@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include <ctype.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <cctype>
 
 using namespace std;
 

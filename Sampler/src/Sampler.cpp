@@ -1,6 +1,6 @@
 #include "Sampler.hpp"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <iterator>

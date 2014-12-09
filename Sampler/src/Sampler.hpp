@@ -5,6 +5,10 @@
 #include "Signature.hpp"
 #include "CallParser.hpp"
 
+#include <vector>
+#include <map>
+#include <string>
+
 class Sampler {
     private:
         std::map<std::string, Signature> signatures;
@@ -14,7 +18,7 @@ class Sampler {
 
         std::vector<int> counters;
 
-        template <typename T> void named_malloc(std::vector<std::string> &tokens, size_t multiplicity);
+        template <typename T> void named_malloc(std::vector<std::string> &tokens, std::size_t multiplicity);
         void named_offset(std::vector<std::string> &tokens);
         void named_free(std::vector<std::string> &tokens);
         void add_call(std::vector<std::string> &tokens);

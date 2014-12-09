@@ -1,7 +1,6 @@
 #ifndef MEMORYMANAGER_HPP
 #define MEMORYMANAGER_HPP
 
-#include <cstddef>
 #include <vector>
 #include <map>
 #include <string>

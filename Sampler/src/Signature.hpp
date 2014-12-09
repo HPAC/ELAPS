@@ -1,8 +1,8 @@
 #ifndef SIGNATURE_HPP
 #define SIGNATURE_HPP
 
-#include <string>
 #include <vector>
+#include <string>
 
 enum ArgType { NONE = '\0', NAME, CHARP, INTP, FLOATP, DOUBLEP, VOIDP };
 

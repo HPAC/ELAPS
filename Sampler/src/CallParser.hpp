@@ -1,12 +1,12 @@
 #ifndef CALLPARSER_HPP
 #define CALLPARSER_HPP
 
-#include <vector>
-
 #include "MemoryManager.hpp"
 #include "Signature.hpp"
 #include "KernelCall.h"
 
+#include <vector>
+#include <string>
 
 class CallParser {
     private:
@@ -21,7 +21,7 @@ class CallParser {
 
         // memory types and location ids
         std::vector<MemType> memtypes;
-        std::vector<size_t> ids;
+        std::vector<std::size_t> ids;
 
         // registering args with the memory manager
         template <typename T> T read_static(char *str);

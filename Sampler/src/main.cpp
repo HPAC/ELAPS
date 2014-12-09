@@ -7,7 +7,6 @@ extern "C" {
 }
 
 int main(int argc, char *argv[]) {
-    // TODO: argument parsing for PAPI counters
     Sampler sampler;
 
     // load signatures
@@ -25,5 +24,6 @@ int main(int argc, char *argv[]) {
             sampler.add_signature(Signature(sigs[i].name, sigs[i].fptr, sigs[i].args));
     }
 
+    // start
     sampler.start();
 }

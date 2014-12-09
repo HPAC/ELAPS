@@ -2,11 +2,9 @@
 
 #include <iostream>
 #include <climits>
-
-#include <string.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <time.h>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
 
 using namespace std;
 
