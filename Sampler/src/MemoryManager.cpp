@@ -23,6 +23,10 @@ MemoryManager::~MemoryManager() {
         named_free(named_mem.begin()->first);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// randomize memory region                                                    //
+////////////////////////////////////////////////////////////////////////////////
+
 template <> void MemoryManager::randomize<char>(void *data, size_t size) {
     for (size_t i = 0; i < size; i++)
         ((unsigned char *) data)[i] = rand() % UCHAR_MAX;
@@ -70,7 +74,6 @@ void MemoryManager::static_reset() {
 bool MemoryManager::named_exists(string name) {
     return (named_map.find(name) != named_map.end());
 }
-
 
 template <typename T>
 void MemoryManager::named_malloc(string name, size_t size) {
@@ -142,6 +145,8 @@ template size_t MemoryManager::dynamic_register<char>(size_t size);
 template size_t MemoryManager::dynamic_register<int>(size_t size);
 template size_t MemoryManager::dynamic_register<float>(size_t size);
 template size_t MemoryManager::dynamic_register<double>(size_t size);
+
+// void treated as char for size
 template <> size_t MemoryManager::dynamic_register<void>(size_t size) {
     dynamic_register<char>(size);
 }

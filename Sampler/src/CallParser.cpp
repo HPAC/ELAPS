@@ -31,11 +31,8 @@ CallParser::CallParser(vector<string> &tokens, Signature &signature, MemoryManag
     register_args();
 }
 
-CallParser::~CallParser() {
-}
-
 ////////////////////////////////////////////////////////////////////////////////
-// Read static value from string                                              //
+// Read 1 static value from string                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
 template <> int CallParser::read_static<int>(char *str) {
@@ -51,7 +48,7 @@ template <> double CallParser::read_static<double>(char *str) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Register static (list of) values                                           //
+// Register static variable (list)                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename T> void CallParser::register_static(char i) {
@@ -59,16 +56,17 @@ template <typename T> void CallParser::register_static(char i) {
     vector<T> data;
     size_t pos = 0;
     while (pos != val.npos) {
-        // read comma separated value into temporary list
+        // read comma separated list 
+        pos += (val[pos] == ',');
         char *str = (char *) val.c_str() + pos;
         data.push_back(read_static<T>(str));
         pos = val.find_first_of(',', pos);
-        pos += (val[pos] == ',');
     }
     memtypes[i] = STATIC;
     ids[i] = mem->static_register((void *) &data[0], data.size() * sizeof(T));
 }
 
+// no static initialization for void *
 template <> void CallParser::register_static<void>(char i) {
     string &val = tokens[i];
     cerr << "Cannot parse to void:" << val << " (call ignored)" << endl;

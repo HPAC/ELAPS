@@ -33,7 +33,6 @@ class CallParser {
 
     public:
         CallParser(std::vector<std::string> &tokens, Signature &signature, MemoryManager &mem);
-        ~CallParser();
 
         KernelCall get_call();
 };
