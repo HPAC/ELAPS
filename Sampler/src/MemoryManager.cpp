@@ -142,6 +142,9 @@ template size_t MemoryManager::dynamic_register<char>(size_t size);
 template size_t MemoryManager::dynamic_register<int>(size_t size);
 template size_t MemoryManager::dynamic_register<float>(size_t size);
 template size_t MemoryManager::dynamic_register<double>(size_t size);
+template <> size_t MemoryManager::dynamic_register<void>(size_t size) {
+    dynamic_register<char>(size);
+}
 
 void *MemoryManager::dynamic_get(size_t id) {
     return (void *) &dynamic_mem[id];

@@ -24,6 +24,11 @@ class CallParser {
         std::vector<size_t> ids;
 
         // registering args with the memory manager
+        template <typename T> T read_static(char *str);
+        template <typename T> void register_static(char i);
+        template <typename T> void register_named(char i);
+        template <typename T> void register_dynamic(char i);
+        template <typename T> void register_arg(char i);
         void register_args();
 
     public:
