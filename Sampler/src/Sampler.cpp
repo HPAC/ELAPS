@@ -10,10 +10,36 @@
 
 using namespace std;
 
-void Sampler::named_malloc(vector<string> &tokens) {
+void Sampler::set_counters(vector<string> &tokens) {
+#ifdef PAPI
+    size_t ncounters = tokens.size() - 1;
+    int maxcounters = PAPI_num_counters();
+    if (ncounters > maxcounters) {
+        cerr << "Too many counters specified: given " << ncounters;
+        cerr << " maximum " << maxcounters << " (truncating counter list)" << endl;
+        ncounters = maxcounters;
+    }
+    counters.resize(0);
+    for (size_t i = 0; i < ncounters; i++) {
+        int code;
+        int check = PAPI_event_name_to_code(tokens[i + 1].c_str(), &code)
+        if (check == PAPI_OK)
+            counters.push_back(code);
+        else if (check == PAPI_ENOTPRESET)
+            cerr << "Counter unknown: " << tokens[i + 1] << " (counter ignored)" << endl;
+        else if (check == PAPI_ENOEVNT)
+            cerr << "Counter unavailable: " << tokens[i + 1] << " (counter ignored)" << endl;
+    }
+#else
+    cerr << "PAPI support not enabled (instruction ignored)" << endl;
+#endif
+}
+
+template <typename T>
+void Sampler::named_malloc(vector<string> &tokens, size_t multiplicity=1) {
     string &name = tokens[1];
-    size_t size = atoi(tokens[2].c_str());
-    mem.named_malloc(name, size);
+    size_t size = atoi(tokens[2].c_str()) * multiplicity;
+    mem.named_malloc<T>(name, size);
 }
 
 void Sampler::named_offset(vector<string> &tokens) {
@@ -40,6 +66,7 @@ void Sampler::add_call(vector<string> &tokens) {
         callparsers.push_back(callparser);
     } catch (...) {
         // callparser initialization failed
+        // (failure already reported)
     }
 }
 
@@ -87,7 +114,17 @@ void Sampler::start() {
         if (command == "go")
             go();
         else if (command == "malloc")
-            named_malloc(tokens);
+            named_malloc<char>(tokens);
+        else if (command == "imalloc")
+            named_malloc<int>(tokens);
+        else if (command == "fmalloc")
+            named_malloc<float>(tokens);
+        else if (command == "dmalloc")
+            named_malloc<double>(tokens);
+        else if (command == "cmalloc")
+            named_malloc<float>(tokens, 2);
+        else if (command == "zmalloc")
+            named_malloc<double>(tokens, 2); 
         else if (command == "offset")
             named_offset(tokens);
         else if (command == "free")

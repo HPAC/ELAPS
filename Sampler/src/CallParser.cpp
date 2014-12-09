@@ -27,106 +27,18 @@ CallParser::CallParser(vector<string> &tokens, Signature &signature, MemoryManag
 CallParser::~CallParser() {
 }
 
-void CallParser::register_charp(char i) {
-    string &val = tokens[i];
-    ids[i] = mem->static_register(val.c_str(), val.size() + 1);
-}
-
-void CallParser::register_intp(char i) {
-    string &val = tokens[i];
-    if (val[0] == '[') {
-        size_t closing = val.find_first_not_of("0123456789", 1);
-        if (closing != val.size() - 1 || val[closing] != ']') {
-            cout << "Invalid or incomplete memory size specification for argument " << i << ": " << val << " (call ignored)" << endl;
-            throw i;
-        }
-        memtypes[i] = DYNAMIC;
-        size_t size = atoi(val.c_str() + 1);
-        ids[i] = mem->dynamic_register(size * sizeof(int));
-    } else if (isalpha(val[0])) {
-        if (!mem->named_exists(val)) {
-            cout << "Unknown variable: " << val << " (call ignored)" << endl;
-            throw i;
-        }
-        memtypes[i] = NAMED;
-    } else {
-        memtypes[i] = STATIC;
-        // TODO: check syntax
-        int ival = atoi(val.c_str());
-        ids[i] = mem->static_register(&ival, sizeof(int));
-    }
-}
-
-void CallParser::register_floatp(char i) {
-    string &val = tokens[i];
-    if (val[0] == '[') {
-        size_t closing = val.find_first_not_of("0123456789", 1);
-        if (closing != val.size() - 1 || val[closing] != ']') {
-            cout << "Invalid or incomplete memory size specification for argument " << i << ": " << val << " (call ignored)" << endl;
-            throw i;
-        }
-        memtypes[i] = DYNAMIC;
-        size_t size = atoi(val.c_str() + 1);
-        ids[i] = mem->dynamic_register(size * sizeof(float));
-    } else if (isalpha(val[0])) {
-        if (!mem->named_exists(val)) {
-            cout << "Unknown variable: " << val << " (call ignored)" << endl;
-            throw i;
-        }
-        memtypes[i] = NAMED;
-    } else {
-        memtypes[i] = STATIC;
-        // TODO: check syntax
-        float ival = atof(val.c_str());
-        ids[i] = mem->static_register(&ival, sizeof(float));
-    }
-}
-
-void CallParser::register_doublep(char i) {
-    string &val = tokens[i];
-    if (val[0] == '[') {
-        size_t closing = val.find_first_not_of("0123456789", 1);
-        if (closing != val.size() - 1 || val[closing] != ']') {
-            cout << "Invalid or incomplete memory size specification for argument " << i << ": " << val << " (call ignored)" << endl;
-            throw i;
-        }
-        memtypes[i] = DYNAMIC;
-        size_t size = atoi(val.c_str() + 1);
-        ids[i] = mem->dynamic_register(size * sizeof(double));
-    } else if (isalpha(val[0])) {
-        if (!mem->named_exists(val)) {
-            cout << "Unknown variable: " << val << " (call ignored)" << endl;
-            throw i;
-        }
-        memtypes[i] = NAMED;
-    } else {
-        memtypes[i] = STATIC;
-        // TODO: check syntax
-        double ival = atof(val.c_str());
-        ids[i] = mem->static_register(&ival, sizeof(double));
-    }
-}
-
-void CallParser::register_voidp(char i) {
-    string &val = tokens[i];
-    if (val[0] == '[') {
-        size_t closing = val.find_first_not_of("0123456789", 1);
-        if (closing != val.size() - 1 || val[closing] != ']') {
-            cout << "Invalid or incomplete memory size specification for argument " << i << ": " << val << " (call ignored)" << endl;
-            throw i;
-        }
-        memtypes[i] = DYNAMIC;
-        size_t size = atoi(val.c_str() + 1);
-        ids[i] = mem->dynamic_register(size);
-    } else if (isalpha(val[0])) {
-        if (!mem->named_exists(val)) {
-            cout << "Unknown variable: " << val << " (call ignored)" << endl;
-            throw i;
-        }
-        memtypes[i] = NAMED;
-    } else {
-        // static undefined for void*
-        throw i;
+size_t get_type_size(ArgType arg) {
+    switch (arg) {
+        case CHARP:
+            return sizeof(char);
+        case INTP:
+            return sizeof(int);
+        case FLOATP:
+            return sizeof(float);
+        case DOUBLEP:
+            return sizeof(double);
+        case VOIDP:
+            return 1;
     }
 }
 
@@ -135,24 +47,76 @@ void CallParser::register_args() {
     mem->dynamic_newcall();
     memtypes.resize(argc);
     ids.resize(argc);
-    for (char i = 1; i < argc; i++)
-        switch (signature->arguments[i]) {
-            case CHARP:
-                register_charp(i);
-                break;
-            case INTP:
-                register_intp(i);
-                break;
-            case FLOATP:
-                register_floatp(i);
-                break;
-            case DOUBLEP:
-                register_doublep(i);
-                break;
-            case VOIDP:
-                register_voidp(i);
-                break;
+    for (char i = 1; i < argc; i++) {
+        ArgType &arg = signature->arguments[i];
+        size_t type_size = get_type_size(arg);
+        string &val = tokens[i];
+        if (arg == CHARP) {
+            // string
+            memtypes[i] = STATIC;
+            ids[i] = mem->static_register(val.c_str(), val.size() + 1);
+        } else if (val[0] == '[') {
+            // dynamic memory: [1234]
+            size_t closing = val.find_first_not_of("0123456789", 1);
+            if (closing != val.size() - 1 || val[closing] != ']') {
+                cout << "Invalid or incomplete memory size specification for argument " << i << ": " << val << " (call ignored)" << endl;
+                throw i;
+            }
+            memtypes[i] = DYNAMIC;
+            size_t size = atoi(val.c_str() + 1);
+            switch (arg) {
+                case INTP:
+                    ids[i] = mem->dynamic_register<int>(size);
+                    break;
+                case FLOATP:
+                    ids[i] = mem->dynamic_register<float>(size);
+                    break;
+                case DOUBLEP:
+                    ids[i] = mem->dynamic_register<double>(size);
+                    break;
+                case VOIDP:
+                    ids[i] = mem->dynamic_register<char>(size);
+                    break;
+            }
+        } else if (isalpha(val[0])) {
+            // named variable
+            if (!mem->named_exists(val)) {
+                cout << "Unknown variable: " << val << " (call ignored)" << endl;
+                throw i;
+            }
+            memtypes[i] = NAMED;
+        } else {
+            // static (constant) variables, comma separated
+            if (arg == VOIDP) {
+                cerr << "Cannot parse to void:" << val << " (call ignored)" << endl;
+                throw i;
+            }
+            memtypes[i] = STATIC;
+            int type_size = get_type_size(arg);
+            vector<char> data;
+            size_t pos = 0;
+            while (pos != val.npos) {
+                // read comma separated value into temporary list
+                char *str = (char *) val.c_str() + pos;
+                data.resize(data.size() + type_size);
+                void *datap = (void *) &data[data.size() - type_size];
+                switch (arg) {
+                    case INTP:
+                        *((int *) datap) = atoi(val.c_str());
+                        break;
+                    case FLOATP:
+                        *((float *) datap) = atof(val.c_str());
+                        break;
+                    case DOUBLEP:
+                        *((double *) datap) = atof(val.c_str());
+                        break;
+                }
+                pos = val.find_first_of(',', pos);
+                pos += (val[pos] == ',');
+            }
+            ids[i] = mem->static_register((void *) &data[0], data.size());
         }
+    }
 }
 
 

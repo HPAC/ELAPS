@@ -26,12 +26,6 @@ class CallParser {
         // registering args with the memory manager
         void register_args();
 
-        void register_charp(char i);
-        void register_intp(char i);
-        void register_floatp(char i);
-        void register_doublep(char i);
-        void register_voidp(char i);
-
     public:
         CallParser(std::vector<std::string> &tokens, Signature &signature, MemoryManager &mem);
         ~CallParser();

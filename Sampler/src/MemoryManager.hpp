@@ -28,26 +28,27 @@ class MemoryManager {
 
         // routines
         void named_delete_aliases(std::string name);
+        template <typename T> void randomize(void *data, std::size_t size);
 
     public:
         MemoryManager(std::size_t alignment = 64, std::size_t first_offset = 0);
         ~MemoryManager();
 
         // static memory
-        std::size_t static_register(const void *value, const size_t size);
+        std::size_t static_register(const void *value, const std::size_t size);
         void *static_get(std::size_t id);
         void static_reset();
 
         // named memory
         bool named_exists(std::string name);
-        void named_malloc(std::string name, std::size_t size);
+        template <typename T> void named_malloc(std::string name, std::size_t size);
         void named_offset(std::string oldname, std::size_t offset, std::string newname);
         void *named_get(std::string name);
         void named_free(std::string name);
 
         // dynamic memory
         void dynamic_newcall();
-        std::size_t dynamic_register(std::size_t size);
+        template <typename T> std::size_t dynamic_register(std::size_t size);
         void *dynamic_get(std::size_t id);
         void dynamic_reset();
 };

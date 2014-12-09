@@ -14,15 +14,14 @@ class Sampler {
 
         std::vector<int> counters;
 
-        void named_malloc(std::vector<std::string> &tokens);
+        template <typename T> void named_malloc(std::vector<std::string> &tokens, size_t multiplicity);
         void named_offset(std::vector<std::string> &tokens);
         void named_free(std::vector<std::string> &tokens);
         void add_call(std::vector<std::string> &tokens);
         void go();
 
     public:
-        void set_counters(std::vector<int> counters);
-        void set_counters(std::vector<std::string> counters);
+        void set_counters(std::vector<std::string> &counters);
         void add_signature(Signature signature);
         void start();
 };
