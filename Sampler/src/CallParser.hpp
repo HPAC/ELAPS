@@ -25,10 +25,10 @@ class CallParser {
 
         // registering args with the memory manager
         template <typename T> T read_static(char *str);
-        template <typename T> void register_static(char i);
-        template <typename T> void register_named(char i);
-        template <typename T> void register_dynamic(char i);
-        template <typename T> void register_arg(char i);
+        template <typename T> void register_static(unsigned char i);
+        template <typename T> void register_named(unsigned char i);
+        template <typename T> void register_dynamic(unsigned char i);
+        template <typename T> void register_arg(unsigned char i);
         void register_args();
 
     public:

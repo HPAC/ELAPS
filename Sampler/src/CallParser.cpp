@@ -51,7 +51,7 @@ template <> double CallParser::read_static<double>(char *str) {
 // Register static variable (list)                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename T> void CallParser::register_static(char i) {
+template <typename T> void CallParser::register_static(unsigned char i) {
     string &val = tokens[i];
     vector<T> data;
     size_t pos = 0;
@@ -67,9 +67,8 @@ template <typename T> void CallParser::register_static(char i) {
 }
 
 // no static initialization for void *
-template <> void CallParser::register_static<void>(char i) {
-    string &val = tokens[i];
-    cerr << "Cannot parse to void:" << val << " (call ignored)" << endl;
+template <> void CallParser::register_static<void>(unsigned char i) {
+    cerr << "Cannot parse to void:" << tokens[i] << " (call ignored)" << endl;
     throw 1;
 }
 
@@ -77,7 +76,7 @@ template <> void CallParser::register_static<void>(char i) {
 // Register named variabes                                                    //
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename T> void CallParser::register_named(char i) {
+template <typename T> void CallParser::register_named(unsigned char i) {
     string &val = tokens[i];
     if (!mem->named_exists(val)) {
         cout << "Unknown variable: " << val << " (call ignored)" << endl;
@@ -90,11 +89,11 @@ template <typename T> void CallParser::register_named(char i) {
 // Register dynamic variabes                                                  //
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename T> void CallParser::register_dynamic(char i) {
+template <typename T> void CallParser::register_dynamic(unsigned char i) {
     string &val = tokens[i];
     size_t closing = val.find_first_not_of("0123456789", 1);
     if (closing != val.size() - 1 || val[closing] != ']') {
-        cout << "Invalid or incomplete memory size specification for argument " << i << ": " << val << " (call ignored)" << endl;
+        cout << "Invalid or incomplete memory size specification: " << val << " (call ignored)" << endl;
         throw i;
     }
     memtypes[i] = DYNAMIC;
@@ -106,7 +105,7 @@ template <typename T> void CallParser::register_dynamic(char i) {
 // Register single argument                                                   //
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename T> void CallParser::register_arg(char i) {
+template <typename T> void CallParser::register_arg(unsigned char i) {
     string &val = tokens[i];
     if (val[0] == '[')
         register_dynamic<T>(i);
@@ -117,7 +116,7 @@ template <typename T> void CallParser::register_arg(char i) {
 }
 
 // all char * are treated as static
-template <> void CallParser::register_arg<char>(char i) {
+template <> void CallParser::register_arg<char>(unsigned char i) {
     string &val = tokens[i];
     memtypes[i] = STATIC;
     ids[i] = mem->static_register(val.c_str(), val.size() + 1);
@@ -132,7 +131,7 @@ void CallParser::register_args() {
     mem->dynamic_newcall();
     memtypes.resize(argc);
     ids.resize(argc);
-    for (char i = 1; i < argc; i++)
+    for (unsigned char i = 1; i < argc; i++)
         switch (signature->arguments[i]) {
             case CHARP:
                 register_arg<char>(i);
@@ -160,7 +159,7 @@ KernelCall CallParser::get_call() {
     KernelCall call;
     call.argc = signature->arguments.size();
     call.argv[0] = signature->function;
-    for (char i = 1; i < call.argc; i++)
+    for (unsigned char i = 1; i < call.argc; i++)
         switch (memtypes[i]) {
             case STATIC:
                 call.argv[i] = mem->static_get(ids[i]);

@@ -31,18 +31,36 @@ void Sampler::set_counters(vector<string> &tokens) {
             cerr << "Counter unavailable: " << tokens[i + 1] << " (counter ignored)" << endl;
     }
 #else
-    cerr << "PAPI support not enabled (instruction ignored)" << endl;
+    cerr << "PAPI support not enabled (command ignored)" << endl;
 #endif
 }
 
 template <typename T>
 void Sampler::named_malloc(vector<string> &tokens, size_t multiplicity=1) {
+    if (tokens.size() < 3) {
+        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
+        cerr << "usage (example): " << tokens[0] << " A 10000" << endl;
+        throw 1;
+    }
+    if (tokens.size() > 3) {
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "usage (example): " << tokens[0] << " A 10000" << endl;
+    }
     string &name = tokens[1];
     size_t size = atoi(tokens[2].c_str()) * multiplicity;
     mem.named_malloc<T>(name, size);
 }
 
 void Sampler::named_offset(vector<string> &tokens) {
+    if (tokens.size() < 4) {
+        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
+        cerr << "usage (example): " << tokens[0] << " Old 10000 New" << endl;
+        throw 1;
+    }
+    if (tokens.size() > 4) {
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "usage (example): " << tokens[0] << " Old 10000 New" << endl;
+    }
     string &oldname = tokens[1];
     ssize_t offset = atoi(tokens[2].c_str());
     string &newname = tokens[3];
@@ -50,6 +68,15 @@ void Sampler::named_offset(vector<string> &tokens) {
 }
 
 void Sampler::named_free(vector<string> &tokens) {
+    if (tokens.size() < 2) {
+        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
+        cerr << "usage (example): " << tokens[0] << " A" << endl;
+        throw 1;
+    }
+    if (tokens.size() > 2) {
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "usage (example): " << tokens[0] << " A" << endl;
+    }
     string &name = tokens[1];
     mem.named_free(name);
 }
@@ -93,6 +120,8 @@ void Sampler::go() {
     }
 
     delete [] calls;
+    callparsers.resize(0);
+    mem.static_reset();
 }
 
 void Sampler::add_signature(Signature signature){
@@ -101,14 +130,26 @@ void Sampler::add_signature(Signature signature){
 
 void Sampler::start() {
     while (!cin.eof()) {
-        // read and tokenize line
+
+        // read the next line
         string line;
         getline(cin, line);
-        istringstream iss(line);
-        vector<string> tokens;
-        copy(istream_iterator<string>(iss), istream_iterator<string>(), back_inserter(tokens));
-        if (tokens.size() == 0)
+
+        // clear comments
+        line = line.substr(0, line.find_first_of("#"));
+
+        // remove leading spaces
+        line = line.substr(line, find_first_not_of(" \t\n\v\f\r"));
+
+        // ignore empty lines
+        if (line.size == 0)
             continue;
+
+        // tokenize line
+        vector<string> tokens;
+        istringstream iss(line);
+        copy(istream_iterator<string>(iss), istream_iterator<string>(), back_inserter(tokens));
+
         // check for special commands
         string &command = tokens[0];
         if (command == "go")
@@ -130,6 +171,8 @@ void Sampler::start() {
         else if (command == "free")
             named_free(tokens);
         else
+            // check for kernel call
             add_call(tokens);
     }
+    go();
 }
