@@ -10,10 +10,10 @@
 
 using namespace std;
 
-void Sampler::set_counters(vector<string> &tokens) {
+void Sampler::set_counters(const vector<string> &tokens) {
 #ifdef PAPI
+    const int maxcounters = PAPI_num_counters();
     size_t ncounters = tokens.size() - 1;
-    int maxcounters = PAPI_num_counters();
     if (ncounters > maxcounters) {
         cerr << "Too many counters specified: given " << ncounters;
         cerr << " maximum " << maxcounters << " (truncating counter list)" << endl;
@@ -22,7 +22,7 @@ void Sampler::set_counters(vector<string> &tokens) {
     counters.resize(0);
     for (size_t i = 0; i < ncounters; i++) {
         int code;
-        int check = PAPI_event_name_to_code(tokens[i + 1].c_str(), &code)
+        const int check = PAPI_event_name_to_code(tokens[i + 1].c_str(), &code)
         if (check == PAPI_OK)
             counters.push_back(code);
         else if (check == PAPI_ENOTPRESET)
@@ -36,7 +36,7 @@ void Sampler::set_counters(vector<string> &tokens) {
 }
 
 template <typename T>
-void Sampler::named_malloc(vector<string> &tokens, size_t multiplicity=1) {
+void Sampler::named_malloc(const vector<string> &tokens, size_t multiplicity=1) {
     if (tokens.size() < 3) {
         cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
         cerr << "usage (example): " << tokens[0] << " A 10000" << endl;
@@ -46,12 +46,12 @@ void Sampler::named_malloc(vector<string> &tokens, size_t multiplicity=1) {
         cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
         cerr << "usage (example): " << tokens[0] << " A 10000" << endl;
     }
-    string &name = tokens[1];
-    size_t size = atoi(tokens[2].c_str()) * multiplicity;
+    const string &name = tokens[1];
+    const size_t size = atoi(tokens[2].c_str()) * multiplicity;
     mem.named_malloc<T>(name, size);
 }
 
-void Sampler::named_offset(vector<string> &tokens) {
+void Sampler::named_offset(const vector<string> &tokens) {
     if (tokens.size() < 4) {
         cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
         cerr << "usage (example): " << tokens[0] << " Old 10000 New" << endl;
@@ -61,13 +61,13 @@ void Sampler::named_offset(vector<string> &tokens) {
         cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
         cerr << "usage (example): " << tokens[0] << " Old 10000 New" << endl;
     }
-    string &oldname = tokens[1];
-    ssize_t offset = atoi(tokens[2].c_str());
-    string &newname = tokens[3];
+    const string &oldname = tokens[1];
+    const ssize_t offset = atoi(tokens[2].c_str());
+    const string &newname = tokens[3];
     mem.named_offset(oldname, offset, newname);
 }
 
-void Sampler::named_free(vector<string> &tokens) {
+void Sampler::named_free(const vector<string> &tokens) {
     if (tokens.size() < 2) {
         cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
         cerr << "usage (example): " << tokens[0] << " A" << endl;
@@ -77,17 +77,17 @@ void Sampler::named_free(vector<string> &tokens) {
         cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
         cerr << "usage (example): " << tokens[0] << " A" << endl;
     }
-    string &name = tokens[1];
+    const string &name = tokens[1];
     mem.named_free(name);
 }
 
-void Sampler::add_call(vector<string> &tokens) {
-    string &routine = tokens[0];
+void Sampler::add_call(const vector<string> &tokens) {
+    const string &routine = tokens[0];
     if (signatures.find(routine) == signatures.end()) {
         cerr << "Uknown kernel: " << routine << " (call ignored)" << endl;
         return;
     }
-    Signature &signature = signatures[routine];
+    const Signature &signature = signatures[routine];
     try {
         CallParser callparser(tokens, signature, mem);
         callparsers.push_back(callparser);
@@ -120,17 +120,16 @@ void Sampler::go() {
     }
 
     delete [] calls;
-    callparsers.resize(0);
+    callparsers.clear();
     mem.static_reset();
 }
 
-void Sampler::add_signature(Signature signature){
+void Sampler::add_signature(const Signature &signature){
     signatures[signature.name] = signature;
 }
 
 void Sampler::start() {
     while (!cin.eof()) {
-
         // read the next line
         string line;
         getline(cin, line);
@@ -139,10 +138,10 @@ void Sampler::start() {
         line = line.substr(0, line.find_first_of("#"));
 
         // remove leading spaces
-        line = line.substr(line, find_first_not_of(" \t\n\v\f\r"));
+        line = line.substr(line.find_first_not_of(" \t\n\v\f\r"));
 
         // ignore empty lines
-        if (line.size == 0)
+        if (line.size() == 0)
             continue;
 
         // tokenize line
@@ -151,7 +150,7 @@ void Sampler::start() {
         copy(istream_iterator<string>(iss), istream_iterator<string>(), back_inserter(tokens));
 
         // check for special commands
-        string &command = tokens[0];
+        const string &command = tokens[0];
         if (command == "go")
             go();
         else if (command == "malloc")

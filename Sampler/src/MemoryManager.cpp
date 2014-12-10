@@ -49,12 +49,12 @@ template <> void MemoryManager::randomize<double>(void *data, size_t size) {
 // static                                                                     //
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t MemoryManager::static_register(const void *value, const size_t size) {
-    size_t length = static_mem.size();
-    size_t newlength = length + (size / 8 + (size % 8 != 0)) * 8; // alignment of 8 bytes
+size_t MemoryManager::static_register(const void *value, size_t size) {
+    const size_t oldlength = static_mem.size();
+    const size_t newlength = oldlength + (size / 8 + (size % 8 != 0)) * 8; // alignment of 8 bytes
     static_mem.resize(newlength);
-    memcpy(&static_mem[length], value, size);
-    return length;
+    memcpy(&static_mem[oldlength], value, size);
+    return oldlength;
 }
 
 void *MemoryManager::static_get(size_t id) {
@@ -69,12 +69,12 @@ void MemoryManager::static_reset() {
 // named                                                                      //
 ////////////////////////////////////////////////////////////////////////////////
 
-bool MemoryManager::named_exists(string name) {
+bool MemoryManager::named_exists(const string &name) const {
     return (named_map.find(name) != named_map.end());
 }
 
 template <typename T>
-void MemoryManager::named_malloc(string name, size_t size) {
+void MemoryManager::named_malloc(const string &name, size_t size) {
     if (named_map.find(name) != named_map.end()) {
         cerr << "duplicate named variable allocation:" << name << endl;
         return;
@@ -87,23 +87,23 @@ void MemoryManager::named_malloc(string name, size_t size) {
     // put random data
     randomize<T>(named_mem[name], size);
 }
-template void MemoryManager::named_malloc<char>(string name, size_t size);
-template void MemoryManager::named_malloc<int>(string name, size_t size);
-template void MemoryManager::named_malloc<float>(string name, size_t size);
-template void MemoryManager::named_malloc<double>(string name, size_t size);
+template void MemoryManager::named_malloc<char>(const string &name, size_t size);
+template void MemoryManager::named_malloc<int>(const string &name, size_t size);
+template void MemoryManager::named_malloc<float>(const string &name, size_t size);
+template void MemoryManager::named_malloc<double>(const string &name, size_t size);
 
-void MemoryManager::named_offset(string oldname, size_t offset, string newname) {
+void MemoryManager::named_offset(const string &oldname, size_t offset, const string &newname) {
     // create map
     named_map[newname] = named_map[oldname] + offset;
     // register alias
     named_aliases[oldname].push_back(newname);
 }
 
-void *MemoryManager::named_get(string name) {
+void *MemoryManager::named_get(const string &name) {
     return (void *) named_map[name];
 }
 
-void MemoryManager::named_free(string name) {
+void MemoryManager::named_free(const string &name) {
     // delete all aliases
     while (named_aliases[name].size())
         named_free(named_aliases.begin()->first);
@@ -128,14 +128,16 @@ void MemoryManager::dynamic_newcall() {
 template <typename T>
 size_t MemoryManager::dynamic_register(size_t size) {
     // go to next alignment step
-    size_t id = (((size_t) dynamic_needed_curr / alignment + 1) * alignment);
+    const size_t id = (((size_t) dynamic_needed_curr / alignment + 1) * alignment);
     // compute new end of needed
     dynamic_needed_curr = id + size * sizeof(T);
     // if needed, extend the size of dynamic memory
-    size_t oldsize = dynamic_mem.size();
-    if (dynamic_needed_curr + alignment > oldsize) {
-        dynamic_mem.resize(dynamic_needed_curr + alignment);
-        randomize<T>(&dynamic_mem[oldsize], (dynamic_needed_curr + alignment - oldsize) / sizeof(T));
+    const size_t oldsize = dynamic_mem.size();
+    const size_t newsize = dynamic_needed_curr + alignment;
+    if (newsize > oldsize) {
+        dynamic_mem.resize(newsize);
+        // randomize with currently requested type
+        randomize<T>(&dynamic_mem[oldsize], newsize / sizeof(T));
     }
     return id;
 }

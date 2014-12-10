@@ -12,7 +12,7 @@ class Signature {
         void *function;
         std::vector<ArgType> arguments;
 
-        Signature(const char *name, void *fptr, ArgType *arguments);
+        Signature(const char *name, void *fptr, const ArgType *arguments);
         Signature();
 };
 

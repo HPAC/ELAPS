@@ -14,7 +14,7 @@ class CallParser {
 
         // Associated Memory Manager
         MemoryManager *mem;
-        Signature *signature;
+        const Signature *signature;
 
         // original tokenized string
         std::vector<std::string> tokens;
@@ -24,7 +24,7 @@ class CallParser {
         std::vector<std::size_t> ids;
 
         // registering args with the memory manager
-        template <typename T> T read_static(char *str);
+        template <typename T> T read_static(const char *str) const;
         template <typename T> void register_static(unsigned char i);
         template <typename T> void register_named(unsigned char i);
         template <typename T> void register_dynamic(unsigned char i);
@@ -32,9 +32,9 @@ class CallParser {
         void register_args();
 
     public:
-        CallParser(std::vector<std::string> &tokens, Signature &signature, MemoryManager &mem);
+        CallParser(const std::vector<std::string> &tokens, const Signature &signature, MemoryManager &mem);
 
-        KernelCall get_call();
+        KernelCall get_call() const;
 };
 
 #endif /* CALLPARSER_HPP */

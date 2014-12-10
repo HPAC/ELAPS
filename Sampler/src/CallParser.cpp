@@ -11,7 +11,7 @@ using namespace std;
 // Initialize from token list                                                 //
 ////////////////////////////////////////////////////////////////////////////////
 
-CallParser::CallParser(vector<string> &tokens, Signature &signature, MemoryManager &mem)
+CallParser::CallParser(const vector<string> &tokens, const Signature &signature, MemoryManager &mem)
 : tokens(tokens), signature(&signature), mem(&mem)
 { 
     // check for too few arguments
@@ -35,15 +35,15 @@ CallParser::CallParser(vector<string> &tokens, Signature &signature, MemoryManag
 // Read 1 static value from string                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-template <> int CallParser::read_static<int>(char *str) {
+template <> int CallParser::read_static<int>(const char *str) const {
     return atoi(str);
 }
 
-template <> float CallParser::read_static<float>(char *str) {
+template <> float CallParser::read_static<float>(const char *str) const {
     return (float) atof(str);
 }
 
-template <> double CallParser::read_static<double>(char *str) {
+template <> double CallParser::read_static<double>(const char *str) const {
     return atof(str);
 }
 
@@ -52,13 +52,13 @@ template <> double CallParser::read_static<double>(char *str) {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename T> void CallParser::register_static(unsigned char i) {
-    string &val = tokens[i];
+    const string &val = tokens[i];
     vector<T> data;
     size_t pos = 0;
     while (pos != val.npos) {
         // read comma separated list 
         pos += (val[pos] == ',');
-        char *str = (char *) val.c_str() + pos;
+        const char *str = val.c_str() + pos;
         data.push_back(read_static<T>(str));
         pos = val.find_first_of(',', pos);
     }
@@ -77,7 +77,7 @@ template <> void CallParser::register_static<void>(unsigned char i) {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename T> void CallParser::register_named(unsigned char i) {
-    string &val = tokens[i];
+    const string &val = tokens[i];
     if (!mem->named_exists(val)) {
         cout << "Unknown variable: " << val << " (call ignored)" << endl;
         throw i;
@@ -90,14 +90,14 @@ template <typename T> void CallParser::register_named(unsigned char i) {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename T> void CallParser::register_dynamic(unsigned char i) {
-    string &val = tokens[i];
-    size_t closing = val.find_first_not_of("0123456789", 1);
+    const string &val = tokens[i];
+    const size_t closing = val.find_first_not_of("0123456789", 1);
     if (closing != val.size() - 1 || val[closing] != ']') {
         cout << "Invalid or incomplete memory size specification: " << val << " (call ignored)" << endl;
         throw i;
     }
     memtypes[i] = DYNAMIC;
-    size_t size = atoi(val.c_str() + 1);
+    const size_t size = atoi(val.c_str() + 1);
     ids[i] = mem->dynamic_register<T>(size);
 }
 
@@ -106,7 +106,7 @@ template <typename T> void CallParser::register_dynamic(unsigned char i) {
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename T> void CallParser::register_arg(unsigned char i) {
-    string &val = tokens[i];
+    const string &val = tokens[i];
     if (val[0] == '[')
         register_dynamic<T>(i);
     else if (isalpha(val[0]))
@@ -117,7 +117,7 @@ template <typename T> void CallParser::register_arg(unsigned char i) {
 
 // all char * are treated as static
 template <> void CallParser::register_arg<char>(unsigned char i) {
-    string &val = tokens[i];
+    const string &val = tokens[i];
     memtypes[i] = STATIC;
     ids[i] = mem->static_register(val.c_str(), val.size() + 1);
 }
@@ -127,7 +127,7 @@ template <> void CallParser::register_arg<char>(unsigned char i) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void CallParser::register_args() {
-    size_t argc = signature->arguments.size();
+    const size_t argc = signature->arguments.size();
     mem->dynamic_newcall();
     memtypes.resize(argc);
     ids.resize(argc);
@@ -155,7 +155,7 @@ void CallParser::register_args() {
 // Produce call                                                               //
 ////////////////////////////////////////////////////////////////////////////////
 
-KernelCall CallParser::get_call() {
+KernelCall CallParser::get_call() const {
     KernelCall call;
     call.argc = signature->arguments.size();
     call.argv[0] = signature->function;
