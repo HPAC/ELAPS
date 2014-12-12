@@ -2,7 +2,7 @@
 from __future__ import division, print_function
 
 
-class Expression():
+class Expression(object):
     def __neg__(self):
         return Minus(self)
 
@@ -47,8 +47,8 @@ class Symbol(Expression):
 
 
 class Operation(Expression, list):
-    def __init__(self, symbol, *args):
-        list.__init__(self, (symbol,) + args)
+    def __init__(self, *args):
+        list.__init__(self, (self.__class__,) + args)
 
     def __repr__(self):
         return (self.__class__.__name__ + "(" +
@@ -74,10 +74,10 @@ class Operation(Expression, list):
 
 class Minus(Operation):
     def __init__(self, expression):
-        Operation.__init__(self, "-", expression)
+        Operation.__init__(self, expression)
 
     def __str__(self):
-        return "-" + self[1]
+        return "-" + str(self[1])
 
     def simplify(self):
         arg = self[1]
@@ -90,9 +90,27 @@ class Minus(Operation):
         return self.__class__(arg)
 
 
+class Abs(Operation):
+    def __init__(self, expression):
+        Operation.__init__(self, expression)
+
+    def __str__(self):
+        return "abs(" + str(self[1]) + ")"
+
+    def simplify(self):
+        arg = self[1]
+        if isinstance(arg, Operation):
+            arg = arg.simplify()
+        if isinstance(arg, (Minus, Abs)):
+            return arg[1]
+        if istinstance(Arg, (int, long, float, complex)):
+            return abs(arg)
+        return self.__class__(arg)
+
+
 class Prod(Operation):
     def __init__(self, *args):
-        Operation.__init__(self, "*", *args)
+        Operation.__init__(self, *args)
 
     def __str__(self):
         return "(" + " * ".join(map(str, self[1:])) + ")"
@@ -118,7 +136,7 @@ class Prod(Operation):
 
 class Plus(Operation):
     def __init__(self, *args):
-        Operation.__init__(self, "+", *args)
+        Operation.__init__(self, *args)
 
     def __str__(self):
         return "(" + " + ".join(map(str, self[1:])) + ")"

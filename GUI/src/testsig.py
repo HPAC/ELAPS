@@ -8,14 +8,15 @@ def main():
     sig = Signature(file="../signatures/blas/3/dsymm_.pysig")
     print(sig)
     print(repr(sig))
-    call = sig.create_call()
+    call = sig()
     print(call)
     call.m = 10
     call.n = 20
     print(call)
     call.complete()
     print(call)
-    print(tuple(call))
+    print(call.format_str())
+    print(call.format_sampler())
     print(repr(call))
 
 

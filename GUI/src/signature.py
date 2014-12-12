@@ -23,7 +23,7 @@ class Signature(list):
             self.complexity = kwargs["complexity"]
 
         # infer and compile min and attr
-        if no isinstance(self[i], Name):
+        if not isinstance(self[0], Name):
             self[0] = Name(self[0])
         lambdaargs = ", ".join(arg.name for arg in self)
         for arg in self:
@@ -42,11 +42,9 @@ class Signature(list):
                 + ", ".join(map(repr, self[1:])) + ")")
 
     def __call__(self, *args):
+        if len(args) == 0:
+            args = tuple(arg.default() for arg in self[1:])
         return Call(self, *args)
-
-    def create_call(self):
-        args = tuple(arg.default() for arg in self[1:])
-        return self(*args)
 
 
 class Call(list):
@@ -107,8 +105,16 @@ class Call(list):
             if hasattr(arg, "min"):
                 self[i] = None
 
+    def format_str(self):
+        return tuple(arg.format_str(val)
+                     for arg, val in zip(self.sig, self))
 
-class Arg():
+    def format_sampler(self):
+        return tuple(arg.format_sampler(val)
+                     for arg, val in zip(self.sig, self))
+
+
+class Arg(object):
     def __init__(self, name, attr=None):
         self.name = name
         self.attrstr = attr
@@ -119,6 +125,12 @@ class Arg():
             args.append(self.attrstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+
+    def format_str(self, val):
+        return str(val)
+
+    def format_sampler(self, val):
+        return self.format_str(val)
 
 
 class Name(Arg):
@@ -260,27 +272,28 @@ class dScalar(Scalar):
 
 
 class cScalar(Scalar):
-    def default(self):
-        return "1,0"
+    def format_sampler(self, val):
+        if isinstance(val, (int, long, float, complex)):
+            val = complex(val)
+            return str(val.real) + "," + str(val.imag)
 
 
 class zScalar(Scalar):
-    def default(self):
-        return "1,0"
+    def format_sampler(self, val):
+        if isinstance(val, (int, long, float, complex)):
+            val = complex(val)
+            return str(val.real) + "," + str(val.imag)
 
 
 class Data(Arg):
     def __init__(self, name, min=None, attr=None):
         Arg.__init__(self, name, attr)
-        self.minstro = min
         self.minstr = min
-        if min:
-            self.minstr = "'[' + str(" + min + ") + ']'"
 
     def __repr__(self):
         args = [self.name]
         if self.minstr:
-            args.append(self.minstro)
+            args.append(self.minstr)
         if self.attrstr:
             if self.minstr:
                 args.append(None)
@@ -290,8 +303,13 @@ class Data(Arg):
 
     def default(self):
         if self.minstr is None:
-            return "[1]"
+            return 1
         return None
+
+    def format_str(self, val):
+        if isinstance(val, int):
+            return "[" + str(val) + "]"
+        return str(val)
 
 
 class iData(Data):
@@ -307,17 +325,17 @@ class dData(Data):
 
 
 class cData(Data):
-    def __init__(self, name, min=None, attr=None):
-        if min:
-            min = "2 * (" + min + ")"
-        Data.__init__(self, name, min, attr)
+    def format_sampler(self, val):
+        if isinstance(val, int):
+            val *= 2
+        return self.format(val)
 
 
 class zData(Data):
-    def __init__(self, name, min=None, attr=None):
-        if min:
-            min = "2 * (" + min + ")"
-        Data.__init__(self, name, min, attr)
+    def format_sampler(self, val):
+        if isinstance(val, int):
+            val *= 2
+        return self.format(val)
 
 
 class Ld(Arg):
@@ -338,13 +356,13 @@ class Ld(Arg):
 
     def default(self):
         if self.minstr is None:
-            return "1"
+            return 1
         return None
 
 
 class Inc(Arg):
     def default(self):
-        return "1"
+        return 1
 
 # attr
 lower = "lower"
