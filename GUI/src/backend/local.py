@@ -7,9 +7,10 @@ import subprocess
 import thrading
 
 
-class Local(Backend):
+class BackendLocal(Backend):
     def __init__(self):
         Backend.__init__(self)
+        self.jobs = {}
         self.scripts = {}
         self.lastsubmitted = None
 
@@ -17,7 +18,8 @@ class Local(Backend):
         if waitid:
             self.jobs[waitid].wait()
         p = self.jobs[jobid]
-        sp.stdin.write(self.scripts[jobid])
+        p.stdin.write(self.scripts[jobid])
+        del self.scripts[jobid]
         p.stdin.close()
 
     def submit(self, script):
@@ -31,18 +33,20 @@ class Local(Backend):
         return jobid
 
     def poll(self, jobid):
+        if jobid in self.scripts:
+            return "PEND"
         returncode = self.jobs[jobid].poll()
         if returncode is None:
-            return RUNNING
+            return "RUN"
         if returncode != 0:
-            return FAILED
-        return DONE
+            return "EXIT"
+        return "DONE"
 
     def wait(self, jobid):
         returncode = self.jobs[jobid].wait()
         if returncode != 0:
-            return FAILED
-        return DONE
+            return "EXIT"
+        return "DONE"
 
     def kill(self, jobid):
         self.jobs[jobid].terminate()

@@ -3,13 +3,8 @@ from __future__ import division, print_function
 
 
 class Backend(object):
-    PENDING = 1
-    RUNNING = 2
-    DONE = 3
-    FAILED = 4
-
     def __init__(self):
-        self.jobs = {}
+        pass
 
     def submit(self, script):
         raise NotImplementedError(self.__class__.__name__

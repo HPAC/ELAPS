@@ -12,6 +12,23 @@ fi
 [ -z "$NAME" ] && NAME=${SYSTEM_NAME}_$BLAS_NAME
 [ -z "$KERNEL_HEADERS" ] && KERNEL_HEADERS="headers/blas.h headers/lapack.h"
 [ -z "$PAPI_MAX_COUNTERS" ] && PAPI_MAX_COUNTERS=0
+[ -z "$BACKEND" ] && BACKEND="local"
+[ -z "$BACKEND_HEADER" ] && BACKEND_HEADER=""
+[ -z "$BACKEND_OPTIONS" ] && BACKEND_OPTIONS=""
+if [ -z "$NT_MAX"]; then
+    if [ "$BACKEND" = "local" ]; then
+        NT_MAX=`grep -c ^processor /proc/cpuinfo`
+    else
+        echo "assuming NT_MAX=1 for non-local system"
+        NT_MAX=1
+    fi
+fi
+[ -z "$FLOPS_PER_CYCLE" ] && echo "FLOPS_PER_CYCLE not provided (no GFLOPS and efficiencies)"
+
+
+export BLAS_NAME SYSTEM_NAME NAME KERNEL_HEADERS PAPI_MAX_COUNTERS
+export BACKEND BACKEND_HEADER BACKEND_OPTIONS NT_MAX
+export FLOPS_PER_CYCLE DFLOPS_PER_CYCLE SFLOPS_PER_CYCLE 
 
 target_dir=build/$NAME
 
@@ -19,6 +36,7 @@ cfg_h=$target_dir/cfg.h
 kernel_h=$target_dir/kernels.h
 sigs_c_inc=$target_dir/sigs.c.inc
 calls_c_inc=$target_dir/calls.c.inc
+info_py=$target_dir/info.py
 
 # clean previous build
 rm -r $target_dir
@@ -27,10 +45,10 @@ rm -r $target_dir
 mkdir -p $target_dir
 
 # create headers file
-src/create_header.py $KERNEL_HEADERS > $kernel_h
+src/create_header.py > $kernel_h
 
 # create aux files
-$CC $CFLAGS -E -I. $kernel_h | src/create_incs.py $cfg_h $kernel_h $sigs_c_inc $calls_c_inc $PAPI_MAX_COUNTERS
+$CC $CFLAGS -E -I. $kernel_h | src/create_incs.py $cfg_h $kernel_h $sigs_c_inc $calls_c_inc $info_py
 
 # build .o
 for x in main CallParser MemoryManager Sampler Signature; do

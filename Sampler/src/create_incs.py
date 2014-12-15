@@ -2,20 +2,22 @@
 from __future__ import division, print_function
 
 import sys
+import os
 import re
 
 
 def main():
     if len(sys.argv) != 6:
         print("usage: gcc -E kernel.h ", sys.argv[0],
-              "cfg.h kernel.h sigs.c.ing calls.c.inc papi_max_counters",
+              "cfg.h kernel.h sigs.c.ing calls.c.inc info.py",
               file=sys.stderr)
         return
     cfg_h = sys.argv[1]
     kernel_h = sys.argv[2]
     sigs_c_inc = sys.argv[3]
     calls_c_inc = sys.argv[4]
-    papi_max_counters = int(sys.argv[5])
+    info_py = sys.argv[5]
+    papi_max_counters = int(os.environ["PAPI_MAX_COUNTERS"])
 
     # read and prepare kernels
     kernels = sys.stdin.read()
@@ -46,12 +48,14 @@ def main():
         "void*": "VOIDP",
     }
     argcmax = 0
+    kernelnames = []
     with open(sigs_c_inc, "w") as fout:
         for line in kernels:
             match = re.match("(?:extern )?\w+ (\w+)\(([^)]*)\);", line)
             if not match:
                 print(line, file=sys.stdout)
             name, args = match.groups()
+            kernelnames.append(name)
             if args:
                 args = [argtypes[arg] for arg in args.split(",")]
             else:
@@ -84,6 +88,31 @@ def main():
             print("#define PAPI", file=fout)
             print("#define MAX_COUNTERS", papi_max_counters, file=fout)
         print("#endif /* SAMPLERCFG_H */", file=fout)
+
+    # create info.py
+    info = {
+        "name":  os.environ["NAME"],
+        "system_name":  os.environ["SYSTEM_NAME"],
+        "blas_name": os.environ["BLAS_NAME"],
+        "backend": os.environ["BACKEND"],
+        "backend_header": os.environ["BACKEND_HEADER"],
+        "backend_options": os.environ["BACKEND_OPTIONS"],
+        "nt_max": int(os.environ["NT_MAX"]),
+        "kernels": sorted(kernelnames)
+    }
+    if "FLOPS_PER_CYCLE" in os.environ:
+        info["dflops/cycle"] = int(os.environ["FLOPS_PER_CYCLE"])
+        info["sflops/cycle"] = 2 * int(os.environ["FLOPS_PER_CYCLE"])
+    if "DFLOPS_PER_CYCLE" in os.environ:
+        info["dflops/cycle"] = int(os.environ["DFLOPS_PER_CYCLE"])
+    if "SFLOPS_PER_CYCLE" in os.environ:
+        info["sflops/cycle"] = int(os.environ["SFLOPS_PER_CYCLE"])
+    with open(info_py, "w") as fout:
+        try:
+            import pprint
+            print(pprint.pformat(info, 4), file=fout)
+        except:
+            print(repr(info), file=fout)
 
 if __name__ == "__main__":
     main()

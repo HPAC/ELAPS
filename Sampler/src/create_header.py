@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
-import sys
+import os
 
 
 def main():
     print("#ifndef KERNELS_H")
     print("#define KERNELS_H")
-    for f in sys.argv[1:]:
+    for f in os.environ["KERNEL_HEADERS"].split():
         print("#include \"" + f + "\"")
     print("#endif /* KERNELS_H */")
 
