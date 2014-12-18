@@ -107,16 +107,17 @@ class GUI_Qt(GUI, QtGui.QApplication):
         rangeL.addWidget(self.Qt_userange)
 
         # window > range > rangevar
-        self.Qt_rangevar = QtGui.QLineEdit()
-        rangeL.addWidget(self.Qt_rangevar)
-        self.Qt_rangevar.setFixedWidth(30)
-        regexp = QtCore.QRegExp("[a-zA-Z]+")
-        validator = QtGui.QRegExpValidator(regexp, self)
-        self.Qt_rangevar.setValidator(validator)
+        # self.Qt_rangevar = QtGui.QLineEdit()
+        # rangeL.addWidget(self.Qt_rangevar)
+        # self.Qt_rangevar.textChanged.connect(self.Qt_rangevar_change)
+        # self.Qt_rangevar.setFixedWidth(30)
+        # regexp = QtCore.QRegExp("[a-zA-Z]+")
+        # validator = QtGui.QRegExpValidator(regexp, self)
+        # self.Qt_rangevar.setValidator(validator)
+        # self.Qt_rangevar.hide()
 
-        # window > range > "="
-        self.Qt_rangevar.textChanged.connect(self.Qt_rangevar_change)
-        self.Qt_rangelabel = QtGui.QLabel("=")
+        # window > range > "n ="
+        self.Qt_rangelabel = QtGui.QLabel("n =")
         rangeL.addWidget(self.Qt_rangelabel)
 
         # window > range > range
@@ -160,106 +161,112 @@ class GUI_Qt(GUI, QtGui.QApplication):
         sys.exit(self.exec_())
 
     # setters
-    def UI_sampler_set(self, samplername):
+    def UI_sampler_set(self):
         self.setting = True
-        self.Qt_sampler.setCurrentIndex(self.Qt_sampler.findText(samplername))
+        self.Qt_sampler.setCurrentIndex(
+            self.Qt_sampler.findText(self.state["sampler"]))
         self.setting = False
 
-    def UI_nt_setmax(self, ntmax):
+    def UI_nt_setmax(self):
         self.setting = True
         self.Qt_nt.clear()
-        self.Qt_nt.addItems(map(str, range(1, ntmax + 1)))
+        sampler = self.samplers[self.state["sampler"]]
+        self.Qt_nt.addItems(map(str, range(1, sampler["nt_max"] + 1)))
         self.setting = False
 
-    def UI_nt_set(self, nt):
+    def UI_nt_set(self):
         self.setting = True
-        self.Qt_nt.setCurrentIndex(nt - 1)
+        self.Qt_nt.setCurrentIndex(self.state["nt"] - 1)
         self.setting = False
 
-    def UI_nrep_set(self, nrep):
+    def UI_nrep_set(self):
         self.setting = True
-        self.Qt_nrep.setText(str(nrep))
+        self.Qt_nrep.setText(str(self.state["nrep"]))
         self.setting = False
 
     def UI_info_set(self, text):
         self.Qt_info.setText(text)
 
-    def UI_usepapi_setenabled(self, state):
-        self.Qt_usepapi.setEnabled(state)
+    def UI_usepapi_setenabled(self):
+        sampler = self.samplers[self.state["sampler"]]
+        self.Qt_usepapi.setEnabled(sampler["papi_counters_max"] > 0)
 
-    def UI_usepapi_set(self, state):
+    def UI_usepapi_set(self):
         self.setting = True
-        self.Qt_usepapi.setChecked(state)
+        self.Qt_usepapi.setChecked(self.state["usepapi"])
         self.setting = False
 
-    def UI_useld_set(self, state):
+    def UI_useld_set(self):
         self.setting = True
-        self.Qt_useld.setChecked(state)
+        self.Qt_useld.setChecked(self.state["useld"])
         self.setting = False
 
-    def UI_usevary_set(self, state):
+    def UI_usevary_set(self):
         self.setting = True
-        self.Qt_usevary.setChecked(state)
+        self.Qt_usevary.setChecked(self.state["usevary"])
         self.setting = False
 
-    def UI_counters_setvisible(self, state):
-        if state:
+    def UI_counters_setvisible(self):
+        if self.state["usepapi"]:
             self.Qt_counters.show()
         else:
             self.Qt_counters.hide()
 
-    def UI_counters_setoptions(self, counters_max, counternames):
+    def UI_counters_setoptions(self):
+        # delete old
         counters = self.Qt_counters.children()[1:]
         for counter in counters:
             counter.deleteLater()
+        # add new
+        sampler = self.samplers[self.state["sampler"]]
         countersL = self.Qt_counters.layout()
-        for _ in range(counters_max):
+        for _ in range(sampler["papi_counters_max"]):
             counter = QtGui.QComboBox()
             countersL.addWidget(counter)
-            counter.addItems([""] + counternames)
+            counter.addItems([""] + sampler["papi_counters_avail"])
             counter.currentIndexChanged.connect(self.Qt_counter_change)
 
-    def UI_counters_set(self, counternames):
+    def UI_counters_set(self):
         self.setting = True
         counters = self.Qt_counters.children()[1:]
-        for counter, countername in zip(counters, counternames):
+        for counter, countername in zip(counters, self.state["counters"]):
             if not countername:
                 countername = ""
             counter.setCurrentIndex(counter.findText(countername))
         self.setting = False
 
-    def UI_userange_set(self, state):
+    def UI_userange_set(self):
         self.setting = True
-        self.Qt_userange.setChecked(state)
+        self.Qt_userange.setChecked(self.state["userange"])
         self.setting = False
 
-    def UI_range_setvisible(self, state):
-        if state:
-            self.Qt_rangevar.show()
+    def UI_range_setvisible(self):
+        if self.state["userange"]:
+            # self.Qt_rangevar.show()
             self.Qt_rangelabel.show()
             self.Qt_range.show()
         else:
-            self.Qt_rangevar.hide()
+            # self.Qt_rangevar.hide()
             self.Qt_rangelabel.hide()
             self.Qt_range.hide()
 
-    def UI_rangevar_set(self, varname):
-        self.setting = True
-        self.Qt_rangevar.setText(varname)
-        self.setting = False
+    # def UI_rangevar_set(self):
+    #     self.setting = True
+    #     self.Qt_rangevar.setText(self.state["rangevar"])
+    #     self.setting = False
 
-    def UI_range_set(self, range):
+    def UI_range_set(self):
         self.setting = True
-        lower, step, upper = range
+        lower, step, upper = self.state["range"]
         if step:
             self.Qt_range.setText("%d:%d:%d" % (lower, step, upper))
         else:
             self.Qt_range.setText("%d:%d" % (lower, upper))
         self.setting = False
 
-    def UI_samplename_set(self, samplename):
+    def UI_samplename_set(self):
         self.setting = True
-        self.Qt_samplename.setText(samplename)
+        self.Qt_samplename.setText(self.state["samplename"])
         self.setting = False
 
     # event handlers
@@ -309,10 +316,10 @@ class GUI_Qt(GUI, QtGui.QApplication):
             return
         self.UI_userange_change(self.Qt_userange.isChecked())
 
-    def Qt_rangevar_change(self):
-        if self.setting:
-            return
-        self.UI_rangevar_change(str(self.Qt_rangevar.text()))
+    # def Qt_rangevar_change(self):
+    #     if self.setting:
+    #         return
+    #     self.UI_rangevar_change(str(self.Qt_rangevar.text()))
 
     def Qt_range_change(self):
         if self.setting:

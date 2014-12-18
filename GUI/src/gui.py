@@ -57,7 +57,7 @@ class GUI():
                 "useld": False,
                 "usevary": False,
                 "userange": False,
-                "rangevar": "n",
+                # "rangevar": "n",
                 "range": (8, 32, 1000),
                 "calls": [("",)],
                 "counters": sampler["papi_counters_max"] * [None],
@@ -83,33 +83,7 @@ class GUI():
         info += "\nBLAS:\t%s\n" % sampler["blas_name"]
         return info
 
-    def UI_init(self):
-        alert("GUI_ needs to be subclassed")
-
-    def UI_setall(self):
-        sampler = self.samplers[self.state["sampler"]]
-        self.UI_sampler_set(sampler["name"])
-        self.UI_nt_setmax(sampler["nt_max"])
-        self.UI_nt_set(self.state["nt"])
-        self.UI_nrep_set(self.state["nrep"])
-        self.UI_info_set(self.get_infostr())
-        self.UI_usepapi_setenabled(sampler["papi_counters_max"] > 0)
-        self.UI_usepapi_set(self.state["usepapi"])
-        self.UI_useld_set(self.state["useld"])
-        self.UI_usevary_set(self.state["usevary"])
-        self.UI_userange_set(self.state["userange"])
-        self.UI_counters_setvisible(self.state["usepapi"])
-        self.UI_counters_setoptions(sampler["papi_counters_max"],
-                                    sampler["papi_counters_avail"])
-        self.UI_counters_set(self.state["counters"])
-        self.UI_range_setvisible(self.state["userange"])
-        self.UI_rangevar_set(self.state["rangevar"])
-        self.UI_range_set(self.state["range"])
-        # TODO: calls
-        self.UI_samplename_set(self.state["samplename"])
-
-    # event handlers
-    def UI_sampler_change(self, samplername):
+    def sampler_set(self, samplername):
         self.state["sampler"] = samplername
         sampler = self.samplers[samplername]
         self.state["nt"] = max(self.state["nt"], sampler["nt_max"])
@@ -125,17 +99,45 @@ class GUI():
         counters += (papi_counters_max - len(counternames)) * [None]
         self.state["counters"] = counternames
 
-        # update calls (disable unavailable)
+        # remove unavailable calls
         # TODO
 
         # update UI
-        self.UI_nt_setmax(sampler["nt_max"])
-        self.UI_nt_set(self.state["nt"])
-        self.UI_usepapi_setenabled(sampler["papi_counters_max"] > 0)
-        self.UI_usepapi_set(self.state["usepapi"])
-        self.UI_counters_setoptions(sampler["papi_counters_max"],
-                                    sampler["papi_counters_avail"])
-        self.UI_counters_set(self.state["counters"])
+        self.UI_nt_setmax()
+        self.UI_nt_set()
+        self.UI_usepapi_setenabled()
+        self.UI_usepapi_set()
+        self.UI_counters_setoptions()
+        self.UI_counters_set()
+        # TODO: calls
+
+    def UI_init(self):
+        alert("GUI_ needs to be subclassed")
+
+    def UI_setall(self):
+        self.UI_sampler_set()
+        self.UI_nt_setmax()
+        self.UI_nt_set()
+        self.UI_nrep_set()
+        self.UI_info_set(self.get_infostr())
+        self.UI_usepapi_setenabled()
+        self.UI_usepapi_set()
+        self.UI_useld_set()
+        self.UI_usevary_set()
+        self.UI_userange_set()
+        self.UI_counters_setvisible()
+        self.UI_counters_setoptions()
+        self.UI_counters_set()
+        self.UI_range_setvisible()
+        # self.UI_rangevar_set()
+        self.UI_range_set()
+        # TODO: calls
+        self.UI_samplename_set()
+
+    # event handlers
+    def UI_sampler_change(self, samplername):
+        # TODO: check for missing call routine conflicts
+        self.sampler_set(samplername)
 
     def UI_nt_change(self, nt):
         self.state["nt"] = nt
@@ -146,8 +148,8 @@ class GUI():
         self.state_write()
 
     def UI_usepapi_change(self, state):
-        self.UI_counters_setvisible(state)
         self.state["usepapi"] = state
+        self.UI_counters_setvisible()
         self.state_write()
 
     def UI_useld_change(self, state):
@@ -165,14 +167,13 @@ class GUI():
         self.state_write()
 
     def UI_userange_change(self, state):
-        self.UI_range_setvisible(state)
         self.state["userange"] = state
+        self.UI_range_setvisible()
         self.state_write()
 
-    def UI_rangevar_change(self, varname):
-        self.state["rangevar"] = varname
-        self.state_write()
-        # TODO: effect on calls?
+    # def UI_rangevar_change(self, varname):
+    #     self.state["rangevar"] = varname
+    #     self.state_write()
 
     def UI_range_change(self, range):
         self.state["range"] = range
