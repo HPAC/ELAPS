@@ -1,9 +1,14 @@
 #include "Sampler.hpp"
 
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <sstream>
 #include <iterator>
+
+#ifdef PAPI
+#include <papi.h>
+#endif
 
 #include CFG_H
 #include "sample.h"
@@ -22,7 +27,9 @@ void Sampler::set_counters(const vector<string> &tokens) {
     counters.resize(0);
     for (size_t i = 0; i < ncounters; i++) {
         int code;
-        const int check = PAPI_event_name_to_code(tokens[i + 1].c_str(), &code)
+        char str[PAPI_MAX_STR_LEN];
+        strcpy(str, tokens[i + 1].c_str());
+        const int check = PAPI_event_name_to_code(str, &code);
         if (check == PAPI_OK)
             counters.push_back(code);
         else if (check == PAPI_ENOTPRESET)
@@ -114,7 +121,7 @@ void Sampler::go() {
         cout << calls[i].rdtsc;
 #ifdef PAPI
         for (size_t j = 0; j < counters.size(); j++)
-            cout << "\t" << call[i].counters[j];
+            cout << "\t" << calls[i].counters[j];
 #endif
         cout << endl;
     }

@@ -11,7 +11,7 @@ fi
 [ -z "$SYSTEM_NAME" ] && SYSTEM_NAME="local"
 [ -z "$NAME" ] && NAME=${SYSTEM_NAME}_$BLAS_NAME
 [ -z "$KERNEL_HEADERS" ] && KERNEL_HEADERS="headers/blas.h headers/lapack.h"
-[ -z "$PAPI_MAX_COUNTERS" ] && PAPI_MAX_COUNTERS=0
+[ -z "$PAPI_COUNTERS_MAX" ] && PAPI_COUNTERS_MAX=0
 [ -z "$BACKEND" ] && BACKEND="local"
 [ -z "$BACKEND_HEADER" ] && BACKEND_HEADER=""
 [ -z "$BACKEND_OPTIONS" ] && BACKEND_OPTIONS=""
@@ -26,9 +26,11 @@ fi
 [ -z "$FLOPS_PER_CYCLE" ] && echo "FLOPS_PER_CYCLE not provided (no GFLOPS and efficiencies)"
 
 
-export BLAS_NAME SYSTEM_NAME NAME KERNEL_HEADERS PAPI_MAX_COUNTERS
-export BACKEND BACKEND_HEADER BACKEND_OPTIONS NT_MAX
+export BLAS_NAME SYSTEM_NAME NAME KERNEL_HEADERS
+export BACKEND BACKEND_HEADER BACKEND_OPTIONS
+export PAPI_COUNTERS_MAX PAPI_COUNTERS_AVAIL
 export FLOPS_PER_CYCLE DFLOPS_PER_CYCLE SFLOPS_PER_CYCLE 
+export CPU_MODEL FREQUENCY_MHZ NT_MAX
 
 target_dir=build/$NAME
 
@@ -52,11 +54,11 @@ $CC $CFLAGS -E -I. $kernel_h | src/create_incs.py $cfg_h $kernel_h $sigs_c_inc $
 
 # build .o
 for x in main CallParser MemoryManager Sampler Signature; do
-    $CXX $CXXFLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/$x.cpp -o $target_dir/$x.o
+    $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/$x.cpp -o $target_dir/$x.o
 done
 
 # build sample.o
-$CC $CFLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/sample.c -o $target_dir/sample.o
+$CC $CFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/sample.c -o $target_dir/sample.o
 
 # build sampler
 $CXX $CXXFLAGS $LINK_FLAGS $target_dir/*.o -o $target_dir/sampler.x

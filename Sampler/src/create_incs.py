@@ -17,7 +17,7 @@ def main():
     sigs_c_inc = sys.argv[3]
     calls_c_inc = sys.argv[4]
     info_py = sys.argv[5]
-    papi_max_counters = int(os.environ["PAPI_MAX_COUNTERS"])
+    papi_counters_max = int(os.environ["PAPI_COUNTERS_MAX"])
 
     # read and prepare kernels
     kernels = sys.stdin.read()
@@ -84,9 +84,9 @@ def main():
         print("#define SIGS_C_INC \"" + sigs_c_inc + "\"", file=fout)
         print("#define CALLS_C_INC \"" + calls_c_inc + "\"", file=fout)
         print("#define KERNEL_MAX_ARGS", argcmax, file=fout)
-        if papi_max_counters > 0:
+        if papi_counters_max > 0:
             print("#define PAPI", file=fout)
-            print("#define MAX_COUNTERS", papi_max_counters, file=fout)
+            print("#define MAX_COUNTERS", papi_counters_max, file=fout)
         print("#endif /* SAMPLERCFG_H */", file=fout)
 
     # create info.py
@@ -98,8 +98,15 @@ def main():
         "backend_header": os.environ["BACKEND_HEADER"],
         "backend_options": os.environ["BACKEND_OPTIONS"],
         "nt_max": int(os.environ["NT_MAX"]),
-        "kernels": sorted(kernelnames)
+        "kernels": sorted(kernelnames),
+        "papi_counters_max": papi_counters_max,
+        "cpu_model": os.environ["CPU_MODEL"],
+        "frequency": 1e6 * float(os.environ["FREQUENCY_MHZ"]),
     }
+    if papi_counters_max:
+        info["papi_counters_avail"] = os.environ["PAPI_COUNTERS_AVAIL"].split()
+    else:
+        info["papi_counters_avail"] = []
     if "FLOPS_PER_CYCLE" in os.environ:
         info["dflops/cycle"] = int(os.environ["FLOPS_PER_CYCLE"])
         info["sflops/cycle"] = 2 * int(os.environ["FLOPS_PER_CYCLE"])

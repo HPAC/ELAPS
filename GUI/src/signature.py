@@ -126,6 +126,9 @@ class Arg(object):
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
+    def __str__(self):
+        return str(self.name)
+
     def format_str(self, val):
         return str(val)
 

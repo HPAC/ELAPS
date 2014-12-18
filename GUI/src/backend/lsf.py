@@ -15,10 +15,13 @@ class BackendLSF(Backend):
         self.jobs = []
         self.header = header
 
-    def submit(self, script, header=""):
+    def submit(self, options, script):
         p = subprocess.Popen(["bsub"], stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out, err) = p.communicate(self.header + header + script)
+        header = self.header
+        header += options["header"]
+        header += "#BSUB -n " + str(options["nt"] + "\n")
+        (out, err) = p.communicate(header + script)
         match = re.search("Job <(\d+)> is submitted to queue <.*>\.", out)
         if not match:
             raise IOError(err)

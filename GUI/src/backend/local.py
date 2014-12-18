@@ -22,11 +22,13 @@ class BackendLocal(Backend):
         del self.scripts[jobid]
         p.stdin.close()
 
-    def submit(self, script):
+    def submit(self, options, script):
         p = subprocess.Popen(["bash"], stdin=subprocess.PIPE)
         jobid = p.pid
         self.jobs[jobid] = p
-        self.scripts[jobid] = script
+        header = options["header"]
+        header += "export OPM_NUM_THREADS=" + options["nt"] + "\n"
+        self.scripts[jobid] = header + script
         t = thrading.Thread(target=self._run, args=(jobid, self.lastsubmitted))
         t.start()
         self.lastsubmitted = jobid
