@@ -132,11 +132,20 @@ class GUI_Qt(GUI, QtGui.QApplication):
         rangeL.addStretch(1)
 
         # window > calls
-        calls = QtGui.QScrollArea()
-        windowL.addWidget(calls)
-        self.Qt_callsL = QtGui.QVBoxLayout()
-        calls.setLayout(self.Qt_callsL)
+        self.Qt_calls = QtGui.QScrollArea()
+        windowL.addWidget(self.Qt_calls)
+        callsL = QtGui.QVBoxLayout()
+        self.Qt_calls.setLayout(callsL)
         windowL.setStretch(2, 1)
+        self.Qt_callFs = []
+
+        # window > calls > add
+        add = QtGui.QPushButton("+")
+        callsL.addWidget(add)
+        add.clicked.connect(self.Qt_call_add)
+
+        # window > calls
+        callsL.addStretch(1)
 
         # window > bottom
         bottomL = QtGui.QHBoxLayout()
@@ -214,25 +223,25 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
     def UI_counters_setoptions(self):
         # delete old
-        counters = self.Qt_counters.children()[1:]
-        for counter in counters:
-            counter.deleteLater()
+        Qcounters = self.Qt_counters.children()[1:]
+        for Qcounter in Qcounters:
+            Qcounter.deleteLater()
         # add new
         sampler = self.samplers[self.state["sampler"]]
-        countersL = self.Qt_counters.layout()
+        QcountersL = self.Qt_counters.layout()
         for _ in range(sampler["papi_counters_max"]):
-            counter = QtGui.QComboBox()
-            countersL.addWidget(counter)
-            counter.addItems([""] + sampler["papi_counters_avail"])
-            counter.currentIndexChanged.connect(self.Qt_counter_change)
+            Qcounter = QtGui.QComboBox()
+            QcountersL.addWidget(Qcounter)
+            Qcounter.addItems([""] + sampler["papi_counters_avail"])
+            Qcounter.currentIndexChanged.connect(self.Qt_counter_change)
 
     def UI_counters_set(self):
         self.setting = True
-        counters = self.Qt_counters.children()[1:]
-        for counter, countername in zip(counters, self.state["counters"]):
+        Qcounters = self.Qt_counters.children()[1:]
+        for Qcounter, countername in zip(Qcounters, self.state["counters"]):
             if not countername:
                 countername = ""
-            counter.setCurrentIndex(counter.findText(countername))
+            Qcounter.setCurrentIndex(Qcounter.findText(countername))
         self.setting = False
 
     def UI_userange_set(self):
@@ -264,6 +273,83 @@ class GUI_Qt(GUI, QtGui.QApplication):
             self.Qt_range.setText("%d:%d" % (lower, upper))
         self.setting = False
 
+    def UI_calls_set(self):
+        # delete old
+        for Qcall in self.Qt_callFs:
+            Qcall.deleteLater()
+        self.Qt_callFs = []
+        # add new
+        QcallsL = self.Qt_calls.layout()
+        for callid in range(len(self.state["calls"])):
+            QcallF = QtGui.QFrame()
+            QcallsL.insertWidget(callid, QcallF)
+            self.Qt_callFs.append(QcallF)
+            QcallL = QtGui.QGridLayout()
+            self.Qt_callFs.append(QcallL)
+            QcallF.setLayout(QcallL)
+            self.UI_call_init(callid)
+
+    def UI_call_init(self, callid):
+        routines = [r for r in self.signatures.keys()
+                    if r in self.samplers[self.state["sampler"]]["kernels"]]
+        callF = self.Qt_callFs[callid]
+        callL = callF.layout()
+
+        callF.callid = callid
+
+        # buttons
+        buttonsL = QtGui.QHBoxLayout()
+        callL.addLayout(buttonsL, 0, 0)
+
+        # buttons > remove
+        callL.removeS = QtGui.QStackedWidget()
+        buttonsL.addWidget(callL.removeS)
+        remove = QtGui.QToolButton()
+        callL.removeS.addWidget(remove)
+        icon = self.style().standardIcon(QtGui.QStyle.SP_DialogDiscardButton)
+        remove.setIcon(icon)
+        remove.clicked.connect(self.Qt_call_remove)
+        callL.removeS.addWidget(QtGui.QWidget())
+
+        # buttons > down
+        callL.downS = QtGui.QStackedWidget()
+        buttonsL.addWidget(callL.downS)
+        down = QtGui.QToolButton()
+        down.setArrowType(QtCore.Qt.DownArrow)
+        callL.downS.addWidget(down)
+        down.clicked.connect(self.Qt_call_movedown)
+        callL.downS.addWidget(QtGui.QWidget())
+
+        # buttons > up
+        callL.upS = QtGui.QStackedWidget()
+        buttonsL.addWidget(callL.upS)
+        up = QtGui.QToolButton()
+        up.setArrowType(QtCore.Qt.UpArrow)
+        callL.upS.addWidget(up)
+        up.clicked.connect(self.Qt_call_moveup)
+        callL.upS.addWidget(QtGui.QWidget())
+
+        # buttons
+        buttonsL.addStretch(1)
+
+        # routine
+        routine = QtGui.QLineEdit(self.state["calls"][callid][0])
+        callL.addWidget(routine, 1, 0)
+        routine.textChanged.connect(self.Qt_routine_change)
+        completer = QtGui.QCompleter(routines, routine)
+        routine.setCompleter(completer)
+
+        # args
+        callL.args = [routine]
+
+        self.UI_call_update(callid)
+
+    def UI_call_update(self, callid):
+        pass
+
+    def UI_arg_set(self):
+        pass
+
     def UI_samplename_set(self):
         self.setting = True
         self.Qt_samplename.setText(self.state["samplename"])
@@ -283,7 +369,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def Qt_nrep_change(self):
         if self.setting:
             return
-        text = self.Qt_nrep.text()
+        text = str(self.Qt_nrep.text())
         self.UI_nrep_change(int(text) if text else None)
 
     def Qt_usepapi_change(self):
@@ -305,9 +391,9 @@ class GUI_Qt(GUI, QtGui.QApplication):
         if self.setting:
             return
         counternames = []
-        counters = self.Qt_counters.children()[1:]
-        for counter in counters:
-            countername = str(counter.currentText())
+        Qcounters = self.Qt_counters.children()[1:]
+        for Qcounter in Qcounters:
+            countername = str(Qcounter.currentText())
             counternames.append(countername if countername else None)
         self.UI_counters_change(counternames)
 
@@ -329,6 +415,24 @@ class GUI_Qt(GUI, QtGui.QApplication):
         step = int(parts[1]) if len(parts) == 3 and parts[1] else 1
         upper = int(parts[-1]) if len(parts) >= 2 and parts[-1] else None
         self.UI_range_change((lower, step, upper))
+
+    def Qt_call_add(self):
+        self.UI_call_add()
+
+    def Qt_call_remove(self):
+        self.UI_call_remove(self.sender().parent().parent().callid)
+
+    def Qt_call_moveup(self):
+        self.UI_call_moveup(self.sender().parent().parent().callid)
+
+    def Qt_call_movedown(self):
+        self.UI_call_movedown(self.sender().parent().parent().callid)
+
+    def Qt_routine_change(self):
+        pass
+
+    def Qt_arg_change(self):
+        pass
 
     def Qt_samplename_change(self):
         if self.setting:

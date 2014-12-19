@@ -63,6 +63,10 @@ class GUI():
                 "counters": sampler["papi_counters_max"] * [None],
                 "samplename": "",
             }
+            if "dgemm_" in sampler["kernels"] and "dgemm_" in self.signatures:
+                sig = self.signatures["dgemm_"]
+                self.state["calls"] = [sig("N", "N", 1000, 1000, 1000, 1, "A",
+                                           1000, "B", 1000, 1, "C", 1000)]
             self.state_write()
 
     def state_write(self):
@@ -109,7 +113,7 @@ class GUI():
         self.UI_usepapi_set()
         self.UI_counters_setoptions()
         self.UI_counters_set()
-        # TODO: calls
+        self.UI_calls_set()
 
     def UI_init(self):
         alert("GUI_ needs to be subclassed")
@@ -131,7 +135,7 @@ class GUI():
         self.UI_range_setvisible()
         # self.UI_rangevar_set()
         self.UI_range_set()
-        # TODO: calls
+        self.UI_calls_set()
         self.UI_samplename_set()
 
     # event handlers
@@ -179,10 +183,27 @@ class GUI():
         self.state["range"] = range
         self.state_write()
 
+    def UI_call_add(self):
+        alert("call_add")
+
+    def UI_call_remove(self, callid):
+        alert("call_remove", callid)
+
+    def UI_call_moveup(self, callid):
+        alert("call_moveup", callid)
+
+    def UI_call_movedown(self, callid):
+        alert("call_movedown", callid)
+
+    def UI_routine_cahnge(self, callid, routinename):
+        alert("routine_change", callid, routinename)
+
+    def UI_arg_change(self, callid, argid, value):
+        alert("arg_change", callid, argid, value)
+
     def UI_samplename_change(self, samplename):
         self.state["samplename"] = samplename
         self.state_write()
 
     def UI_submit_click(self):
-        # TODO
-        pass
+        alert("submit_click")

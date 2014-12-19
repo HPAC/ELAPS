@@ -53,7 +53,7 @@ class Call(list):
             raise TypeError("a Signature is requred as first argument")
         if len(args) != len(sig) - 1:
             raise TypeError(sig[0].name + "() takes exactly " +
-                            str(len(self) - 1) + " arguments (" +
+                            str(len(sig) - 1) + " arguments (" +
                             str(len(args)) + " given)")
         list.__init__(self, (sig[0].name,) + args)
         self.__dict__["sig"] = sig
