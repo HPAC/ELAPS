@@ -2,6 +2,7 @@
 from __future__ import division, print_function
 
 from gui import GUI
+from qcall import QCall
 
 import sys
 
@@ -17,8 +18,10 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def UI_init(self):
         # window
         self.Qt_window = QtGui.QWidget()
+        self.Qt_window.setWindowTitle("Sampler")
         windowL = QtGui.QVBoxLayout()
         self.Qt_window.setLayout(windowL)
+        windowL.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
 
         # window > top
         topL = QtGui.QHBoxLayout()
@@ -132,12 +135,15 @@ class GUI_Qt(GUI, QtGui.QApplication):
         rangeL.addStretch(1)
 
         # window > calls
-        self.Qt_calls = QtGui.QScrollArea()
-        windowL.addWidget(self.Qt_calls)
+        calls = QtGui.QScrollArea()
+        windowL.addWidget(calls)
+        self.Qt_calls = QtGui.QWidget()
+        calls.setWidget(self.Qt_calls)
         callsL = QtGui.QVBoxLayout()
         self.Qt_calls.setLayout(callsL)
+        callsL.setSizeConstraint(QtGui.QLayout.SetMinAndMaxSize)
         windowL.setStretch(2, 1)
-        self.Qt_callFs = []
+        self.Qt_Qcalls = []
 
         # window > calls > add
         add = QtGui.QPushButton("+")
@@ -274,81 +280,28 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.setting = False
 
     def UI_calls_set(self):
+        self.setting = True
         # delete old
-        for Qcall in self.Qt_callFs:
+        for Qcall in self.Qt_Qcalls:
             Qcall.deleteLater()
-        self.Qt_callFs = []
+        self.Qt_Qcalls = []
         # add new
         QcallsL = self.Qt_calls.layout()
         for callid in range(len(self.state["calls"])):
-            QcallF = QtGui.QFrame()
-            QcallsL.insertWidget(callid, QcallF)
-            self.Qt_callFs.append(QcallF)
-            QcallL = QtGui.QGridLayout()
-            self.Qt_callFs.append(QcallL)
-            QcallF.setLayout(QcallL)
-            self.UI_call_init(callid)
+            Qcall = QCall(self, callid)
+            QcallsL.insertWidget(callid, Qcall)
+            self.Qt_Qcalls.append(Qcall)
+            Qcall.args_set()
+        self.setting = False
 
-    def UI_call_init(self, callid):
-        routines = [r for r in self.signatures.keys()
-                    if r in self.samplers[self.state["sampler"]]["kernels"]]
-        callF = self.Qt_callFs[callid]
-        callL = callF.layout()
+    def UI_call_set(self, callid):
+        self.setting = True
+        self.Qt_Qcalls[callid].args_set()
+        self.setting = False
 
-        callF.callid = callid
-
-        # buttons
-        buttonsL = QtGui.QHBoxLayout()
-        callL.addLayout(buttonsL, 0, 0)
-
-        # buttons > remove
-        callL.removeS = QtGui.QStackedWidget()
-        buttonsL.addWidget(callL.removeS)
-        remove = QtGui.QToolButton()
-        callL.removeS.addWidget(remove)
-        icon = self.style().standardIcon(QtGui.QStyle.SP_DialogDiscardButton)
-        remove.setIcon(icon)
-        remove.clicked.connect(self.Qt_call_remove)
-        callL.removeS.addWidget(QtGui.QWidget())
-
-        # buttons > down
-        callL.downS = QtGui.QStackedWidget()
-        buttonsL.addWidget(callL.downS)
-        down = QtGui.QToolButton()
-        down.setArrowType(QtCore.Qt.DownArrow)
-        callL.downS.addWidget(down)
-        down.clicked.connect(self.Qt_call_movedown)
-        callL.downS.addWidget(QtGui.QWidget())
-
-        # buttons > up
-        callL.upS = QtGui.QStackedWidget()
-        buttonsL.addWidget(callL.upS)
-        up = QtGui.QToolButton()
-        up.setArrowType(QtCore.Qt.UpArrow)
-        callL.upS.addWidget(up)
-        up.clicked.connect(self.Qt_call_moveup)
-        callL.upS.addWidget(QtGui.QWidget())
-
-        # buttons
-        buttonsL.addStretch(1)
-
-        # routine
-        routine = QtGui.QLineEdit(self.state["calls"][callid][0])
-        callL.addWidget(routine, 1, 0)
-        routine.textChanged.connect(self.Qt_routine_change)
-        completer = QtGui.QCompleter(routines, routine)
-        routine.setCompleter(completer)
-
-        # args
-        callL.args = [routine]
-
-        self.UI_call_update(callid)
-
-    def UI_call_update(self, callid):
-        pass
-
-    def UI_arg_set(self):
-        pass
+    def UI_useld_apply(self):
+        for Qcall in self.Qt_Qcalls:
+            Qcall.useld_apply()
 
     def UI_samplename_set(self):
         self.setting = True
@@ -418,21 +371,6 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
     def Qt_call_add(self):
         self.UI_call_add()
-
-    def Qt_call_remove(self):
-        self.UI_call_remove(self.sender().parent().parent().callid)
-
-    def Qt_call_moveup(self):
-        self.UI_call_moveup(self.sender().parent().parent().callid)
-
-    def Qt_call_movedown(self):
-        self.UI_call_movedown(self.sender().parent().parent().callid)
-
-    def Qt_routine_change(self):
-        pass
-
-    def Qt_arg_change(self):
-        pass
 
     def Qt_samplename_change(self):
         if self.setting:

@@ -46,7 +46,11 @@ class GUI():
         self.statefile = os.path.join(self.rootpath, "GUI", ".state.py")
         try:
             with open(self.statefile) as fin:
-                self.state = eval(fin)
+                self.state = eval(fin.read())
+            calls = self.state["calls"]
+            for callid, call in enumerate(calls):
+                if call[0] in self.signatures:
+                    calls[callid] = self.signatures[call[0]](*call[1:])
         except:
             sampler = self.samplers[min(self.samplers)]
             self.state = {
@@ -70,12 +74,15 @@ class GUI():
             self.state_write()
 
     def state_write(self):
+        callobjects = self.state["calls"]
+        self.state["calls"] = map(list, self.state["calls"])
         with open(self.statefile, "w") as fout:
             try:
                 import pprint
                 print(pprint.pformat(self.state, 4), file=fout)
             except:
                 print(repr(self.state), file=fout)
+        self.state["calls"] = callobjects
 
     def get_infostr(self):
         sampler = self.samplers[self.state["sampler"]]
@@ -158,8 +165,8 @@ class GUI():
 
     def UI_useld_change(self, state):
         self.state["useld"] = state
+        self.UI_useld_apply()
         self.state_write()
-        # TODO
 
     def UI_usevary_change(self, state):
         self.state["usevary"] = state
@@ -184,16 +191,26 @@ class GUI():
         self.state_write()
 
     def UI_call_add(self):
-        alert("call_add")
+        self.state["calls"].append([""])
+        self.UI_calls_set()
+        self.state_write()
 
     def UI_call_remove(self, callid):
-        alert("call_remove", callid)
+        del self.state["calls"][callid]
+        self.UI_calls_set()
+        self.state_write()
 
     def UI_call_moveup(self, callid):
-        alert("call_moveup", callid)
+        calls = self.state["calls"]
+        calls[callid], calls[callid - 1] = calls[callid - 1], calls[callid]
+        self.UI_calls_set()
+        self.state_write()
 
     def UI_call_movedown(self, callid):
-        alert("call_movedown", callid)
+        calls = self.state["calls"]
+        calls[callid + 1], calls[callid] = calls[callid], calls[callid + 1]
+        self.UI_calls_set()
+        self.state_write()
 
     def UI_routine_cahnge(self, callid, routinename):
         alert("routine_change", callid, routinename)
@@ -206,4 +223,7 @@ class GUI():
         self.state_write()
 
     def UI_submit_click(self):
+        print(self.Qt_window.size())
+        print(self.Qt_window.sizeHint())
+        print(self.Qt_window.minimumSizeHint())
         alert("submit_click")
