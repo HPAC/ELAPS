@@ -2,6 +2,7 @@
 from __future__ import division, print_function
 
 import signature
+from qdataarg import QDataArg
 
 from PyQt4 import QtCore, QtGui
 
@@ -69,7 +70,7 @@ class QCall(QtGui.QFrame):
         completer = QtGui.QCompleter(routines, routine)
         routine.setCompleter(completer)
 
-        # space at end
+        # spaces
         layout.setColumnStretch(100, 1)
 
         # attributes
@@ -114,7 +115,7 @@ class QCall(QtGui.QFrame):
                 Qarg = QtGui.QLineEdit()
                 Qarg.textChanged.connect(self.arg_change)
             elif isinstance(arg, signature.Data):
-                Qarg = QtGui.QWidget()
+                Qarg = QDataArg(self)
             Qarg.argid = argid
             self.layout().addWidget(Qarg, 1, argid)
             self.args.append(Qarg)
@@ -143,7 +144,7 @@ class QCall(QtGui.QFrame):
                     self.arglabels[argid].hide()
                     self.args[argid].hide()
 
-    def args_set(self):
+    def args_set(self, fromarg=None):
         call = self.app.state["calls"][self.callid]
         # set widgets
         if not isinstance(call, signature.Call):
@@ -153,16 +154,21 @@ class QCall(QtGui.QFrame):
             self.args_clear()
             self.args_init()
         # set values
-        for Qarg, arg, val in zip(self.args, call.sig, map(str, call)):
+        for Qarg, arg, val in zip(self.args, call.sig, call):
+            if Qarg.argid == fromarg:
+                continue
+            val = "" if val is None else str(val)
             if isinstance(arg, (signature.Name, signature.Dim,
                                 signature.Scalar, signature.Ld,
                                 signature.Inc)):
                 Qarg.setText(val)
                 size = Qarg.minimumSizeHint()
                 width = Qarg.fontMetrics().width(val[2:])
-                Qarg.setMinimumSize(size.width() + width, size.height())
+                Qarg.setFixedSize(size.width() + width, size.height())
             elif isinstance(arg, signature.Flag):
                 Qarg.setCurrentIndex(Qarg.findText(val))
+            elif isinstance(arg, signature.Data):
+                Qarg.set()
 
     # event handlers
     def remove_click(self):
@@ -180,10 +186,10 @@ class QCall(QtGui.QFrame):
         sender = self.app.sender()
         argid = sender.argid
         if isinstance(sender, QtGui.QLineEdit):
-            val = sender.text()
+            val = str(sender.text())
             size = sender.minimumSizeHint()
             width = sender.fontMetrics().width(val[2:])
-            sender.setMinimumSize(size.width() + width, size.height())
+            sender.setFixedSize(size.width() + width, size.height())
         elif isinstance(sender, QtGui.QComboBox):
-            val = sender.currentText()
+            val = str(sender.currentText())
         self.app.UI_arg_change(self.callid, argid, val)

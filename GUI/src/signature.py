@@ -81,7 +81,10 @@ class Call(list):
                              + repr(name))
 
     def copy(self):
-        return Call(self.sig, self[1:])
+        return Call(self.sig, *self[1:])
+
+    def argdict(self):
+        return {arg.name: val for arg, val in zip(self.sig, self)}
 
     def complete_once(self):
         l = list(self)

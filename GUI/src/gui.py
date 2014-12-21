@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
-from signature import Signature
+import signature
+import symbolic
 
 import sys
 import os
@@ -39,7 +40,9 @@ class GUI():
         signaturepath = os.path.join(self.rootpath, "GUI", "signatures")
         for path, dirs, files in os.walk(signaturepath, followlinks=True):
             for filename in files:
-                sig = Signature(file=os.path.join(path, filename))
+                if filename[0] == ".":
+                    continue
+                sig = signature.Signature(file=os.path.join(path, filename))
                 self.signatures[str(sig[0])] = sig
 
     def state_init(self):
@@ -47,10 +50,6 @@ class GUI():
         try:
             with open(self.statefile) as fin:
                 self.state = eval(fin.read())
-            calls = self.state["calls"]
-            for callid, call in enumerate(calls):
-                if call[0] in self.signatures:
-                    calls[callid] = self.signatures[call[0]](*call[1:])
         except:
             sampler = self.samplers[min(self.samplers)]
             self.state = {
@@ -63,15 +62,22 @@ class GUI():
                 "userange": False,
                 # "rangevar": "n",
                 "range": (8, 32, 1000),
-                "calls": [("",)],
                 "counters": sampler["papi_counters_max"] * [None],
                 "samplename": "",
+                "calls": [("",)],
+                "data": {},
+                "datascale": 100,
             }
-            if "dgemm_" in sampler["kernels"] and "dgemm_" in self.signatures:
-                sig = self.signatures["dgemm_"]
-                self.state["calls"] = [sig("N", "N", 1000, 1000, 1000, 1, "A",
-                                           1000, "B", 1000, 1, "C", 1000)]
-            self.state_write()
+            if "dgemm_" in sampler["kernels"]:
+                self.state["calls"][0] = ("dgemm_", "N", "N", 1000, 1000, 1000,
+                                          1, "A", 1000, "B", 1000, 1, "C",
+                                          1000)
+        calls = self.state["calls"]
+        for callid, call in enumerate(calls):
+            if call[0] in self.signatures:
+                calls[callid] = self.signatures[call[0]](*call[1:])
+            self.infer_data(callid)
+        self.state_write()
 
     def state_write(self):
         callobjects = self.state["calls"]
@@ -93,6 +99,59 @@ class GUI():
         info += "  %.2f MHz\n" % (sampler["frequency"] / 1e6)
         info += "\nBLAS:\t%s\n" % sampler["blas_name"]
         return info
+
+    def data_clean(self):
+        needed = []
+        for call in self.state["calls"]:
+            if isinstance(call, signature.Call):
+                for argid, arg in enumerate(call.sig):
+                    if isinstance(arg, signature.Data) and call[argid]:
+                        needed.append(call[argid])
+        self.state["data"] = {k: v for k, v in self.state["data"].iteritems()
+                              if k in needed}
+
+    def data_maxdim(self):
+        return max(max(data["dimmin"] + data["dimmax"])
+                   for data in self.state["data"].itervalues())
+
+    def infer_lds(self, callid):
+        call = self.state["calls"][callid]
+        call2 = call.copy()
+        assert isinstance(call, signature.Call)
+        for i, arg in enumerate(call2.sig):
+            if isinstance(arg, (signature.Ld, signature.Inc)):
+                call2[i] = None
+        call2.complete()
+        for i, arg in enumerate(call2.sig):
+            if isinstance(arg, (signature.Ld, signature.Inc)):
+                if self.state["useld"]:
+                    call[i] = max(call2[i], call[i])
+                else:
+                    call[i] = call2[i]
+
+    def infer_data(self, callid):
+        call = self.state["calls"][callid]
+        call2 = call.copy()
+        assert isinstance(call, signature.Call)
+        for i, arg in enumerate(call2.sig):
+            if isinstance(arg, (signature.Dim, signature.Ld, signature.Inc)):
+                call2[i] = symbolic.Symbol(arg.name)
+            if isinstance(arg, signature.Data):
+                call2[i] = None
+        call2.complete()
+        for i, arg in enumerate(call2.sig):
+            if isinstance(arg, signature.Data) and call[i]:
+                size = call2[i].substitute(**call.argdict())
+                # TODO: rangevar
+                if isinstance(size, symbolic.Prod):
+                    size = size[1:]
+                elif isinstance(size, int):
+                    size = (size,)
+                self.state["data"][call[i]] = {
+                    "dimmin": size,
+                    "dimmax": size
+                }
+                # TODO: copy other attributes (if any)
 
     def sampler_set(self, samplername):
         self.state["sampler"] = samplername
@@ -121,6 +180,61 @@ class GUI():
         self.UI_counters_setoptions()
         self.UI_counters_set()
         self.UI_calls_set()
+
+    def routine_set(self, callid, value):
+        if value in self.signatures:
+            # TODO: default argument values
+            call = self.signatures[value]()
+            for i, arg in enumerate(call.sig):
+                if isinstance(arg, signature.Dim):
+                    call[i] = 1000
+                elif isinstance(arg, signature.Data):
+                    for name in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                        if name not in self.state["data"]:
+                            call[i] = name
+                            self.state["data"][name] = None
+                            break
+            self.state["calls"][callid] = call
+            self.infer_lds(callid)
+            self.infer_data(callid)
+        else:
+            self.state["calls"][callid] = [value]
+        self.UI_call_set(callid, 0)
+        self.state_write()
+
+    def arg_set(self, callid, argid, value):
+        call = self.state["calls"][callid]
+        arg = call.sig[argid]
+        if isinstance(arg, signature.Flag):
+            call[argid] = value
+        elif isinstance(arg, signature.Dim):
+            call[argid] = int(value) if value else None
+            # TODO: rangevar + error checking
+            self.infer_lds(callid)
+            self.infer_data(callid)
+            self.UI_call_set(callid, argid)
+            self.UI_data_set()
+        elif isinstance(arg, signature.Scalar):
+            if isinstance(arg, (signature.sScalar, signature.dScalar)):
+                try:
+                    call[argid] = float(value)
+                except:
+                    call[argid] = None
+            else:
+                try:
+                    call[argid] = complex(value)
+                except:
+                    call[argid] = None
+        elif isinstance(arg, signature.Data):
+            call[argid] = value
+            self.infer_data(callid)
+            self.data_clean()
+            self.UI_call_set(callid, argid)
+        elif isinstance(arg, (signature.Ld, signature.Inc)):
+            # TODO: rangevar + error checking + conflict checking
+            call[argid] = int(value) if value else None
+            self.infer_data(callid)
+        self.state_write()
 
     def UI_init(self):
         alert("GUI_ needs to be subclassed")
@@ -212,18 +326,15 @@ class GUI():
         self.UI_calls_set()
         self.state_write()
 
-    def UI_routine_cahnge(self, callid, routinename):
-        alert("routine_change", callid, routinename)
-
     def UI_arg_change(self, callid, argid, value):
-        alert("arg_change", callid, argid, value)
+        if argid == 0:
+            self.routine_set(callid, value)
+        else:
+            self.arg_set(callid, argid, value)
 
     def UI_samplename_change(self, samplename):
         self.state["samplename"] = samplename
         self.state_write()
 
     def UI_submit_click(self):
-        print(self.Qt_window.size())
-        print(self.Qt_window.sizeHint())
-        print(self.Qt_window.minimumSizeHint())
         alert("submit_click")

@@ -3,6 +3,7 @@ from __future__ import division, print_function
 
 from gui import GUI
 from qcall import QCall
+from qdataarg import QDataArg
 
 import sys
 
@@ -28,34 +29,27 @@ class GUI_Qt(GUI, QtGui.QApplication):
         windowL.addLayout(topL)
 
         # window > top > setup
-        setupL = QtGui.QGridLayout()
+        setupL = QtGui.QFormLayout()
         topL.addLayout(setupL)
 
         # window > top > setup > sampler
-        setupL.addWidget(QtGui.QLabel("Sampler:"), 0, 0)
         self.Qt_sampler = QtGui.QComboBox()
-        setupL.addWidget(self.Qt_sampler, 0, 1)
+        setupL.addRow("&Sampler:", self.Qt_sampler)
         self.Qt_sampler.addItems(sorted(self.samplers.keys()))
         self.Qt_sampler.currentIndexChanged.connect(self.Qt_sampler_change)
 
         # window > top > setup > nt
-        label = QtGui.QLabel("#threads:")
-        setupL.addWidget(label, 1, 0)
         self.Qt_nt = QtGui.QComboBox()
-        setupL.addWidget(self.Qt_nt, 1, 1)
+        setupL.addRow("#&threads:", self.Qt_nt)
         self.Qt_nt.currentIndexChanged.connect(self.Qt_nt_change)
 
         # window > top > setup > nrep
-        setupL.addWidget(QtGui.QLabel("repetitions:"), 2, 0)
         self.Qt_nrep = QtGui.QLineEdit()
-        setupL.addWidget(self.Qt_nrep, 2, 1)
+        setupL.addRow("&repetitions:", self.Qt_nrep)
         self.Qt_nrep.textChanged.connect(self.Qt_nrep_change)
         validator = QtGui.QIntValidator()
         self.Qt_nrep.setValidator(validator)
         validator.setBottom(0)
-
-        # window > top > setup
-        setupL.setRowStretch(3, 1)
 
         # window > top > info
         info = QtGui.QGroupBox()
@@ -74,17 +68,17 @@ class GUI_Qt(GUI, QtGui.QApplication):
         advanced.setLayout(advancedL)
 
         # window > top > advanced > usepapi
-        self.Qt_usepapi = QtGui.QCheckBox("use PAPI")
+        self.Qt_usepapi = QtGui.QCheckBox("use &PAPI")
         advancedL.addWidget(self.Qt_usepapi)
         self.Qt_usepapi.stateChanged.connect(self.Qt_usepapi_change)
 
         # window > top > advanced > useld
-        self.Qt_useld = QtGui.QCheckBox("show leading dimensions")
+        self.Qt_useld = QtGui.QCheckBox("show &leading dimensions")
         advancedL.addWidget(self.Qt_useld)
         self.Qt_useld.stateChanged.connect(self.Qt_useld_change)
 
         # window > top > advanced > usevary
-        self.Qt_usevary = QtGui.QCheckBox("change matrices across reps")
+        self.Qt_usevary = QtGui.QCheckBox("&vary matrices across reps")
         advancedL.addWidget(self.Qt_usevary)
         self.Qt_usevary.stateChanged.connect(self.Qt_usevary_change)
 
@@ -135,10 +129,12 @@ class GUI_Qt(GUI, QtGui.QApplication):
         rangeL.addStretch(1)
 
         # window > calls
-        calls = QtGui.QScrollArea()
-        windowL.addWidget(calls)
+        callsSA = QtGui.QScrollArea()
+        windowL.addWidget(callsSA)
+        callsSA.setWidgetResizable(True)
+        callsSA.setMinimumHeight(500)
         self.Qt_calls = QtGui.QWidget()
-        calls.setWidget(self.Qt_calls)
+        callsSA.setWidget(self.Qt_calls)
         callsL = QtGui.QVBoxLayout()
         self.Qt_calls.setLayout(callsL)
         callsL.setSizeConstraint(QtGui.QLayout.SetMinAndMaxSize)
@@ -171,6 +167,21 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
         # window
         self.Qt_window.show()
+
+        # pens (for dataargs)
+        self.Qt_pens = {
+            None: QtGui.QColor(0, 0, 0, 0),
+            "maxfront": QtGui.QColor(0, 0, 0, 127),
+            "maxback": QtGui.QPen(QtGui.QColor(0, 0, 0, 127), 0,
+                                  style=QtCore.Qt.DotLine),
+            "minfront": QtGui.QColor(0, 0, 0, 255),
+            "minback": QtGui.QPen(QtGui.QColor(0, 0, 0, 255), 0,
+                                  style=QtCore.Qt.DotLine),
+        }
+        self.Qt_brushes = {
+            "max": QtGui.QColor(255, 255, 255, 127),
+            "min": QtGui.QColor(255, 255, 255, 255),
+        }
 
     def UI_start(self):
         sys.exit(self.exec_())
@@ -294,9 +305,17 @@ class GUI_Qt(GUI, QtGui.QApplication):
             Qcall.args_set()
         self.setting = False
 
-    def UI_call_set(self, callid):
+    def UI_call_set(self, callid, fromarg=None):
         self.setting = True
-        self.Qt_Qcalls[callid].args_set()
+        self.Qt_Qcalls[callid].args_set(fromarg)
+        self.setting = False
+
+    def UI_data_set(self):
+        self.setting = True
+        for call in self.Qt_Qcalls:
+            for arg in call.args:
+                if isinstance(arg, QDataArg):
+                    arg.set()
         self.setting = False
 
     def UI_useld_apply(self):

@@ -113,7 +113,11 @@ class Prod(Operation):
         Operation.__init__(self, *args)
 
     def __str__(self):
-        return "(" + " * ".join(map(str, self[1:])) + ")"
+        strs = map(str, self[1:])
+        for i, arg in enumerate(self[1:]):
+            if isinstance(arg, Plus):
+                strs[i] = "(" + strs[i] + ")"
+        return " * ".join(strs)
 
     def simplify(self):
         num = 1
@@ -139,7 +143,7 @@ class Plus(Operation):
         Operation.__init__(self, *args)
 
     def __str__(self):
-        return "(" + " + ".join(map(str, self[1:])) + ")"
+        return " + ".join(map(str, self[1:]))
 
     def simplify(self):
         num = 0
