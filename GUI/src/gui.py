@@ -21,12 +21,31 @@ class GUI():
         self.UI_setall()
         self.UI_start()
 
+    # state access attributes
+    def getcalls(self):
+        return self.state["calls"]
+
+    def setcalls(self, value):
+        self.state["calls"] = value
+
+    calls = property(getcalls, setcalls)
+
+    def getdata(self):
+        return self.state["data"]
+
+    def setdata(self, value):
+        self.state["data"] = value
+
+    data = property(getdata, setdata)
+
+    # utility
     def log(self, *args):
         print(*args)
 
     def alert(self, *args):
         print(*args, file=sys.stderr)
 
+    # initializers
     def samplers_init(self):
         self.samplers = {}
         samplerpath = os.path.join(self.rootpath, "Sampler", "build")
@@ -73,26 +92,25 @@ class GUI():
                 "datascale": 100,
             }
             if "dgemm_" in sampler["kernels"]:
-                self.state["calls"][0] = ("dgemm_", "N", "N", 1000, 1000, 1000,
-                                          1, "A", 1000, "B", 1000, 1, "C",
-                                          1000)
-        calls = self.state["calls"]
-        for callid, call in enumerate(calls):
+                self.calls[0] = ("dgemm_", "N", "N", 1000, 1000, 1000,
+                                 1, "A", 1000, "B", 1000, 1, "C", 1000)
+        for callid, call in enumerate(self.calls):
             if call[0] in self.signatures:
-                calls[callid] = self.signatures[call[0]](*call[1:])
+                self.calls[callid] = self.signatures[call[0]](*call[1:])
             self.infer_data(callid)
         self.state_write()
 
+    # functionality
     def state_write(self):
-        callobjects = self.state["calls"]
-        self.state["calls"] = map(list, self.state["calls"])
+        callobjects = self.calls
+        self.calls = map(list, self.calls)
         with open(self.statefile, "w") as fout:
             try:
                 import pprint
                 print(pprint.pformat(self.state, 4), file=fout)
             except:
                 print(repr(self.state), file=fout)
-        self.state["calls"] = callobjects
+        self.calls = callobjects
 
     def get_infostr(self):
         sampler = self.samplers[self.state["sampler"]]
@@ -106,20 +124,19 @@ class GUI():
 
     def data_clean(self):
         needed = []
-        for call in self.state["calls"]:
+        for call in self.calls:
             if isinstance(call, signature.Call):
                 for argid, arg in enumerate(call.sig):
                     if isinstance(arg, signature.Data) and call[argid]:
                         needed.append(call[argid])
-        self.state["data"] = {k: v for k, v in self.state["data"].iteritems()
-                              if k in needed}
+        self.data = {k: v for k, v in self.data.iteritems() if k in needed}
 
     def data_maxdim(self):
         return max(max(data["dimmin"] + data["dimmax"])
-                   for data in self.state["data"].itervalues())
+                   for data in self.data.itervalues())
 
     def infer_lds(self, callid):
-        call = self.state["calls"][callid]
+        call = self.calls[callid]
         call2 = call.copy()
         assert isinstance(call, signature.Call)
         for i, arg in enumerate(call2.sig):
@@ -135,7 +152,7 @@ class GUI():
                     call[i] = call2[i]
 
     def infer_data(self, callid):
-        call = self.state["calls"][callid]
+        call = self.calls[callid]
         call2 = call.copy()
         assert isinstance(call, signature.Call)
         for i, arg in enumerate(call2.sig):
@@ -174,15 +191,15 @@ class GUI():
                     dimmax.append(int(dmax))
                 except:
                     dimmax.append(None)
-            self.state["data"][call[i]] = {
+            self.data[call[i]] = {
                 "dimmin": dimmin,
                 "dimmax": dimmax,
                 "dim": size
             }
 
     def infer_dims(self, callid, argid):
-        data = self.state["data"][call[argid]]
-        call = self.state["calls"][callid]
+        data = self.data[call[argid]]
+        call = self.calls[callid]
         call2 = call.copy()
         for i, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Dim, signature.Ld, signature.Inc)):
@@ -201,35 +218,34 @@ class GUI():
             setattr(call, symbol.name, dim)
 
     def infer_all(self, callid, argid=None):
-        calls = self.state["calls"]
-        data = self.state["data"]
-        call = calls[callid]
+        call = self.calls[callid]
         if argid and isinstance(call.sig[argid], signature.Data):
             self.infer_dims(callid, argid)
         callids = [callid]
         hashes = []
-        newhash = hash(map(list, calls) + callids)
+        newhash = hash(map(list, self.calls) + callids)
         while newhash not in hashes:
             hashes.append(newhash)
             callid = callids[0]
             callids = callids[1:]
-            call = calls[callid]
-            olddata = [(val, data[val].copy())
+            call = self.calls[callid]
+            olddata = {val: self.data[val].copy()
                        for arg, val in zip(call.sig, call)
-                       if isinstance(arg, signature.Data)]
+                       if isinstance(arg, signature.Data)}
             self.infer_lds(callid)
             self.infer_data(callid)
-            datachanged = [val for val, data in olddata if data[val] != data]
-            for callid2 in range(len(calls)):
+            datachanged = [val for val, data in olddata.iteritems()
+                           if self.data[val] != data]
+            for callid2 in range(len(self.calls)):
                 if callid2 == callid:
                     continue
-                call = calls[callid]
+                call = self.calls[callid]
                 for argid, (arg, val) in enumerate(zip(call.sig, call)):
                     if isinstance(arg, signature.Data) and val in datachanged:
                         self.infer_dims(callid2, argid)
                         if callid not in callids:
                             callids.append(callid)
-            newhash = hash(map(list, calls) + callids)
+            newhash = hash(map(list, self.calls) + callids)
 
     def sampler_set(self, samplername):
         self.state["sampler"] = samplername
@@ -268,20 +284,20 @@ class GUI():
                     call[i] = 1000
                 elif isinstance(arg, signature.Data):
                     for name in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                        if name not in self.state["data"]:
+                        if name not in self.data:
                             call[i] = name
-                            self.state["data"][name] = None
+                            self.data[name] = None
                             break
-            self.state["calls"][callid] = call
+            self.calls[callid] = call
             self.infer_lds(callid)
             self.infer_data(callid)
         else:
-            self.state["calls"][callid] = [value]
+            self.calls[callid] = [value]
         self.UI_call_set(callid, 0)
         self.state_write()
 
     def arg_set(self, callid, argid, value):
-        call = self.state["calls"][callid]
+        call = self.calls[callid]
         arg = call.sig[argid]
         if isinstance(arg, signature.Flag):
             call[argid] = value
@@ -327,26 +343,26 @@ class GUI():
         self.state_write()
 
     def data_override(self, callid, argid, value):
-        call = self.state["calls"][callid]
+        call = self.calls[callid]
         oldvalue = call[argid]
-        olddata = self.state["data"][value].copy()
+        olddata = self.data[value].copy()
         call[argid] = value
         self.infer_data(callid)
-        if self.state["data"][value] != olddata:
+        if self.data[value] != olddata:
             call[argid] = oldvalue
-            self.state["Data"][value] = olddata
+            self.data[value] = olddata
             self.UI_choose_data_override(callid, argid, value)
         else:
             # self.UI_call_set(callid, argid)
             pass
 
     def data_override_this(self, callid, argid, value):
-        self.state["calls"][callid][argid] = value
+        self.calls[callid][argid] = value
         self.infer_all(callid)
         self.infer_all(callid, argid)
 
     def data_override_other(self, callid, argid, value):
-        self.state["calls"][callid][argid] = value
+        self.calls[callid][argid] = value
         self.infer_all(callid, argid)
         self.infer_all(callid, argid)
 
@@ -422,23 +438,23 @@ class GUI():
         self.state_write()
 
     def UI_call_add(self):
-        self.state["calls"].append([""])
+        self.calls.append([""])
         self.UI_calls_set()
         self.state_write()
 
     def UI_call_remove(self, callid):
-        del self.state["calls"][callid]
+        del self.calls[callid]
         self.UI_calls_set()
         self.state_write()
 
     def UI_call_moveup(self, callid):
-        calls = self.state["calls"]
+        calls = self.calls
         calls[callid], calls[callid - 1] = calls[callid - 1], calls[callid]
         self.UI_calls_set()
         self.state_write()
 
     def UI_call_movedown(self, callid):
-        calls = self.state["calls"]
+        calls = self.calls
         calls[callid + 1], calls[callid] = calls[callid], calls[callid + 1]
         self.UI_calls_set()
         self.state_write()

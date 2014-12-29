@@ -80,7 +80,7 @@ class QCall(QtGui.QFrame):
         self.sig = None
 
     def movers_setvisibility(self):
-        ncalls = len(self.app.state["calls"])
+        ncalls = len(self.app.calls)
         if ncalls > 1:
             self.removeS.setCurrentIndex(0)
             if self.callid > 0:
@@ -97,7 +97,7 @@ class QCall(QtGui.QFrame):
             self.movedownS.setCurrentIndex(1)
 
     def args_init(self):
-        call = self.app.state["calls"][self.callid]
+        call = self.app.calls[self.callid]
         assert isinstance(call, signature.Call)
         assert len(self.args) == 1
         for argid, arg in enumerate(call.sig):
@@ -147,7 +147,7 @@ class QCall(QtGui.QFrame):
                     self.args[argid].hide()
 
     def args_set(self, fromarg=None):
-        call = self.app.state["calls"][self.callid]
+        call = self.app.calls[self.callid]
         # set widgets
         if not isinstance(call, signature.Call):
             self.args_clear()

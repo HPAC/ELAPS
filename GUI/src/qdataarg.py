@@ -84,7 +84,7 @@ class QDataArg(QtGui.QFrame):
             self.dim.setText("")
             return
         self.name.setText(name)
-        data = self.app.state["data"][name]
+        data = self.app.data[name]
         self.dimmin = data["dimmin"]
         self.dimmax = data["dimmax"]
         # TODO: handle exceptions

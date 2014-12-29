@@ -325,7 +325,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_Qcalls = []
         # add new
         QcallsL = self.Qt_calls.layout()
-        for callid in range(len(self.state["calls"])):
+        for callid in range(len(self.calls)):
             Qcall = QCall(self, callid)
             QcallsL.insertWidget(callid, Qcall)
             self.Qt_Qcalls.append(Qcall)
