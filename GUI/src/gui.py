@@ -152,7 +152,7 @@ class GUI():
             if isinstance(size, symbolic.Prod):
                 size = size[1:]
             else:
-                size = (size,)
+                size = [size]
             userange = self.state["userange"]
             if userange:
                 rangevar = self.state["rangevar"]
@@ -176,8 +176,60 @@ class GUI():
                     dimmax.append(None)
             self.state["data"][call[i]] = {
                 "dimmin": dimmin,
-                "dimmax": dimmax
+                "dimmax": dimmax,
+                "dim": size
             }
+
+    def infer_dims(self, callid, argid):
+        data = self.state["data"][call[argid]]
+        call = self.state["calls"][callid]
+        call2 = call.copy()
+        for i, arg in enumerate(call2.sig):
+            if isinstance(arg, (signature.Dim, signature.Ld, signature.Inc)):
+                call2[i] = symbolic.Symbol("." + arg.name)
+            if isinstance(arg, signature.Data):
+                call2[i] = None
+        call2.complete()
+        if isinstance(size, symbolic.Prod):
+            size = size[1:]
+        else:
+            size = [size]
+        if len(size) != len(data["dim"]):
+            alert("data dimensionality mismatch:", call[argid])
+            return
+        for symbol, dim in zip(size, data["dim"]):
+            setattr(call, symbol.name, dim)
+
+    def infer_all(self, callid, argid=None):
+        calls = self.state["calls"]
+        data = self.state["data"]
+        call = calls[callid]
+        if argid and isinstance(call.sig[argid], signature.Data):
+            self.infer_dims(callid, argid)
+        callids = [callid]
+        hashes = []
+        newhash = hash(map(list, calls) + callids)
+        while newhash not in hashes:
+            hashes.append(newhash)
+            callid = callids[0]
+            callids = callids[1:]
+            call = calls[callid]
+            olddata = [(val, data[val].copy())
+                       for arg, val in zip(call.sig, call)
+                       if isinstance(arg, signature.Data)]
+            self.infer_lds(callid)
+            self.infer_data(callid)
+            datachanged = [val for val, data in olddata if data[val] != data]
+            for callid2 in range(len(calls)):
+                if callid2 == callid:
+                    continue
+                call = calls[callid]
+                for argid, (arg, val) in enumerate(zip(call.sig, call)):
+                    if isinstance(arg, signature.Data) and val in datachanged:
+                        self.infer_dims(callid2, argid)
+                        if callid not in callids:
+                            callids.append(callid)
+            newhash = hash(map(list, calls) + callids)
 
     def sampler_set(self, samplername):
         self.state["sampler"] = samplername
@@ -233,6 +285,9 @@ class GUI():
         arg = call.sig[argid]
         if isinstance(arg, signature.Flag):
             call[argid] = value
+            self.infer_all(callid)
+            self.UI_call_set(callid, argid)
+            self.UI_data_set()  # data viz scale may have changed anywhere
         elif isinstance(arg, signature.Scalar):
             if isinstance(arg, (signature.sScalar, signature.dScalar)):
                 try:
@@ -254,10 +309,9 @@ class GUI():
             except:
                 value = None
             call[argid] = value
-            self.infer_lds(callid)
-            self.infer_data(callid)
+            self.infer_all(callid)
             self.UI_call_set(callid, argid)
-            self.UI_data_set()
+            self.UI_data_set()  # data viz scale may have changed anywhere
         elif isinstance(arg, signature.Data):
             if value in self.data:
                 self.data_override(callid, argid, value)
@@ -265,7 +319,7 @@ class GUI():
                 call[argid] = value
                 self.infer_data(callid)
                 self.data_clean()
-                # self.UI_call_set(callid, argid)
+                self.UI_call_set(callid, argid)
         elif isinstance(arg, (signature.Ld, signature.Inc)):
             # TODO: rangevar + error checking + conflict checking
             call[argid] = int(value) if value else None
@@ -287,10 +341,14 @@ class GUI():
             pass
 
     def data_override_this(self, callid, argid, value):
-        pass
+        self.state["calls"][callid][argid] = value
+        self.infer_all(callid)
+        self.infer_all(callid, argid)
 
     def data_override_other(self, callid, argid, value):
-        pass
+        self.state["calls"][callid][argid] = value
+        self.infer_all(callid, argid)
+        self.infer_all(callid, argid)
 
     def data_override_cancel(self, callid, argid, value):
         self.UI_call_set(callid, argid)

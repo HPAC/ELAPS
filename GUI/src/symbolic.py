@@ -107,7 +107,7 @@ class Abs(Operation):
         arg = self[1]
         if isinstance(arg, Operation):
             arg = arg.simplify()
-        if isinstance(arg, (Minus, Abs)):
+        if isinstance(arg, Abs):
             return arg[1]
         if istinstance(Arg, (int, long, float, complex)):
             return abs(arg)
@@ -137,10 +137,10 @@ class Prod(Operation):
                 num *= arg
             else:
                 args.append(arg)
-        if len(args) == 0:
-            return num
         if num != 1:
             args = [num] + args
+        if len(args) == 1:
+            return args[0]
         return self.__class__(*args)
 
 
@@ -163,8 +163,8 @@ class Plus(Operation):
                 num += arg
             else:
                 args.append(arg)
-        if len(args) == 0:
-            return num
         if num != 0:
             args = [num] + args
+        if len(args) == 1:
+            return args[0]
         return self.__class__(*args)
