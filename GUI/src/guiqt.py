@@ -104,17 +104,17 @@ class GUI_Qt(GUI, QtGui.QApplication):
         rangeL.addWidget(self.Qt_userange)
 
         # window > range > rangevar
-        # self.Qt_rangevar = QtGui.QLineEdit()
-        # rangeL.addWidget(self.Qt_rangevar)
-        # self.Qt_rangevar.textChanged.connect(self.Qt_rangevar_change)
-        # self.Qt_rangevar.setFixedWidth(30)
-        # regexp = QtCore.QRegExp("[a-zA-Z]+")
-        # validator = QtGui.QRegExpValidator(regexp, self)
-        # self.Qt_rangevar.setValidator(validator)
-        # self.Qt_rangevar.hide()
+        self.Qt_rangevar = QtGui.QLineEdit()
+        rangeL.addWidget(self.Qt_rangevar)
+        self.Qt_rangevar.textChanged.connect(self.Qt_rangevar_change)
+        self.Qt_rangevar.setFixedWidth(30)
+        regexp = QtCore.QRegExp("[a-zA-Z]+")
+        validator = QtGui.QRegExpValidator(regexp, self)
+        self.Qt_rangevar.setValidator(validator)
+        self.Qt_rangevar.hide()
 
-        # window > range > "n ="
-        self.Qt_rangelabel = QtGui.QLabel("n =")
+        # window > range > "="
+        self.Qt_rangelabel = QtGui.QLabel("=")
         rangeL.addWidget(self.Qt_rangelabel)
 
         # window > range > range
@@ -168,6 +168,14 @@ class GUI_Qt(GUI, QtGui.QApplication):
         # window
         self.Qt_window.show()
 
+        # style
+        self.setStyleSheet("""
+            QLineEdit[invalid="true"],
+            *[invalid="true"] QLineEdit {
+                background: #FFDDDD;
+            }
+        """)
+
         # pens (for dataargs)
         self.Qt_pens = {
             None: QtGui.QColor(0, 0, 0, 0),
@@ -185,6 +193,25 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
     def UI_start(self):
         sys.exit(self.exec_())
+
+    def UI_choose_data_override(self, callid, argid, value):
+        Qbox = QtGui.QMessageBox()
+        Qbox.setIcon(QtGui.QMessageBox.Question)
+        Qbox.setText("Incompatible sizes for" + value)
+        Qbox.setInformativeText("Change the corresponding dimension "
+                                + "arguments?")
+        Qthis = Qbox.addButton("In this call", QtGui.QMessageBox.ActionRole)
+        Qother = Qbox.addButton("In other call(s)",
+                                QtGui.QMessageBox.ActionRole)
+        Qbox.addButton(QtGui.QMessageBox.Cancel)
+        Qbox.setDefaultButton(Qthis)
+        ret = Qbox.exec_()
+        if ret == Qthis:
+            self.data_override_this(callid, argid, value)
+        elif ret == Qother:
+            self.data_override_other(callid, argid, value)
+        else:
+            self.data_override_cancel(callid, argid, value)
 
     # setters
     def UI_sampler_set(self):
@@ -268,18 +295,18 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
     def UI_range_setvisible(self):
         if self.state["userange"]:
-            # self.Qt_rangevar.show()
+            self.Qt_rangevar.show()
             self.Qt_rangelabel.show()
             self.Qt_range.show()
         else:
-            # self.Qt_rangevar.hide()
+            self.Qt_rangevar.hide()
             self.Qt_rangelabel.hide()
             self.Qt_range.hide()
 
-    # def UI_rangevar_set(self):
-    #     self.setting = True
-    #     self.Qt_rangevar.setText(self.state["rangevar"])
-    #     self.setting = False
+    def UI_rangevar_set(self):
+        self.setting = True
+        self.Qt_rangevar.setText(self.state["rangevar"])
+        self.setting = False
 
     def UI_range_set(self):
         self.setting = True
@@ -374,10 +401,10 @@ class GUI_Qt(GUI, QtGui.QApplication):
             return
         self.UI_userange_change(self.Qt_userange.isChecked())
 
-    # def Qt_rangevar_change(self):
-    #     if self.setting:
-    #         return
-    #     self.UI_rangevar_change(str(self.Qt_rangevar.text()))
+    def Qt_rangevar_change(self):
+        if self.setting:
+            return
+        self.UI_rangevar_change(str(self.Qt_rangevar.text()))
 
     def Qt_range_change(self):
         if self.setting:

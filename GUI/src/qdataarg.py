@@ -30,10 +30,6 @@ class QDataArg(QtGui.QFrame):
         layout.addWidget(self.name, alignment=QtCore.Qt.AlignHCenter)
         self.name.setAlignment(QtCore.Qt.AlignHCenter)
         self.name.setContentsMargins(0, 0, 0, 0)
-        self.name.setStyleSheet("""
-            :!focus {background: transparent; border: none;}
-            :focus {background: white;}
-        """)
         self.name.setSizePolicy(QtGui.QSizePolicy(
             QtGui.QSizePolicy.MinimumExpanding,
             QtGui.QSizePolicy.MinimumExpanding
@@ -42,6 +38,17 @@ class QDataArg(QtGui.QFrame):
         regexp = QtCore.QRegExp("[a-zA-Z]+")
         validator = QtGui.QRegExpValidator(regexp, self.app)
         self.name.setValidator(validator)
+
+        # style
+        self.setStyleSheet("""
+            [invalid="true"] QLineEdit {
+                background: #FFDDDD;
+            }
+            [invalid="false"] > QLineEdit:!focus:!hover {
+                background: transparent;
+                border: none;
+            }
+        """)
 
     def paintEvent(self, event):
         if not self.polygonmax:
@@ -63,11 +70,11 @@ class QDataArg(QtGui.QFrame):
         # min
         painter.setBrush(brushes["min"])
         painter.setPen(pens[None])
-        painter.drawPolygon(self.polygonmax)
+        painter.drawPolygon(self.polygonmin)
         painter.setPen(pens["minback"])
-        painter.drawLines(self.linesmaxback)
+        painter.drawLines(self.linesminback)
         painter.setPen(pens["minfront"])
-        painter.drawLines(self.linesmaxfront)
+        painter.drawLines(self.linesminfront)
 
     def set(self):
         name = self.app.state["calls"][self.call.callid][self.argid]
@@ -80,6 +87,7 @@ class QDataArg(QtGui.QFrame):
         data = self.app.state["data"][name]
         self.dimmin = data["dimmin"]
         self.dimmax = data["dimmax"]
+        # TODO: handle exceptions
         if len(self.dimmax) <= 3 and all(self.dimmin + self.dimmax):
             # compute 3D sizes
             scale = self.app.state["datascale"] / self.app.data_maxdim()

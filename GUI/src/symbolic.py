@@ -45,6 +45,12 @@ class Symbol(Expression):
     def __hash__(self):
         return hash(self.name)
 
+    def __call__(self, **kwargs):
+        if self.name in kwargs:
+            return kwargs[self.name]
+        else:
+            return self
+
 
 class Operation(Expression, list):
     def __init__(self, *args):

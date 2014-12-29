@@ -66,6 +66,7 @@ class QCall(QtGui.QFrame):
         layout.addWidget(routine, 1, 0)
         routine.callid = self.callid
         routine.argid = 0
+        routine.setProperty("valid", False)
         routine.textChanged.connect(self.arg_change)
         completer = QtGui.QCompleter(routines, routine)
         routine.setCompleter(completer)
@@ -117,6 +118,7 @@ class QCall(QtGui.QFrame):
             elif isinstance(arg, signature.Data):
                 Qarg = QDataArg(self)
             Qarg.argid = argid
+            Qarg.setProperty("invalid", True)
             self.layout().addWidget(Qarg, 1, argid)
             self.args.append(Qarg)
         self.sig = call.sig
@@ -155,6 +157,10 @@ class QCall(QtGui.QFrame):
             self.args_init()
         # set values
         for Qarg, arg, val in zip(self.args, call.sig, call):
+            Qarg.setProperty("invalid", val is None)
+            Qarg.style().unpolish(Qarg)
+            Qarg.style().polish(Qarg)
+            Qarg.update()
             if Qarg.argid == fromarg:
                 continue
             val = "" if val is None else str(val)
@@ -192,4 +198,6 @@ class QCall(QtGui.QFrame):
             sender.setFixedSize(size.width() + width, size.height())
         elif isinstance(sender, QtGui.QComboBox):
             val = str(sender.currentText())
+        if not val:
+            val = None
         self.app.UI_arg_change(self.callid, argid, val)

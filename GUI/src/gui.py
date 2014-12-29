@@ -8,10 +8,6 @@ import sys
 import os
 
 
-def alert(*args):
-    print(*args, file=sys.stderr)
-
-
 class GUI():
     def __init__(self):
         self.rootpath = ".."
@@ -25,6 +21,12 @@ class GUI():
         self.UI_setall()
         self.UI_start()
 
+    def log(self, *args):
+        print(*args)
+
+    def alert(self, *args):
+        print(*args, file=sys.stderr)
+
     def samplers_init(self):
         self.samplers = {}
         samplerpath = os.path.join(self.rootpath, "Sampler", "build")
@@ -34,6 +36,7 @@ class GUI():
                     system = eval(fin.read())
                 system["sampler"] = os.path.join(path, "sampler.x")
                 self.samplers[system["name"]] = system
+        self.log("loaded", len(self.samplers), "samplers")
 
     def signatures_init(self):
         self.signatures = {}
@@ -44,12 +47,13 @@ class GUI():
                     continue
                 sig = signature.Signature(file=os.path.join(path, filename))
                 self.signatures[str(sig[0])] = sig
+        self.log("loaded", len(self.signatures), "signatures")
 
     def state_init(self):
         self.statefile = os.path.join(self.rootpath, "GUI", ".state.py")
         try:
             with open(self.statefile) as fin:
-                self.state = eval(fin.read())
+                self.state = eval(fin.read()) + 1
         except:
             sampler = self.samplers[min(self.samplers)]
             self.state = {
@@ -60,7 +64,7 @@ class GUI():
                 "useld": False,
                 "usevary": False,
                 "userange": False,
-                # "rangevar": "n",
+                "rangevar": "n",
                 "range": (8, 32, 1000),
                 "counters": sampler["papi_counters_max"] * [None],
                 "samplename": "",
@@ -124,7 +128,8 @@ class GUI():
         call2.complete()
         for i, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
-                if self.state["useld"]:
+                if self.state["useld"] and not isinstance(call2[i],
+                                                          symbolc.Expression):
                     call[i] = max(call2[i], call[i])
                 else:
                     call[i] = call2[i]
@@ -135,23 +140,44 @@ class GUI():
         assert isinstance(call, signature.Call)
         for i, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Dim, signature.Ld, signature.Inc)):
-                call2[i] = symbolic.Symbol(arg.name)
+                call2[i] = symbolic.Symbol("." + arg.name)
             if isinstance(arg, signature.Data):
                 call2[i] = None
         call2.complete()
+        argdict = {"." + key: val for key, val in call.argdict().iteritems()}
         for i, arg in enumerate(call2.sig):
-            if isinstance(arg, signature.Data) and call[i]:
-                size = call2[i].substitute(**call.argdict())
-                # TODO: rangevar
-                if isinstance(size, symbolic.Prod):
-                    size = size[1:]
-                elif isinstance(size, int):
-                    size = (size,)
-                self.state["data"][call[i]] = {
-                    "dimmin": size,
-                    "dimmax": size
-                }
-                # TODO: copy other attributes (if any)
+            if not (isinstance(arg, signature.Data) and call[i]):
+                continue
+            size = call2[i].substitute(**argdict)
+            if isinstance(size, symbolic.Prod):
+                size = size[1:]
+            else:
+                size = (size,)
+            userange = self.state["userange"]
+            if userange:
+                rangevar = self.state["rangevar"]
+                rangemin = self.state["range"][0]
+                rangemax = self.state["range"][2]
+            dimmin = []
+            dimmax = []
+            for dim in size:
+                if userange and isinstance(dim, symbolic.Expression):
+                    dmin = dim(**{rangevar: rangemin})
+                    dmax = dim(**{rangevar: rangemax})
+                else:
+                    dmin = dmax = dim
+                try:
+                    dimmin.append(int(dmin))
+                except:
+                    dimmin.append(None)
+                try:
+                    dimmax.append(int(dmax))
+                except:
+                    dimmax.append(None)
+            self.state["data"][call[i]] = {
+                "dimmin": dimmin,
+                "dimmax": dimmax
+            }
 
     def sampler_set(self, samplername):
         self.state["sampler"] = samplername
@@ -207,13 +233,6 @@ class GUI():
         arg = call.sig[argid]
         if isinstance(arg, signature.Flag):
             call[argid] = value
-        elif isinstance(arg, signature.Dim):
-            call[argid] = int(value) if value else None
-            # TODO: rangevar + error checking
-            self.infer_lds(callid)
-            self.infer_data(callid)
-            self.UI_call_set(callid, argid)
-            self.UI_data_set()
         elif isinstance(arg, signature.Scalar):
             if isinstance(arg, (signature.sScalar, signature.dScalar)):
                 try:
@@ -225,19 +244,59 @@ class GUI():
                     call[argid] = complex(value)
                 except:
                     call[argid] = None
-        elif isinstance(arg, signature.Data):
+        elif isinstance(arg, signature.Dim):
+            try:
+                if self.state["userange"]:
+                    var = self.state["rangevar"]
+                    value = eval(value, {}, {var: symbolic.Symbol(var)})
+                else:
+                    value = int(eval(value, {}, {}))
+            except:
+                value = None
             call[argid] = value
+            self.infer_lds(callid)
             self.infer_data(callid)
-            self.data_clean()
             self.UI_call_set(callid, argid)
+            self.UI_data_set()
+        elif isinstance(arg, signature.Data):
+            if value in self.data:
+                self.data_override(callid, argid, value)
+            else:
+                call[argid] = value
+                self.infer_data(callid)
+                self.data_clean()
+                # self.UI_call_set(callid, argid)
         elif isinstance(arg, (signature.Ld, signature.Inc)):
             # TODO: rangevar + error checking + conflict checking
             call[argid] = int(value) if value else None
             self.infer_data(callid)
         self.state_write()
 
+    def data_override(self, callid, argid, value):
+        call = self.state["calls"][callid]
+        oldvalue = call[argid]
+        olddata = self.state["data"][value].copy()
+        call[argid] = value
+        self.infer_data(callid)
+        if self.state["data"][value] != olddata:
+            call[argid] = oldvalue
+            self.state["Data"][value] = olddata
+            self.UI_choose_data_override(callid, argid, value)
+        else:
+            # self.UI_call_set(callid, argid)
+            pass
+
+    def data_override_this(self, callid, argid, value):
+        pass
+
+    def data_override_other(self, callid, argid, value):
+        pass
+
+    def data_override_cancel(self, callid, argid, value):
+        self.UI_call_set(callid, argid)
+
     def UI_init(self):
-        alert("GUI_ needs to be subclassed")
+        self.alert("GUI_ needs to be subclassed")
 
     def UI_setall(self):
         self.UI_sampler_set()
@@ -254,7 +313,7 @@ class GUI():
         self.UI_counters_setoptions()
         self.UI_counters_set()
         self.UI_range_setvisible()
-        # self.UI_rangevar_set()
+        self.UI_rangevar_set()
         self.UI_range_set()
         self.UI_calls_set()
         self.UI_samplename_set()
@@ -296,9 +355,9 @@ class GUI():
         self.UI_range_setvisible()
         self.state_write()
 
-    # def UI_rangevar_change(self, varname):
-    #     self.state["rangevar"] = varname
-    #     self.state_write()
+    def UI_rangevar_change(self, varname):
+        self.state["rangevar"] = varname
+        self.state_write()
 
     def UI_range_change(self, range):
         self.state["range"] = range
@@ -337,4 +396,4 @@ class GUI():
         self.state_write()
 
     def UI_submit_click(self):
-        alert("submit_click")
+        self.alert("submit_click")
