@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
+from copy import deepcopy
+
 
 class Signature(list):
     def __init__(self, *args, **kwargs):
@@ -46,6 +48,10 @@ class Signature(list):
             args = tuple(arg.default() for arg in self[1:])
         return Call(self, *args)
 
+    def dataargs(self):
+        return [argid for argid, arg in enumerate(self)
+                if isinstance(arg, Data)]
+
 
 class Call(list):
     def __init__(self, sig, *args):
@@ -80,8 +86,11 @@ class Call(list):
         raise AttributeError(repr(self.sig[0].name) + " call has no attribute "
                              + repr(name))
 
-    def copy(self):
+    def __copy__(self):
         return Call(self.sig, *self[1:])
+
+    def __deepcopy__(self, memo):
+        return Call(self.sig, *[deepcopy(val, memo) for val in self[1:]])
 
     def argdict(self):
         return {arg.name: val for arg, val in zip(self.sig, self)}
@@ -91,7 +100,7 @@ class Call(list):
         for i, arg in enumerate(self.sig):
             if self[i] is None and hasattr(arg, "min"):
                 try:
-                    self[i] = arg.min(*self)
+                    self[i] = arg.min(*l)
                 except TypeError:
                     pass  # probably a None
 
@@ -99,8 +108,8 @@ class Call(list):
         if overwrite:
             self.clear_completable()
         calls = []
-        while list(self) not in calls:
-            calls.append(list(self))
+        while self[1:] not in calls:
+            calls.append(self[1:])
             self.complete_once()
 
     def clear_completable(self):

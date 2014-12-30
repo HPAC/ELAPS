@@ -53,6 +53,12 @@ class Symbol(Expression):
 
 
 class Operation(Expression, list):
+    def __new__(cls, *args):
+        if any(arg is None for arg in args):
+            return None
+        else:
+            return list.__new__(cls)
+
     def __init__(self, *args):
         list.__init__(self, (self.__class__,) + args)
 

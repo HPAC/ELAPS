@@ -6,9 +6,10 @@ import symbolic
 
 import sys
 import os
+from copy import deepcopy
 
 
-class GUI():
+class GUI(object):
     def __init__(self):
         self.rootpath = ".."
         if os.path.split(os.getcwd())[1] == "src":
@@ -22,21 +23,21 @@ class GUI():
         self.UI_start()
 
     # state access attributes
-    def getcalls(self):
+    @property
+    def calls(self):
         return self.state["calls"]
 
-    def setcalls(self, value):
+    @calls.setter
+    def calls(self, value):
         self.state["calls"] = value
 
-    calls = property(getcalls, setcalls)
-
-    def getdata(self):
+    @property
+    def data(self):
         return self.state["data"]
 
-    def setdata(self, value):
+    @data.setter
+    def data(self, value):
         self.state["data"] = value
-
-    data = property(getdata, setdata)
 
     # utility
     def log(self, *args):
@@ -97,10 +98,10 @@ class GUI():
         for callid, call in enumerate(self.calls):
             if call[0] in self.signatures:
                 self.calls[callid] = self.signatures[call[0]](*call[1:])
-            self.infer_data(callid)
+        self.data = self.infer_alldata(self.calls)
         self.state_write()
 
-    # functionality
+    # utility type routines
     def state_write(self):
         callobjects = self.calls
         self.calls = map(list, self.calls)
@@ -122,6 +123,7 @@ class GUI():
         info += "\nBLAS:\t%s\n" % sampler["blas_name"]
         return info
 
+    # simple data operations
     def data_clean(self):
         needed = []
         for call in self.calls:
@@ -135,10 +137,11 @@ class GUI():
         return max(max(data["dimmin"] + data["dimmax"])
                    for data in self.data.itervalues())
 
-    def infer_lds(self, callid):
-        call = self.calls[callid]
-        call2 = call.copy()
-        assert isinstance(call, signature.Call)
+    # inference system
+    def infer_lds(self, call):
+        # make sure we don't alter the input
+        call = deepcopy(call)
+        call2 = deepcopy(call)
         for i, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
                 call2[i] = None
@@ -150,26 +153,33 @@ class GUI():
                     call[i] = max(call2[i], call[i])
                 else:
                     call[i] = call2[i]
+        return call
 
-    def infer_data(self, callid):
-        call = self.calls[callid]
-        call2 = call.copy()
+    def infer_data(self, call, argid=None):
+        self.log("infer_data", call, argid)
         assert isinstance(call, signature.Call)
-        for i, arg in enumerate(call2.sig):
+        # make sure we don't alter the input
+        call = deepcopy(call)
+        symcall = deepcopy(call)
+        for i, arg in enumerate(symcall.sig):
             if isinstance(arg, (signature.Dim, signature.Ld, signature.Inc)):
-                call2[i] = symbolic.Symbol("." + arg.name)
+                symcall[i] = symbolic.Symbol("." + arg.name)
             if isinstance(arg, signature.Data):
-                call2[i] = None
-        call2.complete()
+                symcall[i] = None
+        symcall.complete()
         argdict = {"." + key: val for key, val in call.argdict().iteritems()}
-        for i, arg in enumerate(call2.sig):
+        data = {}
+        for i, arg in enumerate(symcall.sig):
             if not (isinstance(arg, signature.Data) and call[i]):
                 continue
-            size = call2[i].substitute(**argdict)
+            if argid is not None and i != argid:
+                continue
+            size = symcall[i].substitute(**argdict)
             if isinstance(size, symbolic.Prod):
                 size = size[1:]
             else:
                 size = [size]
+            # TODO: move dimmin dimmax away from here
             userange = self.state["userange"]
             if userange:
                 rangevar = self.state["rangevar"]
@@ -191,62 +201,143 @@ class GUI():
                     dimmax.append(int(dmax))
                 except:
                     dimmax.append(None)
-            self.data[call[i]] = {
+            data[call[i]] = {
                 "dimmin": dimmin,
                 "dimmax": dimmax,
                 "dim": size
             }
+        return data
 
-    def infer_dims(self, callid, argid):
-        data = self.data[call[argid]]
-        call = self.calls[callid]
-        call2 = call.copy()
-        for i, arg in enumerate(call2.sig):
-            if isinstance(arg, (signature.Dim, signature.Ld, signature.Inc)):
-                call2[i] = symbolic.Symbol("." + arg.name)
-            if isinstance(arg, signature.Data):
-                call2[i] = None
-        call2.complete()
-        if isinstance(size, symbolic.Prod):
-            size = size[1:]
+    def infer_alldata(self, calls):
+        self.log("infer_alldata", map(str, calls))
+        data = {}
+        for call in calls:
+            data.update(self.infer_data(call))
+        return data
+
+    def infer_dims(self, call, argid, data=None):
+        assert isinstance(call, signature.Call)
+        self.log("infer_dims", call, argid)
+        if data is None:
+            data = self.data
+        # make sure we don't alter the input
+        call = deepcopy(call)
+        data = data[call[argid]]
+        symcall = deepcopy(call)
+        for i, arg in enumerate(call.sig):
+            if isinstance(arg, signature.Dim):
+                symcall[i] = symbolic.Symbol("." + arg.name)
+            if isinstance(arg, (signature.Data, signature.Ld, signature.Inc)):
+                symcall[i] = None
+        symcall.complete()
+        symdim = symcall[argid]
+        if isinstance(symdim, symbolic.Prod):
+            symdim = symdim[1:]
         else:
-            size = [size]
-        if len(size) != len(data["dim"]):
-            alert("data dimensionality mismatch:", call[argid])
+            symdim = [symdim]
+        if len(symdim) != len(data["dim"]):
+            self.alert("data dimensionality mismatch:", call[argid])
+            self.alert(symdim, data["dim"])
             return
-        for symbol, dim in zip(size, data["dim"]):
-            setattr(call, symbol.name, dim)
+        for symbol, dim in zip(symdim, data["dim"]):
+            setattr(call, symbol.name[1:], dim)
+        return call
 
-    def infer_all(self, callid, argid=None):
-        call = self.calls[callid]
-        if argid and isinstance(call.sig[argid], signature.Data):
-            self.infer_dims(callid, argid)
-        callids = [callid]
+    def infer_call(self, call, argid=None, data=None):
+        assert isinstance(call, signature.Call)
+        self.log("infer_call", call, argid)
+        if data is None:
+            data = self.data
+        # make sure we don't alter the input
+        call = deepcopy(call)
+        data = deepcopy(data)
+        changed = []
+        if argid:
+            if isinstance(call.sig[argid], signature.Data):
+                call = self.infer_dims(call, argid, data)
+            else:
+                changed.append(argid)
+        call = self.infer_lds(call)
+        dataargids = call.sig.dataargs()
+        if len(dataargids) == len(set(call[argid] for argid in dataargids)):
+            return call
         hashes = []
-        newhash = hash(map(list, self.calls) + callids)
+        newhash = hash(tuple(call))
         while newhash not in hashes:
             hashes.append(newhash)
-            callid = callids[0]
-            callids = callids[1:]
-            call = self.calls[callid]
-            olddata = {val: self.data[val].copy()
-                       for arg, val in zip(call.sig, call)
-                       if isinstance(arg, signature.Data)}
-            self.infer_lds(callid)
-            self.infer_data(callid)
-            datachanged = [val for val, data in olddata.iteritems()
-                           if self.data[val] != data]
-            for callid2 in range(len(self.calls)):
-                if callid2 == callid:
+            for dargid in dataargids():
+                newdata = self.infer_data(call, dargid)
+                if newdata[call[dargid]] == data[call[dargid]]:
                     continue
-                call = self.calls[callid]
-                for argid, (arg, val) in enumerate(zip(call.sig, call)):
-                    if isinstance(arg, signature.Data) and val in datachanged:
-                        self.infer_dims(callid2, argid)
-                        if callid not in callids:
-                            callids.append(callid)
-            newhash = hash(map(list, self.calls) + callids)
+                data.update(self.infer_data(call, dargid))
+                # data changed
+                for dargid2 in dataargids:
+                    # check for occurence of the same data
+                    if dargid == dargid2 or call[dargid] != call[dargid2]:
+                        continue
+                    tmpcall = self.infer_dims(call, dargid2, data)
+                    for argid, val in enumerate(tmpcall):
+                        if val == call[argid] or argid in changed:
+                            # arg didn't change or already changed before
+                            continue
+                        # arg changed now
+                        call[argid] = val
+                        changed.append(argid)
+                call = self.infer_lds(call)
+            newhash = hash(tuple(call))
+        return call
 
+    def infer_calls(self, calls, callid, argid=None, data=None):
+        self.log("infer_calls", map(str, calls), callid, argid)
+        if data is None:
+            data = self.data
+        # make sure we don't alter the inputs
+        calls = deepcopy(calls)
+        data = deepcopy(data)
+        changedargs = []
+        if argid:
+            # infer calls[callid] and set up changedargs
+            changedargs.append((callid, argid))
+            call = calls[callid]
+            newcall = self.infer_call(call, argid, data)
+            for argid, val in enumerate(newcall):
+                if val != call[argid]:
+                    call[argid] = val
+                    changedargs.append((callid, argid))
+        if len(calls) == 1:
+            return calls
+        changedcalls = [callid]
+        hashes = []
+        newhash = hash(tuple(map(tuple, calls) + changedcalls))
+        if newhash not in hashes and len(changedcalls):
+            hashes.append(newhash)
+            callid = changedcalls.pop(0)
+            newdata = self.infer_data(calls[callid])
+            changeddata = [val for val in newdata if newdata[val] != data[val]]
+            data.update(newdata)
+            for callid2, call in enumerate(calls):
+                if callid == callid2:
+                    continue
+                for argid in call.sig.dataargs():
+                    if call[argid] not in changeddata:
+                        continue
+                    tmpcall = self.infer_call(call, argid, data)
+                    for argid2, val in enumerate(tmpcall):
+                        if val == call[argid2]:
+                            # arg didn't change
+                            continue
+                        if (callid2, argid2) in changedargs:
+                            # arg may only change once
+                            continue
+                        # argument changed now
+                        call[argid2] = val
+                        changedargs.append((callid2, argid2))
+                        if callid2 not in changedcalls:
+                            changedcalls.append(callid2)
+            newhash = hash(tuple(map(tuple, calls) + changedcalls))
+        return calls
+
+    # treat changes for the calls
     def sampler_set(self, samplername):
         self.state["sampler"] = samplername
         sampler = self.samplers[samplername]
@@ -288,9 +379,8 @@ class GUI():
                             call[i] = name
                             self.data[name] = None
                             break
-            self.calls[callid] = call
-            self.infer_lds(callid)
-            self.infer_data(callid)
+            self.calls[callid] = self.infer_lds(call)
+            self.data.update(self.infer_data(call))
         else:
             self.calls[callid] = [value]
         self.UI_call_set(callid, 0)
@@ -301,7 +391,7 @@ class GUI():
         arg = call.sig[argid]
         if isinstance(arg, signature.Flag):
             call[argid] = value
-            self.infer_all(callid)
+            self.calls = self.infer_call(self.calls)
             self.UI_call_set(callid, argid)
             self.UI_data_set()  # data viz scale may have changed anywhere
         elif isinstance(arg, signature.Scalar):
@@ -325,50 +415,61 @@ class GUI():
             except:
                 value = None
             call[argid] = value
-            self.infer_all(callid)
-            self.UI_call_set(callid, argid)
+            self.calls = self.infer_calls(self.calls, callid, argid)
+            self.data = self.infer_alldata(self.calls)
+            for callid2 in range(len(self.calls)):
+                self.UI_call_set(callid2, argid if callid2 == callid else None)
             self.UI_data_set()  # data viz scale may have changed anywhere
         elif isinstance(arg, signature.Data):
             if value in self.data:
+                # resolve potential conflicts
                 self.data_override(callid, argid, value)
             else:
                 call[argid] = value
-                self.infer_data(callid)
+                self.data.update(self.infer_data(call))
                 self.data_clean()
                 self.UI_call_set(callid, argid)
         elif isinstance(arg, (signature.Ld, signature.Inc)):
-            # TODO: rangevar + error checking + conflict checking
+            # TODO: proper ld treatment
             call[argid] = int(value) if value else None
-            self.infer_data(callid)
+            self.data.update(self.infer_data(call))
         self.state_write()
 
+    # catch and handle data conflicts
     def data_override(self, callid, argid, value):
-        call = self.calls[callid]
-        oldvalue = call[argid]
-        olddata = self.data[value].copy()
+        call = deepcopy(self.calls[callid])
         call[argid] = value
-        self.infer_data(callid)
-        if self.data[value] != olddata:
-            call[argid] = oldvalue
-            self.data[value] = olddata
+        newdata = self.infer_data(call, argid)
+        if self.data[value] != newdata[value]:
             self.UI_choose_data_override(callid, argid, value)
         else:
-            # self.UI_call_set(callid, argid)
-            pass
+            # no conflict
+            self.calls[callid][argid] = value
 
     def data_override_this(self, callid, argid, value):
         self.calls[callid][argid] = value
-        self.infer_all(callid)
-        self.infer_all(callid, argid)
+        self.calls = self.infer_call(self.calls, callid, argid)
+        self.data = self.infer_alldata(self.calls)
+        for callid2 in range(len(self.calls)):
+            if callid2 == callid:
+                self.UI_call_set(callid, argid)
+            else:
+                self.UI_call_set(callid)
 
     def data_override_other(self, callid, argid, value):
         self.calls[callid][argid] = value
-        self.infer_all(callid, argid)
-        self.infer_all(callid, argid)
+        self.calls = self.infer_call(self.calls, callid)
+        self.data = self.infer_alldata(self.calls)
+        for callid2 in range(len(self.calls)):
+            if callid2 == callid:
+                self.UI_call_set(callid, argid)
+            else:
+                self.UI_call_set(callid)
 
     def data_override_cancel(self, callid, argid, value):
-        self.UI_call_set(callid, argid)
+        self.UI_call_set(callid)
 
+    # user interface
     def UI_init(self):
         self.alert("GUI_ needs to be subclassed")
 

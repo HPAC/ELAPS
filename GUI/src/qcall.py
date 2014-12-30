@@ -153,6 +153,8 @@ class QCall(QtGui.QFrame):
             self.args_clear()
             return
         if call.sig != self.sig:
+            print(id(call.sig), call.sig)
+            print(id(self.sig), self.sig)
             self.args_clear()
             self.args_init()
         # set values
@@ -168,9 +170,6 @@ class QCall(QtGui.QFrame):
                                 signature.Scalar, signature.Ld,
                                 signature.Inc)):
                 Qarg.setText(val)
-                size = Qarg.minimumSizeHint()
-                width = Qarg.fontMetrics().width(val[2:])
-                Qarg.setFixedSize(size.width() + width, size.height())
             elif isinstance(arg, signature.Flag):
                 Qarg.setCurrentIndex(Qarg.findText(val))
             elif isinstance(arg, signature.Data):
@@ -187,17 +186,18 @@ class QCall(QtGui.QFrame):
         self.app.UI_call_movedown(self.callid)
 
     def arg_change(self):
+        sender = self.app.sender()
+        if isinstance(sender, QtGui.QLineEdit):
+            # adjust widt no matter where the change came from
+            val = str(sender.text())
+            if sender.argid != 0:
+                size = sender.minimumSizeHint()
+                width = sender.fontMetrics().width(val[2:])
+                sender.setFixedSize(size.width() + width, size.height())
         if self.app.setting:
             return
-        sender = self.app.sender()
-        argid = sender.argid
-        if isinstance(sender, QtGui.QLineEdit):
-            val = str(sender.text())
-            size = sender.minimumSizeHint()
-            width = sender.fontMetrics().width(val[2:])
-            sender.setFixedSize(size.width() + width, size.height())
-        elif isinstance(sender, QtGui.QComboBox):
+        if isinstance(sender, QtGui.QComboBox):
             val = str(sender.currentText())
         if not val:
             val = None
-        self.app.UI_arg_change(self.callid, argid, val)
+        self.app.UI_arg_change(self.callid, sender.argid, val)
