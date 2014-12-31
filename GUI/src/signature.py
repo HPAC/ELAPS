@@ -32,8 +32,8 @@ class Signature(list):
             if hasattr(arg, "minstr") and arg.minstr:
                 arg.min = eval("lambda " + lambdaargs + ": " + arg.minstr)
             if arg.attrstr:
-                arg.attr = eval("lambda (" + lambdaargs + "): filter(None, (" +
-                                arg.attrstr + "))")
+                arg.attr = eval("lambda " + lambdaargs + ": filter(None, (" +
+                                arg.attrstr + ",))")
 
     def __str__(self):
         return (self[0].name + "(" +
@@ -92,6 +92,9 @@ class Call(list):
     def __deepcopy__(self, memo):
         return Call(self.sig, *[deepcopy(val, memo) for val in self[1:]])
 
+    def copy(self):
+        return self.__copy__()
+
     def argdict(self):
         return {arg.name: val for arg, val in zip(self.sig, self)}
 
@@ -104,9 +107,7 @@ class Call(list):
                 except TypeError:
                     pass  # probably a None
 
-    def complete(self, overwrite=False):
-        if overwrite:
-            self.clear_completable()
+    def complete(self):
         calls = []
         while self[1:] not in calls:
             calls.append(self[1:])
@@ -124,6 +125,9 @@ class Call(list):
     def format_sampler(self):
         return tuple(arg.format_sampler(val)
                      for arg, val in zip(self.sig, self))
+
+    def attributes(self):
+        return [arg.attr(*self) for arg in self.sig]
 
 
 class Arg(object):

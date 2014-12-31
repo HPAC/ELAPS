@@ -195,21 +195,13 @@ class GUI_Qt(GUI, QtGui.QApplication):
         sys.exit(self.exec_())
 
     def UI_choose_data_override(self, callid, argid, value):
-        Qbox = QtGui.QMessageBox()
-        Qbox.setIcon(QtGui.QMessageBox.Question)
-        Qbox.setText("Incompatible sizes for" + value)
-        Qbox.setInformativeText("Change the corresponding dimension "
-                                + "arguments?")
-        Qthis = Qbox.addButton("In this call", QtGui.QMessageBox.ActionRole)
-        Qother = Qbox.addButton("In other call(s)",
-                                QtGui.QMessageBox.ActionRole)
-        Qbox.addButton(QtGui.QMessageBox.Cancel)
-        Qbox.setDefaultButton(Qthis)
-        ret = Qbox.exec_()
-        if ret == Qthis:
-            self.data_override_this(callid, argid, value)
-        elif ret == Qother:
-            self.data_override_other(callid, argid, value)
+        ret = QtGui.QMessageBox.warning(
+            self.Qt_window, "Incompatible sizes for" + value,
+            "Dimension arguments will be adjusted automatically.",
+            QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
+        )
+        if ret == QtGui.QMessageBox.Ok:
+            self.data_override_ok(callid, argid, value)
         else:
             self.data_override_cancel(callid, argid, value)
 
@@ -310,14 +302,14 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
     def UI_range_set(self):
         self.setting = True
-        lower, step, upper = self.state["range"]
+        lower, upper, step = self.state["range"]
         if step:
             self.Qt_range.setText("%d:%d:%d" % (lower, step, upper))
         else:
             self.Qt_range.setText("%d:%d" % (lower, upper))
         self.setting = False
 
-    def UI_calls_set(self):
+    def UI_calls_init(self):
         self.setting = True
         # delete old
         for Qcall in self.Qt_Qcalls:
@@ -332,17 +324,21 @@ class GUI_Qt(GUI, QtGui.QApplication):
             Qcall.args_set()
         self.setting = False
 
-    def UI_call_set(self, callid, fromarg=None):
+    def UI_call_set(self, callid, fromargid=None):
         self.setting = True
-        self.Qt_Qcalls[callid].args_set(fromarg)
+        self.Qt_Qcalls[callid].args_set(fromargid)
         self.setting = False
 
-    def UI_data_set(self):
+    def UI_calls_set(self, fromcallid=None, fromargid=None):
         self.setting = True
-        for call in self.Qt_Qcalls:
-            for arg in call.args:
-                if isinstance(arg, QDataArg):
-                    arg.set()
+        for callid, Qcall in enumerate(self.Qt_Qcalls):
+            Qcall.args_set(fromargid if fromcallid == callid else None)
+        self.setting = False
+
+    def UI_data_viz(self):
+        self.setting = True
+        for Qcall in self.Qt_Qcalls:
+            Qcall.data_viz()
         self.setting = False
 
     def UI_useld_apply(self):
@@ -413,7 +409,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         lower = int(parts[0]) if len(parts) >= 1 and parts[0] else None
         step = int(parts[1]) if len(parts) == 3 and parts[1] else 1
         upper = int(parts[-1]) if len(parts) >= 2 and parts[-1] else None
-        self.UI_range_change((lower, step, upper))
+        self.UI_range_change((lower, upper, step))
 
     def Qt_call_add(self):
         self.UI_call_add()

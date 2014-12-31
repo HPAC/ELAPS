@@ -146,15 +146,13 @@ class QCall(QtGui.QFrame):
                     self.arglabels[argid].hide()
                     self.args[argid].hide()
 
-    def args_set(self, fromarg=None):
+    def args_set(self, fromargid=None):
         call = self.app.calls[self.callid]
         # set widgets
         if not isinstance(call, signature.Call):
             self.args_clear()
             return
         if call.sig != self.sig:
-            print(id(call.sig), call.sig)
-            print(id(self.sig), self.sig)
             self.args_clear()
             self.args_init()
         # set values
@@ -163,7 +161,7 @@ class QCall(QtGui.QFrame):
             Qarg.style().unpolish(Qarg)
             Qarg.style().polish(Qarg)
             Qarg.update()
-            if Qarg.argid == fromarg:
+            if Qarg.argid == fromargid:
                 continue
             val = "" if val is None else str(val)
             if isinstance(arg, (signature.Name, signature.Dim,
@@ -174,6 +172,10 @@ class QCall(QtGui.QFrame):
                 Qarg.setCurrentIndex(Qarg.findText(val))
             elif isinstance(arg, signature.Data):
                 Qarg.set()
+
+    def data_viz(self):
+        for argid in self.app.calls[self.callid].sig.dataargs():
+            self.args[argid].viz()
 
     # event handlers
     def remove_click(self):

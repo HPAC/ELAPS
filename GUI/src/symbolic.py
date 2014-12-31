@@ -24,6 +24,15 @@ class Expression(object):
     def __rmul__(self, other):
         return Prod(other, self)
 
+    def subistitute(self, **kwargs):
+        return self
+
+    def simplify(self):
+        return self
+
+    def __call__(self, **kwargs):
+        return self.substitute(**kwargs).simplify()
+
 
 class Symbol(Expression):
     def __init__(self, name):
@@ -45,7 +54,7 @@ class Symbol(Expression):
     def __hash__(self):
         return hash(self.name)
 
-    def __call__(self, **kwargs):
+    def substitute(self, **kwargs):
         if self.name in kwargs:
             return kwargs[self.name]
         else:
@@ -79,9 +88,6 @@ class Operation(Expression, list):
             else:
                 args.append(arg)
         return self.__class__(*args)
-
-    def __call__(self, **kwargs):
-        return self.substitute(**kwargs).simplify()
 
 
 class Minus(Operation):
