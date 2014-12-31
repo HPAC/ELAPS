@@ -194,8 +194,8 @@ class QCall(QtGui.QFrame):
             val = str(sender.text())
             if sender.argid != 0:
                 size = sender.minimumSizeHint()
-                width = sender.fontMetrics().width(val[2:])
-                sender.setFixedSize(size.width() + width, size.height())
+                width = sender.fontMetrics().width(val) + size.width()
+                sender.setFixedSize(max(size.height(), width), size.height())
         if self.app.setting:
             return
         if isinstance(sender, QtGui.QComboBox):

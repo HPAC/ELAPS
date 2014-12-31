@@ -179,7 +179,8 @@ class GUI(object):
         mincall.complete()
         symcall.complete()
         argdict = {"." + arg.name: value for arg, value in zip(call.sig, call)}
-        argnamedict = {"." + arg.name: arg.name for arg in call.sig}
+        argnamedict = {"." + arg.name: symbolic.Symbol(arg.name)
+                       for arg in call.sig}
         for argid in call.sig.dataargs():
             if call[argid] is None:
                 continue
