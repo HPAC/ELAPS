@@ -42,7 +42,7 @@ template <> void MemoryManager::randomize<float>(void *data, size_t size) {
 
 template <> void MemoryManager::randomize<double>(void *data, size_t size) {
     for (size_t i = 0; i < size; i++)
-        ((double *) data)[i] = ((float) rand()) / RAND_MAX;
+        ((double *) data)[i] = ((double) rand()) / RAND_MAX;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -137,7 +137,7 @@ size_t MemoryManager::dynamic_register(size_t size) {
     if (newsize > oldsize) {
         dynamic_mem.resize(newsize);
         // randomize with currently requested type
-        randomize<T>(&dynamic_mem[oldsize], newsize / sizeof(T));
+        randomize<T>(&dynamic_mem[oldsize], (newsize - oldsize) / sizeof(T));
     }
     return id;
 }
