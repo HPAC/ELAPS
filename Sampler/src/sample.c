@@ -12,6 +12,7 @@
 } while(0)
 
 void sample_nopapi(KernelCall *calls, size_t ncalls) {
+    // for each call
     int i;
     for (i = 0; i < ncalls; i++) {
         void **argv = calls[i].argv;
@@ -23,6 +24,7 @@ void sample_nopapi(KernelCall *calls, size_t ncalls) {
 #define COUNTERS_START() rdtsc(ticks0);
 #define COUNTERS_END()   rdtsc(ticks1);
 
+            // actual routine invocations are 
             // automatically generated depending on the number of arguments
 #include CALLS_C_INC
 
@@ -38,6 +40,7 @@ void sample_nopapi(KernelCall *calls, size_t ncalls) {
 
 #ifdef PAPI
 void sample_papi(KernelCall *calls, size_t ncalls, int *counters, int ncounters) {
+    // for each call
     int i;
     for (i = 0; i < ncalls; i++) {
         void **argv = calls[i].argv;
@@ -45,11 +48,11 @@ void sample_papi(KernelCall *calls, size_t ncalls, int *counters, int ncounters)
 
         // branch depending on #arguments
         switch (calls[i].argc) {
-        
             // start and stop papi counters (used in CALLS_C_INC) and capture rdtsc
 #define COUNTERS_START() PAPI_start_counters(counters, ncounters); rdtsc(ticks0);
 #define COUNTERS_END()   rdtsc(ticks1); PAPI_stop_counters(calls[i].counters, ncounters);
 
+            // actual routine invocations are 
             // automatically generated depending on the number of arguments
 #include CALLS_C_INC
 
