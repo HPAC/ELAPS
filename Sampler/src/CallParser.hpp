@@ -8,6 +8,8 @@
 #include <vector>
 #include <string>
 
+class CallParserException: public std::exception { };
+
 class CallParser {
     private:
         enum MemType { STATIC, NAMED, DYNAMIC };

@@ -4,6 +4,7 @@
 #include <papi.h>
 #endif
 
+// read time stamp counter (CPU register)
 #define rdtsc(var) { \
     unsigned int __a, __d; \
     asm volatile("rdtsc" : "=a" (__a), "=d" (__d)); \
@@ -11,36 +12,55 @@
 } while(0)
 
 void sample_nopapi(KernelCall *calls, size_t ncalls) {
-#define COUNTERS_START() rdtsc(ticks0);
-#define COUNTERS_END()   rdtsc(ticks1);
     int i;
     for (i = 0; i < ncalls; i++) {
         void **argv = calls[i].argv;
         unsigned long ticks0, ticks1; 
+
+        // branch depending on #arguments
         switch (calls[i].argc) {
+            // capture rdtsc
+#define COUNTERS_START() rdtsc(ticks0);
+#define COUNTERS_END()   rdtsc(ticks1);
+
+            // automatically generated depending on the number of arguments
 #include CALLS_C_INC
-        }
-        calls[i].rdtsc = ticks1 - ticks0;
-    }
+
+            // clean up macros
 #undef COUNTERS_START
 #undef COUNTERS_END
+        }
+
+        // compute rdtsc dfference (time)
+        calls[i].rdtsc = ticks1 - ticks0;
+    }
 }
 
 #ifdef PAPI
 void sample_papi(KernelCall *calls, size_t ncalls, int *counters, int ncounters) {
-#define COUNTERS_START() PAPI_start_counters(counters, ncounters); rdtsc(ticks0);
-#define COUNTERS_END()   rdtsc(ticks1); PAPI_stop_counters(calls[i].counters, ncounters);
     int i;
     for (i = 0; i < ncalls; i++) {
         void **argv = calls[i].argv;
         unsigned long ticks0, ticks1; 
+
+        // branch depending on #arguments
         switch (calls[i].argc) {
+        
+            // start and stop papi counters (used in CALLS_C_INC) and capture rdtsc
+#define COUNTERS_START() PAPI_start_counters(counters, ncounters); rdtsc(ticks0);
+#define COUNTERS_END()   rdtsc(ticks1); PAPI_stop_counters(calls[i].counters, ncounters);
+
+            // automatically generated depending on the number of arguments
 #include CALLS_C_INC
-        }
-        calls[i].rdtsc = ticks1 - ticks0;
-    }
+
+            // clean up macros
 #undef COUNTERS_START
 #undef COUNTERS_END
+        }
+
+        // compute rdtsc dfference (time)
+        calls[i].rdtsc = ticks1 - ticks0;
+    }
 }
 #endif
 
