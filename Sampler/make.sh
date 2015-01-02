@@ -15,7 +15,7 @@ fi
 [ -z "$BACKEND" ] && BACKEND="local"
 [ -z "$BACKEND_HEADER" ] && BACKEND_HEADER=""
 [ -z "$BACKEND_OPTIONS" ] && BACKEND_OPTIONS=""
-if [ -z "$NT_MAX"]; then
+if [ -z "$NT_MAX" ]; then
     if [ "$BACKEND" = "local" ]; then
         NT_MAX=`grep -c ^processor /proc/cpuinfo`
     else
@@ -24,6 +24,8 @@ if [ -z "$NT_MAX"]; then
     fi
 fi
 [ -z "$FLOPS_PER_CYCLE" ] && echo "FLOPS_PER_CYCLE not provided (no GFLOPS and efficiencies)"
+[ -z "$CC" ] && CC=gcc
+[ -z "$CXX" ] && CXX=g++
 
 
 export BLAS_NAME SYSTEM_NAME NAME KERNEL_HEADERS
@@ -41,7 +43,7 @@ calls_c_inc=$target_dir/calls.c.inc
 info_py=$target_dir/info.py
 
 # clean previous build
-rm -r $target_dir
+rm -rf $target_dir
 
 # craete buld directory
 mkdir -p $target_dir

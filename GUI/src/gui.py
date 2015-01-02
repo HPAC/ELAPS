@@ -9,8 +9,12 @@ import os
 from copy import deepcopy
 from collections import defaultdict
 
+import traceback
+
 
 class GUI(object):
+    state = {}
+
     def __init__(self):
         self.rootpath = ".."
         if os.path.split(os.getcwd())[1] == "src":
@@ -24,13 +28,17 @@ class GUI(object):
         self.UI_start()
 
     # state access attributes
-    @property
-    def calls(self):
-        return self.state["calls"]
+    def __getattr__(self, name):
+        if name in self.__dict__["state"]:
+            return self.__dict__["state"][name]
+        raise AttributeError("%r object has no attribute %r" %
+                             (self.__class__, name))
 
-    @calls.setter
-    def calls(self, value):
-        self.state["calls"] = value
+    def __setattr__(self, name, value):
+        if name in self.state:
+            self.state[name] = value
+        else:
+            super(GUI, self).__setattr__(name, value)
 
     # utility
     def log(self, *args):
@@ -65,8 +73,10 @@ class GUI(object):
     def state_init(self):
         self.statefile = os.path.join(self.rootpath, "GUI", ".state.py")
         try:
+            from symbolic import *
             with open(self.statefile) as fin:
-                self.state = eval(fin.read()) + 1
+                self.state = eval(fin.read())
+            self.log("loaded state from", self.statefile)
         except:
             sampler = self.samplers[min(self.samplers)]
             self.state = {
@@ -82,6 +92,7 @@ class GUI(object):
                 "counters": sampler["papi_counters_max"] * [None],
                 "samplename": "",
                 "calls": [("",)],
+                "vary": {},
                 "datascale": 100,
             }
             if "dgemm_" in sampler["kernels"]:
@@ -107,7 +118,7 @@ class GUI(object):
         self.calls = callobjects
 
     def get_infostr(self):
-        sampler = self.samplers[self.state["sampler"]]
+        sampler = self.samplers[self.sampler]
         info = "System:\t%s\n" % sampler["system_name"]
         if sampler["backend"] != "local":
             info += "  (via %s(\n" % sampler["backend"]
@@ -118,9 +129,9 @@ class GUI(object):
 
     def range_eval(self, expr):
         if isinstance(expr, symbolic.Expression):
-            rangevar = self.state["rangevar"]
+            rangevar = self.rangevar
             return [expr(**{rangevar: value})
-                    for value in range(*self.state["range"])]
+                    for value in range(*self.range)]
         return [expr]
 
     # simple data operations
@@ -142,6 +153,8 @@ class GUI(object):
                 self.infer_lds(callid)
             return
         call = self.calls[callid]
+        if not isinstance(call, signature.Call):
+            return
         call2 = call.copy()
         for i, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
@@ -149,7 +162,7 @@ class GUI(object):
         call2.complete()
         for i, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
-                if self.state["useld"] and not isinstance(call2[i],
+                if self.useld and not isinstance(call2[i],
                                                           symbolc.Expression):
                     call[i] = max(call2[i], call[i])
                 else:
@@ -160,8 +173,12 @@ class GUI(object):
             self.data = {}
             for callid in range(len(self.calls)):
                 self.data_update(callid)
+            self.vary = {name: value for name, value in self.vary.iteritems()
+                         if name in self.data}
             return
         call = self.calls[callid]
+        if not isinstance(call, signature.Call):
+            return
         compcall = call.copy()
         mincall = call.copy()
         symcall = call.copy()
@@ -182,20 +199,25 @@ class GUI(object):
         argnamedict = {"." + arg.name: symbolic.Symbol(arg.name)
                        for arg in call.sig}
         for argid in call.sig.dataargs():
-            if call[argid] is None:
+            name = call[argid]
+            if name is None:
                 continue
-            self.data[call[argid]] = {
+            self.data[name] = {
                 "comp": compcall[argid],
                 "min": mincall[argid],
                 "sym": symcall[argid].substitute(**argdict),
-                "symnames": symcall[argid].substitute(**argnamedict)
+                "symnames": symcall[argid].substitute(**argnamedict),
             }
+            if name not in self.vary:
+                self.vary[name] = False
         # TODO: attributes (upper, lower, ...)
 
     def connections_update(self):
         # compute symbolic sizes for all calls
         sizes = defaultdict(list)
         for callid, call in enumerate(self.calls):
+            if not isinstance(call, signature.Call):
+                continue
             symcall = call.copy()
             for argid, arg in enumerate(call.sig):
                 if isinstance(arg, signature.Dim):
@@ -244,20 +266,20 @@ class GUI(object):
 
     # treat changes for the calls
     def sampler_set(self, samplername):
-        self.state["sampler"] = samplername
+        self.sampler = samplername
         sampler = self.samplers[samplername]
-        self.state["nt"] = max(self.state["nt"], sampler["nt_max"])
+        self.nt = max(self.nt, sampler["nt_max"])
 
         # update countes (kill unavailable, adjust length)
         papi_counters_max = sampler["papi_counters_max"]
-        self.state["usepapi"] &= papi_counters_max > 0
+        self.usepapi &= papi_counters_max > 0
         counters = []
-        for counter in self.state["counters"]:
+        for counter in self.counters:
             if counter in sampler["papi_counters_avail"]:
                 counters.append(counter)
         counters = counternames[:papi_counters_max]
         counters += (papi_counters_max - len(counternames)) * [None]
-        self.state["counters"] = counternames
+        self.counters = counternames
 
         # remove unavailable calls
         # TODO
@@ -273,16 +295,17 @@ class GUI(object):
 
     def routine_set(self, callid, value):
         if value in self.signatures:
-            # TODO: default argument values
+            # TODO: non-static default argument values
             call = self.signatures[value]()
+            owndata = []
             for i, arg in enumerate(call.sig):
                 if isinstance(arg, signature.Dim):
                     call[i] = 1000
                 elif isinstance(arg, signature.Data):
                     for name in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                        if name not in self.data:
+                        if name not in self.data and name not in owndata:
                             call[i] = name
-                            self.data[name] = None
+                            owndata.append(name)
                             break
             self.calls[callid] = call
             self.infer_lds(callid)
@@ -299,6 +322,7 @@ class GUI(object):
             call[argid] = value
             self.connections_update()
             self.connections_apply(callid)
+            self.state_write()
             self.UI_calls_set(callid, argid)
             self.UI_data_viz()
         elif isinstance(arg, signature.Scalar):
@@ -315,8 +339,8 @@ class GUI(object):
         elif isinstance(arg, signature.Dim):
             # evaluate value
             try:
-                if self.state["userange"]:
-                    var = self.state["rangevar"]
+                if self.userange:
+                    var = self.rangevar
                     value = eval(value, {}, {var: symbolic.Symbol(var)})
                 else:
                     value = int(eval(value, {}, {}))
@@ -326,6 +350,7 @@ class GUI(object):
             self.connections_apply(callid, argid)
             self.infer_lds()
             self.data_update()
+            self.state_write()
             self.UI_calls_set(callid, argid)
             self.UI_data_viz()
         elif isinstance(arg, signature.Data):
@@ -338,12 +363,13 @@ class GUI(object):
                 call[argid] = value
                 self.connections_update()
                 self.data_update()
+                self.state_write()
                 self.UI_call_set(callid, argid)
         elif isinstance(arg, (signature.Ld, signature.Inc)):
             # TODO: proper ld treatment
             call[argid] = int(value) if value else None
             self.data_update()
-        self.state_write()
+            self.state_write()
 
     # catch and handle data conflicts
     def data_override(self, callid, argid, value):
@@ -369,9 +395,12 @@ class GUI(object):
                 self.connections_apply(callid2)
         self.connections_apply(callid)
         self.infer_lds()
+        self.data_update()
+        self.state_write()
         self.UI_calls_set()
 
     def data_override_cancel(self, callid, argid, value):
+        self.state_write()
         self.UI_call_set(callid)
 
     # user interface
@@ -404,43 +433,43 @@ class GUI(object):
         self.sampler_set(samplername)
 
     def UI_nt_change(self, nt):
-        self.state["nt"] = nt
+        self.nt = nt
         self.state_write()
 
     def UI_nrep_change(self, nrep):
-        self.state["nrep"] = nrep
+        self.nrep = nrep
         self.state_write()
 
     def UI_usepapi_change(self, state):
-        self.state["usepapi"] = state
+        self.usepapi = state
         self.UI_counters_setvisible()
         self.state_write()
 
     def UI_useld_change(self, state):
-        self.state["useld"] = state
-        self.UI_useld_apply()
+        self.useld = state
         self.state_write()
+        self.UI_useld_apply()
 
     def UI_usevary_change(self, state):
-        self.state["usevary"] = state
+        self.usevary = state
         self.state_write()
-        # TODO
+        self.UI_usevary_apply()
 
     def UI_counters_change(self, counters):
-        self.state["counters"] = counters
+        self.counters = counters
         self.state_write()
 
     def UI_userange_change(self, state):
-        self.state["userange"] = state
-        self.UI_range_setvisible()
+        self.userange = state
         self.state_write()
+        self.UI_range_setvisible()
 
     def UI_rangevar_change(self, varname):
-        self.state["rangevar"] = varname
+        self.rangevar = varname
         self.state_write()
 
     def UI_range_change(self, range):
-        self.state["range"] = range
+        self.range = range
         self.state_write()
 
     def UI_call_add(self):
@@ -474,8 +503,16 @@ class GUI(object):
         else:
             self.arg_set(callid, argid, value)
 
+    def UI_vary_change(self, callid, argid, state):
+        name = self.calls[callid][argid]
+        if name is None:
+            return
+        self.vary[name] = state
+        self.state_write()
+        self.UI_data_viz()
+
     def UI_samplename_change(self, samplename):
-        self.state["samplename"] = samplename
+        self.samplename = samplename
         self.state_write()
 
     def UI_submit_click(self):

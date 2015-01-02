@@ -22,7 +22,6 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_window.setWindowTitle("Sampler")
         windowL = QtGui.QVBoxLayout()
         self.Qt_window.setLayout(windowL)
-        windowL.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
 
         # window > top
         topL = QtGui.QHBoxLayout()
@@ -131,13 +130,13 @@ class GUI_Qt(GUI, QtGui.QApplication):
         # window > calls
         callsSA = QtGui.QScrollArea()
         windowL.addWidget(callsSA)
-        callsSA.setWidgetResizable(True)
         callsSA.setMinimumHeight(500)
+        callsSA.setMinimumWidth(800)
         self.Qt_calls = QtGui.QWidget()
         callsSA.setWidget(self.Qt_calls)
         callsL = QtGui.QVBoxLayout()
         self.Qt_calls.setLayout(callsL)
-        callsL.setSizeConstraint(QtGui.QLayout.SetMinAndMaxSize)
+        callsL.setSizeConstraint(QtGui.QLayout.SetFixedSize)
         windowL.setStretch(2, 1)
         self.Qt_Qcalls = []
 
@@ -209,53 +208,50 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def UI_sampler_set(self):
         self.setting = True
         self.Qt_sampler.setCurrentIndex(
-            self.Qt_sampler.findText(self.state["sampler"]))
+            self.Qt_sampler.findText(self.sampler))
         self.setting = False
 
     def UI_nt_setmax(self):
         self.setting = True
         self.Qt_nt.clear()
-        sampler = self.samplers[self.state["sampler"]]
+        sampler = self.samplers[self.sampler]
         self.Qt_nt.addItems(map(str, range(1, sampler["nt_max"] + 1)))
         self.setting = False
 
     def UI_nt_set(self):
         self.setting = True
-        self.Qt_nt.setCurrentIndex(self.state["nt"] - 1)
+        self.Qt_nt.setCurrentIndex(self.nt - 1)
         self.setting = False
 
     def UI_nrep_set(self):
         self.setting = True
-        self.Qt_nrep.setText(str(self.state["nrep"]))
+        self.Qt_nrep.setText(str(self.nrep))
         self.setting = False
 
     def UI_info_set(self, text):
         self.Qt_info.setText(text)
 
     def UI_usepapi_setenabled(self):
-        sampler = self.samplers[self.state["sampler"]]
+        sampler = self.samplers[self.sampler]
         self.Qt_usepapi.setEnabled(sampler["papi_counters_max"] > 0)
 
     def UI_usepapi_set(self):
         self.setting = True
-        self.Qt_usepapi.setChecked(self.state["usepapi"])
+        self.Qt_usepapi.setChecked(self.usepapi)
         self.setting = False
 
     def UI_useld_set(self):
         self.setting = True
-        self.Qt_useld.setChecked(self.state["useld"])
+        self.Qt_useld.setChecked(self.useld)
         self.setting = False
 
     def UI_usevary_set(self):
         self.setting = True
-        self.Qt_usevary.setChecked(self.state["usevary"])
+        self.Qt_usevary.setChecked(self.usevary)
         self.setting = False
 
     def UI_counters_setvisible(self):
-        if self.state["usepapi"]:
-            self.Qt_counters.show()
-        else:
-            self.Qt_counters.hide()
+        self.Qt_counters.setVisible(self.usepapi)
 
     def UI_counters_setoptions(self):
         # delete old
@@ -263,7 +259,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         for Qcounter in Qcounters:
             Qcounter.deleteLater()
         # add new
-        sampler = self.samplers[self.state["sampler"]]
+        sampler = self.samplers[self.sampler]
         QcountersL = self.Qt_counters.layout()
         for _ in range(sampler["papi_counters_max"]):
             Qcounter = QtGui.QComboBox()
@@ -274,7 +270,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def UI_counters_set(self):
         self.setting = True
         Qcounters = self.Qt_counters.children()[1:]
-        for Qcounter, countername in zip(Qcounters, self.state["counters"]):
+        for Qcounter, countername in zip(Qcounters, self.counters):
             if not countername:
                 countername = ""
             Qcounter.setCurrentIndex(Qcounter.findText(countername))
@@ -282,27 +278,22 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
     def UI_userange_set(self):
         self.setting = True
-        self.Qt_userange.setChecked(self.state["userange"])
+        self.Qt_userange.setChecked(self.userange)
         self.setting = False
 
     def UI_range_setvisible(self):
-        if self.state["userange"]:
-            self.Qt_rangevar.show()
-            self.Qt_rangelabel.show()
-            self.Qt_range.show()
-        else:
-            self.Qt_rangevar.hide()
-            self.Qt_rangelabel.hide()
-            self.Qt_range.hide()
+        self.Qt_rangevar.setVisible(self.userange)
+        self.Qt_rangelabel.setVisible(self.userange)
+        self.Qt_range.setVisible(self.userange)
 
     def UI_rangevar_set(self):
         self.setting = True
-        self.Qt_rangevar.setText(self.state["rangevar"])
+        self.Qt_rangevar.setText(self.rangevar)
         self.setting = False
 
     def UI_range_set(self):
         self.setting = True
-        lower, upper, step = self.state["range"]
+        lower, upper, step = self.range
         if step:
             self.Qt_range.setText("%d:%d:%d" % (lower, step, upper))
         else:
@@ -322,6 +313,8 @@ class GUI_Qt(GUI, QtGui.QApplication):
             QcallsL.insertWidget(callid, Qcall)
             self.Qt_Qcalls.append(Qcall)
             Qcall.args_set()
+        QcallsL.invalidate()
+        QcallsL.activate()
         self.setting = False
 
     def UI_call_set(self, callid, fromargid=None):
@@ -345,9 +338,13 @@ class GUI_Qt(GUI, QtGui.QApplication):
         for Qcall in self.Qt_Qcalls:
             Qcall.useld_apply()
 
+    def UI_usevary_apply(self):
+        for Qcall in self.Qt_Qcalls:
+            Qcall.usevary_apply()
+
     def UI_samplename_set(self):
         self.setting = True
-        self.Qt_samplename.setText(self.state["samplename"])
+        self.Qt_samplename.setText(self.samplename)
         self.setting = False
 
     # event handlers
@@ -381,6 +378,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         if self.setting:
             return
         self.UI_usevary_change(self.Qt_usevary.isChecked())
+        self.UI_data_viz()
 
     def Qt_counter_change(self):
         if self.setting:

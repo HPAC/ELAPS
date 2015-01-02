@@ -31,9 +31,13 @@ class Signature(list):
         for arg in self:
             if hasattr(arg, "minstr") and arg.minstr:
                 arg.min = eval("lambda " + lambdaargs + ": " + arg.minstr)
-            if arg.attrstr:
-                arg.attr = eval("lambda " + lambdaargs + ": filter(None, (" +
-                                arg.attrstr + ",))")
+            else:
+                arg.min = None
+            if arg.propertiesstr:
+                arg.properties = eval("lambda " + lambdaargs + ": filter(None, ("
+                                      + arg.propertiesstr + ",))")
+            else:
+                arg.properties = lambda *args: ()
 
     def __str__(self):
         return (self[0].name + "(" +
@@ -75,16 +79,16 @@ class Call(list):
         for i, arg in enumerate(self.sig):
             if arg.name == name:
                 return self[i]
-        raise AttributeError(repr(self.sig[0].name) + " call has no attribute "
-                             + repr(name))
+        raise AttributeError("%r object has no attribute %r" %
+                             (self.__class__, name))
 
     def __setattr__(self, name, value):
         for i, arg in enumerate(self.sig):
             if arg.name == name:
                 self[i] = value
                 return
-        raise AttributeError(repr(self.sig[0].name) + " call has no attribute "
-                             + repr(name))
+        raise AttributeError("%r object has no attribute %r" %
+                             (self.__class__, name))
 
     def __copy__(self):
         return Call(self.sig, *self[1:])
@@ -101,7 +105,7 @@ class Call(list):
     def complete_once(self):
         l = list(self)
         for i, arg in enumerate(self.sig):
-            if self[i] is None and hasattr(arg, "min"):
+            if self[i] is None and arg.min:
                 try:
                     self[i] = arg.min(*l)
                 except TypeError:
@@ -115,7 +119,7 @@ class Call(list):
 
     def clear_completable(self):
         for i, arg in enumerate(self.sig):
-            if hasattr(arg, "min"):
+            if agrg.min:
                 self[i] = None
 
     def format_str(self):
@@ -126,19 +130,21 @@ class Call(list):
         return tuple(arg.format_sampler(val)
                      for arg, val in zip(self.sig, self))
 
-    def attributes(self):
-        return [arg.attr(*self) for arg in self.sig]
+    def properties(self, argid=None):
+        if argid:
+            return self.sig[argid].properties(*self)
+        return [arg.properties(*self) for arg in self.sig]
 
 
 class Arg(object):
     def __init__(self, name, attr=None):
         self.name = name
-        self.attrstr = attr
+        self.propertiesstr = attr
 
     def __repr__(self):
         args = [self.name]
-        if self.attrstr:
-            args.append(self.attrstr)
+        if self.propertiesstr:
+            args.append(self.propertiesstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
@@ -164,8 +170,8 @@ class Flag(Arg):
 
     def __repr__(self):
         args = [self.name, self.flags]
-        if self.attrstr:
-            args.append(self.attrstr)
+        if self.propertiesstr:
+            args.append(self.propertiesstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
@@ -181,10 +187,10 @@ class Side(Flag):
         args = []
         if self.name != "side":
             args.append(self.name)
-        if self.attrstr:
+        if self.propertiesstr:
             if self.name == "side":
                 args.append(None)
-            args.append(self.attrstr)
+            args.append(self.propertiesstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
@@ -197,10 +203,10 @@ class Uplo(Flag):
         args = []
         if self.name != "uplo":
             args.append(self.name)
-        if self.attrstr:
+        if self.propertiesstr:
             if self.name == "uplo":
                 args.append(None)
-            args.append(self.attrstr)
+            args.append(self.propertiesstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
@@ -213,10 +219,10 @@ class Trans(Flag):
         args = []
         if self.name != "trans":
             args.append(self.name)
-        if self.attrstr:
+        if self.propertiesstr:
             if self.name == "trans":
                 args.append(None)
-            args.append(self.attrstr)
+            args.append(self.propertiesstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
@@ -229,10 +235,10 @@ class Diag(Flag):
         args = []
         if self.name != "diag":
             args.append(self.name)
-        if self.attrstr:
+        if self.propertiesstr:
             if self.name == "diag":
                 args.append(None)
-            args.append(self.attrstr)
+            args.append(self.propertiesstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
@@ -246,10 +252,10 @@ class Dim(Arg):
         args = [self.name]
         if self.minstr:
             args.append(self.minstr)
-        if self.attrstr:
+        if self.propertiesstr:
             if not self.minstr:
                 args.append(None)
-            args.append(self.attrstr)
+            args.append(self.propertiesstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
@@ -267,10 +273,10 @@ class Scalar(Arg):
         args = []
         if self.name != "alpha":
             args.append(self.name)
-        if self.attrstr:
+        if self.propertiesstr:
             if self.name == "alpha":
                 args.append(None)
-            args.append(self.attrstr)
+            args.append(self.propertiesstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
@@ -313,10 +319,10 @@ class Data(Arg):
         args = [self.name]
         if self.minstr:
             args.append(self.minstr)
-        if self.attrstr:
+        if self.propertiesstr:
             if self.minstr:
                 args.append(None)
-            args.append(self.attrstr)
+            args.append(self.propertiesstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
@@ -366,10 +372,10 @@ class Ld(Arg):
         args = [self.name]
         if self.minstr:
             args.append(self.minstr)
-        if self.attrstr:
+        if self.propertiesstr:
             if self.minstr:
                 args.append(None)
-            args.append(self.attrstr)
+            args.append(self.propertiesstr)
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
