@@ -33,7 +33,10 @@ class Expression(object):
         return self
 
     def __call__(self, **kwargs):
-        return self.substitute(**kwargs).simplify()
+        expr = self.substitute(**kwargs)
+        if isinstance(expr, Expression):
+            return expr.simplify()
+        return expr
 
 
 class Symbol(Expression):
