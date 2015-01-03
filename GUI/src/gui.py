@@ -227,6 +227,7 @@ class GUI(object):
                 "min": mincall[argid],
                 "sym": symcall[argid].substitute(**argdict),
                 "symnames": symcall[argid].substitute(**argnamedict),
+                "type": call.sig[argid].__class__,
             }
             if name not in self.vary:
                 self.vary[name] = False
@@ -390,9 +391,17 @@ class GUI(object):
             call[argid] = int(value) if value else None
             self.data_update()
             self.state_write()
+        self.UI_submit_setenabled()
 
     # catch and handle data conflicts
     def data_override(self, callid, argid, value):
+        thistype = self.calls[callid].sig[argid].__class__
+        othertype = self.data[value]["type"]
+        if thistype != othertype:
+            self.UI_alert("Incompatible data types for %r: %r and %r" %
+                          (value, thistype.typename, othertype.typename))
+            self.UI_call_set(callid)
+            return
         call = self.calls[callid]
         oldvalue = call[argid]  # backup
         # apply change and check consistency
