@@ -300,9 +300,15 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.setting = True
         lower, upper, step = self.range
         if step:
-            self.Qt_range.setText("%d:%d:%d" % (lower, step, upper))
+            self.Qt_range.setText("%d:%d:%d" % (lower, step, upper - 1))
+        elif lower and upper:
+            self.Qt_range.setText("%d:%d" % (lower, upper - 1))
+        elif lower:
+            self.Qt_range.setText("%d:" % lower)
+        elif upper:
+            self.Qt_range.setText(":%d" % upper)
         else:
-            self.Qt_range.setText("%d:%d" % (lower, upper))
+            self.Qt_range.setText("")
         self.setting = False
 
     def UI_calls_init(self):
@@ -419,7 +425,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         parts = str(self.Qt_range.text()).split(":")
         lower = int(parts[0]) if len(parts) >= 1 and parts[0] else None
         step = int(parts[1]) if len(parts) == 3 and parts[1] else 1
-        upper = int(parts[-1]) if len(parts) >= 2 and parts[-1] else None
+        upper = int(parts[-1]) + 1 if len(parts) >= 2 and parts[-1] else None
         self.UI_range_change((lower, upper, step))
 
     def Qt_call_add(self):
