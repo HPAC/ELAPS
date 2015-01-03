@@ -143,12 +143,16 @@ class GUI(object):
         info += "\nBLAS:\t%s\n" % sampler["blas_name"]
         return info
 
-    def range_eval(self, expr):
+    def range_eval(self, expr, value=None):
+        if not self.userange:
+            if value is None:
+                return expr
+            return [expr]
+        if value is None:
+            return [self.range_eval(expr, val) for val in range(*self.range)]
         if isinstance(expr, symbolic.Expression):
-            rangevar = self.rangevar
-            return [expr(**{rangevar: value})
-                    for value in range(*self.range)]
-        return [expr]
+            return expr(**{self.rangevar: value})
+        return expr
 
     # simple data operations
     def data_maxdim(self):
