@@ -90,7 +90,8 @@ void Sampler::named_malloc(const vector<string> &tokens, size_t multiplicity=1) 
     mem.named_malloc<T>(name, size);
 }
 
-void Sampler::named_offset(const vector<string> &tokens) {
+template <typename T>
+void Sampler::named_offset(const vector<string> &tokens, size_t multiplicity=1) {
     // require 3 arguments: oldname, offset, newname
     if (tokens.size() < 4) {
         cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
@@ -104,7 +105,7 @@ void Sampler::named_offset(const vector<string> &tokens) {
     
     // parse arguments
     const string &oldname = tokens[1];
-    const ssize_t offset = atoi(tokens[2].c_str());
+    const ssize_t offset = atoi(tokens[2].c_str()) * multiplicity;
     const string &newname = tokens[3];
 
     // check existence of oldname
@@ -120,7 +121,7 @@ void Sampler::named_offset(const vector<string> &tokens) {
     }
 
     // alias a new offset
-    mem.named_offset(oldname, offset, newname);
+    mem.named_offset<T>(oldname, offset, newname);
 }
 
 void Sampler::named_free(const vector<string> &tokens) {
@@ -225,8 +226,12 @@ void Sampler::start() {
 
         // check for special commands
         const string &command = tokens[0];
+
+        // run sampler
         if (command == "go")
             go();
+
+        // malloc
         else if (command == "malloc")
             named_malloc<char>(tokens);
         else if (command == "imalloc")
@@ -239,14 +244,31 @@ void Sampler::start() {
             named_malloc<float>(tokens, 2);
         else if (command == "zmalloc")
             named_malloc<double>(tokens, 2); 
+
+        // offset
         else if (command == "offset")
-            named_offset(tokens);
+            named_offset<char>(tokens);
+        else if (command == "ioffset")
+            named_offset<int>(tokens);
+        else if (command == "foffset")
+            named_offset<float>(tokens);
+        else if (command == "doffset")
+            named_offset<double>(tokens);
+        else if (command == "coffset")
+            named_offset<float>(tokens, 2);
+        else if (command == "zoffset")
+            named_offset<double>(tokens, 2);
+
+        // free
         else if (command == "free")
             named_free(tokens);
+
+        // PAPI counters
         else if (command == "set_counters")
             set_counters(tokens);
+
+        // check for kernel call
         else
-            // check for kernel call
             add_call(tokens);
     }
 

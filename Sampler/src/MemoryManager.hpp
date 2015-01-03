@@ -42,7 +42,7 @@ class MemoryManager {
         // named memory
         bool named_exists(const std::string &name) const;
         template <typename T> void named_malloc(const std::string &name, std::size_t size);
-        void named_offset(const std::string &oldname, std::size_t offset, const std::string &newname);
+        template <typename T> void named_offset(const std::string &oldname, std::size_t offset, const std::string &newname);
         void *named_get(const std::string &name);
         void named_free(const std::string &name);
 

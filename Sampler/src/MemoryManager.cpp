@@ -108,13 +108,18 @@ template void MemoryManager::named_malloc<int>(const string &name, size_t size);
 template void MemoryManager::named_malloc<float>(const string &name, size_t size);
 template void MemoryManager::named_malloc<double>(const string &name, size_t size);
 
+template <typename T>
 void MemoryManager::named_offset(const string &oldname, size_t offset, const string &newname) {
     // create mapping from offset
-    named_map[newname] = named_map[oldname] + offset;
+    named_map[newname] = named_map[oldname] + offset * sizeof(T);
 
     // register alias
     named_aliases[oldname].push_back(newname);
 }
+template void MemoryManager::named_offset<char>(const string &oldname, size_t offset, const string &newname);
+template void MemoryManager::named_offset<int>(const string &oldname, size_t offset, const string &newname);
+template void MemoryManager::named_offset<float>(const string &oldname, size_t offset, const string &newname);
+template void MemoryManager::named_offset<double>(const string &oldname, size_t offset, const string &newname);
 
 void *MemoryManager::named_get(const string &name) {
     return (void *) named_map[name];
