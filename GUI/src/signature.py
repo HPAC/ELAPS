@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
-from copy import deepcopy
 import numbers
 
 
@@ -94,9 +93,6 @@ class Call(list):
 
     def __copy__(self):
         return Call(self.sig, *self[1:])
-
-    def __deepcopy__(self, memo):
-        return Call(self.sig, *[deepcopy(val, memo) for val in self[1:]])
 
     def copy(self):
         return self.__copy__()
