@@ -4,10 +4,10 @@ from __future__ import division, print_function
 from backend import Backend
 
 import subprocess
-import thrading
+import threading
 
 
-class BackendLocal(Backend):
+class local(Backend):
     def __init__(self):
         Backend.__init__(self)
         self.jobs = {}
@@ -29,7 +29,8 @@ class BackendLocal(Backend):
         header = options["header"]
         header += "export OPM_NUM_THREADS=" + options["nt"] + "\n"
         self.scripts[jobid] = header + script
-        t = thrading.Thread(target=self._run, args=(jobid, self.lastsubmitted))
+        t = threading.Thread(target=self._run,
+                             args=(jobid, self.lastsubmitted))
         t.start()
         self.lastsubmitted = jobid
         return jobid
