@@ -2,6 +2,7 @@
 from __future__ import division, print_function
 
 from copy import deepcopy
+import numbers
 
 
 class Signature(list):
@@ -300,14 +301,14 @@ class dScalar(Scalar):
 
 class cScalar(Scalar):
     def format_sampler(self, val):
-        if isinstance(val, (int, long, float, complex)):
+        if isinstance(val, numbers.Number):
             val = complex(val)
             return str(val.real) + "," + str(val.imag)
 
 
 class zScalar(Scalar):
     def format_sampler(self, val):
-        if isinstance(val, (int, long, float, complex)):
+        if isinstance(val, numbers.Number):
             val = complex(val)
             return str(val.real) + "," + str(val.imag)
 
