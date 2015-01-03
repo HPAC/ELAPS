@@ -7,6 +7,7 @@ import symbolic
 import sys
 import os
 from copy import deepcopy
+import imp
 from collections import defaultdict
 
 import traceback
@@ -20,6 +21,7 @@ class GUI(object):
         if os.path.split(os.getcwd())[1] == "src":
             self.rootpath = os.path.join("..", "..")
 
+        self.backends_init()
         self.samplers_init()
         self.signatures_init()
         self.state_init()
@@ -48,16 +50,33 @@ class GUI(object):
         print(*args, file=sys.stderr)
 
     # initializers
+    def backends_init(self):
+        self.backends = {}
+        backendpath = os.path.join(self.rootpath, "GUI", "src", "backends")
+        for filename in os.listdir(backendpath):
+            if not filename[-3:] == ".py":
+                continue
+            name = filename[:-3]
+            module = imp.load_source(name, os.path.join(backendpath, filename))
+            self.backends[name] = getattr(module, name)
+        self.log("loaded", len(self.backends), "backends:",
+                 *sorted(self.backends))
+
     def samplers_init(self):
         self.samplers = {}
         samplerpath = os.path.join(self.rootpath, "Sampler", "build")
         for path, dirs, files in os.walk(samplerpath, followlinks=True):
             if "info.py" in files and "sampler.x" in files:
                 with open(os.path.join(path, "info.py")) as fin:
-                    system = eval(fin.read())
-                system["sampler"] = os.path.join(path, "sampler.x")
-                self.samplers[system["name"]] = system
-        self.log("loaded", len(self.samplers), "samplers")
+                    sampler = eval(fin.read())
+                if sampler["backend"] not in self.backends:
+                    self.alert("missing backend %r for sampler %r"
+                               % (sampler["backend"], sampler["name"]))
+                    continue
+                sampler["sampler"] = os.path.join(path, "sampler.x")
+                self.samplers[sampler["name"]] = sampler
+        self.log("loaded", len(self.samplers), "samplers:",
+                 *sorted(self.samplers))
 
     def signatures_init(self):
         self.signatures = {}
@@ -68,14 +87,14 @@ class GUI(object):
                     continue
                 sig = signature.Signature(file=os.path.join(path, filename))
                 self.signatures[str(sig[0])] = sig
-        self.log("loaded", len(self.signatures), "signatures")
+        self.log("loaded", len(self.signatures), "signatures:",
+                 *sorted(self.signatures))
 
     def state_init(self):
         self.statefile = os.path.join(self.rootpath, "GUI", ".state.py")
         try:
-            from symbolic import *
             with open(self.statefile) as fin:
-                self.state = eval(fin.read())
+                self.state = eval(fin.read(), symbolic.__dict__)
             self.log("loaded state from", self.statefile)
         except:
             sampler = self.samplers[min(self.samplers)]
