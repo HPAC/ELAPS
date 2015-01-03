@@ -70,7 +70,7 @@ class Call(list):
         self.__dict__["sig"] = sig
 
     def __str__(self):
-        return self[0] + "(" + ", ".join(map(str, self[1:])) + ")"
+        return str(self[0]) + "(" + ", ".join(map(str, self[1:])) + ")"
 
     def __repr__(self):
         return (self.__class__.__name__ + "(" + repr(self.sig) + ", " +
@@ -117,7 +117,7 @@ class Call(list):
 
     def clear_completable(self):
         for i, arg in enumerate(self.sig):
-            if agrg.min:
+            if arg.min:
                 self[i] = None
 
     def properties(self, argid=None):
@@ -130,9 +130,7 @@ class Call(list):
                      for arg, val in zip(self.sig, self))
 
     def format_sampler(self):
-        return tuple(arg.format_sampler(val)
-                     for arg, val in zip(self.sig, self))
-
+        return [arg.format_sampler(val) for arg, val in zip(self.sig, self)]
 
 
 class Arg(object):
@@ -300,6 +298,7 @@ class cScalar(Scalar):
         if isinstance(val, numbers.Number):
             val = complex(val)
             return str(val.real) + "," + str(val.imag)
+        return val
 
 
 class zScalar(Scalar):
@@ -307,6 +306,7 @@ class zScalar(Scalar):
         if isinstance(val, numbers.Number):
             val = complex(val)
             return str(val.real) + "," + str(val.imag)
+        return val
 
 
 class Data(Arg):
@@ -352,14 +352,14 @@ class cData(Data):
     def format_sampler(self, val):
         if isinstance(val, int):
             val *= 2
-        return self.format(val)
+        return val
 
 
 class zData(Data):
     def format_sampler(self, val):
         if isinstance(val, int):
             val *= 2
-        return self.format(val)
+        return val
 
 
 class Ld(Arg):
