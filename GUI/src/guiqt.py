@@ -160,9 +160,9 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_samplename.textChanged.connect(self.Qt_samplename_change)
 
         # window > bottom > submit
-        submit = QtGui.QPushButton("submit")
-        bottomL.addWidget(submit)
-        submit.clicked.connect(self.Qt_submit_click)
+        self.Qt_submit = QtGui.QPushButton("submit")
+        bottomL.addWidget(self.Qt_submit)
+        self.Qt_submit.clicked.connect(self.Qt_submit_click)
 
         # window
         self.Qt_window.show()
@@ -346,6 +346,14 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.setting = True
         self.Qt_samplename.setText(self.samplename)
         self.setting = False
+
+    def UI_submit_setenabled(self):
+        if any(not all(call) for call in self.calls):
+            self.Qt_submit.setEnabled(False)
+        elif any(not isinstance(call, signature.Call) for call in self.calls):
+            self.Qt_submit.setEnabled(False)
+        else:
+            self.Qt_submit.setEnabled(True)
 
     # event handlers
     def Qt_sampler_change(self):
