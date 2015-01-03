@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
+import numbers
+
 
 class Expression(object):
     def __neg__(self):
@@ -103,7 +105,7 @@ class Minus(Operation):
             arg = arg.simplify()
         if isinstance(arg, Minus):
             return arg[1]
-        if isinstance(arg, (int, long, float, complex)):
+        if isinstance(arg, numbers.Number):
             return -arg
         return self.__class__(arg)
 
@@ -121,7 +123,7 @@ class Abs(Operation):
             arg = arg.simplify()
         if isinstance(arg, Abs):
             return arg[1]
-        if istinstance(Arg, (int, long, float, complex)):
+        if isinstance(arg, numbers.Number):
             return abs(arg)
         return self.__class__(arg)
 
@@ -145,7 +147,7 @@ class Prod(Operation):
                 arg = arg.simplify()
             if isinstance(arg, Prod):
                 args += arg[1:]
-            elif isinstance(arg, (int, long, float, complex)):
+            elif isinstance(arg, numbers.Number):
                 num *= arg
             else:
                 args.append(arg)
@@ -171,7 +173,7 @@ class Plus(Operation):
                 arg = arg.simplify()
             if isinstance(arg, Plus):
                 args += arg[1:]
-            elif isinstance(arg, (int, long, float, complex)):
+            elif isinstance(arg, numbers.Number):
                 num += arg
             else:
                 args.append(arg)
