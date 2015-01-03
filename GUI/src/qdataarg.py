@@ -206,6 +206,7 @@ class QDataArg(QtGui.QWidget):
                 QtCore.QLine(points[1][1], points[0][1]),  # |
                 QtCore.QLine(points[0][1], points[0][0]),  # -
             ]
+        self.linesmaxback = []
         if signature.symm in properties or signature.herm in properties:
             self.linesmaxback = [
                 QtCore.QLine(points[0][0], points[1][0]),  # |
@@ -213,8 +214,6 @@ class QDataArg(QtGui.QWidget):
                 QtCore.QLine(points[1][1], points[0][1]),  # |
                 QtCore.QLine(points[0][1], points[0][0]),  # -
             ]
-        else:
-            self.linesmaxback = []
         # minimum
         h, w = dimmin
         points = [[QtCore.QPoint(woff + x, hoff + y)
@@ -244,6 +243,7 @@ class QDataArg(QtGui.QWidget):
                 QtCore.QLine(points[1][1], points[0][1]),  # |
                 QtCore.QLine(points[0][1], points[0][0]),  # -
             ]
+        self.linesminback = []
         if signature.symm in properties or signature.herm in properties:
             self.linesminback = [
                 QtCore.QLine(points[0][0], points[1][0]),  # |
@@ -251,9 +251,6 @@ class QDataArg(QtGui.QWidget):
                 QtCore.QLine(points[1][1], points[0][1]),  # |
                 QtCore.QLine(points[0][1], points[0][0]),  # -
             ]
-        else:
-            self.linesminback = []
-
 
     def viz_tensor(self, dimmin, dimmax):
         # compute total size and offsets

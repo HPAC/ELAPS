@@ -34,8 +34,9 @@ class Signature(list):
             else:
                 arg.min = None
             if arg.propertiesstr:
-                arg.properties = eval("lambda " + lambdaargs + ": filter(None, ("
-                                      + arg.propertiesstr + ",))")
+                arg.properties = eval("lambda " + lambdaargs +
+                                      ": filter(None, (" + arg.propertiesstr +
+                                      ",))")
             else:
                 arg.properties = lambda *args: ()
 
@@ -122,6 +123,11 @@ class Call(list):
             if agrg.min:
                 self[i] = None
 
+    def properties(self, argid=None):
+        if argid:
+            return self.sig[argid].properties(*self)
+        return [arg.properties(*self) for arg in self.sig]
+
     def format_str(self):
         return tuple(arg.format_str(val)
                      for arg, val in zip(self.sig, self))
@@ -130,10 +136,6 @@ class Call(list):
         return tuple(arg.format_sampler(val)
                      for arg, val in zip(self.sig, self))
 
-    def properties(self, argid=None):
-        if argid:
-            return self.sig[argid].properties(*self)
-        return [arg.properties(*self) for arg in self.sig]
 
 
 class Arg(object):
