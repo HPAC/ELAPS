@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
+import signature
 from gui import GUI
 from qcall import QCall
-from qdataarg import QDataArg
 
 import sys
 
