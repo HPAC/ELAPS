@@ -31,7 +31,7 @@ class QDataArg(QtGui.QWidget):
 
         # name
         self.Qt_name = QtGui.QLineEdit()
-        layout.addWidget(self.Qt_name, 1, QtCore.Qt.AlignHCenter|
+        layout.addWidget(self.Qt_name, 1, QtCore.Qt.AlignHCenter |
                          QtCore.Qt.AlignVCenter)
         self.Qt_name.setAlignment(QtCore.Qt.AlignHCenter)
         self.Qt_name.textChanged.connect(self.change)
@@ -130,7 +130,6 @@ class QDataArg(QtGui.QWidget):
             self.viz_none()
             return
         if not isinstance(data["sym"], symbolic.Prod):
-            # TODO
             self.app.alert("don't know how to vizualize", data["sym"])
             self.viz_none()
             return
@@ -154,13 +153,13 @@ class QDataArg(QtGui.QWidget):
             self.viz_tensor(dimmin, dimmax)
 
     def viz_none(self):
+        hoff, woff = self.setsize(0, 0)
         self.polygonmax = None
         self.linesmaxfront = None
         self.linesmaxback = None
         self.polygonmin = None
         self.linesminfront = None
         self.linesminback = None
-        self.setMinimumSize(self.Qt_name.minimumSize())
 
     def viz_vector(self, dimmin, dimmax):
         self.viz_matrix(dimmin + [1], dimmax + [1])
