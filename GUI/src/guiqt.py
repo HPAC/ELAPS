@@ -193,6 +193,11 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def UI_start(self):
         sys.exit(self.exec_())
 
+    # dialogs
+    def UI_alert(self, msg):
+        ret = QtGui.QMessageBox.warning(self.Qt_window, msg)
+        return ret == QtGui.QMessageBox.Ok
+
     def UI_choose_data_override(self, callid, argid, value):
         ret = QtGui.QMessageBox.warning(
             self.Qt_window, "Incompatible sizes for" + value,
