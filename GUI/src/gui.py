@@ -428,8 +428,79 @@ class GUI(object):
         self.UI_calls_set()
 
     def data_override_cancel(self, callid, argid, value):
-        self.state_write()
         self.UI_call_set(callid)
+
+    # generate final calls
+    def generate_cmds(self):
+        cmds = []
+
+        rangevals = [0]
+        if self.userange:
+            rangevals = range(*self.range)
+
+        if len(self.counters):
+            cmds.append(["########################################"])
+            cmds.append(["# counters                             #"])
+            cmds.append(["########################################"])
+            cmds.append([])
+            cmds.append(["set_counters"] + self.counters)
+            cmds.append([])
+            cmds.append([])
+
+        cmds.append(["########################################"])
+        cmds.append(["# data                                 #"])
+        cmds.append(["########################################"])
+
+        # data
+        cmdprefixes = {
+            signature.Data: "",
+            signature.iData: "i",
+            signature.sData: "s",
+            signature.dData: "d",
+            signature.cData: "s",
+            signature.zData: "z",
+        }
+        for name, data in self.data.iteritems():
+            cmds.append([])
+            cmds.append(["#", name])
+            cmdprefix = cmdprefixes[data["type"]]
+            size = max(self.range_eval(data["comp"]))
+            if not self.vary[name]:
+                cmds.append([cmdprefix + "malloc", name, size])
+                continue
+            # argument varies
+            fullsize = size * self.nrep
+            cmds.append([cmdprefix + "malloc", name, fullsize])
+            rangesizes = self.range_eval(data["comp"])
+            for rangeval, rangesize in zip(rangevals, rangesizes):
+                if self.userange:
+                    cmds.append(["#", self.rangevar, "=", rangeval])
+                for rep in range(self.nrep):
+                    cmds.append([cmdprefix + "offset", name, rep * rangesize,
+                                 "%s_%d_%d" % (name, rangeval, rep)])
+        cmds.append([])
+        cmds.append([])
+
+        # calls
+        cmds.append(["########################################"])
+        cmds.append(["# calls                                #"])
+        cmds.append(["########################################"])
+        cmds.append([])
+        for rangeid, rangeval in enumerate(rangevals):
+            if self.userange:
+                cmds.append(["#", self.rangevar, "=", rangeval])
+            for rep in range(self.nrep):
+                for call in self.calls:
+                    call = call.sig(*[self.range_eval(arg, rangeval)
+                                      for arg in call[1:]])
+                    cmd = call.format_sampler()
+                    for argid in call.sig.dataargs():
+                        name = call[argid]
+                        if self.vary[name]:
+                            cmd[argid] = "%s_%d_%d" % (name, rangeval, rep)
+                    cmds.append(cmd)
+
+        return cmds
 
     # user interface
     def UI_init(self):
@@ -454,6 +525,7 @@ class GUI(object):
         self.UI_range_set()
         self.UI_calls_init()
         self.UI_samplename_set()
+        self.UI_submit_setenabled()
 
     # event handlers
     def UI_sampler_change(self, samplername):
@@ -498,18 +570,21 @@ class GUI(object):
 
     def UI_range_change(self, range):
         self.range = range
+        self.data_update()
         self.state_write()
 
     def UI_call_add(self):
         self.calls.append([""])
         self.state_write()
         self.UI_calls_init()
+        self.UI_submit_setenabled()
 
     def UI_call_remove(self, callid):
         del self.calls[callid]
         self.connections_update()
         self.state_write()
         self.UI_calls_init()
+        self.UI_submit_setenabled()
 
     def UI_call_moveup(self, callid):
         calls = self.calls
@@ -544,4 +619,6 @@ class GUI(object):
         self.state_write()
 
     def UI_submit_click(self):
-        self.alert("submit_click")
+        cmds = self.generate_cmds()
+        for rawcall in cmds:
+            print(*rawcall)
