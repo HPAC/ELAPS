@@ -22,7 +22,6 @@ class QCall(QtGui.QGroupBox):
         routines = [r for r in self.app.signatures.keys()
                     if r in sampler["kernels"]]
 
-
         layout = QtGui.QGridLayout()
         self.setLayout(layout)
         layout.setContentsMargins(5, 5, 5, 5)
@@ -68,7 +67,7 @@ class QCall(QtGui.QGroupBox):
         layout.addWidget(routine, 1, 0)
         routine.callid = self.callid
         routine.argid = 0
-        routine.setProperty("valid", False)
+        routine.setProperty("invalid", True)
         routine.textChanged.connect(self.arg_change)
         completer = QtGui.QCompleter(routines, routine)
         routine.setCompleter(completer)
@@ -100,8 +99,7 @@ class QCall(QtGui.QGroupBox):
 
     def args_init(self):
         call = self.app.calls[self.callid]
-        assert isinstance(call, signature.Call)
-        assert len(self.Qt_args) == 1
+        self.Qt_args[0].setProperty("invalid", False)
         for argid, arg in enumerate(call.sig):
             if isinstance(arg, signature.Name):
                 continue  # routine name
@@ -128,6 +126,7 @@ class QCall(QtGui.QGroupBox):
         self.usevary_apply()
 
     def args_clear(self):
+        self.Qt_args[0].setProperty("invalid", True)
         for Qarg in self.Qt_args[1:]:
             Qarg.deleteLater()
         self.Qt_args = self.Qt_args[:1]
@@ -199,7 +198,6 @@ class QCall(QtGui.QGroupBox):
             # adjust widt no matter where the change came from
             val = str(sender.text())
             if sender.argid != 0:
-                size = sender.minimumSizeHint()
                 width = sender.fontMetrics().width(val)
                 width += sender.minimumSizeHint().width()
                 height = sender.sizeHint().height()
