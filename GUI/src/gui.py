@@ -6,11 +6,8 @@ import symbolic
 
 import sys
 import os
-from copy import deepcopy
 import imp
 from collections import defaultdict
-
-import traceback
 
 
 class GUI(object):
