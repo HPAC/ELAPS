@@ -183,7 +183,7 @@ class GUI(object):
         for i, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
                 if self.useld and not isinstance(call2[i],
-                                                          symbolc.Expression):
+                                                 symbolic.Expression):
                     call[i] = max(call2[i], call[i])
                 else:
                     call[i] = call2[i]
@@ -231,7 +231,6 @@ class GUI(object):
             }
             if name not in self.vary:
                 self.vary[name] = False
-        # TODO: attributes (upper, lower, ...)
 
     def connections_update(self):
         # compute symbolic sizes for all calls
@@ -298,9 +297,9 @@ class GUI(object):
         for counter in self.counters:
             if counter in sampler["papi_counters_avail"]:
                 counters.append(counter)
-        counters = counternames[:papi_counters_max]
-        counters += (papi_counters_max - len(counternames)) * [None]
-        self.counters = counternames
+        counters = counters[:papi_counters_max]
+        counters += (papi_counters_max - len(counters)) * [None]
+        self.counters = counters
 
         # remove unavailable calls
         # TODO
