@@ -282,18 +282,20 @@ class Scalar(Arg):
 
 
 class iScalar(Scalar):
-    pass
+    typename = "integer"
 
 
 class sScalar(Scalar):
-    pass
+    typename = "single precision"
 
 
 class dScalar(Scalar):
-    pass
+    typename = "double precision"
 
 
 class cScalar(Scalar):
+    typename = "single precision complex"
+
     def format_sampler(self, val):
         if isinstance(val, numbers.Number):
             val = complex(val)
@@ -302,6 +304,8 @@ class cScalar(Scalar):
 
 
 class zScalar(Scalar):
+    typename = "double precision complex"
+
     def format_sampler(self, val):
         if isinstance(val, numbers.Number):
             val = complex(val)
@@ -337,18 +341,20 @@ class Data(Arg):
 
 
 class iData(Data):
-    pass
+    typename = "integer"
 
 
 class sData(Data):
-    pass
+    typename = "single precision"
 
 
 class dData(Data):
-    pass
+    typename = "double precision"
 
 
 class cData(Data):
+    typename = "single precision complex"
+
     def format_sampler(self, val):
         if isinstance(val, int):
             val *= 2
@@ -356,6 +362,8 @@ class cData(Data):
 
 
 class zData(Data):
+    typename = "double precision complex"
+
     def format_sampler(self, val):
         if isinstance(val, int):
             val *= 2
