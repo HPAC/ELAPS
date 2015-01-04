@@ -91,11 +91,11 @@ class GUI(object):
         self.statefile = os.path.join(self.rootpath, "GUI", ".state.py")
         try:
             with open(self.statefile) as fin:
-                self.state = eval(fin.read(), symbolic.__dict__)
+                state = eval(fin.read(), symbolic.__dict__)
             self.log("loaded state from", self.statefile)
         except:
             sampler = self.samplers[min(self.samplers)]
-            self.state = {
+            state = {
                 "sampler": sampler["name"],
                 "nt": 1,
                 "nrep": 10,
@@ -107,25 +107,32 @@ class GUI(object):
                 "range": (8, 1000, 32),
                 "counters": sampler["papi_counters_max"] * [None],
                 "samplename": "",
-                "calls": [("",)],
+                "calls": [[""]],
                 "vary": {},
                 "datascale": 100,
             }
             if "dgemm_" in sampler["kernels"]:
-                self.calls[0] = ("dgemm_", "N", "N", 1000, 1000, 1000,
-                                 1, "A", 1000, "B", 1000, 1, "C", 1000)
-        for callid, call in enumerate(self.calls):
-            if call[0] in self.signatures:
-                self.calls[callid] = self.signatures[call[0]](*call[1:])
+                state["calls"][0] = ("dgemm_", "N", "N", 1000, 1000, 1000,
+                                     1, "A", 1000, "B", 1000, 1, "C", 1000)
+        self.state_fromflat(state)
         self.connections_update()
         self.data_update()
         self.state_write()
 
     # utility type routines
-    def state_flat(self):
+    def state_toflat(self):
         state = self.state.copy()
         state["calls"] = map(list, self.calls)
         return state
+
+    def state_fromflat(self, state):
+        state = state.copy()
+        calls = state["calls"]
+        for callid, call in enumerate(calls):
+            if call[0] in self.signatures:
+                calls[callid] = self.signatures[call[0]](*call[1:])
+        state["calls"] = calls
+        self.state = state
 
     def state_write(self):
         with open(self.statefile, "w") as fout:
