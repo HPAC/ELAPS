@@ -101,7 +101,7 @@ void MemoryManager::named_malloc(const string &name, size_t size) {
     named_aliases[name] = vector<string>();
 
     // put random data of correspoindng type
-    randomize<T>(named_mem[name], size);
+    randomize<T>(named_map[name], size);
 }
 template void MemoryManager::named_malloc<char>(const string &name, size_t size);
 template void MemoryManager::named_malloc<int>(const string &name, size_t size);
@@ -127,8 +127,11 @@ void *MemoryManager::named_get(const string &name) {
 
 void MemoryManager::named_free(const string &name) {
     // delete all aliases
-    while (named_aliases[name].size())
-        named_free(named_aliases.begin()->first);
+    vector<string> &aliases = named_aliases[name];
+    while (aliases.size()) {
+        named_free(aliases.back());
+        aliases.pop_back();
+    }
     named_aliases.erase(name);
 
     // delete mapping

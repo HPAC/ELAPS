@@ -68,8 +68,8 @@ void Sampler::named_malloc(const vector<string> &tokens, size_t multiplicity=1) 
     const string &name = tokens[1];
     const size_t size = atoi(tokens[2].c_str()) * multiplicity;
 
-    // check non-existance of name
-    if (!mem.named_exists(name)) {
+    // variable must not exist yet
+    if (mem.named_exists(name)) {
         cerr << "Variable already exists: " << name << " (command ignored)" << endl;
         return;
     }
@@ -108,14 +108,14 @@ void Sampler::named_offset(const vector<string> &tokens, size_t multiplicity=1) 
     const ssize_t offset = atoi(tokens[2].c_str()) * multiplicity;
     const string &newname = tokens[3];
 
-    // check existence of oldname
+    // oldname must exist
     if (!mem.named_exists(oldname)) {
         cerr << "Unknown variable: " << oldname << " (command ignored)" << endl;
         return;
     }
     // TODO: check offset conversion errors
-    // check non-existance of newname
-    if (!mem.named_exists(oldname)) {
+    // newname must not exist yet
+    if (mem.named_exists(newname)) {
         cerr << "Variable already exists: " << newname << " (command ignored)" << endl;
         return;
     }
