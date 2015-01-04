@@ -6,7 +6,7 @@ class Backend(object):
     def __init__(self):
         pass
 
-    def submit(self, options, script):
+    def submit(self, script, **options):
         raise NotImplementedError(self.__class__.__name__
                                   + " does not implement 'submit'")
 
