@@ -7,6 +7,7 @@ import symbolic
 import sys
 import os
 import imp
+import pprint
 from collections import defaultdict
 
 
@@ -136,11 +137,7 @@ class GUI(object):
 
     def state_write(self):
         with open(self.statefile, "w") as fout:
-            try:
-                import pprint
-                print(pprint.pformat(self.state_flat(), 4), file=fout)
-            except:
-                print(repr(self.state_flat()), file=fout)
+            print(pprint.pformat(self.state_toflat(), 4), file=fout)
 
     def get_infostr(self):
         sampler = self.samplers[self.sampler]
@@ -513,14 +510,19 @@ class GUI(object):
 
     def generate_script(self, cmds):
         filename = os.path.join(self.rootpath, "meas",
-                                self.samplename + ".smpl")
-        script = "echo \"{'state': " + repr(self.state_flat())
-        script += ", 'rawdata': '''\" > " + filename + "\n"
+                                self.samplename + ".pysmpl")
+        script = "cat > " + filename + " << 1234END5678\n"
+        script += "{'state':\n" + pprint.pformat(self.state_toflat(), 4)
+        script += ",\n 'cmds': [\n"
+        for cmd in cmds:
+            script += "\t" + repr(cmd) + ",\n"
+        script += "],\n 'rawdata': '''\n"
+        script += "1234END5678\n"
         script += self.samplers[self.sampler]["sampler"] + " >> " + filename
-        script += " <<1234CMDEND5678\n"
+        script += " <<1234END5678\n"
         for cmd in cmds:
             script += "\t".join(map(str, cmd)) + "\n"
-        script += "1234CMDEND5678\n"
+        script += "1234END5678\n"
         script += "echo \"'''}\" >> " + filename
         return script
 
@@ -528,9 +530,7 @@ class GUI(object):
         sampler = self.samplers[self.sampler]
         cmds = self.generate_cmds()
         script = self.generate_script(cmds)
-        with open("test.sh", "w") as fout:
-            print(script, file=fout)
-        # self.backends[sampler["backend"]].submit(script, nt=self.nt)
+        self.backends[sampler["backend"]].submit(script, nt=self.nt)
 
     # user interface
     def UI_init(self):
