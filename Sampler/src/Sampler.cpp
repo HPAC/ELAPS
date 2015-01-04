@@ -212,6 +212,10 @@ void Sampler::start() {
         // clear comments
         line = line.substr(0, line.find_first_of("#"));
 
+        // ignore empty lines
+        if (line.size() == 0)
+            continue;
+
         // remove leading spaces
         line = line.substr(line.find_first_not_of(" \t\n\v\f\r"));
 
