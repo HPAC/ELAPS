@@ -1,4 +1,5 @@
 #include "Sampler.hpp"
+#include <cstdlib>
 
 #include CFG_H
 
@@ -6,7 +7,7 @@ extern "C" {
 #include KERNEL_H
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     Sampler sampler;
 
     // load signatures
@@ -31,4 +32,6 @@ int main(int argc, char *argv[]) {
 
     // start the sampler
     sampler.start();
+
+    return EXIT_SUCCESS;
 }
