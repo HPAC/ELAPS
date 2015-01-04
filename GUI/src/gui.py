@@ -55,7 +55,7 @@ class GUI(object):
                 continue
             name = filename[:-3]
             module = imp.load_source(name, os.path.join(backendpath, filename))
-            self.backends[name] = getattr(module, name)
+            self.backends[name] = getattr(module, name)()
         self.log("loaded", len(self.backends), "backends:",
                  *sorted(self.backends))
 
@@ -430,7 +430,7 @@ class GUI(object):
     def data_override_cancel(self, callid, argid, value):
         self.UI_call_set(callid)
 
-    # generate final calls
+    # submit
     def generate_cmds(self):
         cmds = []
 
@@ -462,7 +462,7 @@ class GUI(object):
         }
         for name, data in self.data.iteritems():
             cmds.append([])
-            cmds.append(["#", name])
+            cmds.append(["# %s" % name])
             cmdprefix = cmdprefixes[data["type"]]
             size = max(self.range_eval(data["comp"]))
             if not self.vary[name]:
@@ -474,7 +474,7 @@ class GUI(object):
             rangesizes = self.range_eval(data["comp"])
             for rangeval, rangesize in zip(rangevals, rangesizes):
                 if self.userange:
-                    cmds.append(["#", self.rangevar, "=", rangeval])
+                    cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
                 for rep in range(self.nrep):
                     cmds.append([cmdprefix + "offset", name, rep * rangesize,
                                  "%s_%d_%d" % (name, rangeval, rep)])
@@ -488,7 +488,7 @@ class GUI(object):
         cmds.append([])
         for rangeid, rangeval in enumerate(rangevals):
             if self.userange:
-                cmds.append(["#", self.rangevar, "=", rangeval])
+                cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
             for rep in range(self.nrep):
                 for call in self.calls:
                     call = call.sig(*[self.range_eval(arg, rangeval)
@@ -501,6 +501,27 @@ class GUI(object):
                     cmds.append(cmd)
 
         return cmds
+
+    def generate_script(self, cmds):
+        filename = os.path.join(self.rootpath, "meas",
+                                self.samplename + ".smpl")
+        script = "echo \"{'state': " + repr(self.state_flat())
+        script += ", 'rawdata': '''\" > " + filename + "\n"
+        script += self.samplers[self.sampler]["sampler"] + " >> " + filename
+        script += " <<1234CMDEND5678\n"
+        for cmd in cmds:
+            script += "\t".join(map(str, cmd)) + "\n"
+        script += "1234CMDEND5678\n"
+        script += "echo \"'''}\" >> " + filename
+        return script
+
+    def submit(self):
+        sampler = self.samplers[self.sampler]
+        cmds = self.generate_cmds()
+        script = self.generate_script(cmds)
+        with open("test.sh", "w") as fout:
+            print(script, file=fout)
+        # self.backends[sampler["backend"]].submit(script, nt=self.nt)
 
     # user interface
     def UI_init(self):
@@ -619,6 +640,4 @@ class GUI(object):
         self.state_write()
 
     def UI_submit_click(self):
-        cmds = self.generate_cmds()
-        for rawcall in cmds:
-            print(*rawcall)
+        self.submit()
