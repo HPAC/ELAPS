@@ -122,16 +122,18 @@ class GUI(object):
         self.state_write()
 
     # utility type routines
+    def state_flat(self):
+        state = self.state.copy()
+        state["calls"] = map(list, self.calls)
+        return state
+
     def state_write(self):
-        callobjects = self.calls
-        self.calls = map(list, self.calls)
         with open(self.statefile, "w") as fout:
             try:
                 import pprint
-                print(pprint.pformat(self.state, 4), file=fout)
+                print(pprint.pformat(self.state_flat(), 4), file=fout)
             except:
-                print(repr(self.state), file=fout)
-        self.calls = callobjects
+                print(repr(self.state_flat()), file=fout)
 
     def get_infostr(self):
         sampler = self.samplers[self.sampler]
