@@ -515,7 +515,7 @@ class GUI(object):
     def generate_script(self, cmds):
         ofilename = os.path.join(self.rootpath, "meas",
                                  self.samplename + ".pysmpl")
-        efilename = os.path.join(self.rootmath, "meas",
+        efilename = os.path.join(self.rootpath, "meas",
                                  self.samplename + ".err")
         script = "cat > " + ofilename + " 2> " + efilename
         script += " << 1234END5678\n"
@@ -530,7 +530,7 @@ class GUI(object):
         for cmd in cmds:
             script += "\t".join(map(str, cmd)) + "\n"
         script += "1234END5678\n"
-        script += "echo \"'''}\" >> " + ofilename + " 2>> " + efilename
+        script += "echo \"'''}\" >> " + ofilename + " 2>> " + efilename + "\n"
         script += "[ -s " + efilename + " ] || rm " + efilename
         return script
 
