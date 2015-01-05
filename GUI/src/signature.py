@@ -103,11 +103,14 @@ class Call(list):
     def complete_once(self):
         l = list(self)
         for i, arg in enumerate(self.sig):
-            if self[i] is None and arg.min:
-                try:
-                    self[i] = arg.min(*l)
-                except TypeError:
-                    pass  # probably a None
+            if self[i] is None:
+                if arg.min:
+                    try:
+                        self[i] = arg.min(*l)
+                    except TypeError:
+                        pass  # probably a None
+                else:
+                    self[i] = arg.default()
 
     def complete(self):
         calls = []
