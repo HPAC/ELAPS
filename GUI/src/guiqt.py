@@ -194,8 +194,10 @@ class GUI_Qt(GUI, QtGui.QApplication):
         sys.exit(self.exec_())
 
     # dialogs
-    def UI_alert(self, msg):
-        ret = QtGui.QMessageBox.warning(self.Qt_window, msg)
+    def UI_alert(self, *args, **kwargs):
+        msg = " ".join(map(str, args))
+        title = kwargs.get("title", "")
+        ret = QtGui.QMessageBox.information(self.Qt_window, title, msg)
         return ret == QtGui.QMessageBox.Ok
 
     def UI_choose_data_override(self, callid, argid, value):

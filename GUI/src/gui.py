@@ -534,7 +534,12 @@ class GUI(object):
         sampler = self.samplers[self.sampler]
         cmds = self.generate_cmds()
         script = self.generate_script(cmds)
-        self.backends[sampler["backend"]].submit(script, nt=self.nt)
+        self.backends[sampler["backend"]].submit(script, nt=self.nt,
+                                                 jobname=self.samplename)
+        self.UI_alert("Submitted job %r to backend %r" %
+                      (self.samplename, sampler["backend"]))
+        self.log("submitted %r to %r" %
+                 (self.samplename, sampler["backend"]))
 
     # user interface
     def UI_init(self):
