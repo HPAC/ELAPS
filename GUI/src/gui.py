@@ -249,10 +249,15 @@ class GUI(object):
             self.data[name] = {
                 "comp": compcall[argid],
                 "min": mincall[argid],
-                "sym": symcall[argid].substitute(**argdict),
-                "symnames": symcall[argid].substitute(**argnamedict),
+                "sym": None,
+                "symnames": None,
                 "type": call.sig[argid].__class__,
             }
+            if symcall[argid] is not None:
+                self.data[name]["sym"] = symcall[argid].substitute(**argdict)
+                self.data[name]["symnames"] = symcall[argid].substitute(
+                    **argnamedict
+                )
             if name not in self.vary:
                 self.vary[name] = False
 
@@ -276,6 +281,8 @@ class GUI(object):
                     datasize = datasize[1:]
                 elif isinstance(datasize, symbolic.Symbol):
                     datasize = [datasize]
+                elif datasize is None:
+                    continue
                 else:
                     self.alert("don't know how to handle datasize for",
                                call.sig[argid], "in", call.sig, ":", datasize)
@@ -362,6 +369,7 @@ class GUI(object):
             self.UI_call_set(callid, 0)
         else:
             self.calls[callid] = [value]
+            self.UI_call_set(callid, 0)
         self.state_write()
 
     def arg_set(self, callid, argid, value):
