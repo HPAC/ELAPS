@@ -98,30 +98,42 @@ class QCall(QtGui.QGroupBox):
     def args_init(self):
         call = self.app.calls[self.callid]
         self.Qt_args[0].setProperty("invalid", False)
-        for argid, arg in enumerate(call.sig):
-            if isinstance(arg, signature.Name):
-                continue  # routine name
-            Qarglabel = QtGui.QLabel(arg.name)
+        if isinstance(call, signature.Call):
+            self.sig = call.sig
+        else:
+            minsig = self.app.sampler["kernels"][call[0]]
+            self.sig = None
+        for argid in range(len(call))[1:]:
+            if self.sig:
+                argname = self.sig[argid].name
+            else:
+                argname = minsig[argid].replace("*", " *")
+            Qarglabel = QtGui.QLabel(argname)
             self.layout().addWidget(Qarglabel, 0, argid)
             self.Qt_arglabels.append(Qarglabel)
             Qarglabel.setAlignment(QtCore.Qt.AlignCenter)
-            if isinstance(arg, signature.Flag):
-                Qarg = QtGui.QComboBox()
-                Qarg.addItems(arg.flags)
-                Qarg.currentIndexChanged.connect(self.arg_change)
-            elif isinstance(arg, (signature.Dim, signature.Scalar,
-                                  signature.Ld, signature.Inc)):
+            if self.sig:
+                arg = self.sig[argid]
+                if isinstance(arg, signature.Flag):
+                    Qarg = QtGui.QComboBox()
+                    Qarg.addItems(arg.flags)
+                    Qarg.currentIndexChanged.connect(self.arg_change)
+                elif isinstance(arg, (signature.Dim, signature.Scalar,
+                                    signature.Ld, signature.Inc)):
+                    Qarg = QtGui.QLineEdit()
+                    Qarg.textChanged.connect(self.arg_change)
+                elif isinstance(arg, signature.Data):
+                    Qarg = QDataArg(self)
+            else:
                 Qarg = QtGui.QLineEdit()
                 Qarg.textChanged.connect(self.arg_change)
-            elif isinstance(arg, signature.Data):
-                Qarg = QDataArg(self)
             Qarg.argid = argid
             Qarg.setProperty("invalid", True)
             self.layout().addWidget(Qarg, 1, argid)
             self.Qt_args.append(Qarg)
-        self.sig = call.sig
-        self.useld_apply()
-        self.usevary_apply()
+        if self.sig:
+            self.useld_apply()
+            self.usevary_apply()
 
     def args_clear(self):
         self.Qt_args[0].setProperty("invalid", True)
@@ -143,6 +155,8 @@ class QCall(QtGui.QGroupBox):
                 self.Qt_args[argid].setVisible(useld)
 
     def usevary_apply(self):
+        if not self.sig:
+            return
         for Qarg in self.Qt_args:
             if isinstance(Qarg, QDataArg):
                 Qarg.usevary_apply()
@@ -150,14 +164,20 @@ class QCall(QtGui.QGroupBox):
     def args_set(self, fromargid=None):
         call = self.app.calls[self.callid]
         # set widgets
-        if not isinstance(call, signature.Call):
+        if call[0] not in self.app.sampler["kernels"]:
             self.args_clear()
             return
-        if call.sig != self.sig:
-            self.args_clear()
-            self.args_init()
+        if isinstance(call, signature.Call):
+            if call.sig != self.sig:
+                self.args_clear()
+                self.args_init()
+        else:
+            if len(self.Qt_args) != len(call):
+                self.args_clear()
+                self.args_init()
         # set values
-        for Qarg, arg, val in zip(self.Qt_args, call.sig, call):
+        for argid, val in enumerate(call):
+            Qarg = self.Qt_args[argid]
             Qarg.setProperty("invalid", val is None)
             Qarg.style().unpolish(Qarg)
             Qarg.style().polish(Qarg)
@@ -165,13 +185,11 @@ class QCall(QtGui.QGroupBox):
             if Qarg.argid == fromargid:
                 continue
             val = "" if val is None else str(val)
-            if isinstance(arg, (signature.Name, signature.Dim,
-                                signature.Scalar, signature.Ld,
-                                signature.Inc)):
+            if isinstance(Qarg, QtGui.QLineEdit):
                 Qarg.setText(val)
-            elif isinstance(arg, signature.Flag):
+            elif isinstance(Qarg, QtGui.QComboBox):
                 Qarg.setCurrentIndex(Qarg.findText(val))
-            elif isinstance(arg, signature.Data):
+            elif isinstance(Qarg, QDataArg):
                 Qarg.set()
 
     def data_viz(self):

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
-import signature
 from gui import GUI
 from qcall import QCall
 
@@ -358,9 +357,10 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.setting = False
 
     def UI_submit_setenabled(self):
-        if any(not all(call) for call in self.calls):
+        if any(any(arg is None for arg in call) for call in self.calls):
             self.Qt_submit.setEnabled(False)
-        elif any(not isinstance(call, signature.Call) for call in self.calls):
+        elif any(call[0] not in self.sampler["kernels"]
+                 for call in self.calls):
             self.Qt_submit.setEnabled(False)
         else:
             self.Qt_submit.setEnabled(True)

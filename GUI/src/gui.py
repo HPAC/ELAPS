@@ -344,14 +344,22 @@ class GUI(object):
             self.calls[callid] = call
             self.infer_lds(callid)
             self.data_update()
+            self.UI_call_set(callid, 0)
+        elif value in self.sampler["kernels"]:
+            minsig = self.sampler["kernels"][value]
+            call = [value] + (len(minsig) - 1) * [None]
+            self.calls[callid] = call
+            self.UI_call_set(callid, 0)
         else:
             self.calls[callid] = [value]
-        self.UI_call_set(callid, 0)
         self.state_write()
 
     def arg_set(self, callid, argid, value):
         call = self.calls[callid]
-        arg = call.sig[argid]
+        if isinstance(call, signature.Call):
+            arg = call.sig[argid]
+        else:
+            arg = self.sampler["kernels"][call[0]][argid]
         if isinstance(arg, signature.Flag):
             call[argid] = value
             self.connections_update()
@@ -404,6 +412,22 @@ class GUI(object):
             call[argid] = int(value) if value else None
             self.data_update()
             self.state_write()
+        # calls without proper signatures
+        else:
+            if value is None:
+                call[callid] = None
+            elif arg == "char*":
+                call[argid] = value
+            elif value[0] == "[" and value[-1] == "]":
+                # datasize specification syntax [size]
+                parsed = self.range_parse(value[1:-1])
+                call[argid] = None
+                if parsed is not None:
+                    call[argid] = "[" + str(parsed) + "]"
+            else:
+                call[argid] = self.range_parse(value)
+            self.state_write()
+            self.UI_call_set(callid, argid)
         self.UI_submit_setenabled()
 
     # catch and handle data conflicts
@@ -461,39 +485,40 @@ class GUI(object):
             cmds.append([])
             cmds.append([])
 
-        cmds.append(["########################################"])
-        cmds.append(["# data                                 #"])
-        cmds.append(["########################################"])
+        if len(self.data):
+            cmds.append(["########################################"])
+            cmds.append(["# data                                 #"])
+            cmds.append(["########################################"])
 
-        # data
-        cmdprefixes = {
-            signature.Data: "",
-            signature.iData: "i",
-            signature.sData: "s",
-            signature.dData: "d",
-            signature.cData: "s",
-            signature.zData: "z",
-        }
-        for name, data in self.data.iteritems():
+            cmdprefixes = {
+                signature.Data: "",
+                signature.iData: "i",
+                signature.sData: "s",
+                signature.dData: "d",
+                signature.cData: "s",
+                signature.zData: "z",
+            }
+            for name, data in self.data.iteritems():
+                cmds.append([])
+                cmds.append(["# %s" % name])
+                cmdprefix = cmdprefixes[data["type"]]
+                size = max(self.range_eval(data["comp"]))
+                if not self.vary[name]:
+                    cmds.append([cmdprefix + "malloc", name, size])
+                    continue
+                # argument varies
+                fullsize = size * self.nrep
+                cmds.append([cmdprefix + "malloc", name, fullsize])
+                rangesizes = self.range_eval(data["comp"])
+                for rangeval, rangesize in zip(rangevals, rangesizes):
+                    if self.userange:
+                        cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
+                    for rep in range(self.nrep):
+                        cmds.append([cmdprefix + "offset", name,
+                                     rep * rangesize,
+                                    "%s_%d_%d" % (name, rangeval, rep)])
             cmds.append([])
-            cmds.append(["# %s" % name])
-            cmdprefix = cmdprefixes[data["type"]]
-            size = max(self.range_eval(data["comp"]))
-            if not self.vary[name]:
-                cmds.append([cmdprefix + "malloc", name, size])
-                continue
-            # argument varies
-            fullsize = size * self.nrep
-            cmds.append([cmdprefix + "malloc", name, fullsize])
-            rangesizes = self.range_eval(data["comp"])
-            for rangeval, rangesize in zip(rangevals, rangesizes):
-                if self.userange:
-                    cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
-                for rep in range(self.nrep):
-                    cmds.append([cmdprefix + "offset", name, rep * rangesize,
-                                 "%s_%d_%d" % (name, rangeval, rep)])
-        cmds.append([])
-        cmds.append([])
+            cmds.append([])
 
         # calls
         cmds.append(["########################################"])
@@ -505,13 +530,34 @@ class GUI(object):
                 cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
             for rep in range(self.nrep):
                 for call in self.calls:
-                    call = call.sig(*[self.range_eval(arg, rangeval)
-                                      for arg in call[1:]])
-                    cmd = call.format_sampler()
-                    for argid in call.sig.dataargs():
-                        name = call[argid]
-                        if self.vary[name]:
-                            cmd[argid] = "%s_%d_%d" % (name, rangeval, rep)
+                    if isinstance(call, signature.Call):
+                        call = call.sig(*[self.range_eval(value, rangeval)
+                                        for value in call[1:]])
+                        cmd = call.format_sampler()
+                        for argid in call.sig.dataargs():
+                            name = call[argid]
+                            if self.vary[name]:
+                                cmd[argid] = "%s_%d_%d" % (name, rangeval, rep)
+                    else:
+                        # call without proper signature
+                        cmd = call[:]
+                        minsig = self.sampler["kernels"][call[0]]
+                        for argid, value in enumerate(call):
+                            if argid == 0 or minsig[argid] == "char":
+                                # chars don't need further processing
+                                continue
+                            if isinstance(value, str):
+                                if value[0] == "[" and value[-1] == "]":
+                                    parsed = self.range_parse(value[1:-1])
+                                    if parsed is not None:
+                                        value = self.range_eval(parsed,
+                                                                rangeval)
+                                        call[argid] = "[" + str(value) + "]"
+                            else:
+                                parsed = self.range_parse(value)
+                                if parsed is not None:
+                                    value = self.range_eval(parsed, rangeval)
+                                    call[argid] = str(value)
                     cmds.append(cmd)
 
         return cmds
