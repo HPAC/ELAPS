@@ -109,9 +109,9 @@ class GUI(object):
                 "usepapi": False,
                 "useld": False,
                 "usevary": False,
-                "userange": False,
+                "userange": True,
                 "rangevar": "n",
-                "range": (8, 1000, 32),
+                "range": (8, 1001, 32),
                 "counters": sampler["papi_counters_max"] * [None],
                 "samplename": "",
                 "calls": [[""]],
@@ -119,8 +119,10 @@ class GUI(object):
                 "datascale": 100,
             }
             if "dgemm_" in sampler["kernels"]:
-                state["calls"][0] = ("dgemm_", "N", "N", 1000, 1000, 1000,
-                                     1, "A", 1000, "B", 1000, 1, "C", 1000)
+                n = symbolic.Symbol("n")
+                state["calls"] = [
+                    ("dgemm_", "N", "N", n, n, n, 1, "A", n, "B", n, 1, "C", n)
+                ]
         self.state_fromflat(state)
         self.connections_update()
         self.data_update()
