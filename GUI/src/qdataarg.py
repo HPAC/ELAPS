@@ -144,8 +144,6 @@ class QDataArg(QtGui.QWidget):
                 self.viz_none()
                 return
         # compute min and max from range
-        scale = self.app.datascale / self.app.data_maxdim()
-        dim = data["sym"][1:]
         dimmin = []
         dimmax = []
         for expr in dim:
@@ -153,8 +151,8 @@ class QDataArg(QtGui.QWidget):
             if any(value is None for value in values):
                 self.viz_none()
                 return
-            dimmin.append(round(scale * min(values)))
-            dimmax.append(round(scale * max(values)))
+            dimmin.append(min(values))
+            dimmax.append(max(values))
         if len(dim) == 1:
             self.viz_vector(dimmin, dimmax)
         elif len(dim) == 2:
@@ -175,6 +173,9 @@ class QDataArg(QtGui.QWidget):
         self.viz_matrix(dimmin + [1], dimmax + [1])
 
     def viz_matrix(self, dimmin, dimmax):
+        scale = self.app.datascale / self.app.data_maxdim()
+        dimmin = [int(round(scale * dim)) for dim in dimmin]
+        dimmax = [int(round(scale * dim)) for dim in dimmax]
         properties = self.app.calls[self.Qt_call.callid].properties(self.argid)
         for prop in properties:
             if prop in (signature.lower, signature.upper):
