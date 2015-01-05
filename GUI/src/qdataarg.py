@@ -129,10 +129,20 @@ class QDataArg(QtGui.QWidget):
         if data["sym"] is None:
             self.viz_none()
             return
-        if not isinstance(data["sym"], symbolic.Prod):
-            self.app.alert("don't know how to vizualize", data["sym"])
-            self.viz_none()
-            return
+        if isinstance(data["sym"], symbolic.Prod):
+            # we're good
+            dim = data["sym"][1:]
+        else:
+            # try simplifying
+            sym = data["sym"].simplify()
+            if isinstance(sym, symbolic.Prod):
+                dim = sym[1:]
+            elif isinstance(sym, (symbolic.Symbol, int)):
+                dim = [sym]
+            else:
+                self.app.alert("don't know how to vizualize", sym)
+                self.viz_none()
+                return
         # compute min and max from range
         scale = self.app.datascale / self.app.data_maxdim()
         dim = data["sym"][1:]

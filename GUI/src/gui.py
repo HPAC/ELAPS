@@ -281,11 +281,17 @@ class GUI(object):
                     datasize = datasize[1:]
                 elif isinstance(datasize, symbolic.Symbol):
                     datasize = [datasize]
-                elif datasize is None:
-                    continue
+                elif isinstance(datasize, symbolic.Operation):
+                    # try simplifying
+                    datasize = datasize.simplify()
+                    if isinstance(datasize, symbolic.Prod):
+                        datasize = datasize[1:]
+                    elif isinstance(datasize, symbolic.Symbol):
+                        datasize = [datasize]
+                    else:
+                        continue
                 else:
-                    self.alert("don't know how to handle datasize for",
-                               call.sig[argid], "in", call.sig, ":", datasize)
+                    continue
                 datasize = [size.name for size in datasize]
                 sizes[call[argid]].append(datasize)
         # deduce connections from symbolic sizes for each dataname
