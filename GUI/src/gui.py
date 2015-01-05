@@ -9,6 +9,7 @@ import os
 import imp
 import pprint
 from collections import defaultdict
+from __builtin__ import intern
 
 
 class GUI(object):
@@ -72,8 +73,6 @@ class GUI(object):
                                % (sampler["backend"], sampler["name"]))
                     continue
                 sampler["sampler"] = os.path.join(path, "sampler.x")
-                if isinstance(__builtins__, dict):
-                    intern = __builtins__["intern"]  # supress pyflakes error
                 sampler["kernels"] = {kernel[0]: tuple(map(intern, kernel))
                                       for kernel in sampler["kernels"]}
                 self.samplers[sampler["name"]] = sampler
