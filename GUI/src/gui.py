@@ -204,13 +204,13 @@ class GUI(object):
             if isinstance(arg, (signature.Ld, signature.Inc)):
                 call2[i] = None
         call2.complete()
-        for i, arg in enumerate(call2.sig):
+        for argid, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
-                if self.useld and not isinstance(call2[i],
+                if self.useld and not isinstance(call2[argid],
                                                  symbolic.Expression):
-                    call[i] = max(call2[i], call[i])
+                    call[argid] = max(call2[argid], call[argid])
                 else:
-                    call[i] = call2[i]
+                    call[argid] = call2[argid]
 
     def data_update(self, callid=None):
         if callid is None:
