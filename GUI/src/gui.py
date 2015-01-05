@@ -513,21 +513,25 @@ class GUI(object):
         return cmds
 
     def generate_script(self, cmds):
-        filename = os.path.join(self.rootpath, "meas",
-                                self.samplename + ".pysmpl")
-        script = "cat > " + filename + " << 1234END5678\n"
+        ofilename = os.path.join(self.rootpath, "meas",
+                                 self.samplename + ".pysmpl")
+        efilename = os.path.join(self.rootmath, "meas",
+                                 self.samplename + ".err")
+        script = "cat > " + ofilename + " 2> " + efilename
+        script += " << 1234END5678\n"
         script += "{'state':\n" + pprint.pformat(self.state_toflat(), 4)
         script += ",\n 'cmds': [\n"
         for cmd in cmds:
             script += "\t" + repr(cmd) + ",\n"
         script += "],\n 'rawdata': '''\n"
         script += "1234END5678\n"
-        script += self.samplers[self.sampler]["sampler"] + " >> " + filename
-        script += " <<1234END5678\n"
+        script += self.samplers[self.sampler]["sampler"] + " >> " + ofilename
+        script += " 2>> " + efilename + " <<1234END5678\n"
         for cmd in cmds:
             script += "\t".join(map(str, cmd)) + "\n"
         script += "1234END5678\n"
-        script += "echo \"'''}\" >> " + filename
+        script += "echo \"'''}\" >> " + ofilename + " 2>> " + efilename
+        script += "[ -s " + efilename + " ] || rm " + efilename
         return script
 
     def submit(self):
