@@ -176,12 +176,12 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
         # pens (for dataargs)
         self.Qt_pens = {
-            None: QtGui.QColor(0, 0, 0, 0),
-            "maxfront": QtGui.QColor(0, 0, 0, 127),
-            "maxback": QtGui.QPen(QtGui.QColor(0, 0, 0, 127), 0,
+            None: QtGui.QColor(0, 0, 255, 0),
+            "maxfront": QtGui.QColor(127, 127, 255, 127),
+            "maxback": QtGui.QPen(QtGui.QColor(127, 127, 255, 127), 0,
                                   style=QtCore.Qt.DotLine),
-            "minfront": QtGui.QColor(0, 0, 0, 255),
-            "minback": QtGui.QPen(QtGui.QColor(0, 0, 0, 255), 0,
+            "minfront": QtGui.QColor(127, 127, 255),
+            "minback": QtGui.QPen(QtGui.QColor(127, 127, 255), 0,
                                   style=QtCore.Qt.DotLine),
         }
         self.Qt_brushes = {
