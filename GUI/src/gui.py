@@ -168,6 +168,16 @@ class GUI(object):
             return expr(**{self.rangevar: value})
         return expr
 
+    def range_parse(self, value):
+        try:
+            if self.userange:
+                var = self.rangevar
+                return eval(value, {}, {var: symbolic.Symbol(var)})
+            else:
+                return int(eval(value, {}, {}))
+        except:
+            return None
+
     # simple data operations
     def data_maxdim(self):
         result = 0
@@ -380,15 +390,7 @@ class GUI(object):
                     call[argid] = None
         elif isinstance(arg, signature.Dim):
             # evaluate value
-            try:
-                if self.userange:
-                    var = self.rangevar
-                    value = eval(value, {}, {var: symbolic.Symbol(var)})
-                else:
-                    value = int(eval(value, {}, {}))
-            except:
-                value = None
-            call[argid] = value
+            call[argid] = self.range_parse(value)
             self.connections_apply(callid, argid)
             self.infer_lds()
             self.data_update()
