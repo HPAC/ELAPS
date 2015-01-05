@@ -8,7 +8,7 @@ import re
 
 def main():
     if len(sys.argv) != 6:
-        print("usage: gcc -E kernel.h ", sys.argv[0],
+        print("usage: gcc -E kernel.h | ", sys.argv[0],
               "cfg.h kernel.h sigs.c.ing calls.c.inc info.py",
               file=sys.stderr)
         return
@@ -48,21 +48,22 @@ def main():
         "void*": "VOIDP",
     }
     argcmax = 0
-    kernelnames = []
+    kernelsigs = []
     with open(sigs_c_inc, "w") as fout:
         for line in kernels:
             match = re.match("(?:extern )?\w+ (\w+)\(([^)]*)\);", line)
             if not match:
                 print(line, file=sys.stdout)
             name, args = match.groups()
-            kernelnames.append(name)
             if args:
-                args = [argtypes[arg] for arg in args.split(",")]
+                args = map(intern, args.split(","))
             else:
                 args = []
-            argcmax = max(argcmax, len(args) + 1)
+            kernelsigs.append((name,) + tuple(arg for arg in args))
+            enumargs = [argtypes[arg] for arg in args]
+            argcmax = max(argcmax, len(enumargs) + 1)
             print("{\"" + name + "\", (void *) " + name + ", { " +
-                  ", ".join(args) + " } },", file=fout)
+                  ", ".join(enumargs) + " } },", file=fout)
 
     # create calls.s.cin
     with open(calls_c_inc, "w") as fout:
@@ -98,7 +99,7 @@ def main():
         "backend_header": os.environ["BACKEND_HEADER"],
         "backend_options": os.environ["BACKEND_OPTIONS"],
         "nt_max": int(os.environ["NT_MAX"]),
-        "kernels": sorted(kernelnames),
+        "kernels": sorted(kernelsigs),
         "papi_counters_max": papi_counters_max,
         "cpu_model": os.environ["CPU_MODEL"],
         "frequency": 1e6 * float(os.environ["FREQUENCY_MHZ"]),

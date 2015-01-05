@@ -72,6 +72,10 @@ class GUI(object):
                                % (sampler["backend"], sampler["name"]))
                     continue
                 sampler["sampler"] = os.path.join(path, "sampler.x")
+                if isinstance(__builtins__, dict):
+                    intern = __builtins__["intern"]  # supress pyflakes error
+                sampler["kernels"] = {kernel[0]: tuple(map(intern, kernel))
+                                      for kernel in sampler["kernels"]}
                 self.samplers[sampler["name"]] = sampler
         self.log("loaded", len(self.samplers), "samplers:",
                  *sorted(self.samplers))
