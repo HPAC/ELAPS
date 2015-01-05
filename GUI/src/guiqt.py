@@ -215,14 +215,13 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def UI_sampler_set(self):
         self.setting = True
         self.Qt_sampler.setCurrentIndex(
-            self.Qt_sampler.findText(self.sampler))
+            self.Qt_sampler.findText(self.samplername))
         self.setting = False
 
     def UI_nt_setmax(self):
         self.setting = True
         self.Qt_nt.clear()
-        sampler = self.samplers[self.sampler]
-        self.Qt_nt.addItems(map(str, range(1, sampler["nt_max"] + 1)))
+        self.Qt_nt.addItems(map(str, range(1, self.sampler["nt_max"] + 1)))
         self.setting = False
 
     def UI_nt_set(self):
@@ -239,8 +238,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_info.setText(text)
 
     def UI_usepapi_setenabled(self):
-        sampler = self.samplers[self.sampler]
-        self.Qt_usepapi.setEnabled(sampler["papi_counters_max"] > 0)
+        self.Qt_usepapi.setEnabled(self.sampler["papi_counters_max"] > 0)
 
     def UI_usepapi_set(self):
         self.setting = True
@@ -266,12 +264,11 @@ class GUI_Qt(GUI, QtGui.QApplication):
         for Qcounter in Qcounters:
             Qcounter.deleteLater()
         # add new
-        sampler = self.samplers[self.sampler]
         QcountersL = self.Qt_counters.layout()
-        for _ in range(sampler["papi_counters_max"]):
+        for _ in range(self.sampler["papi_counters_max"]):
             Qcounter = QtGui.QComboBox()
             QcountersL.addWidget(Qcounter)
-            Qcounter.addItems([""] + sampler["papi_counters_avail"])
+            Qcounter.addItems([""] + self.sampler["papi_counters_avail"])
             Qcounter.currentIndexChanged.connect(self.Qt_counter_change)
 
     def UI_counters_set(self):

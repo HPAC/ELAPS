@@ -32,6 +32,8 @@ class GUI(object):
     def __getattr__(self, name):
         if name in self.__dict__["state"]:
             return self.__dict__["state"][name]
+        if name == "sampler":
+            return self.samplers[self.samplername]
         raise AttributeError("%r object has no attribute %r" %
                              (self.__class__, name))
 
@@ -77,7 +79,8 @@ class GUI(object):
                                       for kernel in sampler["kernels"]}
                 self.samplers[sampler["name"]] = sampler
         self.log("loaded", len(self.samplers), "samplers:",
-                 *sorted(self.samplers))
+                 *sorted("%s (%d)" % (name, len(sampler["kernels"]))
+                         for name, sampler in self.samplers.iteritems()))
 
     def signatures_init(self):
         self.signatures = {}
@@ -100,7 +103,7 @@ class GUI(object):
         except:
             sampler = self.samplers[min(self.samplers)]
             state = {
-                "sampler": sampler["name"],
+                "samplername": sampler["name"],
                 "nt": 1,
                 "nrep": 10,
                 "usepapi": False,
@@ -143,7 +146,7 @@ class GUI(object):
             print(pprint.pformat(self.state_toflat(), 4), file=fout)
 
     def get_infostr(self):
-        sampler = self.samplers[self.sampler]
+        sampler = self.sampler
         info = "System:\t%s\n" % sampler["system_name"]
         if sampler["backend"] != "local":
             info += "  (via %s(\n" % sampler["backend"]
@@ -295,7 +298,7 @@ class GUI(object):
 
     # treat changes for the calls
     def sampler_set(self, samplername):
-        self.sampler = samplername
+        self.samplername = samplername
         sampler = self.samplers[samplername]
         self.nt = max(self.nt, sampler["nt_max"])
 
@@ -524,7 +527,7 @@ class GUI(object):
             script += "\t" + repr(cmd) + ",\n"
         script += "],\n 'rawdata': '''\n"
         script += "1234END5678\n"
-        script += self.samplers[self.sampler]["sampler"] + " >> " + ofilename
+        script += self.sampler["sampler"] + " >> " + ofilename
         script += " 2>> " + efilename + " <<1234END5678\n"
         for cmd in cmds:
             script += "\t".join(map(str, cmd)) + "\n"
@@ -534,15 +537,15 @@ class GUI(object):
         return script
 
     def submit(self):
-        sampler = self.samplers[self.sampler]
         cmds = self.generate_cmds()
         script = self.generate_script(cmds)
-        self.backends[sampler["backend"]].submit(script, nt=self.nt,
-                                                 jobname=self.samplename)
+        self.backends[self.sampler["backend"]].submit(
+            script, nt=self.nt, jobname=self.samplename
+        )
         self.UI_alert("Submitted job %r to backend %r" %
-                      (self.samplename, sampler["backend"]))
+                      (self.samplename, self.sampler["backend"]))
         self.log("submitted %r to %r" %
-                 (self.samplename, sampler["backend"]))
+                 (self.samplename, self.sampler["backend"]))
 
     # user interface
     def UI_init(self):

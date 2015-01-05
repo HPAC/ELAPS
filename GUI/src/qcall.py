@@ -18,9 +18,7 @@ class QCall(QtGui.QGroupBox):
         self.movers_setvisibility()
 
     def UI_init(self):
-        sampler = self.app.samplers[self.app.sampler]
-        routines = [r for r in self.app.signatures.keys()
-                    if r in sampler["kernels"]]
+        routines = list(self.app.sampler["kernels"])
 
         layout = QtGui.QGridLayout()
         self.setLayout(layout)
