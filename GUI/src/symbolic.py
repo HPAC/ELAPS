@@ -44,7 +44,7 @@ class Symbol(Expression):
         self.name = name
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     def __repr__(self):
         return self.__class__.__name__ + "(" + repr(self.name) + ")"
@@ -149,13 +149,19 @@ class Prod(Operation):
             if isinstance(arg, Operation):
                 arg = arg.simplify()
             if isinstance(arg, Prod):
-                args += arg[1:]
+                otherargs = arg[1:]
+                if isinstance(otherargs[0], numbers.Number):
+                    num *= otherargs[0]
+                    otherargs = otherargs[1:]
+                args += otherargs
             elif isinstance(arg, numbers.Number):
                 num *= arg
             else:
                 args.append(arg)
         if num != 1:
             args = [num] + args
+        if len(args) == 0:
+            return 1
         if len(args) == 1:
             return args[0]
         return self.__class__(*args)
@@ -175,13 +181,19 @@ class Plus(Operation):
             if isinstance(arg, Operation):
                 arg = arg.simplify()
             if isinstance(arg, Plus):
-                args += arg[1:]
+                otherargs = arg[1:]
+                if isinstance(otherargs[0], numbers.Number):
+                    num += otherargs[0]
+                    otherargs = otherargs[1:]
+                args += otherargs
             elif isinstance(arg, numbers.Number):
                 num += arg
             else:
                 args.append(arg)
         if num != 0:
             args = [num] + args
+        if len(args) == 0:
+            return 0
         if len(args) == 1:
             return args[0]
         return self.__class__(*args)
