@@ -9,6 +9,8 @@ KERNEL_HEADERS="headers/blas.h headers/lapack.h"
 CXXFLAGS="-g"
 CFLAGS="-g"
 
+BACKEND_HEADER="export VECLIB_MAXIMUM_THREADS={nt}"
+
 NT_MAX=2
 FREQUENCY_MHZ=2000
 CPU_MODEL="Intel(R) Core(TM) i7-3667U CPU @ 2.00GHz"

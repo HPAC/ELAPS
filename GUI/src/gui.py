@@ -9,7 +9,7 @@ import os
 import imp
 import pprint
 from collections import defaultdict
-from __builtin__ import intern
+from __builtin__ import intern  # fix for pyflake error
 
 
 class GUI(object):
@@ -603,6 +603,9 @@ class GUI(object):
     def submit(self):
         cmds = self.generate_cmds()
         script = self.generate_script(cmds)
+        header = self.sampler["backend_header"].format(nt=self.nt)
+        if header:
+            script = header + "\n" + script
         self.backends[self.sampler["backend"]].submit(
             script, nt=self.nt, jobname=self.samplename
         )

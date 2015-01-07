@@ -4,6 +4,8 @@ from __future__ import division, print_function
 import sys
 import os
 import re
+from time import time
+from __builtin__ import intern  # fix for pyflake error
 
 
 def main():
@@ -91,13 +93,18 @@ def main():
         print("#endif /* SAMPLERCFG_H */", file=fout)
 
     # create info.py
+    try:
+        options = eval(os.environ["BACKEND_OPTIONS"])
+    except:
+        options = {}
     info = {
+        "buildtime": time(),
         "name":  os.environ["NAME"],
         "system_name":  os.environ["SYSTEM_NAME"],
         "blas_name": os.environ["BLAS_NAME"],
         "backend": os.environ["BACKEND"],
         "backend_header": os.environ["BACKEND_HEADER"],
-        "backend_options": os.environ["BACKEND_OPTIONS"],
+        "backend_options": options,
         "nt_max": int(os.environ["NT_MAX"]),
         "kernels": sorted(kernelsigs),
         "papi_counters_max": papi_counters_max,
