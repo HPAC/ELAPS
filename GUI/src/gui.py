@@ -16,9 +16,10 @@ class GUI(object):
     state = {}
 
     def __init__(self):
-        self.rootpath = ".."
-        if os.path.split(os.getcwd())[1] == "src":
-            self.rootpath = os.path.join("..", "..")
+        thispath = os.path.dirname(__file__)
+        if thispath not in sys.path:
+            sys.path.append(thispath)
+        self.rootpath = os.path.join(thispath, "..", "..")
 
         self.backends_init()
         self.samplers_init()
@@ -59,7 +60,8 @@ class GUI(object):
                 continue
             name = filename[:-3]
             module = imp.load_source(name, os.path.join(backendpath, filename))
-            self.backends[name] = getattr(module, name)()
+            if hasattr(module, name):
+                self.backends[name] = getattr(module, name)()
         self.log("loaded", len(self.backends), "backends:",
                  *sorted(self.backends))
 
