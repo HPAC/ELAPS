@@ -1,2 +1,2 @@
 build
-cfgs
+cfgs/*.inc
