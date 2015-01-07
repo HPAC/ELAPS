@@ -1,0 +1,11 @@
+# single precision scaled vector addition
+Signature(
+    "saxpy_",
+    Dim("n"),
+    sScalar(),
+    sData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("IncX"),
+    sData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("IncY"),
+    complexity = "2 * n"
+)

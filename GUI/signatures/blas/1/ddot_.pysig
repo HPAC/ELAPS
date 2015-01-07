@@ -1,0 +1,10 @@
+# double precision vector-vector inner product
+Signature(
+    "ddot_",
+    Dim("n"),
+    dData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("IncX"),
+    dData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("IncY"),
+    complexity = "2 * n"  # checked
+)

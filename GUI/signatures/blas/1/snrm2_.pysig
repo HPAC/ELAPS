@@ -1,0 +1,8 @@
+# single precision vector 2-norm
+Signature(
+    "drnm2_",
+    Dim("n"),
+    sData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("IncX"),
+    complexity = "2 * n"
+)

@@ -1,0 +1,10 @@
+# double precision vector copy
+Signature(
+    "dcopy_",
+    Dim("n"),
+    dData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("IncX"),
+    dData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("IncY"),
+    complexity = "0"  # only memops
+)

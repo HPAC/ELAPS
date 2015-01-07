@@ -1,0 +1,14 @@
+# single precision double symmetric vector-vector product
+Signature(
+    "ssyr2_",
+    Uplo(),
+    Dim("n"),
+    sScalar(),
+    sData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("IncX"),
+    sData("Y", "1 + (n - 1) * abs(incX)"),
+    Inc("IncY"),
+    sData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("LdA", "n"),
+    complexity = "4 * n ** 2"
+)

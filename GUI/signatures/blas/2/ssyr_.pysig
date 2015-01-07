@@ -1,0 +1,12 @@
+# single precision symetric vector outer product
+Signature(
+    "ssyr_",
+    Uplo(),
+    Dim("n"),
+    sScalar(),
+    sData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("IncX"),
+    sData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("LdA", "n"),
+    complexity = "2 * n ** 2"
+)

@@ -1,0 +1,8 @@
+# double precision vector absolute sum
+Signature(
+    "dasum_",
+    Dim("n"),
+    dData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("IncX"),
+    complexity = "n"
+)
