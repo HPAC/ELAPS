@@ -1,1 +1,2 @@
-meas
+meas/*
+!meas/.gitignore
