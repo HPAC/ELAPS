@@ -92,10 +92,12 @@ class GUI(object):
                 if filename[0] == "." or filename[-6:] != ".pysig":
                     continue
                 try:
-                    sig = signature.Signature(file=os.path.join(path, filename))
+                    sig = signature.Signature(file=os.path.join(path,
+                                                                filename))
                     self.signatures[str(sig[0])] = sig
                 except:
-                    pass
+                    print("couldn't load", os.path.relpath(filename),
+                          file=sys.stderr)
         self.log("loaded", len(self.signatures), "signatures:",
                  *sorted(self.signatures))
 

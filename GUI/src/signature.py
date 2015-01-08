@@ -13,9 +13,9 @@ class Signature(list):
                 with open(self.filename) as fin:
                     sig = eval(fin.read())
             except:
-                raise TypeError(self.filename + "could not be loaded")
+                raise IOError(self.filename + " could not be loaded")
             if not isinstance(sig, Signature):
-                raise TypeError(self.filename + "did not conatin a Signature")
+                raise TypeError(self.filename + " did not conatin a Signature")
             # initialize from loaded signature
             list.__init__(self, sig)
             self.complexity = sig.complexity
