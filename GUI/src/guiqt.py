@@ -5,6 +5,7 @@ from gui import GUI
 from qcall import QCall
 
 import sys
+import time
 
 from PyQt4 import QtCore, QtGui
 
@@ -210,10 +211,12 @@ class GUI_Qt(GUI, QtGui.QApplication):
         else:
             self.data_override_cancel(callid, argid, value)
 
-    def UI_submit_confirmoverwrite(self):
+    def UI_submit_confirmoverwrite(self, sampletime):
         ret = QtGui.QMessageBox.warning(
             self.Qt_window, "Confirm overwrite",
-            "A report %r alrady exists!\nOverwrite it?" % self.samplename,
+            "A report %r alerady exists!\n(generated %s)\n\nOverwrite it?" % (
+                self.samplename,
+                time.strftime("%c", time.localtime(sampletime))),
             QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
         )
         if ret == QtGui.QMessageBox.Ok:

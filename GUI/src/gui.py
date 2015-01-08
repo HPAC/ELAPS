@@ -8,6 +8,7 @@ import sys
 import os
 import imp
 import pprint
+import time
 from collections import defaultdict
 from __builtin__ import intern  # fix for pyflake error
 
@@ -624,7 +625,8 @@ class GUI(object):
     def generate_outputheader(self, cmds):
         info = {
             "state": self.state_toflat(),
-            "cmds": cmds
+            "cmds": cmds,
+            "submittime": time.time()
         }
         with open(self.get_reportfilename(), "w") as fout:
             print(repr(info), file=fout)
@@ -771,7 +773,8 @@ class GUI(object):
         self.state_write()
 
     def UI_submit_click(self):
-        if os.path.isfile(self.get_reportfilename()):
-            self.UI_submit_confirmoverwrite()
+        reportfile = self.get_reportfilename()
+        if os.path.isfile(reportfile):
+            self.UI_submit_confirmoverwrite(os.path.getmtime(reportfile))
         else:
             self.submit()
