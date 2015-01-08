@@ -679,16 +679,14 @@ class GUI(object):
         self.state_write()
 
     def UI_userange_change(self, state):
-        self.userange = state
-        if not self.userange:
+        if not state:
             for call in self.calls:
                 for argid, arg in enumerate(call):
-                    if isinstance(call[argid], symbolic.Expression):
-                        call[argid] = None
+                    call[argid] = self.range_eval(arg, 0)
             self.data_update()
-        self.state_write()
-        if not self.userange:
             self.UI_calls_set()
+        self.userange = state
+        self.state_write()
         self.UI_range_setvisible()
 
     def UI_rangevar_change(self, varname):
