@@ -240,7 +240,7 @@ void Sampler::start() {
             named_malloc<char>(tokens);
         else if (command == "imalloc")
             named_malloc<int>(tokens);
-        else if (command == "fmalloc")
+        else if (command == "smalloc")
             named_malloc<float>(tokens);
         else if (command == "dmalloc")
             named_malloc<double>(tokens);
@@ -254,7 +254,7 @@ void Sampler::start() {
             named_offset<char>(tokens);
         else if (command == "ioffset")
             named_offset<int>(tokens);
-        else if (command == "foffset")
+        else if (command == "soffset")
             named_offset<float>(tokens);
         else if (command == "doffset")
             named_offset<double>(tokens);

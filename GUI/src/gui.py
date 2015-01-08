@@ -13,6 +13,7 @@ from __builtin__ import intern  # fix for pyflake error
 
 
 class GUI(object):
+    requiresbuildtime = 1420744815
     state = {}
 
     def __init__(self, loadstate=True):
@@ -65,6 +66,8 @@ class GUI(object):
                 self.backends[name] = getattr(module, name)()
         self.log("loaded", len(self.backends), "backends:",
                  *sorted(self.backends))
+        if len(self.backends) == 0:
+            raise Exception("No backends found")
 
     def samplers_init(self):
         self.samplers = {}
@@ -73,6 +76,10 @@ class GUI(object):
             if "info.py" in files and "sampler.x" in files:
                 with open(os.path.join(path, "info.py")) as fin:
                     sampler = eval(fin.read())
+                if sampler["buildtime"] < self.requiresbuildtime:
+                    self.alert("backend", sampler["name"],
+                               "is outdated.  Please rebuild!")
+                    continue
                 if sampler["backend"] not in self.backends:
                     self.alert("missing backend %r for sampler %r"
                                % (sampler["backend"], sampler["name"]))
@@ -84,6 +91,8 @@ class GUI(object):
         self.log("loaded", len(self.samplers), "samplers:",
                  *sorted("%s (%d)" % (name, len(sampler["kernels"]))
                          for name, sampler in self.samplers.iteritems()))
+        if len(self.samplers) == 0:
+            raise Exception("No samplers found")
 
     def signatures_init(self):
         self.signatures = {}
