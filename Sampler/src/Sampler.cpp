@@ -81,8 +81,8 @@ void Sampler::named_malloc(const vector<string> &tokens, size_t multiplicity=1) 
 
     //TODO: check size conversion error
     // size must be > 0
-    if (size <= 0) {
-        cerr << "Cannot allocate variable of non-positive size " << size << " (command ignored)" << endl;
+    if (size < 0) {
+        cerr << "Cannot allocate variable of negative size " << size << " (command ignored)" << endl;
         return;
     }
 
