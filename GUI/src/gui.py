@@ -89,10 +89,13 @@ class GUI(object):
         signaturepath = os.path.join(self.rootpath, "GUI", "signatures")
         for path, dirs, files in os.walk(signaturepath, followlinks=True):
             for filename in files:
-                if filename[0] == ".":
+                if filename[0] == "." or filename[-6:] != ".pysig":
                     continue
-                sig = signature.Signature(file=os.path.join(path, filename))
-                self.signatures[str(sig[0])] = sig
+                try:
+                    sig = signature.Signature(file=os.path.join(path, filename))
+                    self.signatures[str(sig[0])] = sig
+                except:
+                    pass
         self.log("loaded", len(self.signatures), "signatures:",
                  *sorted(self.signatures))
 
