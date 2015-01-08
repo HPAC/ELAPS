@@ -173,7 +173,7 @@ class QDataArg(QtGui.QWidget):
         self.viz_matrix(dimmin + [1], dimmax + [1])
 
     def viz_matrix(self, dimmin, dimmax):
-        scale = self.app.datascale / self.app.data_maxdim()
+        scale = self.app.datascale / max(1, self.app.data_maxdim())
         dimmin = [int(round(scale * dim)) for dim in dimmin]
         dimmax = [int(round(scale * dim)) for dim in dimmax]
         properties = self.app.calls[self.Qt_call.callid].properties(self.argid)
