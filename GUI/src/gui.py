@@ -711,7 +711,7 @@ class GUI(object):
         if not state:
             for call in self.calls:
                 for argid, arg in enumerate(call):
-                    call[argid] = self.range_eval(arg, 0)
+                    call[argid] = self.range_eval(arg, self.range[0])
             self.data_update()
             self.UI_calls_set()
         self.userange = state
