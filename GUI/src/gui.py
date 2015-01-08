@@ -167,8 +167,8 @@ class GUI(object):
     def range_eval(self, expr, value=None):
         if not self.userange:
             if value is None:
-                return expr
-            return [expr]
+                return [expr]
+            return expr
         if value is None:
             return [self.range_eval(expr, val) for val in range(*self.range)]
         if isinstance(expr, symbolic.Expression):
@@ -680,7 +680,15 @@ class GUI(object):
 
     def UI_userange_change(self, state):
         self.userange = state
+        if not self.userange:
+            for call in self.calls:
+                for argid, arg in enumerate(call):
+                    if isinstance(call[argid], symbolic.Expression):
+                        call[argid] = None
+            self.data_update()
         self.state_write()
+        if not self.userange:
+            self.UI_calls_set()
         self.UI_range_setvisible()
 
     def UI_rangevar_change(self, varname):
