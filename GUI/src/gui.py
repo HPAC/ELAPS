@@ -614,12 +614,15 @@ class GUI(object):
     def generate_script(self, cmds):
         outfile = self.get_reportfilename()
         errfile = outfile + ".err"
-        script = self.sampler["sampler"] + " >> " + outfile
+        script = ""
+        script += "date +%s >> " + outfile + "\n"
+        script += self.sampler["sampler"] + " >> " + outfile
         script += " 2> " + errfile + " <<1234END5678\n"
         for cmd in cmds:
             script += "\t".join(map(str, cmd)) + "\n"
         script += "1234END5678\n"
-        script += "[ -s " + errfile + " ] || rm " + errfile
+        script += "date +%s >> " + outfile + "\n"
+        script += "[ -s " + errfile + " ] || rm " + errfile + "\n"
         return script
 
     def generate_outputheader(self, cmds):
