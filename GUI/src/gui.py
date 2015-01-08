@@ -545,13 +545,13 @@ class GUI(object):
                     cmds.append([cmdprefix + "malloc", name, size])
                     continue
                 # argument varies
-                fullsize = size * self.nrep
+                fullsize = size * (self.nrep + 1)
                 cmds.append([cmdprefix + "malloc", name, fullsize])
                 rangesizes = self.range_eval(data["comp"])
                 for rangeval, rangesize in zip(rangevals, rangesizes):
                     if self.userange:
                         cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
-                    for rep in range(self.nrep):
+                    for rep in range(self.nrep + 1):
                         cmds.append([cmdprefix + "offset", name,
                                      rep * rangesize,
                                     "%s_%d_%d" % (name, rangeval, rep)])
@@ -567,7 +567,7 @@ class GUI(object):
             if self.userange:
                 cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
                 cmds.append(["go"])
-            for rep in range(self.nrep):
+            for rep in range(self.nrep + 1):
                 for call in self.calls:
                     if isinstance(call, signature.Call):
                         call = call.sig(*[self.range_eval(value, rangeval)
