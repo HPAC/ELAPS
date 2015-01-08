@@ -15,16 +15,17 @@ from __builtin__ import intern  # fix for pyflake error
 class GUI(object):
     state = {}
 
-    def __init__(self):
+    def __init__(self, loadstate=True):
         thispath = os.path.dirname(__file__)
         if thispath not in sys.path:
             sys.path.append(thispath)
         self.rootpath = os.path.join(thispath, "..", "..")
+        self.statefile = os.path.join(self.rootpath, "GUI", ".state.py")
 
         self.backends_init()
         self.samplers_init()
         self.signatures_init()
-        self.state_init()
+        self.state_init(loadstate)
         self.UI_init()
         self.UI_setall()
         self.UI_start()
@@ -101,35 +102,36 @@ class GUI(object):
         self.log("loaded", len(self.signatures), "signatures:",
                  *sorted(self.signatures))
 
-    def state_init(self):
-        self.statefile = os.path.join(self.rootpath, "GUI", ".state.py")
-        try:
-            with open(self.statefile) as fin:
-                state = eval(fin.read(), symbolic.__dict__)
-            self.log("loaded state from", self.statefile)
-        except:
-            sampler = self.samplers[min(self.samplers)]
-            state = {
-                "samplername": sampler["name"],
-                "nt": 1,
-                "nrep": 10,
-                "usepapi": False,
-                "useld": False,
-                "usevary": False,
-                "userange": True,
-                "rangevar": "n",
-                "range": (8, 1001, 32),
-                "counters": sampler["papi_counters_max"] * [None],
-                "samplename": "dgemm",
-                "calls": [[""]],
-                "vary": {},
-                "datascale": 100,
-            }
-            if "dgemm_" in sampler["kernels"]:
-                n = symbolic.Symbol("n")
-                state["calls"] = [
-                    ("dgemm_", "N", "N", n, n, n, 1, "A", n, "B", n, 1, "C", n)
-                ]
+    def state_init(self, load=True):
+        sampler = self.samplers[min(self.samplers)]
+        state = {
+            "samplername": sampler["name"],
+            "nt": 1,
+            "nrep": 10,
+            "usepapi": False,
+            "useld": False,
+            "usevary": False,
+            "userange": True,
+            "rangevar": "n",
+            "range": (8, 1001, 32),
+            "counters": sampler["papi_counters_max"] * [None],
+            "samplename": "dgemm",
+            "calls": [[""]],
+            "vary": {},
+            "datascale": 100,
+        }
+        if "dgemm_" in sampler["kernels"]:
+            n = symbolic.Symbol("n")
+            state["calls"] = [
+                ("dgemm_", "N", "N", n, n, n, 1, "A", n, "B", n, 1, "C", n)
+            ]
+        if load:
+            try:
+                with open(self.statefile) as fin:
+                    state = eval(fin.read(), symbolic.__dict__)
+                self.log("loaded state from", self.statefile)
+            except:
+                pass
         self.state_fromflat(state)
         self.connections_update()
         self.data_update()

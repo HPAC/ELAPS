@@ -10,10 +10,10 @@ from PyQt4 import QtCore, QtGui
 
 
 class GUI_Qt(GUI, QtGui.QApplication):
-    def __init__(self):
+    def __init__(self, loadstate=True):
         QtGui.QApplication.__init__(self, sys.argv)
         self.setting = False
-        GUI.__init__(self)
+        GUI.__init__(self, loadstate)
 
     def UI_init(self):
         # window
@@ -213,7 +213,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def UI_submit_confirmoverwrite(self):
         ret = QtGui.QMessageBox.warning(
             self.Qt_window, "Confirm overwrite",
-            "A report %r alrady exists!\nOverwrite it?" %  self.samplename,
+            "A report %r alrady exists!\nOverwrite it?" % self.samplename,
             QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
         )
         if ret == QtGui.QMessageBox.Ok:
@@ -458,7 +458,8 @@ class GUI_Qt(GUI, QtGui.QApplication):
 def main():
     import signal
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    GUI_Qt()
+    loadstate = "-newstate" not in sys.argv[1:]
+    GUI_Qt(loadstate)
 
 
 if __name__ == "__main__":
