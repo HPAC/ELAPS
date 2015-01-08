@@ -5,7 +5,7 @@ Signature(
     Trans(),
     Diag(),
     Dim("n"),
-    dData("A", "ldA * n", "lower if uplo == 'L' eles upper"),
+    dData("A", "ldA * n", "lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
     dData("X", "1 + (n - 1) * abs(incX)"),
     Inc("incX"),
