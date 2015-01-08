@@ -120,7 +120,7 @@ class GUI(object):
                 "rangevar": "n",
                 "range": (8, 1001, 32),
                 "counters": sampler["papi_counters_max"] * [None],
-                "samplename": "",
+                "samplename": "dgemm",
                 "calls": [[""]],
                 "vary": {},
                 "datascale": 100,
@@ -491,7 +491,20 @@ class GUI(object):
     def data_override_cancel(self, callid, argid, value):
         self.UI_call_set(callid)
 
+    def calls_checksanity(self):
+        for call in self.calls:
+            if call[0] not in self.sampler["kernels"]:
+                return False
+            if any(arg is None for arg in call):
+                return False
+        if self.samplename is None:
+            return False
+        return True
+
     # submit
+    def get_reportfilename(self):
+        return os.path.join(self.rootpath, "meas", self.samplename + ".smpl")
+
     def generate_cmds(self):
         cmds = []
 
@@ -586,29 +599,27 @@ class GUI(object):
         return cmds
 
     def generate_script(self, cmds):
-        ofilename = os.path.join(self.rootpath, "meas",
-                                 self.samplename + ".pysmpl")
-        efilename = os.path.join(self.rootpath, "meas",
-                                 self.samplename + ".err")
-        script = "cat > " + ofilename + " 2> " + efilename
-        script += " << 1234END5678\n"
-        script += "{'state':\n" + pprint.pformat(self.state_toflat(), 4)
-        script += ",\n 'cmds': [\n"
-        for cmd in cmds:
-            script += "\t" + repr(cmd) + ",\n"
-        script += "],\n 'rawdata': '''\n"
-        script += "1234END5678\n"
-        script += self.sampler["sampler"] + " >> " + ofilename
-        script += " 2>> " + efilename + " <<1234END5678\n"
+        outfile = self.get_reportfilename()
+        errfile = outfile + ".err"
+        script = self.sampler["sampler"] + " >> " + outfile
+        script += " 2> " + errfile + " <<1234END5678\n"
         for cmd in cmds:
             script += "\t".join(map(str, cmd)) + "\n"
         script += "1234END5678\n"
-        script += "echo \"'''}\" >> " + ofilename + " 2>> " + efilename + "\n"
-        script += "[ -s " + efilename + " ] || rm " + efilename
+        script += "[ -s " + errfile + " ] || rm " + errfile
         return script
+
+    def generate_outputheader(self, cmds):
+        info = {
+            "state": self.state_toflat(),
+            "cmds": cmds
+        }
+        with open(self.get_reportfilename(), "w") as fout:
+            print(repr(info), file=fout)
 
     def submit(self):
         cmds = self.generate_cmds()
+        self.generate_outputheader(cmds)
         script = self.generate_script(cmds)
         header = self.sampler["backend_header"].format(nt=self.nt)
         if header:
@@ -740,8 +751,15 @@ class GUI(object):
         self.UI_data_viz()
 
     def UI_samplename_change(self, samplename):
+        if samplename == "":
+            samplename = None
         self.samplename = samplename
+        self.UI_samplename_setvalidity()
+        self.UI_submit_setenabled()
         self.state_write()
 
     def UI_submit_click(self):
-        self.submit()
+        if os.path.isfile(self.get_reportfilename()):
+            self.UI_submit_confirmoverwrite()
+        else:
+            self.submit()

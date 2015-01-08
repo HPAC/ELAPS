@@ -210,6 +210,15 @@ class GUI_Qt(GUI, QtGui.QApplication):
         else:
             self.data_override_cancel(callid, argid, value)
 
+    def UI_submit_confirmoverwrite(self):
+        ret = QtGui.QMessageBox.warning(
+            self.Qt_window, "Confirm overwrite",
+            "A report %r alrady exists!\nOverwrite it?" %  self.samplename,
+            QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
+        )
+        if ret == QtGui.QMessageBox.Ok:
+            self.submit()
+
     # setters
     def UI_sampler_set(self):
         self.setting = True
@@ -353,17 +362,24 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
     def UI_samplename_set(self):
         self.setting = True
-        self.Qt_samplename.setText(self.samplename)
+        if self.samplename is None:
+            self.Qt_samplename.setText("")
+        else:
+            self.Qt_samplename.setText(self.samplename)
+        self.UI_samplename_setvalidity()
         self.setting = False
 
+    def UI_samplename_setvalidity(self):
+        self.Qt_samplename.setProperty("invalid", self.samplename is None)
+        self.Qt_samplename.style().unpolish(self.Qt_samplename)
+        self.Qt_samplename.style().polish(self.Qt_samplename)
+        self.Qt_samplename.update()
+
     def UI_submit_setenabled(self):
-        if any(any(arg is None for arg in call) for call in self.calls):
-            self.Qt_submit.setEnabled(False)
-        elif any(call[0] not in self.sampler["kernels"]
-                 for call in self.calls):
-            self.Qt_submit.setEnabled(False)
-        else:
+        if self.calls_checksanity():
             self.Qt_submit.setEnabled(True)
+        else:
+            self.Qt_submit.setEnabled(False)
 
     # event handlers
     def Qt_sampler_change(self):
