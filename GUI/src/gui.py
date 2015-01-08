@@ -566,6 +566,7 @@ class GUI(object):
         for rangeid, rangeval in enumerate(rangevals):
             if self.userange:
                 cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
+                cmds.append(["go"])
             for rep in range(self.nrep):
                 for call in self.calls:
                     if isinstance(call, signature.Call):
