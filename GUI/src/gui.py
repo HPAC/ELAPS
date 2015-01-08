@@ -139,7 +139,7 @@ class GUI(object):
             try:
                 with open(self.statefile) as fin:
                     state = eval(fin.read(), symbolic.__dict__)
-                self.log("loaded state from", self.statefile)
+                self.log("loaded state from", os.path.relpath(self.statefile))
             except:
                 pass
         self.state_fromflat(state)
