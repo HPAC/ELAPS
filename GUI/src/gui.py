@@ -385,6 +385,7 @@ class GUI(object):
                             break
             self.calls[callid] = call
             self.infer_lds(callid)
+            self.connections_update()
             self.data_update()
             self.UI_call_set(callid, 0)
         elif value in self.sampler["kernels"]:
