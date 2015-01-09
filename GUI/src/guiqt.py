@@ -5,7 +5,6 @@ from gui import GUI
 from qcall import QCall
 
 import sys
-import time
 
 from PyQt4 import QtCore, QtGui
 
@@ -197,30 +196,29 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def UI_alert(self, *args, **kwargs):
         msg = " ".join(map(str, args))
         title = kwargs.get("title", "")
-        ret = QtGui.QMessageBox.information(self.Qt_window, title, msg)
-        return ret == QtGui.QMessageBox.Ok
+        self.UI_dialog("information", title, msg)
 
-    def UI_choose_data_override(self, callid, argid, value):
-        ret = QtGui.QMessageBox.warning(
-            self.Qt_window, "Incompatible sizes for" + value,
-            "Dimension arguments will be adjusted automatically.",
-            QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
-        )
-        if ret == QtGui.QMessageBox.Ok:
-            self.data_override_ok(callid, argid, value)
-        else:
-            self.data_override_cancel(callid, argid, value)
+    def UI_dialog(self, msgtype, title, text, callbacks={"Ok": None}):
+        msgtypes = {
+            "information": QtGui.QMessageBox.information,
+            "warning": QtGui.QMessageBox.warning,
+            "question": QtGui.QMessageBox.question,
+            "critical": QtGui.QMessageBox.question
+        }
+        buttontypes = {
+            "Ok": QtGui.QMessageBox.Ok,
+            "Cancel": QtGui.QMessageBox.Cancel
+        }
 
-    def UI_submit_confirmoverwrite(self, sampletime):
-        ret = QtGui.QMessageBox.warning(
-            self.Qt_window, "Confirm overwrite",
-            "A report %r alerady exists!\n(generated %s)\n\nOverwrite it?" % (
-                self.samplename,
-                time.strftime("%c", time.localtime(sampletime))),
-            QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel,
-        )
-        if ret == QtGui.QMessageBox.Ok:
-            self.submit()
+        callbackmap = {}
+        buttons = 0
+        for key, callback in callbacks.iteritems():
+            callbackmap[buttontypes[key]] = callback
+            buttons |= buttontypes[key]
+
+        ret = msgtypes[msgtype](self.Qt_window, title, text, buttons)
+        if callbackmap[ret] is not None:
+            callbackmap[ret][0](*callbackmap[ret][1])
 
     # setters
     def UI_sampler_set(self):

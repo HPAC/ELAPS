@@ -486,7 +486,16 @@ class GUI(object):
                 # inconsistency: restore backup and query override
                 call[argid] = oldvalue
                 self.connections_update()
-                self.UI_choose_data_override(callid, argid, value)
+                callbacks = {
+                    "Ok": (self.data_override_ok, (callid, argid, value)),
+                    "Cancel": (self.data_override_cancel,
+                               (callid, argid, value))
+                }
+                self.UI_dialog(
+                    "warning", "Incompatible sizes for " + value,
+                    "Dimension arguments will be adjusted automatically.",
+                    callbacks
+                )
                 return
 
     def data_override_ok(self, callid, argid, value):
@@ -779,6 +788,12 @@ class GUI(object):
     def UI_submit_click(self):
         reportfile = self.get_reportfilename()
         if os.path.isfile(reportfile):
-            self.UI_submit_confirmoverwrite(os.path.getmtime(reportfile))
+            filetime = time.localtime(os.path.getmtime(reportfile))
+            self.UI_dialog(
+                "warning", "confirm overwrite",
+                "A report %r already exists!\n(generated %s)\n\nOverwrite it?"
+                % (self.samplename, time.strftime("%c", filetime)),
+                {"Ok": (self.submit, ()), "Cancel": None}
+            )
         else:
             self.submit()
