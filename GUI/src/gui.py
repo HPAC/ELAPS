@@ -632,6 +632,7 @@ class GUI(object):
         for cmd in cmds:
             script += "\t".join(map(str, cmd)) + "\n"
         script += "1234END5678\n"
+        script += "ret=$?; [ $ret -eq 0 ] || echo $ret >>" + errfile + "\n"
         script += "date +%s >> " + outfile + "\n"
         script += "[ -s " + errfile + " ] || rm " + errfile + "\n"
         return script
