@@ -22,6 +22,7 @@ class GUI(object):
         if thispath not in sys.path:
             sys.path.append(thispath)
         self.rootpath = os.path.join(thispath, "..", "..")
+        self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
         self.statefile = os.path.join(self.rootpath, "GUI", ".state.py")
 
         self.backends_init()
@@ -525,7 +526,7 @@ class GUI(object):
 
     # submit
     def get_reportfilename(self):
-        return os.path.join(self.rootpath, "meas", self.samplename + ".smpl")
+        return os.path.join(self.reportpath, self.samplename + ".smpl")
 
     def generate_cmds(self):
         cmds = []
