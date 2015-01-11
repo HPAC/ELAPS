@@ -152,11 +152,11 @@ class GUI_Qt(GUI, QtGui.QApplication):
         windowL.addLayout(bottomL)
         bottomL.addStretch(1)
 
-        # window > bottom > samplename
+        # window > bottom > reportname
         bottomL.addWidget(QtGui.QLabel("sample name:"))
-        self.Qt_samplename = QtGui.QLineEdit()
-        bottomL.addWidget(self.Qt_samplename)
-        self.Qt_samplename.textChanged.connect(self.Qt_samplename_change)
+        self.Qt_reportname = QtGui.QLineEdit()
+        bottomL.addWidget(self.Qt_reportname)
+        self.Qt_reportname.textChanged.connect(self.Qt_reportname_change)
 
         # window > bottom > submit
         self.Qt_submit = QtGui.QPushButton("submit")
@@ -361,20 +361,20 @@ class GUI_Qt(GUI, QtGui.QApplication):
         for Qcall in self.Qt_Qcalls:
             Qcall.usevary_apply()
 
-    def UI_samplename_set(self):
+    def UI_reportname_set(self):
         self.setting = True
-        if self.samplename is None:
-            self.Qt_samplename.setText("")
+        if self.reportname is None:
+            self.Qt_reportname.setText("")
         else:
-            self.Qt_samplename.setText(self.samplename)
-        self.UI_samplename_setvalidity()
+            self.Qt_reportname.setText(self.reportname)
+        self.UI_reportname_setvalidity()
         self.setting = False
 
-    def UI_samplename_setvalidity(self):
-        self.Qt_samplename.setProperty("invalid", self.samplename is None)
-        self.Qt_samplename.style().unpolish(self.Qt_samplename)
-        self.Qt_samplename.style().polish(self.Qt_samplename)
-        self.Qt_samplename.update()
+    def UI_reportname_setvalidity(self):
+        self.Qt_reportname.setProperty("invalid", self.reportname is None)
+        self.Qt_reportname.style().unpolish(self.Qt_reportname)
+        self.Qt_reportname.style().polish(self.Qt_reportname)
+        self.Qt_reportname.update()
 
     def UI_submit_setenabled(self):
         if self.calls_checksanity():
@@ -447,10 +447,10 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def Qt_call_add(self):
         self.UI_call_add()
 
-    def Qt_samplename_change(self):
+    def Qt_reportname_change(self):
         if self.setting:
             return
-        self.UI_samplename_change(str(self.Qt_samplename.text()))
+        self.UI_reportname_change(str(self.Qt_reportname.text()))
 
     def Qt_submit_click(self):
         self.UI_submit_click()

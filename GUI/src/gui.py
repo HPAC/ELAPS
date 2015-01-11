@@ -126,7 +126,7 @@ class GUI(object):
             "rangevar": "n",
             "range": (8, 1001, 32),
             "counters": sampler["papi_counters_max"] * [None],
-            "samplename": "dgemm",
+            "reportname": "dgemm",
             "calls": [[""]],
             "vary": {},
             "datascale": 100,
@@ -520,13 +520,13 @@ class GUI(object):
                 return False
             if any(arg is None for arg in call):
                 return False
-        if self.samplename is None:
+        if self.reportname is None:
             return False
         return True
 
     # submit
     def get_reportfilename(self):
-        return os.path.join(self.reportpath, self.samplename + ".smpl")
+        return os.path.join(self.reportpath, self.reportname + ".smpl")
 
     def generate_cmds(self):
         cmds = []
@@ -654,12 +654,12 @@ class GUI(object):
         if header:
             script = header + "\n" + script
         self.backends[self.sampler["backend"]].submit(
-            script, nt=self.nt, jobname=self.samplename
+            script, nt=self.nt, jobname=self.reportname
         )
         self.UI_alert("Submitted job %r to backend %r" %
-                      (self.samplename, self.sampler["backend"]))
+                      (self.reportname, self.sampler["backend"]))
         self.log("submitted %r to %r" %
-                 (self.samplename, self.sampler["backend"]))
+                 (self.reportname, self.sampler["backend"]))
 
     # user interface
     def UI_init(self):
@@ -683,7 +683,7 @@ class GUI(object):
         self.UI_rangevar_set()
         self.UI_range_set()
         self.UI_calls_init()
-        self.UI_samplename_set()
+        self.UI_reportname_set()
         self.UI_submit_setenabled()
 
     # event handlers
