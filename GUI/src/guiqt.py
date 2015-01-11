@@ -152,12 +152,6 @@ class GUI_Qt(GUI, QtGui.QApplication):
         windowL.addLayout(bottomL)
         bottomL.addStretch(1)
 
-        # window > bottom > reportname
-        bottomL.addWidget(QtGui.QLabel("sample name:"))
-        self.Qt_reportname = QtGui.QLineEdit()
-        bottomL.addWidget(self.Qt_reportname)
-        self.Qt_reportname.textChanged.connect(self.Qt_reportname_change)
-
         # window > bottom > submit
         self.Qt_submit = QtGui.QPushButton("submit")
         bottomL.addWidget(self.Qt_submit)
@@ -361,21 +355,6 @@ class GUI_Qt(GUI, QtGui.QApplication):
         for Qcall in self.Qt_Qcalls:
             Qcall.usevary_apply()
 
-    def UI_reportname_set(self):
-        self.setting = True
-        if self.reportname is None:
-            self.Qt_reportname.setText("")
-        else:
-            self.Qt_reportname.setText(self.reportname)
-        self.UI_reportname_setvalidity()
-        self.setting = False
-
-    def UI_reportname_setvalidity(self):
-        self.Qt_reportname.setProperty("invalid", self.reportname is None)
-        self.Qt_reportname.style().unpolish(self.Qt_reportname)
-        self.Qt_reportname.style().polish(self.Qt_reportname)
-        self.Qt_reportname.update()
-
     def UI_submit_setenabled(self):
         if self.calls_checksanity():
             self.Qt_submit.setEnabled(True)
@@ -447,13 +426,16 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def Qt_call_add(self):
         self.UI_call_add()
 
-    def Qt_reportname_change(self):
-        if self.setting:
-            return
-        self.UI_reportname_change(str(self.Qt_reportname.text()))
-
     def Qt_submit_click(self):
-        self.UI_submit_click()
+        filename = QtGui.QFileDialog.getSaveFileName(
+            self.Qt_window,
+            "Generate report as",
+            self.reportpath,
+            "*.smpl"
+        )
+        filename = str(filename)
+        if filename:
+            self.UI_submit(filename)
 
 
 def main():

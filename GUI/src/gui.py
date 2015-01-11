@@ -126,7 +126,6 @@ class GUI(object):
             "rangevar": "n",
             "range": (8, 1001, 32),
             "counters": sampler["papi_counters_max"] * [None],
-            "reportname": "dgemm",
             "calls": [[""]],
             "vary": {},
             "datascale": 100,
@@ -520,14 +519,9 @@ class GUI(object):
                 return False
             if any(arg is None for arg in call):
                 return False
-        if self.reportname is None:
-            return False
         return True
 
     # submit
-    def get_reportfilename(self):
-        return os.path.join(self.reportpath, self.reportname + ".smpl")
-
     def generate_cmds(self):
         cmds = []
 
@@ -622,8 +616,8 @@ class GUI(object):
 
         return cmds
 
-    def generate_script(self, cmds):
-        outfile = self.get_reportfilename()
+    def generate_script(self, filename, cmds):
+        outfile = filename
         errfile = outfile + ".err"
         script = ""
         script += "date +%s >> " + outfile + "\n"
@@ -637,7 +631,7 @@ class GUI(object):
         script += "[ -s " + errfile + " ] || rm " + errfile + "\n"
         return script
 
-    def generate_outputheader(self, cmds):
+    def generate_outputheader(self, filename, cmds):
         info = self.state.copy()
         sampler = self.sampler.copy()
         del sampler["kernels"]
@@ -646,23 +640,23 @@ class GUI(object):
             "cmds": cmds,
             "submittime": time.time()
         })
-        with open(self.get_reportfilename(), "w") as fout:
+        with open(filename, "w") as fout:
             print(repr(info), file=fout)
 
-    def submit(self):
+    def submit(self, filename):
+        name = os.path.basename(filename)[:-5]
         cmds = self.generate_cmds()
-        self.generate_outputheader(cmds)
-        script = self.generate_script(cmds)
+        self.generate_outputheader(filename, cmds)
+        script = self.generate_script(filename, cmds)
         header = self.sampler["backend_header"].format(nt=self.nt)
         if header:
             script = header + "\n" + script
         self.backends[self.sampler["backend"]].submit(
-            script, nt=self.nt, jobname=self.reportname
+            script, nt=self.nt, jobname=name
         )
         self.UI_alert("Submitted job %r to backend %r" %
-                      (self.reportname, self.sampler["backend"]))
-        self.log("submitted %r to %r" %
-                 (self.reportname, self.sampler["backend"]))
+                      (name, self.sampler["backend"]))
+        self.log("submitted %r to %r" % (name, self.sampler["backend"]))
 
     # user interface
     def UI_init(self):
@@ -686,7 +680,6 @@ class GUI(object):
         self.UI_rangevar_set()
         self.UI_range_set()
         self.UI_calls_init()
-        self.UI_reportname_set()
         self.UI_submit_setenabled()
 
     # event handlers
@@ -782,23 +775,5 @@ class GUI(object):
         self.state_write()
         self.UI_data_viz()
 
-    def UI_reportname_change(self, reportname):
-        if reportname == "":
-            reportname = None
-        self.reportname = reportname
-        self.UI_reportname_setvalidity()
-        self.UI_submit_setenabled()
-        self.state_write()
-
-    def UI_submit_click(self):
-        reportfile = self.get_reportfilename()
-        if os.path.isfile(reportfile):
-            timeobj = time.localtime(os.path.getmtime(reportfile))
-            self.UI_dialog(
-                "warning", "confirm overwrite",
-                "A report %r already exists!\n(generated %s)\n\nOverwrite it?"
-                % (self.reportname, time.strftime("%c", timeobj)),
-                {"Ok": (self.submit, ()), "Cancel": None}
-            )
-        else:
-            self.submit()
+    def UI_submit(self, filename):
+        self.submit(filename)
