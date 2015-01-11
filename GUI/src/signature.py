@@ -340,7 +340,7 @@ class Data(Arg):
         if self.minstr:
             args.append(self.minstr)
         if self.propertiesstr:
-            if self.minstr:
+            if not self.minstr:
                 args.append(None)
             args.append(self.propertiesstr)
         args = map(repr, args)
