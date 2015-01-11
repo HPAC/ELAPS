@@ -638,11 +638,14 @@ class GUI(object):
         return script
 
     def generate_outputheader(self, cmds):
-        info = {
-            "state": self.state_toflat(),
+        info = self.state.copy()
+        sampler = self.sampler.copy()
+        del sampler["kernels"]
+        info.update({
+            "sampler": sampler,
             "cmds": cmds,
             "submittime": time.time()
-        }
+        })
         with open(self.get_reportfilename(), "w") as fout:
             print(repr(info), file=fout)
 
@@ -779,22 +782,22 @@ class GUI(object):
         self.state_write()
         self.UI_data_viz()
 
-    def UI_samplename_change(self, samplename):
-        if samplename == "":
-            samplename = None
-        self.samplename = samplename
-        self.UI_samplename_setvalidity()
+    def UI_reportname_change(self, reportname):
+        if reportname == "":
+            reportname = None
+        self.reportname = reportname
+        self.UI_reportname_setvalidity()
         self.UI_submit_setenabled()
         self.state_write()
 
     def UI_submit_click(self):
         reportfile = self.get_reportfilename()
         if os.path.isfile(reportfile):
-            filetime = time.localtime(os.path.getmtime(reportfile))
+            timeobj = time.localtime(os.path.getmtime(reportfile))
             self.UI_dialog(
                 "warning", "confirm overwrite",
                 "A report %r already exists!\n(generated %s)\n\nOverwrite it?"
-                % (self.samplename, time.strftime("%c", filetime)),
+                % (self.reportname, time.strftime("%c", timeobj)),
                 {"Ok": (self.submit, ()), "Cancel": None}
             )
         else:
