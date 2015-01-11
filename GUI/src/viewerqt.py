@@ -28,7 +28,8 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         windowL.addLayout(reportL)
 
         # load
-        load = QtGui.QPushButton("&load repot")
+        icon = self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton)
+        load = QtGui.QPushButton(icon, "&open repot")
         reportL.addWidget(load)
         load.clicked.connect(self.Qt_load_click)
 

@@ -100,18 +100,18 @@ class Viewer(object):
     def report_infostr(self, reportid, callid):
         report = self.reports[reportid]
         sampler = report["sampler"]
-        result = ""
-        result += "File:\t%s\n" %report["filename"]
-        result += "CPU:\t%s\n" % sampler["cpu_model"]
-        result += "#threads: %d\n" % report["nt"]
-        result += "BLAS:\t%s\n" % sampler["blas_name"]
+        result = "<table>"
+        result += "<tr><td>File:</td><td>%s</td></tr>" % report["filename"]
+        result += "<tr><td>CPU:</td><td>%s</td></tr>" % sampler["cpu_model"]
+        result += "<tr><td>#threads:</td><td>%d</td></tr>" % report["nt"]
+        result += "<tr><td>BLAS:</td><td>%s</td></tr>" % sampler["blas_name"]
         if report["valid"]:
-            timeobj = time.localtime(report["endtime"])
-            result += time.strftime("Date:\t%c\n", timeobj)
+            date = time.strftime("%c", time.localtime(report["endtime"]))
+            result += "<tr><td>Date:</td><td>%s</td></tr>" % date
         else:
-            result += "<i>Report is invalid</i>\n"
+            result += "<tr><td>:</td><td><b>Invalid Report!</b></td></tr>"
         if report["userange"]:
-            result += "Range:\t%s = %d:%d:%d\n" % (
+            result += "<tr><td>Range:</td><td>%s = %d:%d:%d</td></tr>" % (
                 report["rangevar"],
                 report["range"][0],
                 report["range"][2],
@@ -122,14 +122,13 @@ class Viewer(object):
             return call[0] + "(" + ", ".join(map(str, call[1:])) + ")"
 
         if callid is None:
-            if len(report["calls"]) > 1:
-                result += "Calls:\n"
-                for call in report["calls"]:
-                    result += "\t%s\n" % format_call(call)
-            else:
-                result += "Call:\t%s\n" % format_call(report["calls"][0])
+            calls = report["calls"]
         else:
-            result += "Call:\t%s\n" % format_call(report["calls"][callid])
+            calls = [report["calls"][callid]]
+        result += "<tr><td>Call%s:</td><td>" % ("s" if len(calls) > 1 else "")
+        result += "<br>".join(map(format_call, calls))
+        result += "</td></tr>"
+        result += "</table>"
         return result
 
     # event handlers
