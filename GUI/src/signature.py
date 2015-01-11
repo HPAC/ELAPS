@@ -18,28 +18,32 @@ class Signature(list):
                 raise TypeError(self.filename + " did not conatin a Signature")
             # initialize from loaded signature
             list.__init__(self, sig)
+            self.complexitystr = sig.complexitystr
             self.complexity = sig.complexity
             return
         # set attributes
         list.__init__(self, args)
-        self.complexity = None
         self.filename = None
-        if "complexity" in kwargs:
-            self.complexity = kwargs["complexity"]
+        self.complexitystr = None
+        self.complexity = None
 
-        # infer and compile min and attr
         if not isinstance(self[0], Name):
             self[0] = Name(self[0])
+
+        # infer and compile complexity, min, attr
         lambdaargs = ", ".join(arg.name for arg in self)
+        if "complexity" in kwargs:
+            self.complexitystr = kwargs["complexity"]
+            self.complexity = eval("lambda %s: %s" %
+                                   (lambdaargs, kwargs["complexity"]))
         for arg in self:
             if hasattr(arg, "minstr") and arg.minstr:
-                arg.min = eval("lambda " + lambdaargs + ": " + arg.minstr)
+                arg.min = eval("lambda %s: %s" % (lambdaargs,  arg.minstr))
             else:
                 arg.min = None
             if arg.propertiesstr:
-                arg.properties = eval("lambda " + lambdaargs +
-                                      ": filter(None, (" + arg.propertiesstr +
-                                      ",))")
+                arg.properties = eval("lambda %s: filter(None, (%s,))" %
+                                      (lambdaargs, arg.propertiesstr))
             else:
                 arg.properties = lambda *args: ()
 
@@ -48,8 +52,10 @@ class Signature(list):
                 ", ".join(arg.name for arg in self[1:]) + ")")
 
     def __repr__(self):
-        return (self.__class__.__name__ + "(" + repr(self[0].name) + ", "
-                + ", ".join(map(repr, self[1:])) + ")")
+        args = [repr(self[0].name)] + map(repr, self[1:])
+        if self.complexity:
+            args.append("complexity=" + repr(self.complexitystr))
+        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
     def __call__(self, *args):
         if len(args) == 0:
@@ -130,6 +136,11 @@ class Call(list):
         if argid:
             return self.sig[argid].properties(*self)
         return [arg.properties(*self) for arg in self.sig]
+
+    def complexity(self):
+        if self.sig.complexity is not None:
+            return self.sig.complexity(*self)
+        return None
 
     def format_str(self):
         return tuple(arg.format_str(val)
