@@ -17,6 +17,8 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         Viewer.__init__(self)
 
     def UI_init(self):
+        self.UI_hasHTML = True
+
         # window
         self.Qt_window = QtGui.QWidget()
         self.Qt_window.setWindowTitle("Viewer")

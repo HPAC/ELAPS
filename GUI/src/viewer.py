@@ -7,6 +7,7 @@ import symbolic
 import os
 import sys
 import time
+import re
 
 import traceback
 
@@ -97,7 +98,7 @@ class Viewer(object):
             report["valid"] = True
         return report
 
-    def report_infostr(self, reportid, callid):
+    def report_infostr_HTML(self, reportid, callid):
         report = self.reports[reportid]
         sampler = report["sampler"]
         result = "<table>"
@@ -125,10 +126,17 @@ class Viewer(object):
             calls = report["calls"]
         else:
             calls = [report["calls"][callid]]
-        result += "<tr><td>Call%s:</td><td>" % ("s" if len(calls) > 1 else "")
+        result += "<tr><td>Call%s:</td><td>" % "s"[:len(calls) - 1]
         result += "<br>".join(map(format_call, calls))
         result += "</td></tr>"
         result += "</table>"
+        return result
+
+    def report_infostr(self, reportid, callid):
+        result = self.report_infostr_HTML(reportid, callid)
+        result = result.replace("</td><td>", "\t")
+        result = result.replace("</tr>", "\n")
+        result = re.sub("<.*?>", "", result)
         return result
 
     # event handlers
@@ -144,7 +152,10 @@ class Viewer(object):
         self.UI_report_add(reportid)
 
     def UI_report_select(self, reportid, callid):
-        self.UI_info_set(self.report_infostr(reportid, callid))
+        if hasattr(self, "UI_hasHTML") and self.UI_hasHTML:
+            self.UI_info_set(self.report_infostr_HTML(reportid, callid))
+        else:
+            self.UI_info_set(self.report_infostr(reportid, callid))
 
     def UI_reportcheck_change(self, reportid, callid, state):
         self.alert("reportcheck_change", reportid, callid, state)
