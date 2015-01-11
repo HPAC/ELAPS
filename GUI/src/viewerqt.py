@@ -84,7 +84,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
                 report["range"][1] - 1
             )
         Qreport = QtGui.QTreeWidgetItem((
-            report["reportname"],
+            report["name"],
             "",
             sampler["system_name"],
             str(report["nt"]),

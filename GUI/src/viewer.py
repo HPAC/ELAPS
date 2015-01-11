@@ -36,9 +36,11 @@ class Viewer(object):
     def state_init(self):
         self.reports = []
 
-    def report_load(self, reportfile):
-        name = os.path.basename(reportfile)[:-5]
-        errfile = reportfile + ".err"
+    def report_load(self, filename):
+        name = os.path.basename(filename)[:-5]
+        errfile = filename + ".err"
+
+        # check for errors
         if os.path.isfile(errfile):
             # TODO: make this a UI_alert
             self.alert("report", name, "produced errors")
@@ -49,8 +51,9 @@ class Viewer(object):
             if len(lines) > 10:
                 self.alert("[%d more lines]" % (len(lines) - 10))
 
-        fin = open(reportfile)
+        fin = open(filename)
 
+        # read header
         evaldir = symbolic.__dict__.copy()
         evaldir.update(signature.__dict__)
         try:
@@ -58,10 +61,11 @@ class Viewer(object):
             report["starttime"] = int(fin.readline())
         except:
             traceback.print_exc()
-            raise IOError(name, "did't contain a valid report")
-        report["filename"] = os.path.relpath(reportfile)
+            raise IOError(name, "doesn't contain a valid report")
+        report["filename"] = os.path.relpath(filename)
         report["valid"] = False
         report["endtime"] = None
+        report["name"] = name
 
         rangevals = [0]
         if report["userange"]:
@@ -79,7 +83,7 @@ class Viewer(object):
                     try:
                         line = fin.readline()
                     except:
-                        self.alert(reportfile, "was truncated")
+                        self.alert(filename, "is truncated")
                         return report
                     repdata.append(line.split())
         try:
