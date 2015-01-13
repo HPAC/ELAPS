@@ -27,6 +27,8 @@ fi
 [ -z "$CC" ] && CC=gcc
 [ -z "$CXX" ] && CXX=g++
 
+CFLAGS+=" -Wall"
+CXXFLAGS+=" -Wall"
 
 export BLAS_NAME SYSTEM_NAME NAME KERNEL_HEADERS
 export BACKEND BACKEND_HEADER BACKEND_OPTIONS

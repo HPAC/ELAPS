@@ -180,7 +180,7 @@ template size_t MemoryManager::dynamic_register<double>(size_t size);
 
 // void treated as char for size
 template <> size_t MemoryManager::dynamic_register<void>(size_t size) {
-    dynamic_register<char>(size);
+    return dynamic_register<char>(size);
 }
 
 void *MemoryManager::dynamic_get(size_t id) {

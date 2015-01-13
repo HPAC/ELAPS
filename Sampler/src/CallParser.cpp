@@ -12,7 +12,7 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 
 CallParser::CallParser(const vector<string> &tokens, const Signature &signature, MemoryManager &mem)
-: tokens(tokens), signature(&signature), mem(&mem)
+: mem(&mem), signature(&signature), tokens(tokens)
 { 
     // check for too few arguments
     if (tokens.size() < signature.arguments.size()) {
@@ -176,6 +176,8 @@ void CallParser::register_args() {
                 break;
             case VOIDP:
                 register_arg<void>(i);
+                break;
+            default:
                 break;
         }
 }
