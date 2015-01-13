@@ -6,6 +6,8 @@ from viewer import Viewer
 import sys
 
 from PyQt4 import QtCore, QtGui
+import matplotlib.pyplot as pyplot
+# TODO: use QT backend
 
 
 class Viewer_Qt(Viewer, QtGui.QApplication):
@@ -38,6 +40,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         reportL.addWidget(self.Qt_reports, 1)
         self.Qt_reports.setHeaderLabels(("report", "", "sytem", "#t", "blas",
                                          "range"))
+        self.Qt_columns_resize()
         self.Qt_reports.setMinimumWidth(400)
         self.Qt_reports.currentItemChanged.connect(self.Qt_report_select)
         self.Qt_reports.itemExpanded.connect(self.Qt_report_expanded)
@@ -68,8 +71,10 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         showplot.clicked.connect(self.Qt_showplot_click)
 
         # window
-        self.Qt_columns_resize()
         self.Qt_window.show()
+
+        # plot
+        self.MPL_figs = {}
 
     def UI_start(self):
         sys.exit(self.exec_())
@@ -139,6 +144,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_info.setText(infostr)
 
     def UI_showplots_update(self):
+        self.setting = True
         for box in self.Qt_Qshowplots:
             box.deleteLater()
         self.Qt_Qshowplots = []
@@ -148,11 +154,65 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             QplotsL.addWidget(Qbox)
             Qlayout = QtGui.QHBoxLayout()
             Qbox.setLayout(Qlayout)
-            for plottype in self.plottypes:
-                Qcheckbox = QtGui.QCheckBox(plottype)
+            for plottypename in self.plottypenames:
+                Qcheckbox = QtGui.QCheckBox(plottypename)
                 Qlayout.addWidget(Qcheckbox)
-                Qcheckbox.setChecked(self.showplots[metricname][plottype])
+                Qcheckbox.setChecked(self.showplots[metricname][plottypename])
+                Qcheckbox.metric = metricname
+                Qcheckbox.plottype = plottypename
+                Qcheckbox.stateChanged.connect(self.Qt_showplots_change)
             self.Qt_Qshowplots.append(Qbox)
+        self.setting = False
+
+    def UI_plots_update(self):
+        for metricname in self.showplots:
+            if not any(self.showplots[metricname].values()):
+                if metricname in self.MPL_figs:
+                    pyplot.figure(self.MPL_figs[metricname])
+                    pyplot.clf()
+                    del Qt_plots[metricname]
+                continue
+            self.UI_plot_update(metricname)
+
+    def UI_plot_update(self, metricname):
+        if metricname in self.MPL_figs:
+            pyplot.figure(self.MPL_figs[metricname])
+        else:
+            if len(self.MPL_figs):
+                pyplot.figure(max(self.MPL_figs) + 1)
+            else:
+                pyplot.figure(0)
+
+        # get the data
+        reportsplotting = [key for key, val in self.reportplotting.iteritems()
+                           if val]
+        alldata = {}
+        rangevarnames = set()
+        for reportid, callid in reportsplotting:
+            rangevarnames.add(self.reports[reportid]["rangevar"])
+            alldata[(reportid, callid)] = self.generateplotdata(
+                reportid, callid, metricname
+            )
+        rangevarname = " = ".join(rangevarnames)
+
+        # set up figure
+        pyplot.cla()
+        pyplot.xlabel(rangevarname)
+        pyplot.ylabel(metricname)
+        pyplot.title(metricname)
+        pyplot.hold(True)
+
+        # add plots
+        showplots = self.showplots[metricname]
+        for reportid, callid in reportsplotting:
+            if showplots["med"]:
+                typedata = [(rangeval, self.plottypes["med"](data))
+                             for rangeval, data in alldata[(reportid, callid)]]
+                typedata.sort()
+                x, y = zip(*typedata)
+                pyplot.plot(x, y)
+        pyplot.show()
+
 
     # event handlers
     def Qt_load_click(self):
@@ -170,12 +230,23 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_reports.resizeColumnToContents(0)
 
     def Qt_report_select(self, item):
+        if self.setting:
+            return
         self.UI_report_select(item.reportid, item.callid)
 
     def Qt_reportcheck_change(self):
+        if self.setting:
+            return
         sender = self.sender()
         self.UI_reportcheck_change(sender.item.reportid, sender.item.callid,
                                    sender.isChecked())
+
+    def Qt_showplots_change(self):
+        if self.setting:
+            return
+        sender = self.sender()
+        self.UI_showplots_change(sender.metric, sender.plottype,
+                                 sender.isChecked())
 
     def Qt_showplot_click(self):
         self.UI_showplot_click()

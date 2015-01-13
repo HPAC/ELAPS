@@ -23,9 +23,10 @@ class Viewer(object):
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
 
         self.reports = []
+        self.reportplotting = {}
         self.showplots = defaultdict(lambda: defaultdict(lambda: False))
-        self.plottypes = ["med", "min", "avg", "max", "all"]
         self.metrics_init()
+        self.plottypes_init()
         self.UI_init()
         self.UI_setall()
         self.UI_start()
@@ -51,6 +52,23 @@ class Viewer(object):
                  *sorted(self.metrics))
         if len(self.metrics) == 0:
             raise Exception("No metrics found")
+
+    def plottypes_init(self):
+        def med(data):
+            sorteddata = sorted(data)
+            datalen = len(sorteddata)
+            mid = (datalen - 1) // 2
+            if datalen % 2 == 0:
+                return sorteddata[mid]
+            return (sorteddata[mid] + sorteddata[mid + 1]) / 2
+        self.plottypes = {
+            "med": med,
+            "min": min,
+            "max": max,
+            "avg": lambda data: sum(data) / len(data),
+            "all": lambda data: data
+        }
+        self.plottypenames = ["med", "min", "avg", "max", "all"]
 
     def metrics_adddefaultmetric(self, name):
         self.metrics[name] = lambda data, sampler: data.get(name)
@@ -86,14 +104,14 @@ class Viewer(object):
         report["endtime"] = None
         report["name"] = name
 
-        rangevals = [0]
+        rangevals = [None]
         if report["userange"]:
             rangevals = range(*report["range"])
-        reportdata = []
+        reportdata = {}
         report["data"] = reportdata
         for rangeval in rangevals:
             rangevaldata = []
-            reportdata.append(rangevaldata)
+            reportdata[rangeval] = rangevaldata
             for rep in range(report["nrep"] + 1):
                 repdata = []
                 if rep > 0:
@@ -104,7 +122,7 @@ class Viewer(object):
                     except:
                         self.alert(filename, "is truncated")
                         return report
-                    repdata.append(line.split())
+                    repdata.append(map(int, line.split()))
         try:
             report["endtime"] = int(fin.readline())
         except:
@@ -157,6 +175,51 @@ class Viewer(object):
         result = re.sub("<.*?>", "", result)
         return result
 
+    def generateplotdata(self, reportid, callid, metricname, rangeval=None):
+        report = self.reports[reportid]
+        # ifrangeval not given: return all
+        if rangeval is None:
+            plotdata = []
+            rangevals = [None]
+            if report["userange"]:
+                rangevals = range(*report["range"])
+            for rangeval in rangevals:
+                plotdata.append((rangeval, self.generateplotdata(
+                    reportid, callid, metricname, rangeval)))
+            return plotdata
+        # extract some variables
+        rangevaldata = report["data"][rangeval]
+        calls = report["calls"]
+        sampler = report["sampler"]
+        metric = self.metrics[metricname]
+        # if callid not given: all calls
+        callids = [callid]
+        if callid is None:
+            callids = range(len(calls))
+        data = defaultdict(lambda: None)
+        # complexity is constant across repetitions
+        complexities = [call.complexity()
+                        if isinstance(call, signature.Call) else None
+                        for call in calls]
+        if all(complexity is not None for complexity in complexities):
+            data["complexity"] = sum(complexities)
+        # generate plotdata
+        plotdata = []
+        for rep in range(report["nrep"]):
+            repdata =  rangevaldata[rep]
+            # set up data
+            data["rdtsc"] = sum(repdata[callid][0] for callid in callids)
+            if report["usepapi"]:
+                for counterid, counter in enumerate(report["counters"]):
+                    data[counter] = sum(repdata[callid][counterid + 1]
+                                        for callid in callids)
+            # call metric
+            plotdata.append(metric(data, sampler))
+        if any(val is None for val in data):
+            return None
+        return plotdata
+
+    # UI
     def UI_setall(self):
         self.UI_showplots_update()
 
@@ -170,6 +233,9 @@ class Viewer(object):
             return
         reportid = len(self.reports)
         self.reports.append(report)
+        self.reportplotting[(reportid, None)] = True
+        for callid in range(len(report["calls"])):
+            self.reportplotting[(reportid, callid)] = False
         if report["usepapi"]:
             for counter in report["counters"]:
                 if counter is not None and counter not in self.metrics:
@@ -183,8 +249,14 @@ class Viewer(object):
             self.UI_info_set(self.report_infostr(reportid, callid))
 
     def UI_reportcheck_change(self, reportid, callid, state):
-        self.alert("reportcheck_change", reportid, callid, state)
+        self.reportplotting[(reportid, callid)] = state
+        self.UI_plots_update()
+
+    def UI_showplots_change(self, metricname, plottype, state):
+        self.showplots[metricname][plottype] = state
+        self.UI_plot_update(metricname)
 
     def UI_showplot_click(self):
         self.UI_load_report(os.path.join(self.reportpath, "dgemm.smpl"))
         self.UI_report_select(0, None)
+        self.UI_showplots_change("rdtsc", "med", True)
