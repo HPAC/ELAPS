@@ -8,6 +8,8 @@ import os
 import sys
 import time
 import re
+import imp
+from collections import defaultdict
 
 import traceback
 
@@ -20,12 +22,13 @@ class Viewer(object):
         self.rootpath = os.path.join(thispath, "..", "..")
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
 
-        self.state_init()
+        self.reports = []
+        self.showplots = defaultdict(lambda: defaultdict(lambda: False))
+        self.plottypes = ["med", "min", "avg", "max", "all"]
+        self.metrics_init()
         self.UI_init()
-        self.UI_start()
-        return
-
         self.UI_setall()
+        self.UI_start()
 
     # utility
     def log(self, *args):
@@ -34,8 +37,23 @@ class Viewer(object):
     def alert(self, *args):
         print(*args, file=sys.stderr)
 
-    def state_init(self):
-        self.reports = []
+    def metrics_init(self):
+        self.metrics = {}
+        metricpath = os.path.join(self.rootpath, "GUI", "src", "metrics")
+        for filename in os.listdir(metricpath):
+            if not filename[-3:] == ".py":
+                continue
+            name = filename[:-3]
+            module = imp.load_source(name, os.path.join(metricpath, filename))
+            if hasattr(module, name):
+                self.metrics[name] = getattr(module, name)
+        self.log("loaded", len(self.metrics), "metrics:",
+                 *sorted(self.metrics))
+        if len(self.metrics) == 0:
+            raise Exception("No metrics found")
+
+    def metrics_adddefaultmetric(self, name):
+        self.metrics[name] = lambda data, sampler: data.get(name)
 
     def report_load(self, filename):
         name = os.path.basename(filename)[:-5]
@@ -139,6 +157,9 @@ class Viewer(object):
         result = re.sub("<.*?>", "", result)
         return result
 
+    def UI_setall(self):
+        self.UI_showplots_update()
+
     # event handlers
     def UI_load_report(self, filename):
         try:
@@ -149,6 +170,10 @@ class Viewer(object):
             return
         reportid = len(self.reports)
         self.reports.append(report)
+        if report["usepapi"]:
+            for counter in report["counters"]:
+                if counter is not None and counter not in self.metrics:
+                    self.metrics_adddefaultmetric(counter)
         self.UI_report_add(reportid)
 
     def UI_report_select(self, reportid, callid):

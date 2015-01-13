@@ -9,8 +9,6 @@ from PyQt4 import QtCore, QtGui
 
 
 class Viewer_Qt(Viewer, QtGui.QApplication):
-    state = {}
-
     def __init__(self):
         QtGui.QApplication.__init__(self, sys.argv)
         self.setting = False
@@ -57,8 +55,15 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         infoL.addWidget(self.Qt_info)
         infoL.addStretch(1)
 
+        # showplots
+        self.Qt_showplots = QtGui.QGroupBox("plots")
+        rightL.addWidget(self.Qt_showplots)
+        showplotsL = QtGui.QVBoxLayout()
+        self.Qt_showplots.setLayout(showplotsL)
+        self.Qt_Qshowplots = []
+
         # plotting
-        showplot = QtGui.QPushButton("show &plot")
+        showplot = QtGui.QPushButton("do something")
         rightL.addWidget(showplot)
         showplot.clicked.connect(self.Qt_showplot_click)
 
@@ -132,6 +137,22 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
 
     def UI_info_set(self, infostr):
         self.Qt_info.setText(infostr)
+
+    def UI_showplots_update(self):
+        for box in self.Qt_Qshowplots:
+            box.deleteLater()
+        self.Qt_Qshowplots = []
+        QplotsL = self.Qt_showplots.layout()
+        for metricname in self.metrics:
+            Qbox = QtGui.QGroupBox(metricname)
+            QplotsL.addWidget(Qbox)
+            Qlayout = QtGui.QHBoxLayout()
+            Qbox.setLayout(Qlayout)
+            for plottype in self.plottypes:
+                Qcheckbox = QtGui.QCheckBox(plottype)
+                Qlayout.addWidget(Qcheckbox)
+                Qcheckbox.setChecked(self.showplots[metricname][plottype])
+            self.Qt_Qshowplots.append(Qbox)
 
     # event handlers
     def Qt_load_click(self):
