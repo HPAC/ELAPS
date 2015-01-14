@@ -23,6 +23,7 @@ class Viewer(object):
         self.rootpath = os.path.join(thispath, "..", "..")
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
 
+        self.init()
         self.UI_init()
         self.UI_setall()
         self.UI_start()
@@ -34,14 +35,8 @@ class Viewer(object):
     def alert(self, *args):
         print(*args, file=sys.stderr)
 
-    def init_state(self):
-        self.init_state()
+    def init(self):
         self.reports = []
-        self.default_colors = [
-            "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff",
-            "#880000", "#008800", "#000088", "#888800", "#008888", "#880088",
-        ]
-        self.reportplotting = {}
         self.showplots = defaultdict(lambda: defaultdict(lambda: False))
         self.metrics_init()
         self.plottypes_init()
@@ -80,6 +75,14 @@ class Viewer(object):
 
     def metrics_adddefaultmetric(self, name):
         self.metrics[name] = lambda data, sampler: data.get(name)
+
+    def nextcolor(self, colors=[
+            "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff",
+            "#880000", "#008800", "#000088", "#888800", "#008888", "#880088",
+    ]):
+        if colors:
+            return colors.pop(0)
+        "#%06x" % random.randint(0, 0xffffff)
 
     def report_load(self, filename):
         name = os.path.basename(filename)[:-5]
@@ -214,7 +217,7 @@ class Viewer(object):
         # generate plotdata
         plotdata = []
         for rep in range(report["nrep"]):
-            repdata =  rangevaldata[rep]
+            repdata = rangevaldata[rep]
             # set up data
             data["rdtsc"] = sum(repdata[callid][0] for callid in callids)
             if report["usepapi"]:
@@ -241,13 +244,14 @@ class Viewer(object):
             return
         reportid = len(self.reports)
         self.reports.append(report)
-        if len(self.default_colors):
-            report["pltcolor"] = self.default_colors.pop(0)
-        else:
-            report["pltcolor"] = "#%06x" % random.randint(0, 0xffffff)
-        self.reportplotting[(reportid, None)] = True
+        report["plotting"] = {None: True}
+        report["plotcolors"] = {None: self.nextcolor()}
         for callid in range(len(report["calls"])):
-            self.reportplotting[(reportid, callid)] = False
+            report["plotting"][callid] = False
+            if len(report["calls"]) == 1:
+                report["plotcolors"][0] = report["plotcolors"][None]
+            else:
+                report["plotcolors"][callid] = self.nextcolor()
         if report["usepapi"]:
             for counter in report["counters"]:
                 if counter is not None and counter not in self.metrics:
@@ -261,8 +265,13 @@ class Viewer(object):
             self.UI_info_set(self.report_infostr(reportid, callid))
 
     def UI_reportcheck_change(self, reportid, callid, state):
-        self.reportplotting[(reportid, callid)] = state
+        self.reports[reportid]["plotting"][callid] = state
         self.UI_plots_update()
+
+    def UI_reportcolor_change(self, reportid, callid, color):
+        self.reports[reportid]["plotcolors"][callid] = color
+        self.UI_report_update(reportid)
+        self.UI_showplots_update()
 
     def UI_showplots_change(self, metricname, plottype, state):
         self.showplots[metricname][plottype] = state

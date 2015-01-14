@@ -38,8 +38,8 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         # report list
         self.Qt_reports = QtGui.QTreeWidget()
         reportL.addWidget(self.Qt_reports, 1)
-        self.Qt_reports.setHeaderLabels(("report", "", "sytem", "#t", "blas",
-                                         "range"))
+        self.Qt_reports.setHeaderLabels(("report", "", "color", "sytem", "#t",
+                                         "blas", "range"))
         self.Qt_columns_resize()
         self.Qt_reports.setMinimumWidth(400)
         self.Qt_reports.currentItemChanged.connect(self.Qt_report_select)
@@ -73,7 +73,8 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         # window
         self.Qt_window.show()
 
-        # plot
+        # Qt objects
+        self.Qt_Qreports = {}
         self.Qt_plots = {}
 
     def UI_start(self):
@@ -99,32 +100,43 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         Qreport = QtGui.QTreeWidgetItem((
             report["name"],
             "",
+            "",
             sampler["system_name"],
             str(report["nt"]),
             sampler["blas_name"],
             rangestr,
         ))
         self.Qt_reports.addTopLevelItem(Qreport)
+        self.Qt_Qreports[reportid] = Qreport
         Qreport.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
         # tooltips
         Qreport.setToolTip(0, report["filename"])
-        Qreport.setToolTip(2, sampler["cpu_model"])
+        Qreport.setToolTip(3, sampler["cpu_model"])
 
         # checkbox
         Qcheck = QtGui.QCheckBox()
         self.Qt_reports.setItemWidget(Qreport, 1, Qcheck)
-        Qcheck.setChecked(True)
+        Qreport.checkbox = Qcheck
         Qcheck.stateChanged.connect(self.Qt_reportcheck_change)
         Qcheck.item = Qreport
+
+        # colorbutton
+        Qbutton = QtGui.QPushButton()
+        self.Qt_reports.setItemWidget(Qreport, 2, Qbutton)
+        Qreport.color = Qbutton
+        Qbutton.clicked.connect(self.Qt_color_click)
+        Qbutton.item = Qreport
 
         # annotate
         Qreport.reportid = reportid
         Qreport.callid = None
 
+        Qreport.items = {None: Qreport}
         for callid, call in enumerate(report["calls"]):
             Qitem = QtGui.QTreeWidgetItem((call[0],))
             Qreport.addChild(Qitem)
+            Qreport.items[callid] = Qitem
 
             # tooltip
             Qitem.setToolTip(0, str(call))
@@ -132,13 +144,32 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             # checkbox
             Qcheck = QtGui.QCheckBox()
             self.Qt_reports.setItemWidget(Qitem, 1, Qcheck)
+            Qitem.checkbox = Qcheck
             Qcheck.stateChanged.connect(self.Qt_reportcheck_change)
             Qcheck.item = Qitem
+
+            # colorbutton
+            Qbutton = QtGui.QPushButton()
+            self.Qt_reports.setItemWidget(Qitem, 2, Qbutton)
+            Qitem.color = Qbutton
+            Qbutton.clicked.connect(self.Qt_color_click)
+            Qbutton.item = Qitem
 
             # annotate
             Qitem.reportid = reportid
             Qitem.callid = callid
+
+        self.UI_report_update(reportid)
         self.Qt_columns_resize()
+
+    def UI_report_update(self, reportid):
+        report = self.reports[reportid]
+        Qreport = self.Qt_Qreports[reportid]
+        for callid, Qitem in Qreport.items.iteritems():
+            Qitem.checkbox.setChecked(report["plotting"][callid])
+            color = report["plotcolors"][callid]
+            Qitem.color.setStyleSheet("background-color: %s;" % color)
+            Qitem.color.setToolTip(color)
 
     def UI_info_set(self, infostr):
         self.Qt_info.setText(infostr)
@@ -192,19 +223,19 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             layout.addWidget(Qtoolbar)
             Qplot.MPLfig = fig
             Qplot.Qcanvas = Qcanvas
+            Qplot.show()
         fig = Qplot.MPLfig
         canvas = Qplot.Qcanvas
 
         # get the data
-        reportsplotting = [key for key, val in self.reportplotting.iteritems()
-                           if val]
         alldata = {}
         rangevarnames = set()
-        for reportid, callid in reportsplotting:
-            rangevarnames.add(self.reports[reportid]["rangevar"])
-            alldata[(reportid, callid)] = self.generateplotdata(
-                reportid, callid, metricname
-            )
+        for reportid, report in enumerate(self.reports):
+            rangevarnames.add(report["rangevar"])
+            for callid, state in report["plotting"].iteritems():
+                alldata[reportid, callid] = self.generateplotdata(
+                    reportid, callid, metricname
+                )
         rangevarname = " = ".join(rangevarnames)
 
         # set up figure
@@ -216,14 +247,13 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
 
         # add plots
         showplots = self.showplots[metricname]
-        for reportid, callid in reportsplotting:
+        for reportid, callid in alldata:
             if showplots["med"]:
                 typedata = [(rangeval, self.plottypes["med"](data))
-                            for rangeval, data in alldata[(reportid, callid)]]
+                            for rangeval, data in alldata[reportid, callid]]
                 typedata.sort()
                 x, y = zip(*typedata)
                 ax.plot(x, y)
-        Qplot.show()
         canvas.draw()
 
     # event handlers
@@ -252,6 +282,15 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         sender = self.sender()
         self.UI_reportcheck_change(sender.item.reportid, sender.item.callid,
                                    sender.isChecked())
+
+    def Qt_color_click(self):
+        sender = self.sender().item
+        reportid = sender.reportid
+        callid = sender.callid
+        Qcolor = QtGui.QColor(self.reports[reportid]["plotcolors"][callid])
+        Qcolor = QtGui.QColorDialog.getColor(Qcolor)
+        if Qcolor.isValid():
+            self.UI_reportcolor_change(reportid, callid, Qcolor.name())
 
     def Qt_showplots_change(self):
         if self.setting:
