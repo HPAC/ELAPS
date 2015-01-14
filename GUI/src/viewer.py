@@ -9,6 +9,7 @@ import sys
 import time
 import re
 import imp
+import random
 from collections import defaultdict
 
 import traceback
@@ -22,11 +23,6 @@ class Viewer(object):
         self.rootpath = os.path.join(thispath, "..", "..")
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
 
-        self.reports = []
-        self.reportplotting = {}
-        self.showplots = defaultdict(lambda: defaultdict(lambda: False))
-        self.metrics_init()
-        self.plottypes_init()
         self.UI_init()
         self.UI_setall()
         self.UI_start()
@@ -37,6 +33,18 @@ class Viewer(object):
 
     def alert(self, *args):
         print(*args, file=sys.stderr)
+
+    def init_state(self):
+        self.init_state()
+        self.reports = []
+        self.default_colors = [
+            "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff",
+            "#880000", "#008800", "#000088", "#888800", "#008888", "#880088",
+        ]
+        self.reportplotting = {}
+        self.showplots = defaultdict(lambda: defaultdict(lambda: False))
+        self.metrics_init()
+        self.plottypes_init()
 
     def metrics_init(self):
         self.metrics = {}
@@ -233,6 +241,10 @@ class Viewer(object):
             return
         reportid = len(self.reports)
         self.reports.append(report)
+        if len(self.default_colors):
+            report["pltcolor"] = self.default_colors.pop(0)
+        else:
+            report["pltcolor"] = "#%06x" % random.randint(0, 0xffffff)
         self.reportplotting[(reportid, None)] = True
         for callid in range(len(report["calls"])):
             self.reportplotting[(reportid, callid)] = False
