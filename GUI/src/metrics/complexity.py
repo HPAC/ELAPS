@@ -2,5 +2,7 @@
 from __future__ import division, print_function
 
 
-def complexity(data, sampler):
+def metric(data, report):
     return data.get("complexity")
+
+name = "flops"

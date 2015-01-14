@@ -2,5 +2,7 @@
 from __future__ import division, print_function
 
 
-def rdtsc(data, sampler):
+def metric(data, report):
     return data.get("rdtsc")
+
+name = "rdtsc"

@@ -49,8 +49,8 @@ class Viewer(object):
                 continue
             name = filename[:-3]
             module = imp.load_source(name, os.path.join(metricpath, filename))
-            if hasattr(module, name):
-                self.metrics[name] = getattr(module, name)
+            if hasattr(module, "metric"):
+                self.metrics[module.name] = module.metric
         self.log("loaded", len(self.metrics), "metrics:",
                  *sorted(self.metrics))
         if len(self.metrics) == 0:
@@ -204,7 +204,6 @@ class Viewer(object):
         # extract some variables
         rangevaldata = report["data"][rangeval]
         calls = report["calls"]
-        sampler = report["sampler"]
         metric = self.metrics[metricname]
         # if callid not given: all calls
         callids = [callid]
@@ -213,9 +212,9 @@ class Viewer(object):
         data = defaultdict(lambda: None)
         # complexity is constant across repetitions
         rangevar = report["rangevar"]
-        complexities = [calls[callid].complexity()
-                        if isinstance(calls[callid], signature.Call) else None
-                        for callid in callids]
+        complexities = [calls[callid2].complexity()
+                        if isinstance(calls[callid2], signature.Call) else None
+                        for callid2 in callids]
         if all(isinstance(complexity, symbolic.Expression)
                for complexity in complexities):
             data["complexity"] = sum(complexity(**{rangevar: rangeval})
@@ -231,7 +230,7 @@ class Viewer(object):
                     data[counter] = sum(repdata[callid][counterid + 1]
                                         for callid in callids)
             # call metric
-            val = metric(data, sampler)
+            val = metric(data, report)
             if val is not None:
                 plotdata.append(val)
         if not plotdata:
@@ -289,6 +288,6 @@ class Viewer(object):
         self.UI_load_report(os.path.join(self.reportpath, "dgemm.smpl"))
         self.UI_load_report(os.path.join(self.reportpath, "2.smpl"))
         self.UI_report_select(0, None)
-        self.showplots["complexity"]["avg"] = True
+        self.showplots["flops/s"]["avg"] = True
         self.UI_showplots_update()
         self.UI_plots_update()

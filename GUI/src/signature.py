@@ -66,6 +66,10 @@ class Signature(list):
         return [argid for argid, arg in enumerate(self)
                 if isinstance(arg, Data)]
 
+    def datatype(self):
+        return (arg for arg in reversed(self)
+                if isinstance(arg, Data)).next().typename
+
 
 class Call(list):
     def __init__(self, sig, *args):
