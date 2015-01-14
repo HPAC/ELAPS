@@ -289,7 +289,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             color = report["plotcolors"][callid]
             legendlabel = report["name"]
             if callid is not None:
-                legendlabel += "(%s)" % str(report["calls"][callid][0])
+                legendlabel += " (%s)" % str(report["calls"][callid][0])
             legend.append((MPLlines.Line2D([], [], color=color,
                                            **self.MPL_plotstyles["legend"]),
                            legendlabel))
