@@ -8,6 +8,7 @@ import sys
 from PyQt4 import QtCore, QtGui
 import matplotlib.backends.backend_qt4agg as QtMPL
 import matplotlib.figure as MPLfig
+import matplotlib.lines as MPLlines
 
 
 class Viewer_Qt(Viewer, QtGui.QApplication):
@@ -66,9 +67,9 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_Qshowplots = []
 
         # plotting
-        showplot = QtGui.QPushButton("do something")
-        rightL.addWidget(showplot)
-        showplot.clicked.connect(self.Qt_showplot_click)
+        do = QtGui.QPushButton("do something")
+        rightL.addWidget(do)
+        do.clicked.connect(self.Qt_dosomething)
 
         # window
         self.Qt_window.show()
@@ -76,6 +77,17 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         # Qt objects
         self.Qt_Qreports = {}
         self.Qt_plots = {}
+
+        # plot styles
+        self.MPL_plotstyles = {
+            "legend": {"linestyle": "-"},
+            "med": {"linestyle": "-"},
+            "min": {"linestyle": "--"},
+            "max": {"linestyle": ":"},
+            "avg": {"linestyle": "-."},
+            "all": {"linestyle": "None", "marker": "."},
+            "minmax": {"alpha": .25},
+        }
 
     def UI_start(self):
         sys.exit(self.exec_())
@@ -197,18 +209,17 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
 
     def UI_plots_update(self):
         for metricname in self.showplots:
-            if not any(self.showplots[metricname].values()):
-                if metricname in self.Qt_plots:
-                    Qplot = self.Qt_plots[metricname]
-                    Qplot.hide()
-                    Qplot.deleteLater()
-                    del self.Qt_plots[metricname]
-                continue
             self.UI_plot_update(metricname)
 
     def UI_plot_update(self, metricname):
+        if not any(self.showplots[metricname].values()):
+            if metricname in self.Qt_plots:
+                self.Qt_plots[metricname].hide()
+            return
         if metricname in self.Qt_plots:
             Qplot = self.Qt_plots[metricname]
+            if Qplot.isHidden():
+                Qplot.show()
         else:
             Qplot = QtGui.QDialog()
             Qplot.setWindowTitle(metricname)
@@ -221,39 +232,78 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             layout.addWidget(Qcanvas, 1)
             Qtoolbar = QtMPL.NavigationToolbar2QT(Qcanvas, Qplot)
             layout.addWidget(Qtoolbar)
+            Qplot.axes = fig.add_subplot(111)
+            Qplot.metricname = metricname
             Qplot.MPLfig = fig
             Qplot.Qcanvas = Qcanvas
             Qplot.show()
+
+            self.Qt_plots[metricname] = Qplot
+
         fig = Qplot.MPLfig
         canvas = Qplot.Qcanvas
+        axes = Qplot.axes
+        showplots = self.showplots[metricname]
 
         # get the data
-        alldata = {}
+        plotdata = {}
         rangevarnames = set()
         for reportid, report in enumerate(self.reports):
             rangevarnames.add(report["rangevar"])
             for callid, state in report["plotting"].iteritems():
-                alldata[reportid, callid] = self.generateplotdata(
-                    reportid, callid, metricname
-                )
+                if not report["plotting"][callid]:
+                    continue
+                rawdata = self.generateplotdata(reportid, callid, metricname)
+                if not rawdata:
+                    continue
+                linedatas = {
+                    plottype: [(x, self.plottypes[plottype](y))
+                               for x, y in rawdata
+                               if y is not None]
+                    for plottype in showplots if showplots[plottype]
+                }
+                if "all" in linedatas:
+                    linedatas["all"] = [(x, y) for x, ys in linedatas["all"]
+                                        for y in ys]
+                if "min" in linedatas and "max" in linedatas:
+                    linedatas["minmax"] = [
+                        p1 + (p2[1],) for p1, p2 in zip(linedatas["min"],
+                                                        linedatas["max"])
+                    ]
+                    del linedatas["min"]
+                    del linedatas["max"]
+                plotdata[reportid, callid] = linedatas
+
         rangevarname = " = ".join(rangevarnames)
 
         # set up figure
-        # fig.clear()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel(rangevarname)
-        ax.set_ylabel(metricname)
-        ax.hold(True)
+        axes.cla()
+        axes.set_xlabel(rangevarname)
+        axes.set_ylabel(metricname)
+        axes.hold(True)
 
         # add plots
-        showplots = self.showplots[metricname]
-        for reportid, callid in alldata:
-            if showplots["med"]:
-                typedata = [(rangeval, self.plottypes["med"](data))
-                            for rangeval, data in alldata[reportid, callid]]
-                typedata.sort()
-                x, y = zip(*typedata)
-                ax.plot(x, y)
+        legend = []
+        for (reportid, callid), linedatas in plotdata.iteritems():
+            report = self.reports[reportid]
+            color = report["plotcolors"][callid]
+            legendlabel = report["name"]
+            if callid is not None:
+                legendlabel += "(%s)" % str(report["calls"][callid][0])
+            legend.append((MPLlines.Line2D([], [], color=color,
+                                           **self.MPL_plotstyles["legend"]),
+                           legendlabel))
+            for plottype, linedata in linedatas.iteritems():
+                if plottype == "minmax":
+                    x, y1, y2 = zip(*linedata)
+                    axes.fill_between(x, y1, y2, color=color,
+                                      **self.MPL_plotstyles[plottype])
+                else:
+                    x, y = zip(*linedata)
+                    axes.plot(x, y, color=color,
+                              **self.MPL_plotstyles[plottype])
+        artists, labels = zip(*legend)
+        axes.legend(artists, labels)
         canvas.draw()
 
     # event handlers
@@ -299,8 +349,12 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.UI_showplots_change(sender.metric, sender.plottype,
                                  sender.isChecked())
 
-    def Qt_showplot_click(self):
-        self.UI_showplot_click()
+    def Qt_plot_close(self, event):
+        sender = self.sender()
+        del self.Qt_plots[sender.metricname]
+
+    def Qt_dosomething(self):
+        self.UI_dosomething()
 
 
 def main():

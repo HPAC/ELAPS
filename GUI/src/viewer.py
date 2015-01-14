@@ -197,6 +197,9 @@ class Viewer(object):
             for rangeval in rangevals:
                 plotdata.append((rangeval, self.generateplotdata(
                     reportid, callid, metricname, rangeval)))
+            plotdata = [(x, y) for x, y in plotdata if y is not None]
+            if not plotdata:
+                return None
             return plotdata
         # extract some variables
         rangevaldata = report["data"][rangeval]
@@ -209,11 +212,14 @@ class Viewer(object):
             callids = range(len(calls))
         data = defaultdict(lambda: None)
         # complexity is constant across repetitions
-        complexities = [call.complexity()
-                        if isinstance(call, signature.Call) else None
-                        for call in calls]
-        if all(complexity is not None for complexity in complexities):
-            data["complexity"] = sum(complexities)
+        rangevar = report["rangevar"]
+        complexities = [calls[callid].complexity()
+                        if isinstance(calls[callid], signature.Call) else None
+                        for callid in callids]
+        if all(isinstance(complexity, symbolic.Expression)
+               for complexity in complexities):
+            data["complexity"] = sum(complexity(**{rangevar: rangeval})
+                                     for complexity in complexities)
         # generate plotdata
         plotdata = []
         for rep in range(report["nrep"]):
@@ -225,8 +231,10 @@ class Viewer(object):
                     data[counter] = sum(repdata[callid][counterid + 1]
                                         for callid in callids)
             # call metric
-            plotdata.append(metric(data, sampler))
-        if any(val is None for val in data):
+            val = metric(data, sampler)
+            if val is not None:
+                plotdata.append(val)
+        if not plotdata:
             return None
         return plotdata
 
@@ -277,7 +285,10 @@ class Viewer(object):
         self.showplots[metricname][plottype] = state
         self.UI_plot_update(metricname)
 
-    def UI_showplot_click(self):
+    def UI_dosomething(self):
         self.UI_load_report(os.path.join(self.reportpath, "dgemm.smpl"))
+        self.UI_load_report(os.path.join(self.reportpath, "2.smpl"))
         self.UI_report_select(0, None)
-        self.UI_showplots_change("rdtsc", "med", True)
+        self.showplots["complexity"]["avg"] = True
+        self.UI_showplots_update()
+        self.UI_plots_update()
