@@ -6,8 +6,8 @@ from viewer import Viewer
 import sys
 
 from PyQt4 import QtCore, QtGui
-import matplotlib.pyplot as pyplot
-# TODO: use QT backend
+import matplotlib.backends.backend_qt4agg as QtMPL
+import matplotlib.figure as MPLfig
 
 
 class Viewer_Qt(Viewer, QtGui.QApplication):
@@ -74,7 +74,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_window.show()
 
         # plot
-        self.MPL_figs = {}
+        self.Qt_plots = {}
 
     def UI_start(self):
         sys.exit(self.exec_())
@@ -167,21 +167,33 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
     def UI_plots_update(self):
         for metricname in self.showplots:
             if not any(self.showplots[metricname].values()):
-                if metricname in self.MPL_figs:
-                    pyplot.figure(self.MPL_figs[metricname])
-                    pyplot.clf()
-                    del Qt_plots[metricname]
+                if metricname in self.Qt_plots:
+                    Qplot = self.Qt_plots[metricname]
+                    Qplot.hide()
+                    Qplot.deleteLater()
+                    del self.Qt_plots[metricname]
                 continue
             self.UI_plot_update(metricname)
 
     def UI_plot_update(self, metricname):
-        if metricname in self.MPL_figs:
-            pyplot.figure(self.MPL_figs[metricname])
+        if metricname in self.Qt_plots:
+            Qplot = self.Qt_plots[metricname]
         else:
-            if len(self.MPL_figs):
-                pyplot.figure(max(self.MPL_figs) + 1)
-            else:
-                pyplot.figure(0)
+            Qplot = QtGui.QDialog()
+            Qplot.setWindowTitle(metricname)
+            layout = QtGui.QVBoxLayout()
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(0)
+            Qplot.setLayout(layout)
+            fig = MPLfig.Figure()
+            Qcanvas = QtMPL.FigureCanvasQTAgg(fig)
+            layout.addWidget(Qcanvas, 1)
+            Qtoolbar = QtMPL.NavigationToolbar2QT(Qcanvas, Qplot)
+            layout.addWidget(Qtoolbar)
+            Qplot.MPLfig = fig
+            Qplot.Qcanvas = Qcanvas
+        fig = Qplot.MPLfig
+        canvas = Qplot.Qcanvas
 
         # get the data
         reportsplotting = [key for key, val in self.reportplotting.iteritems()
@@ -196,23 +208,23 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         rangevarname = " = ".join(rangevarnames)
 
         # set up figure
-        pyplot.cla()
-        pyplot.xlabel(rangevarname)
-        pyplot.ylabel(metricname)
-        pyplot.title(metricname)
-        pyplot.hold(True)
+        # fig.clear()
+        ax = fig.add_subplot(111)
+        ax.set_xlabel(rangevarname)
+        ax.set_ylabel(metricname)
+        ax.hold(True)
 
         # add plots
         showplots = self.showplots[metricname]
         for reportid, callid in reportsplotting:
             if showplots["med"]:
                 typedata = [(rangeval, self.plottypes["med"](data))
-                             for rangeval, data in alldata[(reportid, callid)]]
+                            for rangeval, data in alldata[(reportid, callid)]]
                 typedata.sort()
                 x, y = zip(*typedata)
-                pyplot.plot(x, y)
-        pyplot.show()
-
+                ax.plot(x, y)
+        Qplot.show()
+        canvas.draw()
 
     # event handlers
     def Qt_load_click(self):
