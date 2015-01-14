@@ -13,4 +13,5 @@ Signature(
     Ld("ldA", "m if side == 'L' else n"),
     dData("B", "ldB * n"),
     Ld("ldB", "m"),
+    complexity="m * n * (m if side == 'L' else n + 1)"
 )
