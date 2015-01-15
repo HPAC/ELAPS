@@ -25,7 +25,6 @@ class Viewer(object):
 
         self.init()
         self.UI_init()
-        self.UI_setall()
         self.UI_start()
 
     # utility
@@ -39,7 +38,6 @@ class Viewer(object):
         self.reports = []
         self.showplots = defaultdict(lambda: defaultdict(lambda: False))
         self.metrics_init()
-        self.plottypes_init()
 
     def metrics_init(self):
         self.metrics = {}
@@ -47,31 +45,23 @@ class Viewer(object):
         for filename in os.listdir(metricpath):
             if not filename[-3:] == ".py":
                 continue
-            name = filename[:-3]
-            module = imp.load_source(name, os.path.join(metricpath, filename))
-            if hasattr(module, "metric"):
-                self.metrics[module.name] = module.metric
+            try:
+                module = imp.load_source(filename[:-3],
+                                         os.path.join(metricpath, filename))
+                if hasattr(module, "metric") and hasattr(module, "name"):
+                    self.metrics[module.name] = module.metric
+                else:
+                    self.alert(os.path.relpath(filename),
+                               "did not contain a valid metric")
+            except:
+                self.alert("couldn't load", os.path.relpath(filename))
         self.log("loaded", len(self.metrics), "metrics:",
-                 *sorted(self.metrics))
+                 *map(repr, sorted(self.metrics)))
         if len(self.metrics) == 0:
             raise Exception("No metrics found")
-
-    def plottypes_init(self):
-        def med(data):
-            sorteddata = sorted(data)
-            datalen = len(sorteddata)
-            mid = (datalen - 1) // 2
-            if datalen % 2 == 0:
-                return sorteddata[mid]
-            return (sorteddata[mid] + sorteddata[mid + 1]) / 2
-        self.plottypes = {
-            "med": med,
-            "min": min,
-            "max": max,
-            "avg": lambda data: sum(data) / len(data),
-            "all": lambda data: data
-        }
-        self.plottypenames = ["med", "min", "avg", "max", "all"]
+        self.metric_selected = min(self.metrics.keys())
+        if "cycles" in self.metrics:
+            self.metric_selected = "cycles"
 
     def metrics_adddefaultmetric(self, name):
         self.metrics[name] = lambda data, sampler: data.get(name)
@@ -177,6 +167,7 @@ class Viewer(object):
         result += "<br>".join(map(format_call, calls))
         result += "</td></tr>"
         result += "</table>"
+        result += "<br><br>TODO: show some numbers here"
         return result
 
     def report_infostr(self, reportid, callid):
@@ -237,10 +228,6 @@ class Viewer(object):
             return None
         return plotdata
 
-    # UI
-    def UI_setall(self):
-        self.UI_showplots_update()
-
     # event handlers
     def UI_load_report(self, filename):
         try:
@@ -264,12 +251,13 @@ class Viewer(object):
                 if counter is not None and counter not in self.metrics:
                     self.metrics_adddefaultmetric(counter)
         self.UI_report_add(reportid)
+        self.UI_plots_update()
 
     def UI_report_select(self, reportid, callid):
         if hasattr(self, "UI_hasHTML") and self.UI_hasHTML:
-            self.UI_info_set(self.report_infostr_HTML(reportid, callid))
+            self.UI_reportinfo_set(self.report_infostr_HTML(reportid, callid))
         else:
-            self.UI_info_set(self.report_infostr(reportid, callid))
+            self.UI_reportinfo_set(self.report_infostr(reportid, callid))
 
     def UI_reportcheck_change(self, reportid, callid, state):
         self.reports[reportid]["plotting"][callid] = state
@@ -280,14 +268,19 @@ class Viewer(object):
         self.UI_report_update(reportid)
         self.UI_showplots_update()
 
-    def UI_showplots_change(self, metricname, plottype, state):
-        self.showplots[metricname][plottype] = state
-        self.UI_plot_update(metricname)
+    def UI_metricselect_change(self, metric):
+        self.metric_selected = metric
+        info = self.metrics[metric].__doc__
+        if isinstance(info, str):
+            self.UI_metricinfo_set(info.strip())
+        else:
+            self.UI_metricinfo_set("[no docstring for %s]" % metric)
+
+    def UI_plot_clicked(self):
+        self.UI_plot_show(self.metric_selected)
 
     def UI_dosomething(self):
         self.UI_load_report(os.path.join(self.reportpath, "dgemm.smpl"))
         self.UI_load_report(os.path.join(self.reportpath, "2.smpl"))
         self.UI_report_select(0, None)
-        self.showplots["flops/s"]["avg"] = True
-        self.UI_showplots_update()
-        self.UI_plots_update()
+        self.UI_plot_clicked()

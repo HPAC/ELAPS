@@ -6,13 +6,11 @@ from viewer import Viewer
 import sys
 
 from PyQt4 import QtCore, QtGui
-import matplotlib.backends.backend_qt4agg as QtMPL
-import matplotlib.figure as MPLfig
-import matplotlib.lines as MPLlines
 
 
 class Viewer_Qt(Viewer, QtGui.QApplication):
-    def __init__(self):
+    def __init__(self, plotfactory):
+        self.plotfactory = plotfactory
         QtGui.QApplication.__init__(self, sys.argv)
         self.setting = False
         Viewer.__init__(self)
@@ -26,19 +24,26 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         windowL = QtGui.QHBoxLayout()
         self.Qt_window.setLayout(windowL)
 
+        # left
+        leftL = QtGui.QVBoxLayout()
+        windowL.addLayout(leftL)
+        leftL.setContentsMargins(0, 0, 0, 0)
+
         # reports
-        reportL = QtGui.QVBoxLayout()
-        windowL.addLayout(reportL)
+        reports = QtGui.QGroupBox("reports")
+        leftL.addWidget(reports)
+        reportsL = QtGui.QVBoxLayout()
+        reports.setLayout(reportsL)
 
         # load
         icon = self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton)
-        load = QtGui.QPushButton(icon, "&open repot")
-        reportL.addWidget(load)
+        load = QtGui.QPushButton(icon, "&load")
+        reportsL.addWidget(load)
         load.clicked.connect(self.Qt_load_click)
 
         # report list
         self.Qt_reports = QtGui.QTreeWidget()
-        reportL.addWidget(self.Qt_reports, 1)
+        reportsL.addWidget(self.Qt_reports, 1)
         self.Qt_reports.setHeaderLabels(("report", "", "color", "sytem", "#t",
                                          "blas", "range"))
         self.Qt_columns_resize()
@@ -46,50 +51,62 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_reports.currentItemChanged.connect(self.Qt_report_select)
         self.Qt_reports.itemExpanded.connect(self.Qt_report_expanded)
 
-        # right
-        rightL = QtGui.QVBoxLayout()
-        windowL.addLayout(rightL)
+        # metric selection
+        metrics = QtGui.QGroupBox("metrics")
+        leftL.addWidget(metrics)
+        metricsL = QtGui.QVBoxLayout()
+        metrics.setLayout(metricsL)
+        metricselectL = QtGui.QHBoxLayout()
+        metricsL.addLayout(metricselectL)
 
-        # info
-        info = QtGui.QGroupBox()
-        rightL.addWidget(info)
-        infoL = QtGui.QVBoxLayout()
-        info.setLayout(infoL)
-        self.Qt_info = QtGui.QLabel()
-        infoL.addWidget(self.Qt_info)
-        infoL.addStretch(1)
+        # metric list
+        self.Qt_metricslist = QtGui.QComboBox()
+        metricselectL.addWidget(self.Qt_metricslist)
+        self.Qt_metricslist.addItems(sorted(self.metrics.keys()))
+        self.Qt_metricslist.currentIndexChanged.connect(
+            self.Qt_metricselect_change
+        )
 
-        # showplots
-        self.Qt_showplots = QtGui.QGroupBox("plots")
-        rightL.addWidget(self.Qt_showplots)
-        showplotsL = QtGui.QVBoxLayout()
-        self.Qt_showplots.setLayout(showplotsL)
-        self.Qt_Qshowplots = []
+        # plot
+        metricplot = QtGui.QPushButton("&plot")
+        metricselectL.addWidget(metricplot)
+        metricplot.clicked.connect(self.Qt_plot_clicked)
+        metricselectL.addStretch(1)
 
-        # plotting
+        # metricinfo
+        metricinfobox = QtGui.QGroupBox()
+        metricinfobox.setContentsMargins(0, 0, 0, 0)
+        metricsL.addWidget(metricinfobox)
+        metricinfoL = QtGui.QVBoxLayout()
+        metricinfobox.setLayout(metricinfoL)
+        self.Qt_metricinfo = QtGui.QLabel()
+        metricinfoL.addWidget(self.Qt_metricinfo)
+
+        # do something
         do = QtGui.QPushButton("do something")
-        rightL.addWidget(do)
+        leftL.addWidget(do)
         do.clicked.connect(self.Qt_dosomething)
 
-        # window
-        self.Qt_window.show()
+        # report info
+        reportinfobox = QtGui.QGroupBox()
+        windowL.addWidget(reportinfobox)
+        reportinfoL = QtGui.QVBoxLayout()
+        reportinfobox.setLayout(reportinfoL)
+        self.Qt_reportinfo = QtGui.QLabel()
+        reportinfoL.addWidget(self.Qt_reportinfo)
+        reportinfoL.addStretch(1)
 
         # Qt objects
         self.Qt_Qreports = {}
-        self.Qt_plots = {}
+        self.Qt_Qplots = {}
 
-        # plot styles
-        self.MPL_plotstyles = {
-            "legend": {"linestyle": "-"},
-            "med": {"linestyle": "-"},
-            "min": {"linestyle": "--"},
-            "max": {"linestyle": ":"},
-            "avg": {"linestyle": "-."},
-            "all": {"linestyle": "None", "marker": "."},
-            "minmax": {"alpha": .25},
-        }
+        # select metric
+        self.Qt_metricslist.setCurrentIndex(
+            self.Qt_metricslist.findText(self.metric_selected)
+        )
 
     def UI_start(self):
+        self.Qt_window.show()
         sys.exit(self.exec_())
 
     def Qt_columns_resize(self):
@@ -183,128 +200,32 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             Qitem.color.setStyleSheet("background-color: %s;" % color)
             Qitem.color.setToolTip(color)
 
-    def UI_info_set(self, infostr):
-        self.Qt_info.setText(infostr)
+    def UI_reportinfo_set(self, infostr):
+        self.Qt_reportinfo.setText(infostr)
 
-    def UI_showplots_update(self):
+    def UI_plot_show(self, metric, state=True):
         self.setting = True
-        for box in self.Qt_Qshowplots:
-            box.deleteLater()
-        self.Qt_Qshowplots = []
-        QplotsL = self.Qt_showplots.layout()
-        for metricname in self.metrics:
-            Qbox = QtGui.QGroupBox(metricname)
-            QplotsL.addWidget(Qbox)
-            Qlayout = QtGui.QHBoxLayout()
-            Qbox.setLayout(Qlayout)
-            for plottypename in self.plottypenames:
-                Qcheckbox = QtGui.QCheckBox(plottypename)
-                Qlayout.addWidget(Qcheckbox)
-                Qcheckbox.setChecked(self.showplots[metricname][plottypename])
-                Qcheckbox.metric = metricname
-                Qcheckbox.plottype = plottypename
-                Qcheckbox.stateChanged.connect(self.Qt_showplots_change)
-            self.Qt_Qshowplots.append(Qbox)
+        if metric not in self.Qt_Qplots:
+            self.Qt_Qplots[metric] = self.plotfactory(self, metric)
+        Qplot = self.Qt_Qplots[metric]
+        if state:
+            Qplot.plot_update()
+            Qplot.show()
+        else:
+            Qplot.hide()
         self.setting = False
 
+    def UI_metricinfo_set(self, infostr):
+        self.Qt_metricinfo.setText(infostr)
+
     def UI_plots_update(self):
-        for metricname in self.showplots:
-            self.UI_plot_update(metricname)
+        for metric in self.Qt_Qplots:
+            self.UI_plot_update(metric)
 
-    def UI_plot_update(self, metricname):
-        if not any(self.showplots[metricname].values()):
-            if metricname in self.Qt_plots:
-                self.Qt_plots[metricname].hide()
+    def UI_plot_update(self, metric):
+        if metric not in self.Qt_Qplots:
             return
-        if metricname in self.Qt_plots:
-            Qplot = self.Qt_plots[metricname]
-            if Qplot.isHidden():
-                Qplot.show()
-        else:
-            Qplot = QtGui.QDialog()
-            Qplot.setWindowTitle(metricname)
-            layout = QtGui.QVBoxLayout()
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(0)
-            Qplot.setLayout(layout)
-            fig = MPLfig.Figure()
-            Qcanvas = QtMPL.FigureCanvasQTAgg(fig)
-            layout.addWidget(Qcanvas, 1)
-            Qtoolbar = QtMPL.NavigationToolbar2QT(Qcanvas, Qplot)
-            layout.addWidget(Qtoolbar)
-            Qplot.axes = fig.add_subplot(111)
-            Qplot.metricname = metricname
-            Qplot.MPLfig = fig
-            Qplot.Qcanvas = Qcanvas
-            Qplot.show()
-
-            self.Qt_plots[metricname] = Qplot
-
-        fig = Qplot.MPLfig
-        canvas = Qplot.Qcanvas
-        axes = Qplot.axes
-        showplots = self.showplots[metricname]
-
-        # get the data
-        plotdata = {}
-        rangevarnames = set()
-        for reportid, report in enumerate(self.reports):
-            rangevarnames.add(report["rangevar"])
-            for callid, state in report["plotting"].iteritems():
-                if not report["plotting"][callid]:
-                    continue
-                rawdata = self.generateplotdata(reportid, callid, metricname)
-                if not rawdata:
-                    continue
-                linedatas = {
-                    plottype: [(x, self.plottypes[plottype](y))
-                               for x, y in rawdata
-                               if y is not None]
-                    for plottype in showplots if showplots[plottype]
-                }
-                if "all" in linedatas:
-                    linedatas["all"] = [(x, y) for x, ys in linedatas["all"]
-                                        for y in ys]
-                if "min" in linedatas and "max" in linedatas:
-                    linedatas["minmax"] = [
-                        p1 + (p2[1],) for p1, p2 in zip(linedatas["min"],
-                                                        linedatas["max"])
-                    ]
-                    del linedatas["min"]
-                    del linedatas["max"]
-                plotdata[reportid, callid] = linedatas
-
-        rangevarname = " = ".join(rangevarnames)
-
-        # set up figure
-        axes.cla()
-        axes.set_xlabel(rangevarname)
-        axes.set_ylabel(metricname)
-        axes.hold(True)
-
-        # add plots
-        legend = []
-        for (reportid, callid), linedatas in plotdata.iteritems():
-            report = self.reports[reportid]
-            color = report["plotcolors"][callid]
-            legendlabel = report["name"]
-            if callid is not None:
-                legendlabel += " (%s)" % str(report["calls"][callid][0])
-            legend.append((MPLlines.Line2D([], [], color=color,
-                                           **self.MPL_plotstyles["legend"]),
-                           legendlabel))
-            for plottype, linedata in linedatas.iteritems():
-                if plottype == "minmax":
-                    x, y1, y2 = zip(*linedata)
-                    axes.fill_between(x, y1, y2, color=color,
-                                      **self.MPL_plotstyles[plottype])
-                else:
-                    x, y = zip(*linedata)
-                    axes.plot(x, y, color=color,
-                              **self.MPL_plotstyles[plottype])
-        artists, labels = zip(*legend)
-        axes.legend(artists, labels)
-        canvas.draw()
+        self.Qt_Qplots[metric].plot_update()
 
     # event handlers
     def Qt_load_click(self):
@@ -342,26 +263,13 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         if Qcolor.isValid():
             self.UI_reportcolor_change(reportid, callid, Qcolor.name())
 
-    def Qt_showplots_change(self):
+    def Qt_metricselect_change(self):
         if self.setting:
             return
-        sender = self.sender()
-        self.UI_showplots_change(sender.metric, sender.plottype,
-                                 sender.isChecked())
+        self.UI_metricselect_change(str(self.Qt_metricslist.currentText()))
 
-    def Qt_plot_close(self, event):
-        sender = self.sender()
-        del self.Qt_plots[sender.metricname]
+    def Qt_plot_clicked(self):
+        self.UI_plot_clicked()
 
     def Qt_dosomething(self):
         self.UI_dosomething()
-
-
-def main():
-    import signal
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-    Viewer_Qt()
-
-
-if __name__ == "__main__":
-    main()

@@ -218,7 +218,8 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def UI_sampler_set(self):
         self.setting = True
         self.Qt_sampler.setCurrentIndex(
-            self.Qt_sampler.findText(self.samplername))
+            self.Qt_sampler.findText(self.samplername)
+        )
         self.setting = False
 
     def UI_nt_setmax(self):

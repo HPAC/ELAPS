@@ -108,8 +108,7 @@ class GUI(object):
                                                                 filename))
                     self.signatures[str(sig[0])] = sig
                 except:
-                    print("couldn't load", os.path.relpath(filename),
-                          file=sys.stderr)
+                    self.alert("couldn't load", os.path.relpath(filename))
         self.log("loaded", len(self.signatures), "signatures:",
                  *sorted(self.signatures))
 
