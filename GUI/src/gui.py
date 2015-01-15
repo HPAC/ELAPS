@@ -126,7 +126,7 @@ class GUI(object):
             "range": (8, 1001, 32),
             "counters": sampler["papi_counters_max"] * [None],
             "calls": [[""]],
-            "vary": {},
+            "vary": set(),
             "datascale": 100,
         }
         if "dgemm_" in sampler["kernels"]:
@@ -149,12 +149,13 @@ class GUI(object):
     # utility type routines
     def state_toflat(self):
         state = self.state.copy()
-        state["calls"] = map(list, self.calls)
+        state["calls"] = tuple(map(tuple, self.calls))
+        state["counters"] = tuple(state["counters"])
         return state
 
     def state_fromflat(self, state):
         state = state.copy()
-        calls = state["calls"]
+        calls = list(map(list, state["calls"]))
         for callid, call in enumerate(calls):
             if call[0] in self.signatures:
                 calls[callid] = self.signatures[call[0]](*call[1:])
@@ -235,8 +236,7 @@ class GUI(object):
             self.data = {}
             for callid in range(len(self.calls)):
                 self.data_update(callid)
-            self.vary = {name: value for name, value in self.vary.iteritems()
-                         if name in self.data}
+            self.vary = {name for name in self.vary if name in self.data}
             return
         call = self.calls[callid]
         if not isinstance(call, signature.Call):
@@ -276,8 +276,6 @@ class GUI(object):
                 self.data[name]["symnames"] = symcall[argid].substitute(
                     **argnamedict
                 )
-            if name not in self.vary:
-                self.vary[name] = False
 
     def connections_update(self):
         # compute symbolic sizes for all calls
@@ -555,7 +553,7 @@ class GUI(object):
                 cmds.append(["# %s" % name])
                 cmdprefix = cmdprefixes[data["type"]]
                 size = max(self.range_eval(data["comp"]))
-                if not self.vary[name]:
+                if name not in self.vary:
                     cmds.append([cmdprefix + "malloc", name, size])
                     continue
                 # argument varies
@@ -589,7 +587,7 @@ class GUI(object):
                         cmd = call.format_sampler()
                         for argid in call.sig.dataargs():
                             name = call[argid]
-                            if self.vary[name]:
+                            if name in self.vary:
                                 cmd[argid] = "%s_%d_%d" % (name, rangeval, rep)
                     else:
                         # call without proper signature
@@ -770,7 +768,10 @@ class GUI(object):
         name = self.calls[callid][argid]
         if name is None:
             return
-        self.vary[name] = state
+        if state:
+            self.vary.add(name)
+        else:
+            self.vary.discard(name)
         self.state_write()
         self.UI_data_viz()
 

@@ -98,7 +98,7 @@ class QDataArg(QtGui.QWidget):
             self.Qt_vary.setChecked(False)
         else:
             self.Qt_name.setText(value)
-            self.Qt_vary.setChecked(self.app.vary[value])
+            self.Qt_vary.setChecked(value in self.app.vary)
         self.viz()
 
     def setsize(self, height, width):
@@ -124,7 +124,7 @@ class QDataArg(QtGui.QWidget):
         if value is None:
             self.viz_none()
             return
-        self.Qt_vary.setChecked(self.app.vary[value])
+        self.Qt_vary.setChecked(value in self.app.vary)
         data = self.app.data[value]
         if data["sym"] is None:
             self.viz_none()

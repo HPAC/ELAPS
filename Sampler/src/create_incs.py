@@ -106,15 +106,17 @@ def main():
         "backend_header": os.environ["BACKEND_HEADER"],
         "backend_options": options,
         "nt_max": int(os.environ["NT_MAX"]),
-        "kernels": sorted(kernelsigs),
+        "kernels": tuple(sorted(kernelsigs)),
         "papi_counters_max": papi_counters_max,
         "cpu_model": os.environ["CPU_MODEL"],
         "frequency": 1e6 * float(os.environ["FREQUENCY_MHZ"]),
     }
     if papi_counters_max:
-        info["papi_counters_avail"] = os.environ["PAPI_COUNTERS_AVAIL"].split()
+        info["papi_counters_avail"] = tuple(
+            os.environ["PAPI_COUNTERS_AVAIL"].split()
+        )
     else:
-        info["papi_counters_avail"] = []
+        info["papi_counters_avail"] = tuple()
     if "FLOPS_PER_CYCLE" in os.environ:
         info["dflops/cycle"] = int(os.environ["FLOPS_PER_CYCLE"])
         info["sflops/cycle"] = 2 * int(os.environ["FLOPS_PER_CYCLE"])
@@ -122,6 +124,7 @@ def main():
         info["dflops/cycle"] = int(os.environ["DFLOPS_PER_CYCLE"])
     if "SFLOPS_PER_CYCLE" in os.environ:
         info["sflops/cycle"] = int(os.environ["SFLOPS_PER_CYCLE"])
+    info = info
     with open(info_py, "w") as fout:
         try:
             import pprint

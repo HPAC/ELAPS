@@ -12,8 +12,6 @@ import imp
 import random
 from collections import defaultdict
 
-import traceback
-
 
 class Viewer(object):
     def __init__(self):
@@ -80,8 +78,7 @@ class Viewer(object):
 
         # check for errors
         if os.path.isfile(errfile):
-            # TODO: make this a UI_alert
-            self.alert("report", name, "produced errors")
+            self.UI_alert("report", name, "produced errors")
             with open(errfile) as fin:
                 lines = fin.readlines()
             for line in lines[:10]:
@@ -98,14 +95,13 @@ class Viewer(object):
             report = eval(fin.readline(), evaldir)
             report["starttime"] = int(fin.readline())
         except:
-            traceback.print_exc()
             raise IOError(name, "doesn't contain a valid report")
         report["filename"] = os.path.relpath(filename)
         report["valid"] = False
         report["endtime"] = None
         report["name"] = name
 
-        rangevals = [None]
+        rangevals = (None,)
         if report["userange"]:
             rangevals = range(*report["range"])
         reportdata = {}
@@ -123,7 +119,9 @@ class Viewer(object):
                     except:
                         self.alert(filename, "is truncated")
                         return report
-                    repdata.append(map(int, line.split()))
+                    repdata.append(tuple(map(int, line.split())))
+        reportdata = {key: tuple(map(tuple, val))
+                      for key, val in reportdata.iteritems()}
         try:
             report["endtime"] = int(fin.readline())
         except:
@@ -182,13 +180,13 @@ class Viewer(object):
         # ifrangeval not given: return all
         if report["userange"] and rangeval is None:
             plotdata = []
-            rangevals = [None]
+            rangevals = (None,)
             if report["userange"]:
                 rangevals = range(*report["range"])
             for rangeval in rangevals:
                 plotdata.append((rangeval, self.generateplotdata(
                     reportid, callid, metricname, rangeval)))
-            plotdata = [(x, y) for x, y in plotdata if y is not None]
+            plotdata = tuple((x, y) for x, y in plotdata if y is not None)
             if not plotdata:
                 return None
             return plotdata
@@ -197,7 +195,7 @@ class Viewer(object):
         calls = report["calls"]
         metric = self.metrics[metricname]
         # if callid not given: all calls
-        callids = [callid]
+        callids = (callid,)
         if callid is None:
             callids = range(len(calls))
         data = defaultdict(lambda: None)
@@ -227,15 +225,14 @@ class Viewer(object):
         if not plotdata:
             return None
         if report["userange"]:
-            return plotdata
-        return [(None, plotdata)]
+            return tuple(plotdata)
+        return ((None, plotdata),)
 
     # event handlers
     def UI_load_report(self, filename):
         try:
             report = self.report_load(filename)
         except:
-            traceback.print_exc()
             self.alert("could not load", os.path.relpath(filename))
             return
         reportid = len(self.reports)

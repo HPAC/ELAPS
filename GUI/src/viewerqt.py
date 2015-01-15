@@ -104,6 +104,11 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_window.show()
         sys.exit(self.exec_())
 
+    def UI_alert(self, *args, **kwargs):
+        msg = " ".join(map(str, args))
+        title = kwargs.get("title", "")
+        self.UI_dialog("information", title, msg)
+
     def Qt_columns_resize(self):
         for colid in range(self.Qt_reports.columnCount()):
             self.Qt_reports.resizeColumnToContents(colid)

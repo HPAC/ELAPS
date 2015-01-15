@@ -5,6 +5,11 @@ if [ "$#" -eq 0 ]; then
     exit
 fi
 
+if [ ! -e $1 ]; then
+    echo "no such file: $1"
+    exit
+fi
+
 . $1
 
 # set default values
@@ -24,11 +29,8 @@ if [ -z "$NT_MAX" ]; then
     fi
 fi
 [ -z "$FLOPS_PER_CYCLE" ] && echo "FLOPS_PER_CYCLE not provided (no GFLOPS and efficiencies)"
-[ -z "$CC" ] && CC=gcc
-[ -z "$CXX" ] && CXX=g++
-
-CFLAGS+=" -Wall"
-CXXFLAGS+=" -Wall"
+[ -z "$CC" ] && CC="gcc"
+[ -z "$CXX" ] && CXX="g++"
 
 export BLAS_NAME SYSTEM_NAME NAME KERNEL_HEADERS
 export BACKEND BACKEND_HEADER BACKEND_OPTIONS

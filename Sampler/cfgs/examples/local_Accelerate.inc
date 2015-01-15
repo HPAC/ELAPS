@@ -6,8 +6,8 @@ SYSTEM_NAME="local"
 LINK_FLAGS="-framework Accelerate"
 INCLUDE_FLAGS=""
 KERNEL_HEADERS="headers/blas.h headers/lapack.h"
-CXXFLAGS="-g"
-CFLAGS="-g"
+CXXFLAGS="-g -Wall"
+CFLAGS="-g -Wall"
 
 BACKEND_HEADER="export VECLIB_MAXIMUM_THREADS={nt}"
 
