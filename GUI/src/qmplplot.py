@@ -86,15 +86,18 @@ class QMPLplot(QtGui.QWidget):
         # prepare data
         data = {}
         rangevarnames = set()
+        rangevals = set()
         for reportid, report in enumerate(self.app.reports):
-            rangevarnames.add(report["rangevar"])
             for callid, state in report["plotting"].iteritems():
                 if not report["plotting"][callid]:
                     continue
+                if report["userange"]:
+                    rangevarnames.add(report["rangevar"])
                 rawdata = self.app.generateplotdata(reportid, callid,
                                                     self.metric)
                 if not rawdata:
                     continue
+                rangevals.update(zip(*rawdata)[0])
                 linedatas = {
                     plottype: [(x, self.plottypes[plottype](y))
                                for x, y in rawdata
@@ -113,6 +116,22 @@ class QMPLplot(QtGui.QWidget):
                     del linedatas["max"]
                 data[reportid, callid] = linedatas
         rangevarname = " = ".join(rangevarnames)
+
+        # set up pseudo range for reports without range
+        rangevals.discard(None)
+        if rangevals:
+            rangemin = min(rangevals)
+            rangemax = max(rangevals)
+        else:
+            # TODO: use barplot
+            rangemin = 0
+            rangemax = 1
+        for linedatas in data.values():
+            for linedata in linedatas.values():
+                for i, (x, y) in enumerate(linedata[:]):
+                    if x is None:
+                        linedata += [(rangemin, y), (rangemax, y)]
+                        del linedata[i]
 
         # set up figure
         self.axes.cla()

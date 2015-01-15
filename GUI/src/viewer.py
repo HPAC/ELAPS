@@ -180,7 +180,7 @@ class Viewer(object):
     def generateplotdata(self, reportid, callid, metricname, rangeval=None):
         report = self.reports[reportid]
         # ifrangeval not given: return all
-        if rangeval is None:
+        if report["userange"] and rangeval is None:
             plotdata = []
             rangevals = [None]
             if report["userange"]:
@@ -226,7 +226,9 @@ class Viewer(object):
                 plotdata.append(val)
         if not plotdata:
             return None
-        return plotdata
+        if report["userange"]:
+            return plotdata
+        return [(None, plotdata)]
 
     # event handlers
     def UI_load_report(self, filename):
