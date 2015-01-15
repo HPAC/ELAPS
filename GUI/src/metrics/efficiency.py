@@ -3,6 +3,10 @@ from __future__ import division, print_function
 
 
 def metric(data, report):
+    """Performance the operations relative to peak.
+
+    This is comparing the flops/cycle to the system's peak.
+    """
     nops = data.get("complexity")
     rdtsc = data.get("rdtsc")
     call = report["calls"][0]
