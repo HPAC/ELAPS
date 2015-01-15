@@ -278,9 +278,3 @@ class Viewer(object):
 
     def UI_plot_clicked(self):
         self.UI_plot_show(self.metric_selected)
-
-    def UI_dosomething(self):
-        self.UI_load_report(os.path.join(self.reportpath, "dgemm.smpl"))
-        self.UI_load_report(os.path.join(self.reportpath, "2.smpl"))
-        self.UI_report_select(0, None)
-        self.UI_plot_clicked()

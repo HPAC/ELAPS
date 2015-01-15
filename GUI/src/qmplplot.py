@@ -67,11 +67,12 @@ class QMPLplot(QtGui.QWidget):
         layout.addWidget(toolbar)
 
         # plottypes
-        plottypesbox = QtGui.QGroypBox("statistics")
+        plottypesbox = QtGui.QWidget()
         layout.addWidget(plottypesbox)
         plottypesL = QtGui.QHBoxLayout()
         plottypesbox.setLayout(plottypesL)
         plottypesL.addStretch(1)
+        plottypesL.addWidget(QtGui.QLabel("statistics:"))
         self.Qplottypes = {}
         for plottype in ("med", "min", "avg", "max", "all"):
             plottype_showing = QtGui.QCheckBox(plottype)

@@ -82,11 +82,6 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_metricinfo = QtGui.QLabel()
         metricinfoL.addWidget(self.Qt_metricinfo)
 
-        # do something
-        do = QtGui.QPushButton("do something")
-        leftL.addWidget(do)
-        do.clicked.connect(self.Qt_dosomething)
-
         # report info
         reportinfobox = QtGui.QGroupBox()
         windowL.addWidget(reportinfobox)
@@ -270,6 +265,3 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
 
     def Qt_plot_clicked(self):
         self.UI_plot_clicked()
-
-    def Qt_dosomething(self):
-        self.UI_dosomething()
