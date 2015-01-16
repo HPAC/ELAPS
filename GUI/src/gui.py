@@ -128,6 +128,7 @@ class GUI(object):
             "calls": [[""]],
             "vary": set(),
             "datascale": 100,
+            "defaultdim": 1000,
         }
         if "dgemm_" in sampler["kernels"]:
             n = symbolic.Symbol("n")
@@ -324,7 +325,6 @@ class GUI(object):
                     connections[baseid] |= connections[callargid]
                     for callargid2 in connections[callargid]:
                         connections[callargid2] = connections[baseid]
-        # TODO: lds as connections?
         self.connections = connections
 
     def connections_apply(self, callid, argid=None):
@@ -340,22 +340,22 @@ class GUI(object):
     # treat changes for the calls
     def sampler_set(self, samplername):
         self.samplername = samplername
-        sampler = self.samplers[samplername]
-        self.nt = max(self.nt, sampler["nt_max"])
+        self.nt = max(self.nt, self.sampler["nt_max"])
 
         # update countes (kill unavailable, adjust length)
-        papi_counters_max = sampler["papi_counters_max"]
+        papi_counters_max = self.sampler["papi_counters_max"]
         self.usepapi &= papi_counters_max > 0
         counters = []
         for counter in self.counters:
-            if counter in sampler["papi_counters_avail"]:
+            if counter in self.sampler["papi_counters_avail"]:
                 counters.append(counter)
         counters = counters[:papi_counters_max]
         counters += (papi_counters_max - len(counters)) * [None]
         self.counters = counters
 
         # remove unavailable calls
-        # TODO
+        self.calls = [call for call in self.calls
+                      if call[0] in self.sampler["routines"]]
 
         # update UI
         self.UI_nt_setmax()
@@ -368,12 +368,11 @@ class GUI(object):
 
     def routine_set(self, callid, value):
         if value in self.signatures:
-            # TODO: non-static default argument values
             call = self.signatures[value]()
             owndata = []
             for i, arg in enumerate(call.sig):
                 if isinstance(arg, signature.Dim):
-                    call[i] = 1000
+                    call[i] = self.defaultdim
                 elif isinstance(arg, signature.Data):
                     for name in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
                         if name not in self.data and name not in owndata:
@@ -382,17 +381,15 @@ class GUI(object):
                             break
             self.calls[callid] = call
             self.infer_lds(callid)
-            self.connections_update()
-            self.data_update()
-            self.UI_call_set(callid, 0)
         elif value in self.sampler["kernels"]:
             minsig = self.sampler["kernels"][value]
             call = [value] + (len(minsig) - 1) * [None]
             self.calls[callid] = call
-            self.UI_call_set(callid, 0)
         else:
             self.calls[callid] = [value]
-            self.UI_call_set(callid, 0)
+        self.connections_update()
+        self.data_update()
+        self.UI_call_set(callid, 0)
         self.state_write()
 
     def arg_set(self, callid, argid, value):
@@ -441,7 +438,6 @@ class GUI(object):
                 self.state_write()
                 self.UI_call_set(callid, argid)
         elif isinstance(arg, (signature.Ld, signature.Inc)):
-            # TODO: proper ld treatment
             call[argid] = int(value) if value else None
             self.data_update()
             self.state_write()
@@ -681,8 +677,21 @@ class GUI(object):
 
     # event handlers
     def UI_sampler_change(self, samplername):
-        # TODO: check for missing call routine conflicts
-        self.sampler_set(samplername)
+        newsampler = self.samplers[samplername]
+        missing = set(call[0] for call in self.calls
+                      if call[0] in self.sampler["kernels"]
+                      and call[0] not in newsampler["kernels"])
+        if missing:
+            self.UI_dialog(
+                "warning", "unsupported kernels",
+                "%r does not support %s\nCorresponding calls will be removed"
+                % (samplername, ", ".join(map(repr, missing))), {
+                    "Ok": (self.sampler_set, (samplername)),
+                    "Cancel": None
+                }
+            )
+        else:
+            self.sampler_set(samplername)
 
     def UI_nt_change(self, nt):
         self.nt = nt
