@@ -20,7 +20,6 @@ class QMPLplot(QtGui.QWidget):
 
     def fig_init(self):
         self.fig = MPLfig.Figure()
-        self.axes = self.fig.add_subplot(111)  # TODO: 111 necessary?
 
     def plottypes_init(self):
         def med(data):
@@ -133,11 +132,13 @@ class QMPLplot(QtGui.QWidget):
                         linedata += [(rangemin, y), (rangemax, y)]
                         del linedata[i]
 
+        axes = self.fig.gca()
+
         # set up figure
-        self.axes.cla()
-        self.axes.set_xlabel(rangevarname)
-        self.axes.set_ylabel(self.metric)
-        self.axes.hold(True)
+        axes.cla()
+        axes.set_xlabel(rangevarname)
+        axes.set_ylabel(self.metric)
+        axes.hold(True)
 
         # add plots
         legend = []
@@ -153,15 +154,14 @@ class QMPLplot(QtGui.QWidget):
             for plottype, linedata in linedatas.iteritems():
                 if plottype == "minmax":
                     x, y1, y2 = zip(*linedata)
-                    self.axes.fill_between(x, y1, y2, color=color,
-                                           **self.plottype_styles[plottype])
+                    axes.fill_between(x, y1, y2, color=color,
+                                      **self.plottype_styles[plottype])
                 else:
                     x, y = zip(*linedata)
-                    self.axes.plot(x, y, color=color,
-                                   **self.plottype_styles[plottype])
+                    axes.plot(x, y, color=color,
+                              **self.plottype_styles[plottype])
         if legend:
-            # artists, labels = zip(*legend)
-            self.axes.legend(*zip(*legend))
+            axes.legend(*zip(*legend))
         self.Qcanvas.draw()
 
     # event handers
