@@ -5,6 +5,7 @@ from PyQt4 import QtGui
 import matplotlib.backends.backend_qt4agg as QtMPL
 import matplotlib.figure as MPLfig
 import matplotlib.lines as MPLlines
+import matplotlib.patches as MPLpatches
 
 
 class QMPLplot(QtGui.QWidget):
@@ -33,6 +34,7 @@ class QMPLplot(QtGui.QWidget):
             "med": med,
             "min": min,
             "max": max,
+            "min-max": lambda data: (min(data), max(data)),
             "avg": lambda data: sum(data) / len(data),
             "all": lambda data: data
         }
@@ -42,8 +44,8 @@ class QMPLplot(QtGui.QWidget):
             "min": {"linestyle": "--"},
             "max": {"linestyle": ":"},
             "avg": {"linestyle": "-."},
+            "min-max": {"alpha": .25},
             "all": {"linestyle": "None", "marker": "."},
-            "minmax": {"alpha": .25},
         }
 
         self.plottypes_showing = set(["med"])
@@ -73,7 +75,7 @@ class QMPLplot(QtGui.QWidget):
         plottypesL.addStretch(1)
         plottypesL.addWidget(QtGui.QLabel("statistics:"))
         self.Qplottypes = {}
-        for plottype in ("med", "min", "avg", "max", "all"):
+        for plottype in ("med", "min", "avg", "max", "min-max", "all"):
             plottype_showing = QtGui.QCheckBox(plottype)
             plottypesL.addWidget(plottype_showing)
             plottype_showing.setChecked(plottype in self.plottypes_showing)
@@ -106,13 +108,6 @@ class QMPLplot(QtGui.QWidget):
                 if "all" in linedatas:
                     linedatas["all"] = [(x, y) for x, ys in linedatas["all"]
                                         for y in ys]
-                if "min" in linedatas and "max" in linedatas:
-                    linedatas["minmax"] = [
-                        (p1[0], (p1[1], p2[1]))
-                        for p1, p2 in zip(linedatas["min"], linedatas["max"])
-                    ]
-                    del linedatas["min"]
-                    del linedatas["max"]
                 data[reportid, callid] = linedatas
         rangevarname = " = ".join(rangevarnames)
 
@@ -135,7 +130,9 @@ class QMPLplot(QtGui.QWidget):
         axes = self.fig.gca()
 
         # set up figure
+        self.fig.set_facecolor("#ffffff")
         axes.cla()
+        axes.set_axis_bgcolor("#f8f8f8")
         axes.set_xlabel(rangevarname)
         axes.set_ylabel(self.metric)
         axes.hold(True)
@@ -153,15 +150,25 @@ class QMPLplot(QtGui.QWidget):
                            legendlabel))
             for plottype, linedata in linedatas.iteritems():
                 x, y = zip(*linedata)
-                if plottype == "minmax":
+                if plottype == "min-max":
                     y1, y2 = zip(*y)
                     axes.fill_between(x, y1, y2, color=color,
                                       **self.plottype_styles[plottype])
                 else:
                     axes.plot(x, y, color=color,
                               **self.plottype_styles[plottype])
+        for plottype in self.plottypes_showing:
+            if plottype == "min-max":
+                legend.append((MPLpatches.Patch(
+                    color="#888888", **self.plottype_styles[plottype]
+                ), plottype))
+            else:
+                legend.append((MPLlines.Line2D(
+                    [], [], color="#888888", **self.plottype_styles[plottype]
+                ), plottype))
+
         if legend:
-            axes.legend(*zip(*legend))
+            axes.legend(*zip(*legend), loc=0, numpoints=3)
         self.Qcanvas.draw()
 
     # event handers
