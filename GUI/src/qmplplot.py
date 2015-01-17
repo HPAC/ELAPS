@@ -140,14 +140,7 @@ class QMPLplot(QtGui.QWidget):
         # add plots
         legend = []
         for (reportid, callid), linedatas in data.iteritems():
-            report = self.app.reports[reportid]
-            color = report["plotcolors"][callid]
-            legendlabel = report["name"]
-            if callid is not None:
-                legendlabel += " (%s)" % str(report["calls"][callid][0])
-            legend.append((MPLlines.Line2D([], [], color=color,
-                                           **self.plottype_styles["legend"]),
-                           legendlabel))
+            color = self.app.reports[reportid]["plotcolors"][callid]
             for plottype, linedata in linedatas.iteritems():
                 x, y = zip(*linedata)
                 if plottype == "min-max":
@@ -157,6 +150,14 @@ class QMPLplot(QtGui.QWidget):
                 else:
                     axes.plot(x, y, color=color,
                               **self.plottype_styles[plottype])
+
+        # add legend
+        for (reportid, callid), linedatas in data.iteritems():
+            report = self.app.reports[reportid]
+            color = report["plotcolors"][callid]
+            legendlabel = report["name"]
+            if callid is not None:
+                legendlabel += " (%s)" % str(report["calls"][callid][0])
         for plottype in self.plottypes_showing:
             if plottype == "min-max":
                 legend.append((MPLpatches.Patch(
@@ -169,6 +170,9 @@ class QMPLplot(QtGui.QWidget):
 
         if legend:
             axes.legend(*zip(*legend), loc=0, numpoints=3)
+
+        limits = axes.axis()
+        axes.axis((0, limits[1], 0, limits[3]))
         self.Qcanvas.draw()
 
     # event handers
