@@ -12,4 +12,5 @@ Signature(
     sData("C", "ldC * n",
           "symm, lower if uplo == 'L' else upper"),
     Ld("ldC", "n"),
+    complexity="k * n ** 2"
 )

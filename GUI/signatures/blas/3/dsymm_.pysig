@@ -14,4 +14,5 @@ Signature(
     dScalar("beta"),
     dData("C", "ldC * n"),
     Ld("ldC", "m"),
+    complexity="2 * m * n * (m if side = 'L' else n) "
 )
