@@ -10,6 +10,7 @@ import time
 import re
 import imp
 import random
+from numbers import Number
 from collections import defaultdict
 
 
@@ -65,8 +66,8 @@ class Viewer(object):
         self.metrics[name] = lambda data, sampler: data.get(name)
 
     def nextcolor(self, colors=[
-            "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff",
-            "#880000", "#008800", "#000088", "#888800", "#008888", "#880088",
+        "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff",
+        "#880000", "#008800", "#000088", "#888800", "#008888", "#880088",
     ]):
         if colors:
             return colors.pop(0)
@@ -208,6 +209,9 @@ class Viewer(object):
                for complexity in complexities):
             data["complexity"] = sum(complexity(**{rangevar: rangeval})
                                      for complexity in complexities)
+        elif all(isinstance(complexity, Number)
+                 for complexity in complexities):
+            data["complexity"] = sum(complexities)
         # generate plotdata
         plotdata = []
         for rep in range(report["nrep"]):
