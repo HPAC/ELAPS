@@ -108,8 +108,8 @@ class QMPLplot(QtGui.QWidget):
                                         for y in ys]
                 if "min" in linedatas and "max" in linedatas:
                     linedatas["minmax"] = [
-                        p1 + (p2[1],) for p1, p2 in zip(linedatas["min"],
-                                                        linedatas["max"])
+                        (p1[0], (p1[1], p2[1]))
+                        for p1, p2 in zip(linedatas["min"], linedatas["max"])
                     ]
                     del linedatas["min"]
                     del linedatas["max"]
@@ -152,12 +152,12 @@ class QMPLplot(QtGui.QWidget):
                                            **self.plottype_styles["legend"]),
                            legendlabel))
             for plottype, linedata in linedatas.iteritems():
+                x, y = zip(*linedata)
                 if plottype == "minmax":
-                    x, y1, y2 = zip(*linedata)
+                    y1, y2 = zip(*y)
                     axes.fill_between(x, y1, y2, color=color,
                                       **self.plottype_styles[plottype])
                 else:
-                    x, y = zip(*linedata)
                     axes.plot(x, y, color=color,
                               **self.plottype_styles[plottype])
         if legend:
