@@ -183,6 +183,8 @@ class GUI(object):
 
     def range_eval(self, expr, value=None):
         if not self.userange:
+            if isinstance(expr, symbolic.Expression):
+                expr = expr()
             if value is None:
                 return [expr]
             return expr
@@ -657,7 +659,10 @@ class GUI(object):
 
     # jobprogress
     def jobprogress_add(self, name, filename):
-        nlines = len(range(*self.range)) * (self.nrep + 1) * len(self.calls)
+        nlines = 1
+        if self.userange:
+            nlines = len(range(*self.range))
+        nlines *= (self.nrep + 1) * len(self.calls)
         self.jobprogress.append([name, filename, -1, nlines])
 
     def jobprogress_update(self):

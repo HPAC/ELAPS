@@ -172,7 +172,7 @@ class QMPLplot(QtGui.QWidget):
             axes.legend(*zip(*legend), loc=0, numpoints=3)
 
         limits = axes.axis()
-        axes.axis((0, limits[1], 0, limits[3]))
+        axes.axis((limits[0], limits[1], 0, limits[3]))
         self.Qcanvas.draw()
 
     # event handers
