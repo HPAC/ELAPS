@@ -129,8 +129,8 @@ class GUI_Qt(GUI, QtGui.QApplication):
         # window > calls
         callsSA = QtGui.QScrollArea()
         windowL.addWidget(callsSA)
-        callsSA.setMinimumHeight(500)
-        callsSA.setMinimumWidth(800)
+        callsSA.setMinimumHeight(200)
+        callsSA.setMinimumWidth(900)
         self.Qt_calls = QtGui.QWidget()
         callsSA.setWidget(self.Qt_calls)
         callsL = QtGui.QVBoxLayout()
@@ -182,6 +182,25 @@ class GUI_Qt(GUI, QtGui.QApplication):
             "max": QtGui.QColor(255, 255, 255, 127),
             "min": QtGui.QColor(255, 255, 255, 255),
         }
+
+        self.Qt_jobprogress_init()
+
+    def Qt_jobprogress_init(self):
+
+        # window
+        self.Qt_jobprogress = QtGui.QWidget()
+        self.Qt_jobprogress.setWindowTitle("Job progress")
+        layout = QtGui.QGridLayout()
+        self.Qt_jobprogress.setLayout(layout)
+        close = QtGui.QPushButton("hide")
+        layout.addWidget(close, 100, 1)
+        close.clicked.connect(self.Qt_jobprogress.hide)
+
+        # timer
+        self.Qt_jobprogress_items = []
+        self.Qt_jobprogress_timer = QtCore.QTimer()
+        self.Qt_jobprogress_timer.setInterval(1000)
+        self.Qt_jobprogress_timer.timeout.connect(self.UI_jobprogress_update)
 
     def UI_start(self):
         sys.exit(self.exec_())
@@ -361,6 +380,36 @@ class GUI_Qt(GUI, QtGui.QApplication):
             self.Qt_submit.setEnabled(True)
         else:
             self.Qt_submit.setEnabled(False)
+
+    def UI_jobprogress_update(self):
+        if not self.Qt_jobprogress.isVisible():
+            self.Qt_jobprogress_timer.stop()
+            return
+        self.jobprogress_update()
+        for i, (name, _, progress, nlines) in enumerate(self.jobprogress):
+            layout = self.Qt_jobprogress.layout()
+            if i >= len(self.Qt_jobprogress_items):
+                layout.addWidget(QtGui.QLabel(name), i, 0)
+                Qprogress = QtGui.QProgressBar()
+                layout.addWidget(Qprogress, i, 1)
+                Qprogress.setRange(0, nlines)
+                Qlabel = QtGui.QLabel()
+                layout.addWidget(Qlabel, i, 2)
+                self.Qt_jobprogress_items.append((Qprogress, Qlabel))
+            else:
+                Qprogress, Qlabel = self.Qt_jobprogress_items[i]
+            Qprogress.setValue(min(max(0, progress), nlines))
+            if progress < 0:
+                Qlabel.setText("pending")
+            elif progress <= nlines:
+                Qlabel.setText("%d / %d calls" % (progress, nlines))
+            else:
+                Qlabel.setText("completed")
+
+    def UI_jobprogress_show(self):
+        self.Qt_jobprogress.show()
+        self.UI_jobprogress_update()
+        self.Qt_jobprogress_timer.start()
 
     # event handlers
     def Qt_sampler_change(self):

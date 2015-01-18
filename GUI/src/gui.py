@@ -29,6 +29,7 @@ class GUI(object):
         self.samplers_init()
         self.signatures_init()
         self.state_init(loadstate)
+        self.jobprogress_init()
         self.UI_init()
         self.UI_setall()
         self.UI_start()
@@ -146,6 +147,9 @@ class GUI(object):
         self.connections_update()
         self.data_update()
         self.state_write()
+
+    def jobprogress_init(self):
+        self.jobprogress = []
 
     # utility type routines
     def state_toflat(self):
@@ -647,9 +651,21 @@ class GUI(object):
         self.backends[self.sampler["backend"]].submit(
             script, nt=self.nt, jobname=name
         )
-        self.UI_alert("Submitted job %r to backend %r" %
-                      (name, self.sampler["backend"]))
+        self.jobprogress_add(name, filename)
+        self.UI_jobprogress_show()
         self.log("submitted %r to %r" % (name, self.sampler["backend"]))
+
+    # jobprogress
+    def jobprogress_add(self, name, filename):
+        nlines = len(range(*self.range)) * (self.nrep + 1) * len(self.calls)
+        self.jobprogress.append([name, filename, -1, nlines])
+
+    def jobprogress_update(self):
+        for i, (name, filename, _, nlines) in enumerate(self.jobprogress):
+            with open(filename) as fin:
+                self.jobprogress[i] = [
+                    name, filename, len(fin.readlines()) - 2, nlines
+                ]
 
     # user interface
     def UI_init(self):
@@ -733,6 +749,7 @@ class GUI(object):
 
     def UI_rangevar_change(self, varname):
         self.rangevar = varname
+        # TODO: replace old rangevar by new
         self.state_write()
 
     def UI_range_change(self, range):
