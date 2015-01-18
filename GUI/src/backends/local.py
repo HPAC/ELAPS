@@ -30,6 +30,7 @@ class local(Backend):
         self.scripts[jobid] = header + script
         t = threading.Thread(target=self._run,
                              args=(jobid, self.lastsubmitted))
+        t.daemon = True
         t.start()
         self.lastsubmitted = jobid
         return jobid

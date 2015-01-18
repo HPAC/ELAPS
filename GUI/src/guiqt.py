@@ -407,6 +407,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
                 Qlabel.setText("completed")
 
     def UI_jobprogress_show(self):
+        self.Qt_jobprogress.hide()
         self.Qt_jobprogress.show()
         self.UI_jobprogress_update()
         self.Qt_jobprogress_timer.start()
