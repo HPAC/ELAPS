@@ -232,7 +232,7 @@ class Viewer(object):
                     data[counter] = sum(repdata[callid][counterid + 1]
                                         for callid in callids)
             # call metric
-            val = metric(data, report)
+            val = metric(data, report, callid)
             if val is not None:
                 plotdata.append(val)
         if not plotdata:

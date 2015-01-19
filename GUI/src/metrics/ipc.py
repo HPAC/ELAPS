@@ -2,7 +2,7 @@
 from __future__ import division, print_function
 
 
-def metric(data, report):
+def metric(data, report, callid):
     """Floating point operations per cycle.
 
     Counting mathematically required operations (see flops).

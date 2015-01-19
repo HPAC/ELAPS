@@ -2,7 +2,7 @@
 from __future__ import division, print_function
 
 
-def metric(data, report):
+def metric(data, report, callid):
     """Number of cycles spent during the operations.
 
     This is obtained form the RDTSC instruction.
