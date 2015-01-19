@@ -103,12 +103,25 @@ class QCall(QtGui.QGroupBox):
         else:
             minsig = self.app.sampler["kernels"][call[0]]
             self.sig = None
+            if not self.app.nosigwarning_shown:
+                self.app.UI_alert("No signature found for %r!\n" % call[0] +
+                                  "Hover arguments for input syntax.")
+                self.app.nosigwarning_shown = True
         for argid in range(len(call))[1:]:
+            tooltip = None
             if self.sig:
                 argname = self.sig[argid].name
             else:
                 argname = minsig[argid].replace("*", " *")
+                if "char" in argname:
+                    tooltip = "Any string"
+                elif argname in ("int *", "float *", "double *"):
+                    tooltip = ("Scalar:\tvalue\t\te.g. 1, -0.5\n"
+                               "Array:\t[#elements]"
+                               "\te.g. [10000] for a 100x100 matrix")
             Qarglabel = QtGui.QLabel(argname)
+            if tooltip:
+                Qarglabel.setToolTip(tooltip)
             self.layout().addWidget(Qarglabel, 0, argid)
             self.Qt_arglabels.append(Qarglabel)
             Qarglabel.setAlignment(QtCore.Qt.AlignCenter)
@@ -119,7 +132,7 @@ class QCall(QtGui.QGroupBox):
                     Qarg.addItems(arg.flags)
                     Qarg.currentIndexChanged.connect(self.arg_change)
                 elif isinstance(arg, (signature.Dim, signature.Scalar,
-                                    signature.Ld, signature.Inc)):
+                                      signature.Ld, signature.Inc)):
                     Qarg = QtGui.QLineEdit()
                     Qarg.textChanged.connect(self.arg_change)
                 elif isinstance(arg, signature.Data):
@@ -127,6 +140,8 @@ class QCall(QtGui.QGroupBox):
             else:
                 Qarg = QtGui.QLineEdit()
                 Qarg.textChanged.connect(self.arg_change)
+                if tooltip:
+                    Qarg.setToolTip(tooltip)
             Qarg.argid = argid
             Qarg.setProperty("invalid", True)
             self.layout().addWidget(Qarg, 1, argid)

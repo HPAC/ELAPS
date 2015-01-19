@@ -14,6 +14,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def __init__(self, loadstate=True):
         QtGui.QApplication.__init__(self, sys.argv)
         self.setting = False
+        self.nosigwarning_shown = False
         GUI.__init__(self, loadstate)
 
     def UI_init(self):
