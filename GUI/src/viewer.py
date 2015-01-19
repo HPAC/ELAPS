@@ -239,8 +239,9 @@ class Viewer(object):
                 plotdata.append(val)
         if not plotdata:
             return None
+        plotdata = tuple(plotdata)
         if report["userange"]:
-            return tuple(plotdata)
+            return plotdata
         return ((None, plotdata),)
 
     # event handlers
