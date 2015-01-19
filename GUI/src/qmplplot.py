@@ -158,6 +158,9 @@ class QMPLplot(QtGui.QWidget):
             legendlabel = report["name"]
             if callid is not None:
                 legendlabel += " (%s)" % str(report["calls"][callid][0])
+            legend.append((MPLlines.Line2D(
+                [], [], color=color, **self.plottype_styles[plottype]
+            ), legendlabel))
         for plottype in self.plottypes_showing:
             if plottype == "min-max":
                 legend.append((MPLpatches.Patch(

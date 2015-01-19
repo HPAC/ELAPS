@@ -278,7 +278,7 @@ class Viewer(object):
     def UI_reportcolor_change(self, reportid, callid, color):
         self.reports[reportid]["plotcolors"][callid] = color
         self.UI_report_update(reportid)
-        self.UI_showplots_update()
+        self.UI_plots_update()
 
     def UI_metricselect_change(self, metric):
         self.metric_selected = metric

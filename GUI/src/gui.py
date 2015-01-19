@@ -409,6 +409,7 @@ class GUI(object):
             call[argid] = value
             self.connections_update()
             self.connections_apply(callid)
+            self.data_update()
             self.state_write()
             self.UI_calls_set(callid, argid)
             self.UI_data_viz()
@@ -445,9 +446,10 @@ class GUI(object):
                 self.state_write()
                 self.UI_call_set(callid, argid)
         elif isinstance(arg, (signature.Ld, signature.Inc)):
-            call[argid] = int(value) if value else None
+            call[argid] = self.range_parse(value)
             self.data_update()
             self.state_write()
+            self.UI_calls_set(callid, argid)
         # calls without proper signatures
         else:
             if value is None:
@@ -680,7 +682,7 @@ class GUI(object):
 
     # user interface
     def UI_init(self):
-        self.alert("GUI needs to be subclassed")
+        raise Exception("GUI needs to be subclassed")
 
     def UI_setall(self):
         self.UI_sampler_set()
