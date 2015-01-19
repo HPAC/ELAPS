@@ -9,6 +9,7 @@ import os
 import imp
 import pprint
 import time
+import subprocess
 from collections import defaultdict
 from __builtin__ import intern  # fix for pyflake error
 
@@ -650,27 +651,32 @@ class GUI(object):
         header = self.sampler["backend_header"].format(nt=self.nt)
         if header:
             script = header + "\n" + script
-        self.backends[self.sampler["backend"]].submit(
+        jobid = self.backends[self.sampler["backend"]].submit(
             script, nt=self.nt, jobname=name
         )
-        self.jobprogress_add(name, filename)
+        self.jobprogress_add(jobid, filename)
         self.UI_jobprogress_show()
         self.log("submitted %r to %r" % (name, self.sampler["backend"]))
 
     # jobprogress
-    def jobprogress_add(self, name, filename):
+    def jobprogress_add(self, jobid, filename):
         nlines = 1
         if self.userange:
             nlines = len(range(*self.range))
         nlines *= (self.nrep + 1) * len(self.calls)
-        self.jobprogress.append([name, filename, -1, nlines])
+        self.jobprogress.append({
+            "backend": self.sampler["backend"],
+            "id": jobid,
+            "filename": filename,
+            "progress": -1,
+            "progressend": nlines
+        })
 
     def jobprogress_update(self):
-        for i, (name, filename, _, nlines) in enumerate(self.jobprogress):
-            with open(filename) as fin:
-                self.jobprogress[i] = [
-                    name, filename, len(fin.readlines()) - 2, nlines
-                ]
+        for i, job in enumerate(self.jobprogress):
+            if job:
+                with open(job["filename"]) as fin:
+                    job["progress"] = len(fin.readlines()) - 2
 
     # user interface
     def UI_init(self):
@@ -808,3 +814,13 @@ class GUI(object):
 
     def UI_submit(self, filename):
         self.submit(filename)
+
+    def UI_jobkill(self, jobid):
+        job = self.jobprogress[jobid]
+        self.backends[job["backend"]].kill(job["id"])
+        self.jobprogress[jobid] = None
+
+    def UI_jobview(self, jobid):
+        job = self.jobprogress[jobid]
+        viewerpath = os.path.join(self.rootpath, "GUI", "Viewer.py")
+        subprocess.Popen([viewerpath, job["filename"]])

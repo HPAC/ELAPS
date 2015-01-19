@@ -4,6 +4,7 @@ from __future__ import division, print_function
 from gui import GUI
 from qcall import QCall
 
+import os
 import sys
 
 from PyQt4 import QtCore, QtGui
@@ -193,7 +194,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         layout = QtGui.QGridLayout()
         self.Qt_jobprogress.setLayout(layout)
         close = QtGui.QPushButton("hide")
-        layout.addWidget(close, 100, 1)
+        layout.addWidget(close, 100, 3)
         close.clicked.connect(self.Qt_jobprogress.hide)
 
         # timer
@@ -386,25 +387,40 @@ class GUI_Qt(GUI, QtGui.QApplication):
             self.Qt_jobprogress_timer.stop()
             return
         self.jobprogress_update()
-        for i, (name, _, progress, nlines) in enumerate(self.jobprogress):
+        for i, job in enumerate(self.jobprogress):
+            if not job and i < len(self.Qt_jobprogress_items):
+                if self.Qt_jobprogress_items[i]:
+                    for item in self.Qt_jobprogress_items[i]:
+                        item.deleteLater()
+                    self.Qt_jobprogress_items[i] = None
+                continue
             layout = self.Qt_jobprogress.layout()
             if i >= len(self.Qt_jobprogress_items):
-                layout.addWidget(QtGui.QLabel(name), i, 0)
-                Qprogress = QtGui.QProgressBar()
-                layout.addWidget(Qprogress, i, 1)
-                Qprogress.setRange(0, nlines)
+                name = os.path.basename(job["filename"])[:-5]
+                Qname = QtGui.QLabel(name)
+                layout.addWidget(Qname, i, 0)
+                Qbar = QtGui.QProgressBar()
+                layout.addWidget(Qbar, i, 1)
+                Qbar.setRange(0, job["progressend"])
                 Qlabel = QtGui.QLabel()
                 layout.addWidget(Qlabel, i, 2)
-                self.Qt_jobprogress_items.append((Qprogress, Qlabel))
+                Qbutton = QtGui.QPushButton("kill")
+                layout.addWidget(Qbutton, i, 3)
+                Qbutton.clicked.connect(self.Qt_jobprogress_click)
+                Qbutton.jobid = i
+                self.Qt_jobprogress_items.append((Qname, Qbar, Qlabel,
+                                                  Qbutton))
             else:
-                Qprogress, Qlabel = self.Qt_jobprogress_items[i]
-            Qprogress.setValue(min(max(0, progress), nlines))
-            if progress < 0:
+                Qname, Qbar, Qlabel, Qbutton = self.Qt_jobprogress_items[i]
+            Qbar.setValue(min(max(0, job["progress"]), job["progressend"]))
+            if job["progress"] < 0:
                 Qlabel.setText("pending")
-            elif progress <= nlines:
-                Qlabel.setText("%d / %d calls" % (progress, nlines))
+            elif job["progress"] <= job["progressend"]:
+                Qlabel.setText("%d / %d calls"
+                               % (job["progress"], job["progressend"]))
             else:
                 Qlabel.setText("completed")
+                Qbutton.setText("view")
 
     def UI_jobprogress_show(self):
         self.Qt_jobprogress.hide()
@@ -487,6 +503,15 @@ class GUI_Qt(GUI, QtGui.QApplication):
         filename = str(filename)
         if filename:
             self.UI_submit(filename)
+
+    def Qt_jobprogress_click(self):
+        sender = self.sender()
+        jobid = sender.jobid
+        job = self.jobprogress[jobid]
+        if job["progress"] <= job["progressend"]:
+            self.UI_jobkill(jobid)
+        else:
+            self.UI_jobview(jobid)
 
 
 def main():

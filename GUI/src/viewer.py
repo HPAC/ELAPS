@@ -24,6 +24,12 @@ class Viewer(object):
 
         self.init()
         self.UI_init()
+
+        # load reports from command line
+        for arg in sys.argv[1:]:
+            if arg[-5:] == ".smpl" and os.path.isfile(arg):
+                self.UI_load_report(arg)
+
         self.UI_start()
 
     # utility
@@ -79,13 +85,16 @@ class Viewer(object):
 
         # check for errors
         if os.path.isfile(errfile):
-            self.UI_alert("report", name, "produced errors")
             with open(errfile) as fin:
                 lines = fin.readlines()
-            for line in lines[:10]:
-                self.alert(line.rstrip("\n"))
-            if len(lines) > 10:
-                self.alert("[%d more lines]" % (len(lines) - 10))
+            if len(lines) == 0:
+                self.UI.alerT("report %r is not finished" % name)
+            else:
+                self.UI_alert("report %r produced errors" % name)
+                for line in lines[:10]:
+                    self.alert(line.rstrip("\n"))
+                if len(lines) > 10:
+                    self.alert("[%d more lines]" % (len(lines) - 10))
 
         fin = open(filename)
 
