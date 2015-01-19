@@ -43,6 +43,9 @@ class Viewer(object):
         self.reports = []
         self.showplots = defaultdict(lambda: defaultdict(lambda: False))
         self.metrics_init()
+        self.reportid_selected = None
+        self.callid_selected = None
+        self.plots_showing = set()
 
     def metrics_init(self):
         self.metrics = {}
@@ -143,8 +146,8 @@ class Viewer(object):
             report["valid"] = True
         return report
 
-    def report_infostr_HTML(self, reportid, callid):
-        report = self.reports[reportid]
+    def report_infostr_HTML(self):
+        report = self.reports[self.reportid_selected]
         sampler = report["sampler"]
         result = "<table>"
         result += "<tr><td>File:</td><td>%s</td></tr>" % report["filename"]
@@ -167,19 +170,18 @@ class Viewer(object):
         def format_call(call):
             return call[0] + "(" + ", ".join(map(str, call[1:])) + ")"
 
-        if callid is None:
+        if self.callid_selected is None:
             calls = report["calls"]
         else:
-            calls = [report["calls"][callid]]
+            calls = [report["calls"][self.callid_selected]]
         result += "<tr><td>Call%s:</td><td>" % "s"[:len(calls) - 1]
         result += "<br>".join(map(format_call, calls))
         result += "</td></tr>"
         result += "</table>"
-        result += "<br><br>TODO: show some numbers here"
         return result
 
-    def report_infostr(self, reportid, callid):
-        result = self.report_infostr_HTML(reportid, callid)
+    def report_infostr(self):
+        result = self.report_infostr_HTML()
         result = result.replace("</td><td>", "\t")
         result = result.replace("</tr>", "\n")
         result = re.sub("<.*?>", "", result)
@@ -266,13 +268,15 @@ class Viewer(object):
         self.UI_plots_update()
 
     def UI_report_select(self, reportid, callid):
-        if hasattr(self, "UI_hasHTML") and self.UI_hasHTML:
-            self.UI_reportinfo_set(self.report_infostr_HTML(reportid, callid))
-        else:
-            self.UI_reportinfo_set(self.report_infostr(reportid, callid))
+        self.reportid_selected = reportid
+        self.callid_selected = callid
+        self.UI_reportinfo_update()
 
     def UI_reportcheck_change(self, reportid, callid, state):
-        self.reports[reportid]["plotting"][callid] = state
+        if state:
+            self.plots_showing.add((reportid, callid))
+        else:
+            self.plots_showing.discard((reportid, callid))
         self.UI_plots_update()
 
     def UI_reportcolor_change(self, reportid, callid, color):

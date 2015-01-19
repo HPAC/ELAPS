@@ -62,7 +62,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         # metric list
         self.Qt_metricslist = QtGui.QComboBox()
         metricselectL.addWidget(self.Qt_metricslist)
-        self.Qt_metricslist.addItems(sorted(self.metrics.keys()))
+        self.Qt_metricslist.addItems(sorted(self.metrics))
         self.Qt_metricslist.currentIndexChanged.connect(
             self.Qt_metricselect_change
         )
@@ -89,6 +89,21 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         reportinfobox.setLayout(reportinfoL)
         self.Qt_reportinfo = QtGui.QLabel()
         reportinfoL.addWidget(self.Qt_reportinfo)
+
+        # report info tabs
+        self.Qt_reportinfotabs = QtGui.QTabWidget()
+        reportinfoL.addWidget(self.Qt_reportinfotabs)
+
+        # preview
+        self.Qt_preview = self.plotfactory.Preview(self, "time [ms]")
+        self.Qt_reportinfotabs.addTab(self.Qt_preview, "preview")
+        self.Qt_data = QtGui.QTableWidget()
+        self.Qt_reportinfotabs.addTab(self.Qt_data, "data")
+        self.Qt_data.setColumnCount(4)
+        self.Qt_data.setRowCount(len(self.metrics))
+        self.Qt_data.setHorizontalHeaderLabels(["med", "min", "avg", "max"])
+        self.Qt_data.setVerticalHeaderLabels(sorted(self.metrics))
+
         reportinfoL.addStretch(1)
 
         # Qt objects
@@ -190,6 +205,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
 
         self.UI_report_update(reportid)
         self.Qt_columns_resize()
+        self.Qt_reports.setCurrentItem(Qreport)
 
     def UI_report_update(self, reportid):
         report = self.reports[reportid]
@@ -200,13 +216,11 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             Qitem.color.setStyleSheet("background-color: %s;" % color)
             Qitem.color.setToolTip(color)
 
-    def UI_reportinfo_set(self, infostr):
-        self.Qt_reportinfo.setText(infostr)
-
     def UI_plot_show(self, metric, state=True):
         self.setting = True
         if metric not in self.Qt_Qplots:
-            self.Qt_Qplots[metric] = self.plotfactory(self, metric)
+            self.Qt_Qplots[metric] = self.plotfactory(self, metric,
+                                                      self.plots_showing)
         Qplot = self.Qt_Qplots[metric]
         if state:
             Qplot.plot_update()
@@ -217,6 +231,41 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
 
     def UI_metricinfo_set(self, infostr):
         self.Qt_metricinfo.setText(infostr)
+
+    def UI_reportinfo_update(self):
+        infostr = self.report_infostr_HTML()
+        self.Qt_reportinfo.setText(infostr)
+        showing = [(self.reportid_selected, self.callid_selected)]
+        report = self.reports[self.reportid_selected]
+        if len(report["calls"]) > 1 and self.callid_selected is None:
+            showing += [(self.reportid_selected, callid)
+                        for callid in range(len(report["calls"]))]
+        self.Qt_preview.plots_showing_set(showing)
+        self.Qt_preview.plot_update()
+        for i, metricname in enumerate(sorted(self.metrics)):
+            data = self.generateplotdata(self.reportid_selected,
+                                         self.callid_selected, metricname)
+            if data is not None:
+                data = list(sum((values for key, values in data), ()))
+                data.sort()
+                datalen = len(data)
+                mid = (datalen - 1) // 2
+                if datalen % 2 == 0:
+                    med = data[mid]
+                else:
+                    med = (data[mid] + data[mid + 1]) / 2
+                avg = sum(data) / len(data)
+                self.Qt_data.setItem(
+                    i, 0, QtGui.QTableWidgetItem(str(med)))
+                self.Qt_data.setItem(
+                    i, 1, QtGui.QTableWidgetItem(str(data[0])))
+                self.Qt_data.setItem(
+                    i, 2, QtGui.QTableWidgetItem(str(avg)))
+                self.Qt_data.setItem(
+                    i, 3, QtGui.QTableWidgetItem(str(data[-1])))
+            else:
+                for j in range(4):
+                    self.Qt_data.setItem(i, j, QtGui.QTableWidgetItem("NA"))
 
     def UI_plots_update(self):
         for metric in self.Qt_Qplots:

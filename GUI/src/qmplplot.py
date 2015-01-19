@@ -9,10 +9,12 @@ import matplotlib.patches as MPLpatches
 
 
 class QMPLplot(QtGui.QWidget):
-    def __init__(self, app, metric):
+    def __init__(self, app, metric, plots_showing):
         QtGui.QWidget.__init__(self)
         self.metric = metric
         self.app = app
+        self.plots_showing = plots_showing
+        self.statlegend_showing = True
 
         self.setting = False
         self.fig_init()
@@ -64,14 +66,14 @@ class QMPLplot(QtGui.QWidget):
         layout.addWidget(self.Qcanvas, 1)
 
         # toolbar
-        toolbar = QtMPL.NavigationToolbar2QT(self.Qcanvas, self)
-        layout.addWidget(toolbar)
+        self.Qtoolbar = QtMPL.NavigationToolbar2QT(self.Qcanvas, self)
+        layout.addWidget(self.Qtoolbar)
 
         # plottypes
-        plottypesbox = QtGui.QWidget()
-        layout.addWidget(plottypesbox)
+        self.Qplottypesbox = QtGui.QWidget()
+        layout.addWidget(self.Qplottypesbox)
         plottypesL = QtGui.QHBoxLayout()
-        plottypesbox.setLayout(plottypesL)
+        self.Qplottypesbox.setLayout(plottypesL)
         plottypesL.addStretch(1)
         plottypesL.addWidget(QtGui.QLabel("statistics:"))
         self.Qplottypes = {}
@@ -83,32 +85,33 @@ class QMPLplot(QtGui.QWidget):
             plottype_showing.plottype = plottype
         plottypesL.addStretch(1)
 
+    def plots_showing_set(self, showing):
+        self.plots_showing = showing
+
     def plot_update(self):
         # prepare data
         data = {}
         rangevarnames = set()
         rangevals = set()
-        for reportid, report in enumerate(self.app.reports):
-            for callid, state in report["plotting"].iteritems():
-                if not report["plotting"][callid]:
-                    continue
-                if report["userange"]:
-                    rangevarnames.add(report["rangevar"])
-                rawdata = self.app.generateplotdata(reportid, callid,
-                                                    self.metric)
-                if not rawdata:
-                    continue
-                rangevals.update(zip(*rawdata)[0])
-                linedatas = {
-                    plottype: [(x, self.plottypes[plottype](y))
-                               for x, y in rawdata
-                               if y is not None]
-                    for plottype in self.plottypes_showing
-                }
-                if "all" in linedatas:
-                    linedatas["all"] = [(x, y) for x, ys in linedatas["all"]
-                                        for y in ys]
-                data[reportid, callid] = linedatas
+        for reportid, callid in self.plots_showing:
+            report = self.app.reports[reportid]
+            if report["userange"]:
+                rangevarnames.add(report["rangevar"])
+            rawdata = self.app.generateplotdata(reportid, callid,
+                                                self.metric)
+            if not rawdata:
+                continue
+            rangevals.update(zip(*rawdata)[0])
+            linedatas = {
+                plottype: [(x, self.plottypes[plottype](y))
+                           for x, y in rawdata
+                           if y is not None]
+                for plottype in self.plottypes_showing
+            }
+            if "all" in linedatas:
+                linedatas["all"] = [(x, y) for x, ys in linedatas["all"]
+                                    for y in ys]
+            data[reportid, callid] = linedatas
         rangevarname = " = ".join(rangevarnames)
 
         # set up pseudo range for reports without range
@@ -132,7 +135,7 @@ class QMPLplot(QtGui.QWidget):
         # set up figure
         self.fig.set_facecolor("#ffffff")
         axes.cla()
-        axes.set_axis_bgcolor("#f8f8f8")
+        axes.set_axis_bgcolor("#f0f0f0")
         axes.set_xlabel(rangevarname)
         axes.set_ylabel(self.metric)
         axes.hold(True)
@@ -161,15 +164,16 @@ class QMPLplot(QtGui.QWidget):
             legend.append((MPLlines.Line2D(
                 [], [], color=color, **self.plottype_styles[plottype]
             ), legendlabel))
-        for plottype in self.plottypes_showing:
-            if plottype == "min-max":
-                legend.append((MPLpatches.Patch(
-                    color="#888888", **self.plottype_styles[plottype]
-                ), plottype))
-            else:
-                legend.append((MPLlines.Line2D(
-                    [], [], color="#888888", **self.plottype_styles[plottype]
-                ), plottype))
+        if self.statlegend_showing:
+            for plottype in self.plottypes_showing:
+                if plottype == "min-max":
+                    legend.append((MPLpatches.Patch(
+                        color="#888888", **self.plottype_styles[plottype]
+                    ), plottype))
+                else:
+                    legend.append((MPLlines.Line2D(
+                        [], [], color="#888888", **self.plottype_styles[plottype]
+                    ), plottype))
 
         if legend:
             axes.legend(*zip(*legend), loc=0, numpoints=3)
@@ -186,3 +190,15 @@ class QMPLplot(QtGui.QWidget):
         else:
             self.plottypes_showing.discard(sender.plottype)
         self.plot_update()
+
+    @classmethod
+    def Preview(cls, app, metric):
+        return QMPLpreview(app, metric)
+
+
+class QMPLpreview(QMPLplot):
+    def __init__(self, app, metric):
+        QMPLplot.__init__(self, app, metric, [])
+        self.statlegend_showing = False
+        self.Qtoolbar.hide()
+        self.Qplottypesbox.hide()
