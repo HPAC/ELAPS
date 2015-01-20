@@ -373,6 +373,17 @@ class GUI(object):
         self.UI_counters_set()
         self.UI_calls_init()
 
+    def rangevar_set(self, varname):
+        if varname:
+            subst = {self.rangevar: symbolic.Symbol(varname)}
+            for callid, call in enumerate(self.calls):
+                for argid, arg in enumerate(call):
+                    if isinstance(arg, symbolic.Expression):
+                        call[argid] = arg.substitute(**subst)
+            self.rangevar = varname
+            self.data_update()
+            self.UI_calls_set()
+
     def routine_set(self, callid, value):
         if value in self.signatures:
             call = self.signatures[value]()
@@ -753,7 +764,7 @@ class GUI(object):
         if not state:
             for call in self.calls:
                 for argid, arg in enumerate(call):
-                    call[argid] = self.range_eval(arg, self.range[0])
+                    call[argid] = self.range_eval(arg, self.range[1])
             self.data_update()
             self.UI_calls_set()
         self.userange = state
@@ -761,13 +772,13 @@ class GUI(object):
         self.UI_range_setvisible()
 
     def UI_rangevar_change(self, varname):
-        self.rangevar = varname
-        # TODO: replace old rangevar by new
+        self.rangevar_set(varname)
         self.state_write()
 
     def UI_range_change(self, range):
         self.range = range
         self.data_update()
+        self.UI_data_viz()
         self.state_write()
 
     def UI_call_add(self):
