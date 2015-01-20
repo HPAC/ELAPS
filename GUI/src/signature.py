@@ -417,6 +417,14 @@ class Inc(Arg):
     def default(self):
         return 1
 
+
+class Info(Arg):
+    def __init__(self, name="info", attr=None):
+        Arg.__init__(self, name, attr)
+
+    def default(self):
+        return 0
+
 # attr
 lower = "lower"
 upper = "upper"
