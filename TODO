@@ -4,10 +4,7 @@ Sampler:
 - Test on cluster
 
 GUI:
-x Renaming existing rangevars
 - Unused range alert
-x variable into scalar fields
-x update visualization after range changes
 
 - min(a,b) for symbolic
 
@@ -16,13 +13,6 @@ Viewer:
 
 - memory metrics
 
-- typo "system"
-
-x text to be made "selectable"
-
-- color change still broken
-
 
 TOOL (MS thesis) - identification of processor's parameters.
 -> Email to FLAME.   simple/lightweight tool
-

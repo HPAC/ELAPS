@@ -44,7 +44,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         # window > left > reports > list
         self.Qt_reports = QtGui.QTreeWidget()
         reportsL.addWidget(self.Qt_reports, 1)
-        self.Qt_reports.setHeaderLabels(("report", "", "color", "sytem", "#t",
+        self.Qt_reports.setHeaderLabels(("report", "", "color", "system", "#t",
                                          "blas", "range"))
         self.Qt_columns_resize()
         self.Qt_reports.setMinimumWidth(400)
@@ -319,7 +319,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         Qcolor = QtGui.QColor(self.reports[reportid]["plotcolors"][callid])
         Qcolor = QtGui.QColorDialog.getColor(Qcolor)
         if Qcolor.isValid():
-            self.UI_reportcolor_change(reportid, callid, Qcolor.name())
+            self.UI_reportcolor_change(reportid, callid, str(Qcolor.name()))
 
     def Qt_metricselect_change(self):
         if self.setting:
