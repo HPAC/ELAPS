@@ -1,10 +1,13 @@
+Sampler:
+- Automatic hardware analysis (cfg generation)
+
+- Test on cluster
+
 GUI:
 - Renaming existing rangevars
 - Unused range alert
 
 Viewer:
-- performance numbers in info
-
 - barplots
 
 - memory metrics
