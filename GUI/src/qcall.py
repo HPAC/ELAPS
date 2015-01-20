@@ -132,7 +132,8 @@ class QCall(QtGui.QGroupBox):
                     Qarg.addItems(arg.flags)
                     Qarg.currentIndexChanged.connect(self.arg_change)
                 elif isinstance(arg, (signature.Dim, signature.Scalar,
-                                      signature.Ld, signature.Inc)):
+                                      signature.Ld, signature.Inc,
+                                      signature.Info)):
                     Qarg = QtGui.QLineEdit()
                     Qarg.textChanged.connect(self.arg_change)
                 elif isinstance(arg, signature.Data):
@@ -165,7 +166,7 @@ class QCall(QtGui.QGroupBox):
             return
         useld = self.app.useld
         for argid, arg in enumerate(self.sig):
-            if isinstance(arg, (signature.Ld, signature.Inc)):
+            if isinstance(arg, (signature.Ld, signature.Inc, signature.Info)):
                 self.Qt_arglabels[argid].setVisible(useld)
                 self.Qt_args[argid].setVisible(useld)
 

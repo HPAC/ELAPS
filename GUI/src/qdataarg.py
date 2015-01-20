@@ -134,7 +134,10 @@ class QDataArg(QtGui.QWidget):
             dim = data["sym"][1:]
         else:
             # try simplifying
-            sym = data["sym"].simplify()
+            if isinstance(data["sym"], symbolic.Expression):
+                sym = data["sym"].simplify()
+            else:
+                sym = data["sym"]
             if isinstance(sym, symbolic.Prod):
                 dim = sym[1:]
             elif isinstance(sym, (symbolic.Symbol, int)):
