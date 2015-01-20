@@ -26,6 +26,9 @@ class Expression(object):
     def __rmul__(self, other):
         return Prod(other, self)
 
+    def __pow__(self, other):
+        return Power(self, other)
+
     def subistitute(self, **kwargs):
         return self
 
@@ -197,3 +200,29 @@ class Plus(Operation):
         if len(args) == 1:
             return args[0]
         return self.__class__(*args)
+
+
+class Power(Operation):
+    def __init__(self, base, exponent):
+        Operation.__init__(self, base, exponent)
+
+    def __str__(self):
+        strs = map(str, self[1:])
+        for i, arg in enumerate(self[1:]):
+            if not isinstance(arg, (Symbol, numbers.Number)):
+                strs[i] = "(" + strs[i] + ")"
+        return strs[0] + " ** " + strs[1]
+
+    def simplify(self):
+        base = self[1]
+        if isinstance(base, Operation):
+            base = base.simplify()
+        exponent = self[2]
+        if isinstance(exponent, Operation):
+            exponent = exponent.simplify()
+        if isinstance(exponent, int):
+            return Prod(*(exponent * [base])).simplify()
+        if isinstance(base, numbers.Number) and isinstance(exponent,
+                                                           numbers.Number):
+            return base ** exponent
+        return self.__class__(base, exponent)
