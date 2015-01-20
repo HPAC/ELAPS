@@ -1,6 +1,8 @@
 GUI:
 - Renaming existing rangevars
 - Unused range alert
+- variable into scalar fields
+- update visualization after range changes
 
 Viewer:
 - performance numbers in info
@@ -8,3 +10,14 @@ Viewer:
 - barplots
 
 - memory metrics
+
+-typo "system"
+
+-text to be made "selectable"
+
+-color change still broken
+
+
+TOOL (MS thesis) - identification of processor's parameters.
+-> Email to FLAME.   simple/lightweight tool
+
