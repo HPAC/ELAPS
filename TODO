@@ -7,6 +7,8 @@ GUI:
 - Renaming existing rangevars
 - Unused range alert
 
+- min(a,b) for symbolic
+
 Viewer:
 - barplots
 
