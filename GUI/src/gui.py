@@ -425,16 +425,8 @@ class GUI(object):
             self.UI_calls_set(callid, argid)
             self.UI_data_viz()
         elif isinstance(arg, signature.Scalar):
-            if isinstance(arg, (signature.sScalar, signature.dScalar)):
-                try:
-                    call[argid] = float(value)
-                except:
-                    call[argid] = None
-            else:
-                try:
-                    call[argid] = complex(value)
-                except:
-                    call[argid] = None
+            call[argid] = self.range_parse(value)
+            self.UI_call_set(callid, argid)
         elif isinstance(arg, signature.Dim):
             # evaluate value
             call[argid] = self.range_parse(value)
