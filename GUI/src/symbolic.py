@@ -2,6 +2,7 @@
 from __future__ import division, print_function
 
 import numbers
+import __builtin__
 
 
 class Expression(object):
@@ -226,3 +227,99 @@ class Power(Operation):
                                                            numbers.Number):
             return base ** exponent
         return self.__class__(base, exponent)
+
+
+class Min(Operation):
+    def __init__(self, *args):
+        Operation.__init__(self, *args)
+
+    def __str__(self):
+        return "min(" + ", ".join(map(str, self[1:])) + ")"
+
+    def simplify(self):
+        num = float("inf")
+        args = []
+        for arg in self[1:]:
+            if isinstance(arg, Operation):
+                arg = arg.simplify()
+            if isinstance(arg, Min):
+                otherargs = arg[1:]
+                if isinstance(otherargs[0], numbers.Number):
+                    num = min(num, otherargs[0])
+                    otherargs = otherargs[1:]
+                args += otherargs
+            elif isinstance(arg, numbers.Number):
+                num = min(num, arg)
+            else:
+                args.append(arg)
+        if num != float("inf"):
+            args = [num] + args
+        if len(args) == 0:
+            return float("-inf")
+        if len(args) == 1:
+            return args[0]
+        return self.__class__(*args)
+
+
+class Max(Operation):
+    def __init__(self, *args):
+        Operation.__init__(self, *args)
+
+    def __str__(self):
+        return "max(" + ", ".join(map(str, self[1:])) + ")"
+
+    def simplify(self):
+        num = float("-inf")
+        args = []
+        for arg in self[1:]:
+            if isinstance(arg, Operation):
+                arg = arg.simplify()
+            if isinstance(arg, Max):
+                otherargs = arg[1:]
+                if isinstance(otherargs[0], numbers.Number):
+                    num = max(num, otherargs[0])
+                    otherargs = otherargs[1:]
+                args += otherargs
+            elif isinstance(arg, numbers.Number):
+                num = max(num, arg)
+            else:
+                args.append(arg)
+        if num != float("-inf"):
+            args = [num] + args
+        if len(args) == 0:
+            return float("inf")
+        if len(args) == 1:
+            return args[0]
+        return self.__class__(*args)
+
+
+def min_sym(*args, **kwargs):
+    if len(args) == 1:
+        if any(isinstance(arg, Expression) for arg in args[0]):
+            return Min(*args[0])
+        return __builtin__.min(*args, **kwargs)
+    else:
+        if any(isinstance(arg, Expression) for arg in args):
+            return Min(*args)
+        return __builtin__.min(*args, **kwargs)
+
+
+def max_sym(*args, **kwargs):
+    if len(args) == 1:
+        if any(isinstance(arg, Expression) for arg in args[0]):
+            return Max(*args[0])
+        return __builtin__.max(*args, **kwargs)
+    else:
+        if any(isinstance(arg, Expression) for arg in args):
+            return Max(*args)
+        return __builtin__.max(*args, **kwargs)
+
+env = {
+    "min": min_sym,
+    "max": max_sym,
+}
+
+eval_replace = {
+    "min(": "min_sym(",
+    "max(": "max_sym(",
+}

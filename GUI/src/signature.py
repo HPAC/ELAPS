@@ -2,6 +2,17 @@
 from __future__ import division, print_function
 
 import numbers
+import symbolic
+
+# environment for evaluations
+eval_replace = {
+    "lower": repr("lower"),
+    "upper": repr("upper"),
+    "symm": repr("symm"),
+    "herm": repr("herm"),
+}
+for key, val in symbolic.eval_replace.iteritems():
+    eval_replace[key] = "symbolic." + val
 
 
 class Signature(list):
@@ -33,17 +44,25 @@ class Signature(list):
         # infer and compile complexity, min, attr
         lambdaargs = ", ".join(arg.name for arg in self)
         if "complexity" in kwargs:
+            lambdarhs = kwargs["complexity"]
+            for key, value in eval_replace.iteritems():
+                lambdarhs = lambdarhs.replace(key, value)
             self.complexitystr = kwargs["complexity"]
-            self.complexity = eval("lambda %s: %s" %
-                                   (lambdaargs, kwargs["complexity"]))
+            self.complexity = eval("lambda %s: %s" % (lambdaargs, lambdarhs))
         for arg in self:
             if hasattr(arg, "minstr") and arg.minstr:
-                arg.min = eval("lambda %s: %s" % (lambdaargs,  arg.minstr))
+                lambdarhs = arg.minstr
+                for key, value in eval_replace.iteritems():
+                    lambdarhs = lambdarhs.replace(key, value)
+                arg.min = eval("lambda %s: %s" % (lambdaargs,  lambdarhs))
             else:
                 arg.min = None
             if arg.propertiesstr:
+                lambdarhs = arg.propertiesstr
+                for key, value in eval_replace.iteritems():
+                    lambdarhs = lambdarhs.replace(key, value)
                 arg.properties = eval("lambda %s: filter(None, (%s,))" %
-                                      (lambdaargs, arg.propertiesstr))
+                                      (lambdaargs, lambdarhs))
             else:
                 arg.properties = lambda *args: ()
 
@@ -425,8 +444,3 @@ class Info(Arg):
     def default(self):
         return 0
 
-# attr
-lower = "lower"
-upper = "upper"
-symm = "symm"
-herm = "herm"

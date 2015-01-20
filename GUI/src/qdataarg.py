@@ -140,12 +140,8 @@ class QDataArg(QtGui.QWidget):
                 sym = data["sym"]
             if isinstance(sym, symbolic.Prod):
                 dim = sym[1:]
-            elif isinstance(sym, (symbolic.Symbol, int)):
-                dim = [sym]
             else:
-                self.app.alert("don't know how to vizualize", sym)
-                self.viz_none()
-                return
+                dim = [sym]
         # compute min and max from range
         dimmin = []
         dimmax = []
@@ -181,7 +177,7 @@ class QDataArg(QtGui.QWidget):
         dimmax = [int(round(scale * dim)) for dim in dimmax]
         properties = self.app.calls[self.Qt_call.callid].properties(self.argid)
         for prop in properties:
-            if prop in (signature.lower, signature.upper):
+            if prop in ("lower", "upper"):
                 self.viz_triangular(dimmin, dimmax, properties)
                 return
         self.viz_tensor(dimmin + [1], dimmax + [1])
@@ -195,7 +191,7 @@ class QDataArg(QtGui.QWidget):
         points = [[QtCore.QPoint(woff + x, hoff + y)
                    for x in [0, w]]
                   for y in [0, h]]
-        if signature.lower in properties:
+        if "lower" in properties:
             self.polygonmax = QtGui.QPolygon([
                 points[0][0],
                 points[1][0],
@@ -220,7 +216,7 @@ class QDataArg(QtGui.QWidget):
                 QtCore.QLine(points[0][1], points[0][0]),  # -
             ]
         self.linesmaxback = []
-        if signature.symm in properties or signature.herm in properties:
+        if "symm" in properties or signature.herm in properties:
             self.linesmaxback = [
                 QtCore.QLine(points[0][0], points[1][0]),  # |
                 QtCore.QLine(points[1][0], points[1][1]),  # -
@@ -232,7 +228,7 @@ class QDataArg(QtGui.QWidget):
         points = [[QtCore.QPoint(woff + x, hoff + y)
                    for x in [0, w]]
                   for y in [0, h]]
-        if signature.lower in properties:
+        if "lower" in properties:
             self.polygonmin = QtGui.QPolygon([
                 points[0][0],
                 points[1][0],
@@ -257,7 +253,7 @@ class QDataArg(QtGui.QWidget):
                 QtCore.QLine(points[0][1], points[0][0]),  # -
             ]
         self.linesminback = []
-        if signature.symm in properties or signature.herm in properties:
+        if "symm" in properties or signature.herm in properties:
             self.linesminback = [
                 QtCore.QLine(points[0][0], points[1][0]),  # |
                 QtCore.QLine(points[1][0], points[1][1]),  # -
