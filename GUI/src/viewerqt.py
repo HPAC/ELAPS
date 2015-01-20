@@ -24,24 +24,24 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         windowL = QtGui.QHBoxLayout()
         self.Qt_window.setLayout(windowL)
 
-        # left
+        # window > left
         leftL = QtGui.QVBoxLayout()
         windowL.addLayout(leftL)
         leftL.setContentsMargins(0, 0, 0, 0)
 
-        # reports
+        # window > left > reports
         reports = QtGui.QGroupBox("reports")
         leftL.addWidget(reports)
         reportsL = QtGui.QVBoxLayout()
         reports.setLayout(reportsL)
 
-        # load
+        # window > left > reports >load
         icon = self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton)
         load = QtGui.QPushButton(icon, "&load")
         reportsL.addWidget(load)
         load.clicked.connect(self.Qt_load_click)
 
-        # report list
+        # window > left > reports > list
         self.Qt_reports = QtGui.QTreeWidget()
         reportsL.addWidget(self.Qt_reports, 1)
         self.Qt_reports.setHeaderLabels(("report", "", "color", "sytem", "#t",
@@ -51,7 +51,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_reports.currentItemChanged.connect(self.Qt_report_select)
         self.Qt_reports.itemExpanded.connect(self.Qt_report_expanded)
 
-        # metric selection
+        # window > left > metrics
         metrics = QtGui.QGroupBox("metrics")
         leftL.addWidget(metrics)
         metricsL = QtGui.QVBoxLayout()
@@ -59,7 +59,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         metricselectL = QtGui.QHBoxLayout()
         metricsL.addLayout(metricselectL)
 
-        # metric list
+        # window > left > metrics > list
         self.Qt_metricslist = QtGui.QComboBox()
         metricselectL.addWidget(self.Qt_metricslist)
         self.Qt_metricslist.addItems(sorted(self.metrics))
@@ -67,13 +67,13 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             self.Qt_metricselect_change
         )
 
-        # plot
+        # window > left > metrics > plot
         metricplot = QtGui.QPushButton("&plot")
         metricselectL.addWidget(metricplot)
         metricplot.clicked.connect(self.Qt_plot_clicked)
         metricselectL.addStretch(1)
 
-        # metricinfo
+        # window > left > metrics > info
         metricinfobox = QtGui.QGroupBox()
         metricinfobox.setContentsMargins(0, 0, 0, 0)
         metricsL.addWidget(metricinfobox)
@@ -82,21 +82,19 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_metricinfo = QtGui.QLabel()
         metricinfoL.addWidget(self.Qt_metricinfo)
 
-        # report info
-        reportinfobox = QtGui.QGroupBox()
-        windowL.addWidget(reportinfobox)
-        reportinfoL = QtGui.QVBoxLayout()
-        reportinfobox.setLayout(reportinfoL)
-        self.Qt_reportinfo = QtGui.QLabel()
-        reportinfoL.addWidget(self.Qt_reportinfo)
+        # window > right
+        rightL = QtGui.QVBoxLayout()
+        windowL.addLayout(rightL)
 
-        # report info tabs
+        # window > right > tabs
         self.Qt_reportinfotabs = QtGui.QTabWidget()
-        reportinfoL.addWidget(self.Qt_reportinfotabs)
+        rightL.addWidget(self.Qt_reportinfotabs)
 
-        # preview
+        # window > right > tabs > preview
         self.Qt_preview = self.plotfactory.Preview(self, "time [ms]")
         self.Qt_reportinfotabs.addTab(self.Qt_preview, "preview")
+
+        # window > right > tabs > table
         self.Qt_data = QtGui.QTableWidget()
         self.Qt_reportinfotabs.addTab(self.Qt_data, "data")
         self.Qt_data.setColumnCount(4)
@@ -104,7 +102,18 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_data.setHorizontalHeaderLabels(["med", "min", "avg", "max"])
         self.Qt_data.setVerticalHeaderLabels(sorted(self.metrics))
 
-        reportinfoL.addStretch(1)
+        # window > info
+        reportinfobox = QtGui.QGroupBox()
+        rightL.addWidget(reportinfobox)
+        reportinfoL = QtGui.QVBoxLayout()
+        reportinfobox.setLayout(reportinfoL)
+        self.Qt_reportinfo = QtGui.QLabel()
+        reportinfoL.addWidget(self.Qt_reportinfo)
+        self.Qt_reportinfo.setTextInteractionFlags(
+            QtCore.Qt.TextSelectableByMouse
+        )
+
+        rightL.addStretch(1)
 
         # Qt objects
         self.Qt_Qreports = {}
