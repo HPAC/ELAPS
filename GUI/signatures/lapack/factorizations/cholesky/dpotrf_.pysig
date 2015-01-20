@@ -3,7 +3,6 @@ Signature(
     "dpotrf_",
     Uplo(),
     Dim("n"),
-    dScalar(),
     dData("A", "ldA * n", "lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
     Info()

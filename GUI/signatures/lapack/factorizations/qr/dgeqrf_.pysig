@@ -3,7 +3,6 @@ Signature(
     "dpoqrf_",
     Dim("m"),
     Dim("n"),
-    dScalar(),
     dData("A", "ldA * n"),
     Ld("ldA", "n"),
     dData("Tau", "m if m < n else n"),

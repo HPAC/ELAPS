@@ -3,7 +3,6 @@ Signature(
     "dgetrf_",
     Dim("m"),
     Dim("n"),
-    dScalar(),
     dData("A", "ldA * n"),
     Ld("ldA", "m"),
     iData("ipiv", "min(m, n)"),

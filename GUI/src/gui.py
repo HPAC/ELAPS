@@ -718,7 +718,7 @@ class GUI(object):
                 "warning", "unsupported kernels",
                 "%r does not support %s\nCorresponding calls will be removed"
                 % (samplername, ", ".join(map(repr, missing))), {
-                    "Ok": (self.sampler_set, (samplername)),
+                    "Ok": (self.sampler_set, (samplername,)),
                     "Cancel": None
                 }
             )
@@ -818,7 +818,17 @@ class GUI(object):
         self.UI_data_viz()
 
     def UI_submit(self, filename):
-        self.submit(filename)
+        if self.userange and not any(isinstance(arg, symbolic.Expression)
+                                     for call in self.calls for arg in call):
+            self.UI_dialog(
+                "warning", "range not used",
+                "The range is enabled but %r is not used in any call"
+                % self.rangevar, {
+                    "Ok": (self.submit, (filename,)),
+                    "Cancel": None
+                })
+        else:
+            self.submit(filename)
 
     def UI_jobkill(self, jobid):
         job = self.jobprogress[jobid]
