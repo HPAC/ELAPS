@@ -190,7 +190,11 @@ class GUI(object):
                 return [expr]
             return expr
         if value is None:
-            return [self.range_eval(expr, val) for val in range(*self.range)]
+            if self.range[1] > self.range[0]:
+                rangevals = range(*self.range)
+            else:
+                rangevals = [self.range[0]]
+            return [self.range_eval(expr, val) for val in rangevals]
         if isinstance(expr, symbolic.Expression):
             return expr(**{self.rangevar: value})
         return expr
@@ -768,10 +772,11 @@ class GUI(object):
         self.state_write()
 
     def UI_range_change(self, range):
-        self.range = range
-        self.data_update()
-        self.UI_data_viz()
-        self.state_write()
+        if all(val is not None for val in range):
+            self.range = range
+            self.data_update()
+            self.UI_data_viz()
+            self.state_write()
 
     def UI_call_add(self):
         self.calls.append([""])
