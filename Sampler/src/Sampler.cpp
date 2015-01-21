@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <iterator>
+#include <complex>
 
 #ifdef PAPI
 #include <papi.h>
@@ -52,7 +53,7 @@ void Sampler::set_counters(const vector<string> &tokens) {
 }
 
 template <typename T>
-void Sampler::named_malloc(const vector<string> &tokens, size_t multiplicity=1) {
+void Sampler::named_malloc(const vector<string> &tokens) {
     // require 2 arguments: name, size
     if (tokens.size() < 3) {
         cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
@@ -66,7 +67,7 @@ void Sampler::named_malloc(const vector<string> &tokens, size_t multiplicity=1) 
 
     // parse arguments
     const string &name = tokens[1];
-    const size_t size = atoi(tokens[2].c_str()) * multiplicity;
+    const size_t size = atoi(tokens[2].c_str());
 
     // variable must not exist yet
     if (mem.named_exists(name)) {
@@ -91,7 +92,7 @@ void Sampler::named_malloc(const vector<string> &tokens, size_t multiplicity=1) 
 }
 
 template <typename T>
-void Sampler::named_offset(const vector<string> &tokens, size_t multiplicity=1) {
+void Sampler::named_offset(const vector<string> &tokens) {
     // require 3 arguments: oldname, offset, newname
     if (tokens.size() < 4) {
         cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
@@ -105,7 +106,7 @@ void Sampler::named_offset(const vector<string> &tokens, size_t multiplicity=1) 
     
     // parse arguments
     const string &oldname = tokens[1];
-    const ssize_t offset = atoi(tokens[2].c_str()) * multiplicity;
+    const ssize_t offset = atoi(tokens[2].c_str());
     const string &newname = tokens[3];
 
     // oldname must exist
@@ -169,7 +170,7 @@ void Sampler::add_call(const vector<string> &tokens) {
     }
 }
 
-void Sampler::go() {
+void Sampler::go(const vector<string> &tokens) {
     size_t ncalls = callparsers.size();
     KernelCall *calls = new KernelCall[ncalls];
 
@@ -205,6 +206,23 @@ void Sampler::add_signature(const Signature &signature) {
 }
 
 void Sampler::start() {
+    map<string, void (Sampler:: *)(const vector<string> &)> commands;
+    commands["go"] = &Sampler::go;
+    commands["set_counters"] = &Sampler::set_counters;
+    commands["malloc"] = &Sampler::named_malloc<char>;
+    commands["imalloc"] = &Sampler::named_malloc<int>;
+    commands["smalloc"] = &Sampler::named_malloc<float>;
+    commands["dmalloc"] = &Sampler::named_malloc<double>;
+    commands["cmalloc"] = &Sampler::named_malloc<complex<float> >;
+    commands["zmalloc"] = &Sampler::named_malloc<complex<double> >;
+    commands["offset"] = &Sampler::named_offset<char>;
+    commands["ioffset"] = &Sampler::named_offset<int>;
+    commands["soffset"] = &Sampler::named_offset<float>;
+    commands["doffset"] = &Sampler::named_offset<double>;
+    commands["coffset"] = &Sampler::named_offset<complex<float> >;
+    commands["zoffset"] = &Sampler::named_offset<complex<double> >;
+    commands["free"] = &Sampler::named_free;
+
     // read stdin by lines
     string line;
     while (getline(cin, line)) {
@@ -228,54 +246,14 @@ void Sampler::start() {
         istringstream iss(line);
         copy(istream_iterator<string>(iss), istream_iterator<string>(), back_inserter(tokens));
 
-        // check for special commands
-        const string &command = tokens[0];
-
-        // run sampler
-        if (command == "go")
-            go();
-
-        // malloc
-        else if (command == "malloc")
-            named_malloc<char>(tokens);
-        else if (command == "imalloc")
-            named_malloc<int>(tokens);
-        else if (command == "smalloc")
-            named_malloc<float>(tokens);
-        else if (command == "dmalloc")
-            named_malloc<double>(tokens);
-        else if (command == "cmalloc")
-            named_malloc<float>(tokens, 2);
-        else if (command == "zmalloc")
-            named_malloc<double>(tokens, 2); 
-
-        // offset
-        else if (command == "offset")
-            named_offset<char>(tokens);
-        else if (command == "ioffset")
-            named_offset<int>(tokens);
-        else if (command == "soffset")
-            named_offset<float>(tokens);
-        else if (command == "doffset")
-            named_offset<double>(tokens);
-        else if (command == "coffset")
-            named_offset<float>(tokens, 2);
-        else if (command == "zoffset")
-            named_offset<double>(tokens, 2);
-
-        // free
-        else if (command == "free")
-            named_free(tokens);
-
-        // PAPI counters
-        else if (command == "set_counters")
-            set_counters(tokens);
-
-        // check for kernel call
+        // check for commands
+        map<string, void (Sampler:: *)(const vector<string> &)>::iterator command = commands.find(tokens[0]);
+        if (command != commands.end())
+            (this->*(command->second))(tokens);
         else
             add_call(tokens);
     }
 
     // process remaining calls
-    go();
+    go(vector<string>());
 }

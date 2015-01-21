@@ -5,6 +5,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <ctime>
+#include <complex>
 
 using namespace std;
 
@@ -39,15 +40,23 @@ template <> void MemoryManager::randomize<int>(void *data, size_t size) {
 }
 
 template <> void MemoryManager::randomize<float>(void *data, size_t size) {
-    // random single precision number in [0, 1)
+    // random single precision numbers in [0, 1)
     for (size_t i = 0; i < size; i++)
         ((float *) data)[i] = ((float) rand()) / RAND_MAX;
 }
 
 template <> void MemoryManager::randomize<double>(void *data, size_t size) {
-    // random double precision number in [0, 1)
+    // random double precision numbers in [0, 1)
     for (size_t i = 0; i < size; i++)
         ((double *) data)[i] = ((double) rand()) / RAND_MAX;
+}
+
+template <> void MemoryManager::randomize<complex<float> >(void *data, size_t size) {
+    randomize<float>(data, 2 * size);
+}
+
+template <> void MemoryManager::randomize<complex<double> >(void *data, size_t size) {
+    randomize<double>(data, 2 * size);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -107,6 +116,8 @@ template void MemoryManager::named_malloc<char>(const string &name, size_t size)
 template void MemoryManager::named_malloc<int>(const string &name, size_t size);
 template void MemoryManager::named_malloc<float>(const string &name, size_t size);
 template void MemoryManager::named_malloc<double>(const string &name, size_t size);
+template void MemoryManager::named_malloc<complex<float> >(const string &name, size_t size);
+template void MemoryManager::named_malloc<complex<double> >(const string &name, size_t size);
 
 template <typename T>
 void MemoryManager::named_offset(const string &oldname, size_t offset, const string &newname) {
@@ -120,6 +131,8 @@ template void MemoryManager::named_offset<char>(const string &oldname, size_t of
 template void MemoryManager::named_offset<int>(const string &oldname, size_t offset, const string &newname);
 template void MemoryManager::named_offset<float>(const string &oldname, size_t offset, const string &newname);
 template void MemoryManager::named_offset<double>(const string &oldname, size_t offset, const string &newname);
+template void MemoryManager::named_offset<complex<float> >(const string &oldname, size_t offset, const string &newname);
+template void MemoryManager::named_offset<complex<double> >(const string &oldname, size_t offset, const string &newname);
 
 void *MemoryManager::named_get(const string &name) {
     return (void *) named_map[name];
