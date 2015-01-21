@@ -59,7 +59,7 @@ src/create_header.py > $kernel_h
 $CC $CFLAGS -E -I. $kernel_h | src/create_incs.py $cfg_h $kernel_h $sigs_c_inc $calls_c_inc $info_py
 
 # build .o
-for x in main CallParser MemoryManager Sampler Signature; do
+for x in main CallParser MemoryManager Sampler Sampler_utility Signature; do
     $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/$x.cpp -o $target_dir/$x.o
 done
 

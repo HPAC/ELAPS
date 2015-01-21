@@ -24,6 +24,9 @@ class Sampler {
         void add_call(const std::vector<std::string> &tokens);
         void go(const std::vector<std::string> &tokens);
 
+        void print(const std::vector<std::string> &tokens);
+        void date(const std::vector<std::string> &tokens);
+
     public:
         void set_counters(const std::vector<std::string> &tokens);
         void add_signature(const Signature &signature);
