@@ -672,6 +672,7 @@ class GUI(object):
     def submit(self, filename):
         callfile = filename[:-5] + ".calls"
         errfile = filename[:-5] + ".err"
+        jobname = os.path.basename(filename)[:-5]
 
         # create report header
         reportinfo = self.state.copy()
@@ -698,15 +699,14 @@ class GUI(object):
             "o": filename,  # output
             "e": errfile  # error
         }
+        # add header from sampler
         header = self.sampler["backend_header"].format(nt=self.nt)
         if header:
             script = header + "\n" + script
 
         # submit
-        jobname = os.path.basename(filename)[:-5]
-        jobid = self.backends[self.sampler["backend"]].submit(
-            script, nt=self.nt, jobname=jobname
-        )
+        backend = self.backends[self.sampler["backend"]]
+        jobid = backend.submit(script, nt=self.nt, jobname=jobname)
 
         # track progress
         self.jobprogress_add(jobid, filename)
