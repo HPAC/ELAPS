@@ -194,10 +194,10 @@ class GUI_Qt(GUI, QtGui.QApplication):
             None: QtGui.QColor(0, 0, 255, 0),
             "maxfront": QtGui.QColor(127, 127, 255, 127),
             "maxback": QtGui.QPen(QtGui.QColor(127, 127, 255, 127), 0,
-                                  style=QtCore.Qt.DotLine),
+                                  style=QtCore.Qt.DashLine),
             "minfront": QtGui.QColor(127, 127, 255),
             "minback": QtGui.QPen(QtGui.QColor(127, 127, 255), 0,
-                                  style=QtCore.Qt.DotLine),
+                                  style=QtCore.Qt.DashLine),
         }
         self.Qt_brushes = {
             "max": QtGui.QColor(255, 255, 255, 127),
