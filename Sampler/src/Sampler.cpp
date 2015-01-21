@@ -222,6 +222,8 @@ void Sampler::start() {
     commands["coffset"] = &Sampler::named_offset<complex<float> >;
     commands["zoffset"] = &Sampler::named_offset<complex<double> >;
     commands["free"] = &Sampler::named_free;
+    commands["print"] = &Sampler::print;
+    commands["date"] = &Sampler::date;
 
     // read stdin by lines
     string line;
