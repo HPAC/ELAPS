@@ -1,0 +1,13 @@
+# double precision eigensolver
+Signature(
+    "dsyev_",
+    Flag("jobz", ["N", "V"]),
+    Uplo(),
+    Dim("n"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "n"),
+    dData("W", "n"),
+    dData("Work", "lWork"),
+    Dim("lWork", "3 * n - 1"),
+    Info()
+)
