@@ -174,7 +174,14 @@ class GUI(object):
         calls = list(map(list, state["calls"]))
         for callid, call in enumerate(calls):
             if call[0] in self.signatures:
-                calls[callid] = self.signatures[call[0]](*call[1:])
+                sig = self.signatures[call[0]]
+                try:
+                    calls[callid] = sig(*call[1:])
+                except:
+                    self.UI_alert(
+                        ("Could not applying the signature '%s' to '%s(%s)'.\n"
+                         "Signature Ignored.") % (str(sig), call[0], call[1:])
+                    )
         state["calls"] = calls
         self.state = state
 
@@ -248,7 +255,7 @@ class GUI(object):
         for argid, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
                 if (self.showargs["lds"] and
-                    not isinstance(call2[argid], symbolic.Expression)):
+                        not isinstance(call2[argid], symbolic.Expression)):
                     call[argid] = max(call2[argid], call[argid])
                 else:
                     call[argid] = call2[argid]
@@ -399,26 +406,46 @@ class GUI(object):
             self.UI_calls_set()
 
     def routine_set(self, callid, value):
-        if value in self.signatures:
-            call = self.signatures[value]()
-            owndata = []
-            for i, arg in enumerate(call.sig):
-                if isinstance(arg, signature.Dim):
-                    call[i] = self.defaultdim
-                elif isinstance(arg, signature.Data):
-                    for name in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                        if name not in self.data and name not in owndata:
-                            call[i] = name
-                            owndata.append(name)
-                            break
-            self.calls[callid] = call
-            self.infer_lds(callid)
-        elif value in self.sampler["kernels"]:
+        if value in self.sampler["kernels"]:
             minsig = self.sampler["kernels"][value]
             call = [value] + (len(minsig) - 1) * [None]
             self.calls[callid] = call
+            if value in self.signatures:
+                sig = self.signatures[value]
+                if len(sig) == len(minsig):
+                    # TODO: better sanity check ?
+                    try:
+                        call = sig()
+                        owndata = []
+                        for i, arg in enumerate(call.sig):
+                            if isinstance(arg, signature.Dim):
+                                call[i] = self.defaultdim
+                            elif isinstance(arg, signature.Data):
+                                for name in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                                    if (name not in self.data and
+                                            name not in owndata):
+                                        call[i] = name
+                                        owndata.append(name)
+                                        break
+                        self.calls[callid] = call
+                        self.infer_lds(callid)
+                    except:
+                        self.UI_alert(
+                            ("Could not use the signature '%s'\n"
+                             "Signature Ignored") % str(sig)
+                        )
+                else:
+                    self.UI_alert(
+                        ("Kernel %r of sampler %r has %d arguments,\n"
+                         "however the signature '%s' requires %d.\n"
+                         "Signature ignored.")
+                        % (value, self.samplername, len(minsig) - 1, str(sig),
+                           len(sig) - 1)
+                    )
         else:
+            call = [value]
             self.calls[callid] = [value]
+        self.calls[callid] = call
         self.connections_update()
         self.data_update()
         self.UI_call_set(callid, 0)
