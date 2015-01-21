@@ -148,7 +148,7 @@ class GUI(object):
             try:
                 with open(self.statefile) as fin:
                     oldstate = eval(fin.read(), symbolic.__dict__)
-                if oldstate["statetime"] > self.requiresstattime:
+                if oldstate["statetime"] > self.requiresstatetime:
                     state = oldstate
                     self.log("loaded state from",
                              os.path.relpath(self.statefile))
