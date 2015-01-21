@@ -6,6 +6,7 @@ Sampler:
 GUI:
 - work variables
 - sum range
+- "file" backend
 
 Viewer:
 - barplots
