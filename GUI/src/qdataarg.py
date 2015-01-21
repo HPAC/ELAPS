@@ -2,7 +2,6 @@
 from __future__ import division, print_function
 
 import symbolic
-import signature
 
 from PyQt4 import QtCore, QtGui
 
@@ -216,7 +215,7 @@ class QDataArg(QtGui.QWidget):
                 QtCore.QLine(points[0][1], points[0][0]),  # -
             ]
         self.linesmaxback = []
-        if "symm" in properties or signature.herm in properties:
+        if "symm" in properties or "herm" in properties:
             self.linesmaxback = [
                 QtCore.QLine(points[0][0], points[1][0]),  # |
                 QtCore.QLine(points[1][0], points[1][1]),  # -
@@ -253,7 +252,7 @@ class QDataArg(QtGui.QWidget):
                 QtCore.QLine(points[0][1], points[0][0]),  # -
             ]
         self.linesminback = []
-        if "symm" in properties or signature.herm in properties:
+        if "symm" in properties or "herm" in properties:
             self.linesminback = [
                 QtCore.QLine(points[0][0], points[1][0]),  # |
                 QtCore.QLine(points[1][0], points[1][1]),  # -
