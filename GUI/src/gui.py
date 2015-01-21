@@ -16,6 +16,7 @@ from __builtin__ import intern  # fix for pyflake error
 
 class GUI(object):
     requiresbuildtime = 1420744815
+    requiresstatetime = 1421865661
     state = {}
 
     def __init__(self, loadstate=True):
@@ -117,13 +118,19 @@ class GUI(object):
     def state_init(self, load=True):
         sampler = self.samplers[min(self.samplers)]
         state = {
+            "statetime": time.time(),
             "samplername": sampler["name"],
             "nt": 1,
             "nrep": 10,
             "usepapi": False,
-            "useld": False,
             "usevary": False,
             "userange": True,
+            "showargs": {
+                "flags": True,
+                "scalars": True,
+                "lds": False,
+                "infos": False
+            },
             "rangevar": "n",
             "range": (8, 1001, 32),
             "counters": sampler["papi_counters_max"] * [None],
@@ -140,8 +147,11 @@ class GUI(object):
         if load:
             try:
                 with open(self.statefile) as fin:
-                    state = eval(fin.read(), symbolic.__dict__)
-                self.log("loaded state from", os.path.relpath(self.statefile))
+                    oldstate = eval(fin.read(), symbolic.__dict__)
+                if oldstate["statetime"] > self.requiresstattime:
+                    state = oldstate
+                    self.log("loaded state from",
+                             os.path.relpath(self.statefile))
             except:
                 pass
         self.state_fromflat(state)
@@ -237,8 +247,8 @@ class GUI(object):
         call2.complete()
         for argid, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
-                if self.useld and not isinstance(call2[argid],
-                                                 symbolic.Expression):
+                if (self.showargs["lds"] and
+                    not isinstance(call2[argid], symbolic.Expression)):
                     call[argid] = max(call2[argid], call[argid])
                 else:
                     call[argid] = call2[argid]
@@ -699,7 +709,7 @@ class GUI(object):
         self.UI_info_set(self.get_infostr())
         self.UI_usepapi_setenabled()
         self.UI_usepapi_set()
-        self.UI_useld_set()
+        self.UI_showargs_set()
         self.UI_usevary_set()
         self.UI_userange_set()
         self.UI_counters_setvisible()
@@ -742,10 +752,10 @@ class GUI(object):
         self.UI_counters_setvisible()
         self.state_write()
 
-    def UI_useld_change(self, state):
-        self.useld = state
+    def UI_showargs_change(self, name, state):
+        self.showargs[name] = state
         self.state_write()
-        self.UI_useld_apply()
+        self.UI_showargs_apply()
 
     def UI_usevary_change(self, state):
         self.usevary = state

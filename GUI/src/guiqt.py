@@ -61,29 +61,48 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_info.setWordWrap(True)
         infoL.addStretch(1)
 
-        # window > top > advanced
-        advanced = QtGui.QGroupBox("advanced")
-        topL.addWidget(advanced)
-        advancedL = QtGui.QVBoxLayout()
-        advanced.setLayout(advancedL)
+        # window > top > options
+        optionsL = QtGui.QVBoxLayout()
+        topL.addLayout(optionsL)
 
-        # window > top > advanced > usepapi
-        self.Qt_usepapi = QtGui.QCheckBox("use &PAPI")
-        advancedL.addWidget(self.Qt_usepapi)
+        # window > top > options > features
+        features = QtGui.QGroupBox("features")
+        optionsL.addWidget(features)
+        featuresL = QtGui.QVBoxLayout()
+        features.setLayout(featuresL)
+
+        # window > top > options > features > usepapi
+        self.Qt_usepapi = QtGui.QCheckBox("use PAPI")
+        featuresL.addWidget(self.Qt_usepapi)
         self.Qt_usepapi.stateChanged.connect(self.Qt_usepapi_change)
 
-        # window > top > advanced > useld
-        self.Qt_useld = QtGui.QCheckBox("show &leading dimensions")
-        advancedL.addWidget(self.Qt_useld)
-        self.Qt_useld.stateChanged.connect(self.Qt_useld_change)
-
-        # window > top > advanced > usevary
-        self.Qt_usevary = QtGui.QCheckBox("&vary matrices across reps")
-        advancedL.addWidget(self.Qt_usevary)
+        # window > top > options > features> usevary
+        self.Qt_usevary = QtGui.QCheckBox("vary matrices across reps")
+        featuresL.addWidget(self.Qt_usevary)
         self.Qt_usevary.stateChanged.connect(self.Qt_usevary_change)
 
+        # window > top > options > features
+        showargs = QtGui.QGroupBox("show arguments:")
+        optionsL.addWidget(showargs)
+        showargsL = QtGui.QVBoxLayout()
+        showargs.setLayout(showargsL)
+
+        self.Qt_showargs = {}
+        # window > top > options > showargs >
+        for name, desc in (
+            ("flags", "flags"),
+            ("scalars", "scalars"),
+            ("lds", "leading dimensions"),
+            ("infos", "info")
+        ):
+            checkbox = QtGui.QCheckBox(desc)
+            showargsL.addWidget(checkbox)
+            checkbox.argtype = name
+            checkbox.stateChanged.connect(self.Qt_showargs_change)
+            self.Qt_showargs[name] = checkbox
+
         # window > top > advanced
-        advancedL.addStretch(1)
+        optionsL.addStretch(1)
 
         # window > top > counters
         self.Qt_counters = QtGui.QGroupBox("PAPI counters")
@@ -270,14 +289,18 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_usepapi.setChecked(self.usepapi)
         self.setting = False
 
-    def UI_useld_set(self):
-        self.setting = True
-        self.Qt_useld.setChecked(self.useld)
-        self.setting = False
-
     def UI_usevary_set(self):
         self.setting = True
         self.Qt_usevary.setChecked(self.usevary)
+        self.setting = False
+
+    def UI_showargs_set(self, name=None):
+        if name is None:
+            for name in self.Qt_showargs:
+                self.UI_showargs_set(name)
+            return
+        self.setting = True
+        self.Qt_showargs[name].setChecked(self.showargs[name])
         self.setting = False
 
     def UI_counters_setvisible(self):
@@ -369,9 +392,9 @@ class GUI_Qt(GUI, QtGui.QApplication):
             Qcall.data_viz()
         self.setting = False
 
-    def UI_useld_apply(self):
+    def UI_showargs_apply(self):
         for Qcall in self.Qt_Qcalls:
-            Qcall.useld_apply()
+            Qcall.showargs_apply()
 
     def UI_usevary_apply(self):
         for Qcall in self.Qt_Qcalls:
@@ -451,10 +474,11 @@ class GUI_Qt(GUI, QtGui.QApplication):
             return
         self.UI_usepapi_change(self.Qt_usepapi.isChecked())
 
-    def Qt_useld_change(self):
+    def Qt_showargs_change(self):
         if self.setting:
             return
-        self.UI_useld_change(self.Qt_useld.isChecked())
+        sender = self.sender()
+        self.UI_showargs_change(sender.argtype, sender.isChecked())
 
     def Qt_usevary_change(self):
         if self.setting:

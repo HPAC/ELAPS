@@ -148,7 +148,7 @@ class QCall(QtGui.QGroupBox):
             self.layout().addWidget(Qarg, 1, argid)
             self.Qt_args.append(Qarg)
         if self.sig:
-            self.useld_apply()
+            self.showargs_apply()
             self.usevary_apply()
 
     def args_clear(self):
@@ -161,14 +161,20 @@ class QCall(QtGui.QGroupBox):
         self.Qt_arglabels = self.Qt_arglabels[:1]
         self.sig = None
 
-    def useld_apply(self):
+    def showargs_apply(self):
         if not self.sig:
             return
-        useld = self.app.useld
         for argid, arg in enumerate(self.sig):
-            if isinstance(arg, (signature.Ld, signature.Inc, signature.Info)):
-                self.Qt_arglabels[argid].setVisible(useld)
-                self.Qt_args[argid].setVisible(useld)
+            for name, classes in (
+                ("flags", signature.Flag),
+                ("scalars", signature.Scalar),
+                ("lds", (signature.Ld, signature.Inc)),
+                ("infos", signature.Info)
+            ):
+                if isinstance(arg, classes):
+                    showing = self.app.showargs[name]
+                    self.Qt_arglabels[argid].setVisible(showing)
+                    self.Qt_args[argid].setVisible(showing)
 
     def usevary_apply(self):
         if not self.sig:
