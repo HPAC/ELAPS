@@ -23,7 +23,7 @@ class GUI(object):
         thispath = os.path.dirname(__file__)
         if thispath not in sys.path:
             sys.path.append(thispath)
-        self.rootpath = os.path.join(thispath, "..", "..")
+        self.rootpath = os.path.abspath(os.path.join(thispath, "..", ".."))
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
         self.statefile = os.path.join(self.rootpath, "GUI", ".state.py")
 
@@ -568,8 +568,12 @@ class GUI(object):
         return True
 
     # submit
-    def generate_cmds(self):
+    def generate_cmds(self, reportinfo):
         cmds = []
+        cmds.append(["print", repr(reportinfo)])
+
+        cmds.append(["date"])
+        cmds.append([])
 
         rangevals = [0]
         if self.userange:
@@ -623,11 +627,10 @@ class GUI(object):
         cmds.append(["########################################"])
         cmds.append(["# calls                                #"])
         cmds.append(["########################################"])
-        cmds.append([])
         for rangeid, rangeval in enumerate(rangevals):
             if self.userange:
+                cmds.append([])
                 cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
-                cmds.append(["go"])
             for rep in range(self.nrep + 1):
                 for call in self.calls:
                     if isinstance(call, signature.Call):
@@ -659,50 +662,56 @@ class GUI(object):
                                     value = self.range_eval(parsed, rangeval)
                                     call[argid] = str(value)
                     cmds.append(cmd)
+            cmds.append(["go"])
+
+        cmds.append([])
+        cmds.append(["date"])
 
         return cmds
 
-    def generate_script(self, filename, cmds):
-        outfile = filename
-        errfile = outfile + ".err"
-        script = ""
-        script += "date +%s >> " + outfile + "\n"
-        script += self.sampler["sampler"] + " >> " + outfile
-        script += " 2> " + errfile + " <<1234END5678\n"
-        for cmd in cmds:
-            script += "\t".join(map(str, cmd)) + "\n"
-        script += "1234END5678\n"
-        script += "ret=$?; [ $ret -eq 0 ] || echo $ret >>" + errfile + "\n"
-        script += "date +%s >> " + outfile + "\n"
-        script += "[ -s " + errfile + " ] || rm " + errfile + "\n"
-        return script
+    def submit(self, filename):
+        callfile = filename[:-5] + ".calls"
+        errfile = filename[:-5] + ".err"
 
-    def generate_outputheader(self, filename, cmds):
-        info = self.state.copy()
+        # create report header
+        reportinfo = self.state.copy()
         sampler = self.sampler.copy()
         del sampler["kernels"]
-        info.update({
+        reportinfo.update({
             "sampler": sampler,
-            "cmds": cmds,
             "submittime": time.time()
         })
-        with open(filename, "w") as fout:
-            print(repr(info), file=fout)
 
-    def submit(self, filename):
-        name = os.path.basename(filename)[:-5]
-        cmds = self.generate_cmds()
-        self.generate_outputheader(filename, cmds)
-        script = self.generate_script(filename, cmds)
+        # generate commands
+        cmds = self.generate_cmds(reportinfo)
+
+        # write cmds to file
+        with open(callfile, "w") as fout:
+            for cmd in cmds:
+                print(*cmd, file=fout)
+
+        # generate script
+        script = "%(x)s < %(i)s > %(o)s 2> %(e)s && [ -s %(e)s ] || rm %(e)s"
+        script %= {
+            "x": self.sampler["sampler"],  # executable
+            "i": callfile,  # input
+            "o": filename,  # output
+            "e": errfile  # error
+        }
         header = self.sampler["backend_header"].format(nt=self.nt)
         if header:
             script = header + "\n" + script
+
+        # submit
+        jobname = os.path.basename(filename)[:-5]
         jobid = self.backends[self.sampler["backend"]].submit(
-            script, nt=self.nt, jobname=name
+            script, nt=self.nt, jobname=jobname
         )
+
+        # track progress
         self.jobprogress_add(jobid, filename)
         self.UI_jobprogress_show()
-        self.log("submitted %r to %r" % (name, self.sampler["backend"]))
+        self.log("submitted %r to %r" % (jobname, self.sampler["backend"]))
 
     # jobprogress
     def jobprogress_add(self, jobid, filename):
