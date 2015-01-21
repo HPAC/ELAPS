@@ -1,4 +1,4 @@
-# double precision eigensolver
+# double precision symmetric eigensolver
 Signature(
     "dsyev_",
     Flag("jobz", ["N", "V"]),

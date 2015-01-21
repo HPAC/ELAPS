@@ -1,0 +1,18 @@
+# double precision eigensolver
+Signature(
+    "dgeev_",
+    Flag("jobvl", ["N", "V"]),
+    Flag("jobvr", ["N", "V"]),
+    Dim("n"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "n"),
+    dData("Wr", "n"),
+    dData("Wl", "n"),
+    dData("Vl", "ldVl * n"),
+    Ld("ldVl", "1 if 'jobvl' == 'N' else n"),
+    dData("Vr", "ldVr * n"),
+    Ld("ldVr", "1 if 'jobvl' == 'N' else n"),
+    dData("Work", "lWork"),
+    Dim("lWork", "(3 if jobvl == jobvr == 'N'  else 4) * n"),
+    Info()
+)

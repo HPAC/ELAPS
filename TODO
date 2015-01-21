@@ -3,11 +3,16 @@ Sampler:
 
 - Test on cluster
 
+GUI:
+- verbosity
+- work variables
+- sum range
+
 Viewer:
 - barplots
 
-- memory metrics
+- (memory metrics)
 
 
 TOOL (MS thesis) - identification of processor's parameters.
--> Email to FLAME.   simple/lightweight tool
+-> Email to FLAME.   simple/lightweight too:qal
