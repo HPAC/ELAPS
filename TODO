@@ -4,7 +4,6 @@ Sampler:
 - Test on cluster
 
 GUI:
-- verbosity
 - work variables
 - sum range
 
@@ -15,4 +14,4 @@ Viewer:
 
 
 TOOL (MS thesis) - identification of processor's parameters.
--> Email to FLAME.   simple/lightweight too:qal
+-> Email to FLAME.   simple/lightweight too
