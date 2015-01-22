@@ -116,6 +116,8 @@ class Viewer(object):
             report["starttime"] = int(fin.readline())
         except:
             raise IOError(name, "doesn't contain a valid report")
+        if "usesumrange" not in report:
+            report["usesumrange"] = False
         report["filename"] = os.path.relpath(filename)
         report["valid"] = False
         report["endtime"] = None
@@ -174,14 +176,12 @@ class Viewer(object):
             result += "<tr><td>:</td><td><b>Invalid Report!</b></td></tr>"
         if report["userange"]:
             result += ("<tr><td>For each:</td><td>%s = %d:%d:%d</td></tr>"
-                % (report["rangevar"], report["range"][0],
-                   report["range"][2], report["range"][1] - 1)
-            )
+                       % (report["rangevar"], report["range"][0],
+                          report["range"][2], report["range"][1] - 1))
         if report["usesumrange"]:
             result += ("<tr><td>Summed over:</td><td>%s = %d:%d:%d</td></tr>"
-                % (report["sumrangevar"], report["sumrange"][0],
-                   report["sumrange"][2], report["sumrange"][1] - 1)
-            )
+                       % (report["sumrangevar"], report["sumrange"][0],
+                          report["sumrange"][2], report["sumrange"][1] - 1))
 
         def format_call(call):
             return call[0] + "(" + ", ".join(map(str, call[1:])) + ")"
@@ -266,12 +266,12 @@ class Viewer(object):
             # TODO: defaultdict?
             data["rdtsc"] = 0
             if report["usepapi"]:
-                for counter in rpoert["counters"]:
+                for counter in report["counters"]:
                     data[counter] = 0
             for sumrangenum, sumrangeval in enumerate(sumrangevals):
                 sumrangevaldata = repdata[sumrangeval]
                 data["rdtsc"] += sum(sumrangevaldata[callid][0]
-                                    for callid in callids)
+                                     for callid in callids)
                 if report["usepapi"]:
                     for counterid, counter in enumerate(report["counters"]):
                         data[counter] += sum(
