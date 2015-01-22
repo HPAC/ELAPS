@@ -5,7 +5,8 @@ from __future__ import division, print_function
 def metric(data, report, callid):
     """Performance the operations relative to peak.
 
-    This is comparing the flops/cycle to the system's peak.
+    Comparing the flops/cycle to the system's peak.
+    Not acocuting for Turbo Boost.
     """
     nops = data.get("complexity")
     rdtsc = data.get("rdtsc")

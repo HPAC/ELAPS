@@ -5,8 +5,8 @@ from __future__ import division, print_function
 def metric(data, report, callid):
     """Floating point operations per cycle.
 
-    Counting mathematically required operations (see flops).
-    This does not account for Turbo Boost (see cycles).
+    Counting mathematically required operations.
+    Not accounting for Turbo Boost.
     """
     nops = data.get("complexity")
     rdtsc = data.get("rdtsc")

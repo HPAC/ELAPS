@@ -5,7 +5,7 @@ from __future__ import division, print_function
 def metric(data, report, callid):
     """Billions of floating point operations per second.
 
-    Counting mathematically required operations (see flops).
+    Counting mathematically required operations.
     """
     nops = data.get("complexity")
     rdtsc = data.get("rdtsc")

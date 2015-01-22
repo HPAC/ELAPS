@@ -5,7 +5,7 @@ from __future__ import division, print_function
 def metric(data, report, callid):
     """seconds spent during the operations.
 
-    This is obtained form the RDTSC instruction and information on the system.
+    Obtained form the RDTSC instruction and information on the system.
     """
     rdtsc = data.get("rdtsc")
     if rdtsc is None:
