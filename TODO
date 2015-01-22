@@ -1,12 +1,11 @@
 Sampler:
 - Automatic hardware analysis (cfg generation)
 
-- Test on cluster
-
 GUI:
 - work variables
 - sum range
 - "file" backend
+- PAPI counter descriptions
 
 Viewer:
 - barplots
