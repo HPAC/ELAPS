@@ -7,7 +7,7 @@ from qdataarg import QDataArg
 from PyQt4 import QtCore, QtGui
 
 
-class QCall(QtGui.QGroupBox):
+class QCall(QtGui.QFrame):
     def __init__(self, app, callid):
         QtGui.QGroupBox.__init__(self)
         self.app = app
@@ -18,8 +18,12 @@ class QCall(QtGui.QGroupBox):
         self.movers_setvisibility()
 
     def UI_init(self):
+        # frame
+        self.setFrameStyle(QtGui.QFrame.StyledPanel | QtGui.QFrame.Raised)
+
         routines = list(self.app.sampler["kernels"])
 
+        # layout
         layout = QtGui.QGridLayout()
         self.setLayout(layout)
         layout.setContentsMargins(5, 5, 5, 5)

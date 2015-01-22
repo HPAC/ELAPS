@@ -74,9 +74,11 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         metricselectL.addStretch(1)
 
         # window > left > metrics > info
-        metricinfobox = QtGui.QGroupBox()
-        metricinfobox.setContentsMargins(0, 0, 0, 0)
+        metricinfobox = QtGui.QFrame()
         metricsL.addWidget(metricinfobox)
+        metricinfobox.setContentsMargins(0, 0, 0, 0)
+        metricinfobox.setFrameStyle(QtGui.QFrame.StyledPanel |
+                                    QtGui.QFrame.Sunken)
         metricinfoL = QtGui.QVBoxLayout()
         metricinfobox.setLayout(metricinfoL)
         self.Qt_metricinfo = QtGui.QLabel()
@@ -103,8 +105,10 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_data.setVerticalHeaderLabels(sorted(self.metrics))
 
         # window > info
-        reportinfobox = QtGui.QGroupBox()
+        reportinfobox = QtGui.QFrame()
         rightL.addWidget(reportinfobox)
+        reportinfobox.setFrameStyle(QtGui.QFrame.StyledPanel |
+                                    QtGui.QFrame.Sunken)
         reportinfoL = QtGui.QVBoxLayout()
         reportinfobox.setLayout(reportinfoL)
         self.Qt_reportinfo = QtGui.QLabel()
