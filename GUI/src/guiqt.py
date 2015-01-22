@@ -3,6 +3,7 @@ from __future__ import division, print_function
 
 from gui import GUI
 from qcall import QCall
+import papi
 
 import os
 import sys
@@ -354,16 +355,24 @@ class GUI_Qt(GUI, QtGui.QApplication):
         for _ in range(self.sampler["papi_counters_max"]):
             Qcounter = QtGui.QComboBox()
             QcountersL.addWidget(Qcounter)
-            Qcounter.addItems(("",) + self.sampler["papi_counters_avail"])
+            Qcounter.addItem("", QtCore.QVariant(""))
+            for i, name in enumerate(self.sampler["papi_counters_avail"]):
+                event = papi.events[name]
+                Qcounter.addItem(event["short"], QtCore.QVariant(name))
+                Qcounter.setItemData(i, name + "\n" + event["long"],
+                                     QtCore.Qt.ToolTipRole)
             Qcounter.currentIndexChanged.connect(self.Qt_counter_change)
 
     def UI_counters_set(self):
         self.setting = True
         Qcounters = self.Qt_counters.children()[1:]
         for Qcounter, countername in zip(Qcounters, self.counters):
-            if not countername:
-                countername = ""
-            Qcounter.setCurrentIndex(Qcounter.findText(countername))
+            index = Qcounter.findData(QtCore.QVariant(countername))
+            Qcounter.setCurrentIndex(index)
+            tip = ""
+            if countername:
+                tip = countername + "\n" + papi.events[countername]["long"]
+            Qcounter.setToolTip(tip)
         self.setting = False
 
     def UI_rangevar_set(self):
@@ -527,8 +536,14 @@ class GUI_Qt(GUI, QtGui.QApplication):
         counternames = []
         Qcounters = self.Qt_counters.children()[1:]
         for Qcounter in Qcounters:
-            countername = str(Qcounter.currentText())
+            countername = str(
+                Qcounter.itemData(Qcounter.currentIndex()).toString()
+            )
             counternames.append(countername if countername else None)
+            tip = ""
+            if countername:
+                tip = countername + "\n" + papi.events[countername]["long"]
+            Qcounter.setToolTip(tip)
         self.UI_counters_change(counternames)
 
     def Qt_rangevar_change(self):
