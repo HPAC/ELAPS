@@ -133,10 +133,10 @@ class GUI(object):
             },
             "counters": sampler["papi_counters_max"] * [None],
             "rangevar": "n",
-            "range": (8, 1001, 32),
+            "range": (8, 32, 1000),
             "nrep": 10,
             "sumrangevar": "m",
-            "sumrange": (8, 1001, 32),
+            "sumrange": (1, 1, 10),
             "calls": [[""]],
             "vary": set(),
             "datascale": 100,
@@ -211,7 +211,8 @@ class GUI(object):
             return expr
         if value is None:
             if self.range[1] > self.range[0]:
-                rangevals = range(*self.range)
+                lower, step, upper = self.range
+                rangevals = range(lower, upper + 1, step)
             else:
                 rangevals = [self.range[0]]
             return [self.range_eval(expr, val) for val in rangevals]
@@ -228,7 +229,8 @@ class GUI(object):
             return expr
         if value is None:
             if self.sumrange[1] > self.sumrange[0]:
-                sumrangevals = range(*self.sumrange)
+                lower, step, upper = self.sumrange
+                sumrangevals = range(lower, upper + 1, step)
             else:
                 sumrangevals = [self.sumrange[0]]
             return [self.sumrange_eval(expr, val) for val in sumrangevals]
@@ -612,10 +614,12 @@ class GUI(object):
 
         rangevals = [0]
         if self.userange:
-            rangevals = range(*self.range)
+            lower, step, upper = self.range
+            rangevals = range(lower, upper + 1, step)
         sumrangevals = [0]
         if self.usesumrange:
-            sumrangevals = range(*self.sumrange)
+            lower, step, upper = self.sumrange
+            sumrangevals = range(lower, uppe + 1, step)
 
         if len(self.counters):
             cmds.append(["########################################"])
@@ -649,13 +653,11 @@ class GUI(object):
                     cmds.append([cmdprefix + "malloc", name, size])
                     continue
                 # argument varies
-                print(range(*self.range))
-                for rangeval in range(*self.range)[:10]:
-                    print(self.range_eval(data["comp"], rangeval))
+                lower, step, upper = self.range
                 size = (self.nrep + 1) * max(
                     sum(self.sumrange_eval(self.range_eval(data["comp"],
                                                            rangeval)))
-                    for rangeval in range(*self.range)
+                    for rangeval in range(lower, upper + 1, step)
                 )
                 cmds.append([cmdprefix + "malloc", name, size])
                 rangesizes = self.range_eval(data["comp"])
@@ -791,10 +793,12 @@ class GUI(object):
     def jobprogress_add(self, jobid, filename):
         nlines = 1
         if self.userange:
-            nlines *= len(range(*self.range))
+            lower, step, upper = self.range
+            nlines *= len(range(lower, upper + 1, step))
         nlines *= self.nrep + 1
         if self.usesumrange:
-            nlines *= len(range(*self.sumrange))
+            lower, step, upper = self.sumrange
+            nlines *= len(range(lower, upper + 1, step))
         nlines *= len(self.calls)
         self.jobprogress.append({
             "backend": self.sampler["backend"],
@@ -882,7 +886,7 @@ class GUI(object):
         if not state:
             for call in self.calls:
                 for argid, arg in enumerate(call):
-                    call[argid] = self.range_eval(arg, self.range[1])
+                    call[argid] = self.range_eval(arg, self.range[1] - 1)
             self.data_update()
             self.UI_calls_set()
         self.userange = state
@@ -916,6 +920,9 @@ class GUI(object):
         self.state_write()
 
     def UI_sumrange_change(self, sumrange):
+        sumrange = map(self.range_parse, sumrange)
+        if sumrange[2] is None:
+            sumrange[2] = 1
         if all(val is not None for val in sumrange):
             self.sumrange = sumrange
             self.data_update()

@@ -125,10 +125,12 @@ class Viewer(object):
 
         rangevals = (None,)
         if report["userange"]:
-            rangevals = range(*report["range"])
+            lower, step, upper = report["range"]
+            rangevals = range(lower, upper + 1, step)
         sumrangevals = (None,)
         if report["usesumrange"]:
-            sumrangevals = range(*report["sumrange"])
+            lower, step, upper = report["sumrange"]
+            sumrangevals = range(lower, upper + 1, step)
         reportdata = {}
         report["data"] = reportdata
         for rangeval in rangevals:
@@ -230,7 +232,8 @@ class Viewer(object):
             callids = range(len(calls))
         data = defaultdict(lambda: None)
 
-        sumrangevals = range(*report["sumrange"])
+        lower, step, upper = report["sumrange"]
+        sumrangevals = range(lower, upper + 1, step)
 
         rangevardict = {}
         if report["userange"]:
