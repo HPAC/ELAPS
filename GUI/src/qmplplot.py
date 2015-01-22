@@ -41,7 +41,7 @@ class QMPLplot(QtGui.QWidget):
             "all": lambda data: data
         }
         self.plottype_styles = {
-            "legend": {"linestyle": "-"},
+            "legend": {},
             "med": {"linestyle": "-"},
             "min": {"linestyle": "--"},
             "max": {"linestyle": ":"},
@@ -162,7 +162,7 @@ class QMPLplot(QtGui.QWidget):
             if callid is not None:
                 legendlabel += " (%s)" % str(report["calls"][callid][0])
             legend.append((MPLlines.Line2D(
-                [], [], color=color, **self.plottype_styles[plottype]
+                [], [], color=color, **self.plottype_styles["legend"]
             ), legendlabel))
         if self.statlegend_showing:
             for plottype in self.plottypes_showing:
