@@ -62,7 +62,6 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         # window > left > metrics > list
         self.Qt_metricslist = QtGui.QComboBox()
         metricselectL.addWidget(self.Qt_metricslist)
-        self.Qt_metricslist.addItems(sorted(self.metrics))
         self.Qt_metricslist.currentIndexChanged.connect(
             self.Qt_metricselect_change
         )
@@ -100,9 +99,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_data = QtGui.QTableWidget()
         self.Qt_reportinfotabs.addTab(self.Qt_data, "data")
         self.Qt_data.setColumnCount(4)
-        self.Qt_data.setRowCount(len(self.metrics))
         self.Qt_data.setHorizontalHeaderLabels(["med", "min", "avg", "max"])
-        self.Qt_data.setVerticalHeaderLabels(sorted(self.metrics))
 
         # window > info
         reportinfobox = QtGui.QFrame()
@@ -124,9 +121,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_Qplots = {}
 
         # select metric
-        self.Qt_metricslist.setCurrentIndex(
-            self.Qt_metricslist.findText(self.metric_selected)
-        )
+        self.UI_metriclist_update()
 
     def UI_start(self):
         self.Qt_window.show()
@@ -229,6 +224,15 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             Qitem.color.setStyleSheet("background-color: %s;" % color)
             Qitem.color.setToolTip(color)
 
+    def UI_metriclist_update(self):
+        self.setting = True
+        self.Qt_metricslist.clear()
+        self.Qt_metricslist.addItems(sorted(self.metrics))
+        self.setting = False
+        self.Qt_metricslist.setCurrentIndex(
+            self.Qt_metricslist.findText(self.metric_selected)
+        )
+
     def UI_plot_show(self, metric, state=True):
         self.setting = True
         if metric not in self.Qt_Qplots:
@@ -255,6 +259,8 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
                         for callid in range(len(report["calls"]))]
         self.Qt_preview.plots_showing_set(showing)
         self.Qt_preview.plot_update()
+        self.Qt_data.setRowCount(len(self.metrics))
+        self.Qt_data.setVerticalHeaderLabels(sorted(self.metrics))
         for i, metricname in enumerate(sorted(self.metrics)):
             data = self.generateplotdata(self.reportid_selected,
                                          self.callid_selected, metricname)

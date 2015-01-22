@@ -584,7 +584,7 @@ class GUI(object):
             cmds.append(["# counters                             #"])
             cmds.append(["########################################"])
             cmds.append([])
-            cmds.append(["set_counters"] + list(self.counters))
+            cmds.append(["set_counters"] + list(filter(None, self.counters)))
             cmds.append([])
             cmds.append([])
 
@@ -677,6 +677,7 @@ class GUI(object):
         # create report header
         reportinfo = self.state.copy()
         sampler = self.sampler.copy()
+        reportinfo["counters"] = tuple(filter(None, reportinfo["counters"]))
         del sampler["kernels"]
         reportinfo.update({
             "sampler": sampler,

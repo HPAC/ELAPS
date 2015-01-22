@@ -10,6 +10,7 @@ import time
 import re
 import imp
 import random
+import subprocess
 from numbers import Number
 from collections import defaultdict
 
@@ -72,7 +73,15 @@ class Viewer(object):
             self.metric_selected = "cycles"
 
     def metrics_adddefaultmetric(self, name):
-        self.metrics[name] = lambda data, sampler: data.get(name)
+        metric = lambda data, report, callid: data.get(name)
+        metric.__doc__ = "PAPI counter %r" % name
+        try:
+            out = subprocess.check_output(["papi_avail", "-e", name])
+            desc = re.search("Long Description:\s+\|(.*)\|", out).groups()[0]
+            metric.__doc__ = desc
+        except:
+            pass
+        self.metrics[name] = metric
 
     def nextcolor(self, colors=[
         "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff",
@@ -263,8 +272,9 @@ class Viewer(object):
                 report["plotcolors"][callid] = self.nextcolor()
         if report["usepapi"]:
             for counter in report["counters"]:
-                if counter is not None and counter not in self.metrics:
+                if counter not in self.metrics:
                     self.metrics_adddefaultmetric(counter)
+            self.UI_metriclist_update()
         self.UI_report_add(reportid)
         self.UI_plots_update()
 
