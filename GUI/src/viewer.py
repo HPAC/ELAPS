@@ -124,22 +124,28 @@ class Viewer(object):
         rangevals = (None,)
         if report["userange"]:
             rangevals = range(*report["range"])
+        sumrangevals = (None,)
+        if report["usesumrange"]:
+            sumrangevals = range(*report["sumrange"])
         reportdata = {}
         report["data"] = reportdata
         for rangeval in rangevals:
             rangevaldata = []
             reportdata[rangeval] = rangevaldata
             for rep in range(report["nrep"] + 1):
-                repdata = []
+                repdata = {}
                 if rep > 0:
                     rangevaldata.append(repdata)
-                for call in report["calls"]:
-                    try:
-                        line = fin.readline()
-                    except:
-                        self.alert(filename, "is truncated")
-                        return report
-                    repdata.append(tuple(map(int, line.split())))
+                for sumrangeval in sumrangevals:
+                    sumrangevaldata = []
+                    repdata[sumrangeval] = sumrangevaldata
+                    for call in report["calls"]:
+                        try:
+                            line = fin.readline()
+                        except:
+                            self.alert(filename, "is truncated")
+                            return report
+                        sumrangevaldata.append(tuple(map(int, line.split())))
         reportdata = {key: tuple(map(tuple, val))
                       for key, val in reportdata.iteritems()}
         try:
@@ -167,11 +173,14 @@ class Viewer(object):
         else:
             result += "<tr><td>:</td><td><b>Invalid Report!</b></td></tr>"
         if report["userange"]:
-            result += "<tr><td>Range:</td><td>%s = %d:%d:%d</td></tr>" % (
-                report["rangevar"],
-                report["range"][0],
-                report["range"][2],
-                report["range"][1] - 1
+            result += ("<tr><td>For each:</td><td>%s = %d:%d:%d</td></tr>"
+                % (report["rangevar"], report["range"][0],
+                   report["range"][2], report["range"][1] - 1)
+            )
+        if report["usesumrange"]:
+            result += ("<tr><td>Summed over:</td><td>%s = %d:%d:%d</td></tr>"
+                % (report["sumrangevar"], report["sumrange"][0],
+                   report["sumrange"][2], report["sumrange"][1] - 1)
             )
 
         def format_call(call):
@@ -209,37 +218,66 @@ class Viewer(object):
             if not plotdata:
                 return None
             return plotdata
+
         # extract some variables
         rangevaldata = report["data"][rangeval]
         calls = report["calls"]
         metric = self.metrics[metricname]
+
         # if callid not given: all calls
         callids = (callid,)
         if callid is None:
             callids = range(len(calls))
         data = defaultdict(lambda: None)
+
+        sumrangevals = range(*report["sumrange"])
+
+        rangevardict = {}
+        if report["userange"]:
+            rangevardict[report["rangevar"]] = rangeval
+
         # complexity is constant across repetitions
-        rangevar = report["rangevar"]
-        complexities = [calls[callid2].complexity()
-                        if isinstance(calls[callid2], signature.Call) else None
-                        for callid2 in callids]
-        if all(isinstance(complexity, symbolic.Expression)
-               for complexity in complexities):
-            data["complexity"] = sum(complexity(**{rangevar: rangeval})
-                                     for complexity in complexities)
-        elif all(isinstance(complexity, Number)
-                 for complexity in complexities):
-            data["complexity"] = sum(complexities)
+        if all(isinstance(calls[callid2], signature.Call)
+               for callid2 in callids):
+            data["complexity"] = 0
+            for callid2 in callids:
+                call = calls[callid2]
+                for sumrangeval in sumrangevals:
+                    if report["usesumrange"]:
+                        rangevardict[report["sumrangevar"]] = sumrangeval
+                    complexity = call.complexity()
+                    if isinstance(complexity, symbolic.Expression):
+                        data["complexity"] += complexity(**rangevardict)
+                    elif isinstance(complexity, Number):
+                        data["complexity"] += complexity
+                    else:
+                        data["complexity"] = None
+                        break
+                if data["complexity"] is None:
+                    break
+        else:
+            data["complexity"] = None
+
         # generate plotdata
         plotdata = []
         for rep in range(report["nrep"]):
             repdata = rangevaldata[rep]
             # set up data
-            data["rdtsc"] = sum(repdata[callid][0] for callid in callids)
+            # TODO: defaultdict?
+            data["rdtsc"] = 0
             if report["usepapi"]:
-                for counterid, counter in enumerate(report["counters"]):
-                    data[counter] = sum(repdata[callid][counterid + 1]
-                                        for callid in callids)
+                for counter in rpoert["counters"]:
+                    data[counter] = 0
+            for sumrangenum, sumrangeval in enumerate(sumrangevals):
+                sumrangevaldata = repdata[sumrangeval]
+                data["rdtsc"] += sum(sumrangevaldata[callid][0]
+                                    for callid in callids)
+                if report["usepapi"]:
+                    for counterid, counter in enumerate(report["counters"]):
+                        data[counter] += sum(
+                            sumrangevaldata[callid][counterid + 1]
+                            for callid in callids
+                        )
             # call metric
             val = metric(data, report, callid)
             if val is not None:
