@@ -262,7 +262,8 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.Qt_preview.plots_showing_set(showing)
         self.Qt_preview.plot_update()
         self.Qt_data.setRowCount(len(self.metrics))
-        self.Qt_data.setVerticalHeaderLabels(sorted(self.metrics))
+        names = [self.metricnames[metric] for metric in sorted(self.metrics)]
+        self.Qt_data.setVerticalHeaderLabels(names)
         for i, metricname in enumerate(sorted(self.metrics)):
             data = self.generateplotdata(self.reportid_selected,
                                          self.callid_selected, metricname)

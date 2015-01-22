@@ -77,7 +77,7 @@ class Viewer(object):
     def metrics_adddefaultmetric(self, name):
         event = papi.events[name]
         metric = lambda data, report, callid: data.get(name)
-        metric.__doc__ = event["long"]
+        metric.__doc__ = event["long"] + "\n\n    " + name
         self.metrics[name] = metric
         self.metricnames[name] = event["short"]
 

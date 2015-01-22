@@ -53,7 +53,7 @@ class QMPLplot(QtGui.QWidget):
         self.plottypes_showing = set(["med"])
 
     def UI_init(self):
-        self.setWindowTitle(self.metric)
+        self.setWindowTitle(self.app.metricnames[self.metric])
 
         # layout
         layout = QtGui.QVBoxLayout()
@@ -137,7 +137,7 @@ class QMPLplot(QtGui.QWidget):
         axes.cla()
         axes.set_axis_bgcolor("#f0f0f0")
         axes.set_xlabel(rangevarname)
-        axes.set_ylabel(self.metric)
+        axes.set_ylabel(self.app.metricnames[self.metric])
         axes.hold(True)
 
         # add plots
@@ -172,7 +172,8 @@ class QMPLplot(QtGui.QWidget):
                     ), plottype))
                 else:
                     legend.append((MPLlines.Line2D(
-                        [], [], color="#888888", **self.plottype_styles[plottype]
+                        [], [], color="#888888",
+                        **self.plottype_styles[plottype]
                     ), plottype))
 
         if legend:
