@@ -121,23 +121,23 @@ class GUI(object):
             "statetime": time.time(),
             "samplername": sampler["name"],
             "nt": 1,
-            "nrep": 10,
+            "userange": True,
             "usepapi": False,
             "usevary": False,
-            "userange": True,
             "showargs": {
                 "flags": True,
                 "scalars": True,
                 "lds": False,
                 "infos": False
             },
+            "counters": sampler["papi_counters_max"] * [None],
             "rangevar": "n",
             "range": (8, 1001, 32),
-            "counters": sampler["papi_counters_max"] * [None],
+            "nrep": 10,
             "calls": [[""]],
             "vary": set(),
             "datascale": 100,
-            "defaultdim": 1000,
+            "defaultdim": 1000
         }
         if "dgemm_" in sampler["kernels"]:
             n = symbolic.Symbol("n")
@@ -778,10 +778,6 @@ class GUI(object):
         self.nt = nt
         self.state_write()
 
-    def UI_nrep_change(self, nrep):
-        self.nrep = nrep
-        self.state_write()
-
     def UI_usepapi_change(self, state):
         self.usepapi = state
         self.UI_counters_setvisible()
@@ -822,6 +818,23 @@ class GUI(object):
             self.data_update()
             self.UI_data_viz()
             self.state_write()
+
+    def UI_nrep_change(self, nrep):
+        self.nrep = nrep
+        self.state_write()
+
+    def UI_submit(self, filename):
+        if self.userange and not any(isinstance(arg, symbolic.Expression)
+                                     for call in self.calls for arg in call):
+            self.UI_dialog(
+                "warning", "range not used",
+                "The range is enabled but %r is not used in any call"
+                % self.rangevar, {
+                    "Ok": (self.submit, (filename,)),
+                    "Cancel": None
+                })
+        else:
+            self.submit(filename)
 
     def UI_call_add(self):
         self.calls.append([""])
@@ -866,19 +879,6 @@ class GUI(object):
             self.vary.discard(name)
         self.state_write()
         self.UI_data_viz()
-
-    def UI_submit(self, filename):
-        if self.userange and not any(isinstance(arg, symbolic.Expression)
-                                     for call in self.calls for arg in call):
-            self.UI_dialog(
-                "warning", "range not used",
-                "The range is enabled but %r is not used in any call"
-                % self.rangevar, {
-                    "Ok": (self.submit, (filename,)),
-                    "Cancel": None
-                })
-        else:
-            self.submit(filename)
 
     def UI_jobkill(self, jobid):
         job = self.jobprogress[jobid]

@@ -70,10 +70,10 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
         # window > top > setup > separator
         setupL.addStretch(1)
-        line = QtGui.QFrame();
-        line.setFrameShape(QtGui.QFrame.HLine);
-        line.setFrameShadow(QtGui.QFrame.Sunken);
-        setupL.addWidget(line);
+        line = QtGui.QFrame()
+        line.setFrameShape(QtGui.QFrame.HLine)
+        line.setFrameShadow(QtGui.QFrame.Sunken)
+        setupL.addWidget(line)
         setupL.addStretch(1)
 
         # window > top > setup > range
@@ -155,13 +155,16 @@ class GUI_Qt(GUI, QtGui.QApplication):
         featuresL.addWidget(self.Qt_usevary)
         self.Qt_usevary.stateChanged.connect(self.Qt_usevary_change)
 
+        # window > top > features
+        featuresL.addStretch(1)
+
         # window > top > showargs
         showargs = QtGui.QGroupBox("show arguments:")
         topL.addWidget(showargs)
         showargsL = QtGui.QVBoxLayout()
         showargs.setLayout(showargsL)
 
-        # window > top > showargs >
+        # window > top > showargs > *
         self.Qt_showargs = {}
         for name, desc in (
             ("flags", "flags"),
@@ -175,16 +178,17 @@ class GUI_Qt(GUI, QtGui.QApplication):
             checkbox.stateChanged.connect(self.Qt_showargs_change)
             self.Qt_showargs[name] = checkbox
 
+        # window > top > showargs
+        showargsL.addStretch(1)
+
         # window > top > counters
         self.Qt_counters = QtGui.QGroupBox("PAPI counters")
         topL.addWidget(self.Qt_counters)
         countersL = QtGui.QVBoxLayout()
         self.Qt_counters.setLayout(countersL)
 
-
         # window > top
         topL.addStretch(1)
-
 
         # window > top > submit
         self.Qt_submit = QtGui.QPushButton("submit")
@@ -242,7 +246,6 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_jobprogress_init()
 
     def Qt_jobprogress_init(self):
-
         # window
         self.Qt_jobprogress = QtGui.QWidget()
         self.Qt_jobprogress.setWindowTitle("Job progress")
@@ -308,10 +311,13 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_nt.setCurrentIndex(self.nt - 1)
         self.setting = False
 
-    def UI_nrep_set(self):
+    def UI_userange_set(self):
         self.setting = True
-        self.Qt_nrep.setText(str(self.nrep))
+        self.Qt_userange.setChecked(self.userange)
         self.setting = False
+
+    def UI_userange_apply(self):
+        self.Qt_rangeW.setVisible(self.userange)
 
     def UI_usepapi_setenabled(self):
         self.Qt_usepapi.setEnabled(self.sampler["papi_counters_max"] > 0)
@@ -360,14 +366,6 @@ class GUI_Qt(GUI, QtGui.QApplication):
             Qcounter.setCurrentIndex(Qcounter.findText(countername))
         self.setting = False
 
-    def UI_userange_set(self):
-        self.setting = True
-        self.Qt_userange.setChecked(self.userange)
-        self.setting = False
-
-    def UI_userange_apply(self):
-        self.Qt_rangeW.setVisible(self.userange)
-
     def UI_rangevar_set(self):
         self.setting = True
         self.Qt_rangevar.setText(self.rangevar)
@@ -386,6 +384,11 @@ class GUI_Qt(GUI, QtGui.QApplication):
             self.Qt_range.setText(":%d" % upper)
         else:
             self.Qt_range.setText("")
+        self.setting = False
+
+    def UI_nrep_set(self):
+        self.setting = True
+        self.Qt_nrep.setText(str(self.nrep))
         self.setting = False
 
     def UI_calls_init(self):
@@ -496,11 +499,10 @@ class GUI_Qt(GUI, QtGui.QApplication):
             return
         self.UI_nt_change(int(self.Qt_nt.currentText()))
 
-    def Qt_nrep_change(self):
+    def Qt_userange_change(self):
         if self.setting:
             return
-        text = str(self.Qt_nrep.text())
-        self.UI_nrep_change(int(text) if text else None)
+        self.UI_userange_change(self.Qt_userange.isChecked())
 
     def Qt_usepapi_change(self):
         if self.setting:
@@ -529,11 +531,6 @@ class GUI_Qt(GUI, QtGui.QApplication):
             counternames.append(countername if countername else None)
         self.UI_counters_change(counternames)
 
-    def Qt_userange_change(self):
-        if self.setting:
-            return
-        self.UI_userange_change(self.Qt_userange.isChecked())
-
     def Qt_rangevar_change(self):
         if self.setting:
             return
@@ -547,6 +544,12 @@ class GUI_Qt(GUI, QtGui.QApplication):
         step = int(parts[1]) if len(parts) == 3 and parts[1] else 1
         upper = int(parts[-1]) + 1 if len(parts) >= 2 and parts[-1] else None
         self.UI_range_change((lower, upper, step))
+
+    def Qt_nrep_change(self):
+        if self.setting:
+            return
+        text = str(self.Qt_nrep.text())
+        self.UI_nrep_change(int(text) if text else None)
 
     def Qt_submit_click(self):
         filename = QtGui.QFileDialog.getSaveFileName(
