@@ -23,72 +23,146 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_window.setWindowTitle("Sampler")
         windowL = QtGui.QVBoxLayout()
         self.Qt_window.setLayout(windowL)
+        windowL.setContentsMargins(0, 0, 0, 0)
 
         # window > top
+        topW = QtGui.QWidget()
+        windowL.addWidget(topW)
         topL = QtGui.QHBoxLayout()
-        windowL.addLayout(topL)
+        topW.setLayout(topL)
+        topL.setContentsMargins(0, 0, 12, 0)
 
         # window > top > setup
-        setupL = QtGui.QFormLayout()
-        topL.addLayout(setupL)
+        setupW = QtGui.QWidget()
+        topL.addWidget(setupW)
+        setupL = QtGui.QVBoxLayout()
+        setupW.setLayout(setupL)
+        setupL.setContentsMargins(12, 0, 0, 0)
+        setupL.setSpacing(0)
 
         # window > top > setup > sampler
+        samplerW = QtGui.QWidget()
+        setupL.addWidget(samplerW)
+        samplerL = QtGui.QGridLayout()
+        samplerW.setLayout(samplerL)
+        samplerL.setContentsMargins(0, 0, 4, 12)
+
+        # window > top > setup > sampler > sampler
+        samplerL.addWidget(QtGui.QLabel("Sampler:"), 0, 0)
         self.Qt_sampler = QtGui.QComboBox()
-        setupL.addRow("&Sampler:", self.Qt_sampler)
+        samplerL.addWidget(self.Qt_sampler, 0, 1)
         self.Qt_sampler.addItems(sorted(self.samplers.keys()))
         self.Qt_sampler.currentIndexChanged.connect(self.Qt_sampler_change)
 
-        # window > top > setup > nt
+        # window > top > setup > sampler > about
+        icon = self.style().standardIcon(QtGui.QStyle.SP_FileDialogInfoView)
+        about = QtGui.QPushButton(icon, "")
+        about.clicked.connect(self.Qt_sampler_about)
+        samplerL.addWidget(about, 0, 2, 2, 1)
+        about.setSizePolicy(QtGui.QSizePolicy.Preferred,
+                            QtGui.QSizePolicy.MinimumExpanding)
+
+        # window > top > setup > sampler > nt
+        samplerL.addWidget(QtGui.QLabel("#threads:"), 1, 0)
         self.Qt_nt = QtGui.QComboBox()
-        setupL.addRow("#&threads:", self.Qt_nt)
+        samplerL.addWidget(self.Qt_nt, 1, 1)
         self.Qt_nt.currentIndexChanged.connect(self.Qt_nt_change)
 
+        # window > top > setup > separator
+        setupL.addStretch(1)
+        line = QtGui.QFrame();
+        line.setFrameShape(QtGui.QFrame.HLine);
+        line.setFrameShadow(QtGui.QFrame.Sunken);
+        setupL.addWidget(line);
+        setupL.addStretch(1)
+
+        # window > top > setup > range
+        self.Qt_rangeW = QtGui.QWidget()
+        setupL.addWidget(self.Qt_rangeW)
+        rangeL = QtGui.QHBoxLayout()
+        self.Qt_rangeW.setLayout(rangeL)
+        rangeL.setContentsMargins(0, 12, 12, 4)
+
+        # window > top > setup > range > "for"
+        rangeL.addWidget(QtGui.QLabel("for"))
+
+        # window > top > setup > range > rangevar
+        self.Qt_rangevar = QtGui.QLineEdit()
+        rangeL.addWidget(self.Qt_rangevar)
+        self.Qt_rangevar.textChanged.connect(self.Qt_rangevar_change)
+        self.Qt_rangevar.setFixedWidth(16)
+        regexp = QtCore.QRegExp("[a-zA-Z]+")
+        validator = QtGui.QRegExpValidator(regexp, self)
+        self.Qt_rangevar.setValidator(validator)
+
+        # window > top > setup > range > "="
+        rangeL.addWidget(QtGui.QLabel("="))
+
+        # window > top > setup > range > range
+        self.Qt_range = QtGui.QLineEdit()
+        rangeL.addWidget(self.Qt_range)
+        self.Qt_range.textChanged.connect(self.Qt_range_change)
+        regexp = QtCore.QRegExp("(?:-?\d+)?:(?:(?:-?\d+)?:)?(-?\d+)?")
+        validator = QtGui.QRegExpValidator(regexp, self)
+        self.Qt_range.setValidator(validator)
+
+        # window > top > setup > range
+        rangeL.addStretch(1)
+
         # window > top > setup > nrep
+        nrepW = QtGui.QWidget()
+        setupL.addWidget(nrepW)
+        nrepL = QtGui.QHBoxLayout()
+        nrepW.setLayout(nrepL)
+        nrepL.setContentsMargins(16, 0, 12, 0)
+
+        # window > top > setup > nrep > "repeat"
+        nrepL.addWidget(QtGui.QLabel("repeat"))
+
+        # window > top > setup > nrep > nrep
         self.Qt_nrep = QtGui.QLineEdit()
-        setupL.addRow("&repetitions:", self.Qt_nrep)
+        nrepL.addWidget(self.Qt_nrep)
         self.Qt_nrep.textChanged.connect(self.Qt_nrep_change)
+        self.Qt_nrep.setFixedWidth(32)
         validator = QtGui.QIntValidator()
         self.Qt_nrep.setValidator(validator)
-        validator.setBottom(0)
+        validator.setBottom(1)
 
-        # window > top > info
-        info = QtGui.QGroupBox()
-        topL.addWidget(info)
-        infoL = QtGui.QVBoxLayout()
-        info.setLayout(infoL)
-        self.Qt_info = QtGui.QLabel()
-        infoL.addWidget(self.Qt_info)
-        self.Qt_info.setWordWrap(True)
-        infoL.addStretch(1)
+        # window > top > setup > nrep > "times"
+        nrepL.addWidget(QtGui.QLabel("times"))
 
-        # window > top > options
-        optionsL = QtGui.QVBoxLayout()
-        topL.addLayout(optionsL)
+        # window > top > setup > range
+        nrepL.addStretch(1)
 
-        # window > top > options > features
+        # window > top > features
         features = QtGui.QGroupBox("features")
-        optionsL.addWidget(features)
+        topL.addWidget(features)
         featuresL = QtGui.QVBoxLayout()
         features.setLayout(featuresL)
 
-        # window > top > options > features > usepapi
+        # window > top > features > userange
+        self.Qt_userange = QtGui.QCheckBox("use range")
+        self.Qt_userange.stateChanged.connect(self.Qt_userange_change)
+        featuresL.addWidget(self.Qt_userange)
+
+        # window > top > features > usepapi
         self.Qt_usepapi = QtGui.QCheckBox("use PAPI")
         featuresL.addWidget(self.Qt_usepapi)
         self.Qt_usepapi.stateChanged.connect(self.Qt_usepapi_change)
 
-        # window > top > options > features> usevary
+        # window > top > features> usevary
         self.Qt_usevary = QtGui.QCheckBox("vary matrices across reps")
         featuresL.addWidget(self.Qt_usevary)
         self.Qt_usevary.stateChanged.connect(self.Qt_usevary_change)
 
-        # window > top > options > features
+        # window > top > showargs
         showargs = QtGui.QGroupBox("show arguments:")
-        optionsL.addWidget(showargs)
+        topL.addWidget(showargs)
         showargsL = QtGui.QVBoxLayout()
         showargs.setLayout(showargsL)
 
+        # window > top > showargs >
         self.Qt_showargs = {}
-        # window > top > options > showargs >
         for name, desc in (
             ("flags", "flags"),
             ("scalars", "scalars"),
@@ -101,63 +175,34 @@ class GUI_Qt(GUI, QtGui.QApplication):
             checkbox.stateChanged.connect(self.Qt_showargs_change)
             self.Qt_showargs[name] = checkbox
 
-        # window > top > advanced
-        optionsL.addStretch(1)
-
         # window > top > counters
         self.Qt_counters = QtGui.QGroupBox("PAPI counters")
         topL.addWidget(self.Qt_counters)
         countersL = QtGui.QVBoxLayout()
         self.Qt_counters.setLayout(countersL)
 
+
         # window > top
         topL.addStretch(1)
 
-        # window > range
-        rangeL = QtGui.QHBoxLayout()
-        windowL.addLayout(rangeL)
 
-        # window > range > userange
-        self.Qt_userange = QtGui.QCheckBox("range")
-        self.Qt_userange.stateChanged.connect(self.Qt_userange_change)
-        rangeL.addWidget(self.Qt_userange)
-
-        # window > range > rangevar
-        self.Qt_rangevar = QtGui.QLineEdit()
-        rangeL.addWidget(self.Qt_rangevar)
-        self.Qt_rangevar.textChanged.connect(self.Qt_rangevar_change)
-        self.Qt_rangevar.setFixedWidth(30)
-        regexp = QtCore.QRegExp("[a-zA-Z]+")
-        validator = QtGui.QRegExpValidator(regexp, self)
-        self.Qt_rangevar.setValidator(validator)
-        self.Qt_rangevar.hide()
-
-        # window > range > "="
-        self.Qt_rangelabel = QtGui.QLabel("=")
-        rangeL.addWidget(self.Qt_rangelabel)
-
-        # window > range > range
-        self.Qt_range = QtGui.QLineEdit()
-        rangeL.addWidget(self.Qt_range)
-        self.Qt_range.textChanged.connect(self.Qt_range_change)
-        regexp = QtCore.QRegExp("(?:-?\d+)?:(?:(?:-?\d+)?:)?(-?\d+)?")
-        validator = QtGui.QRegExpValidator(regexp, self)
-        self.Qt_range.setValidator(validator)
-
-        # window > range
-        rangeL.addStretch(1)
+        # window > top > submit
+        self.Qt_submit = QtGui.QPushButton("submit")
+        topL.addWidget(self.Qt_submit)
+        self.Qt_submit.clicked.connect(self.Qt_submit_click)
+        self.Qt_submit.setSizePolicy(QtGui.QSizePolicy.Preferred,
+                                     QtGui.QSizePolicy.MinimumExpanding)
 
         # window > calls
         callsSA = QtGui.QScrollArea()
         windowL.addWidget(callsSA)
-        callsSA.setMinimumHeight(200)
-        callsSA.setMinimumWidth(900)
+        callsSA.setMinimumHeight(240)
         self.Qt_calls = QtGui.QWidget()
         callsSA.setWidget(self.Qt_calls)
         callsL = QtGui.QVBoxLayout()
         self.Qt_calls.setLayout(callsL)
         callsL.setSizeConstraint(QtGui.QLayout.SetFixedSize)
-        windowL.setStretch(2, 1)
+        windowL.setStretch(1, 1)
         self.Qt_Qcalls = []
 
         # window > calls > add
@@ -167,16 +212,6 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
         # window > calls
         callsL.addStretch(1)
-
-        # window > bottom
-        bottomL = QtGui.QHBoxLayout()
-        windowL.addLayout(bottomL)
-        bottomL.addStretch(1)
-
-        # window > bottom > submit
-        self.Qt_submit = QtGui.QPushButton("submit")
-        bottomL.addWidget(self.Qt_submit)
-        self.Qt_submit.clicked.connect(self.Qt_submit_click)
 
         # window
         self.Qt_window.show()
@@ -278,9 +313,6 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_nrep.setText(str(self.nrep))
         self.setting = False
 
-    def UI_info_set(self, text):
-        self.Qt_info.setText(text)
-
     def UI_usepapi_setenabled(self):
         self.Qt_usepapi.setEnabled(self.sampler["papi_counters_max"] > 0)
 
@@ -333,10 +365,8 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_userange.setChecked(self.userange)
         self.setting = False
 
-    def UI_range_setvisible(self):
-        self.Qt_rangevar.setVisible(self.userange)
-        self.Qt_rangelabel.setVisible(self.userange)
-        self.Qt_range.setVisible(self.userange)
+    def UI_userange_apply(self):
+        self.Qt_rangeW.setVisible(self.userange)
 
     def UI_rangevar_set(self):
         self.setting = True
@@ -458,6 +488,9 @@ class GUI_Qt(GUI, QtGui.QApplication):
             return
         self.UI_sampler_change(str(self.Qt_sampler.currentText()))
 
+    def Qt_sampler_about(self):
+        self.UI_alert(self.get_infostr())
+
     def Qt_nt_change(self):
         if self.setting:
             return
@@ -515,9 +548,6 @@ class GUI_Qt(GUI, QtGui.QApplication):
         upper = int(parts[-1]) + 1 if len(parts) >= 2 and parts[-1] else None
         self.UI_range_change((lower, upper, step))
 
-    def Qt_call_add(self):
-        self.UI_call_add()
-
     def Qt_submit_click(self):
         filename = QtGui.QFileDialog.getSaveFileName(
             self.Qt_window,
@@ -528,6 +558,9 @@ class GUI_Qt(GUI, QtGui.QApplication):
         filename = str(filename)
         if filename:
             self.UI_submit(filename)
+
+    def Qt_call_add(self):
+        self.UI_call_add()
 
     def Qt_jobprogress_click(self):
         sender = self.sender()

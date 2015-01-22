@@ -742,7 +742,6 @@ class GUI(object):
         self.UI_nt_setmax()
         self.UI_nt_set()
         self.UI_nrep_set()
-        self.UI_info_set(self.get_infostr())
         self.UI_usepapi_setenabled()
         self.UI_usepapi_set()
         self.UI_showargs_set()
@@ -751,7 +750,7 @@ class GUI(object):
         self.UI_counters_setvisible()
         self.UI_counters_setoptions()
         self.UI_counters_set()
-        self.UI_range_setvisible()
+        self.UI_userange_apply()
         self.UI_rangevar_set()
         self.UI_range_set()
         self.UI_calls_init()
@@ -811,7 +810,7 @@ class GUI(object):
             self.UI_calls_set()
         self.userange = state
         self.state_write()
-        self.UI_range_setvisible()
+        self.UI_userange_apply()
 
     def UI_rangevar_change(self, varname):
         self.rangevar_set(varname)
