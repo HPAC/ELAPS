@@ -3,6 +3,7 @@ from __future__ import division, print_function
 
 import signature
 import symbolic
+import papi
 
 import os
 import sys
@@ -10,7 +11,6 @@ import time
 import re
 import imp
 import random
-import subprocess
 from numbers import Number
 from collections import defaultdict
 
@@ -50,6 +50,7 @@ class Viewer(object):
 
     def metrics_init(self):
         self.metrics = {}
+        self.metricnames = {}
         metricpath = os.path.join(self.rootpath, "GUI", "src", "metrics")
         for filename in os.listdir(metricpath):
             if not filename[-3:] == ".py":
@@ -59,6 +60,7 @@ class Viewer(object):
                                          os.path.join(metricpath, filename))
                 if hasattr(module, "metric") and hasattr(module, "name"):
                     self.metrics[module.name] = module.metric
+                    self.metricnames[module.name] = module.name
                 else:
                     self.alert(os.path.relpath(filename),
                                "did not contain a valid metric")
@@ -68,20 +70,16 @@ class Viewer(object):
                  *map(repr, sorted(self.metrics)))
         if len(self.metrics) == 0:
             raise Exception("No metrics found")
-        self.metric_selected = min(self.metrics.keys())
+        self.metric_selected = min(self.metrics)
         if "cycles" in self.metrics:
             self.metric_selected = "cycles"
 
     def metrics_adddefaultmetric(self, name):
+        event = papi.events[name]
         metric = lambda data, report, callid: data.get(name)
-        metric.__doc__ = "PAPI counter %r" % name
-        try:
-            out = subprocess.check_output(["papi_avail", "-e", name])
-            desc = re.search("Long Description:\s+\|(.*)\|", out).groups()[0]
-            metric.__doc__ = desc
-        except:
-            pass
+        metric.__doc__ = event["long"]
         self.metrics[name] = metric
+        self.metricnames[name] = event["short"]
 
     def nextcolor(self, colors=[
         "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff",

@@ -227,10 +227,12 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
     def UI_metriclist_update(self):
         self.setting = True
         self.Qt_metricslist.clear()
-        self.Qt_metricslist.addItems(sorted(self.metrics))
+        for name in sorted(self.metrics):
+            self.Qt_metricslist.addItem(self.metricnames[name],
+                                        QtCore.QVariant(name))
         self.setting = False
         self.Qt_metricslist.setCurrentIndex(
-            self.Qt_metricslist.findText(self.metric_selected)
+            self.Qt_metricslist.findData(QtCore.QVariant(self.metric_selected))
         )
 
     def UI_plot_show(self, metric, state=True):
@@ -334,7 +336,9 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
     def Qt_metricselect_change(self):
         if self.setting:
             return
-        self.UI_metricselect_change(str(self.Qt_metricslist.currentText()))
+        self.UI_metricselect_change(str(self.Qt_metricslist.itemData(
+            self.Qt_metricslist.currentIndex()
+        ).toString()))
 
     def Qt_plot_clicked(self):
         self.UI_plot_clicked()
