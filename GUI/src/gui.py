@@ -584,7 +584,7 @@ class GUI(object):
             cmds.append(["# counters                             #"])
             cmds.append(["########################################"])
             cmds.append([])
-            cmds.append(["set_counters"] + self.counters)
+            cmds.append(["set_counters"] + list(self.counters))
             cmds.append([])
             cmds.append([])
 
