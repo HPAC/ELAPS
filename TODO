@@ -2,10 +2,11 @@ Sampler:
 - Automatic hardware analysis (cfg generation)
 
 GUI:
-- work variables
 - sum range
+- work variables
 - "file" backend
-- PAPI counter descriptions
+
+- (include BLAS/LAPACK documentation from doxygen)
 
 Viewer:
 - barplots
