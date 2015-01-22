@@ -91,7 +91,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_rangevar = QtGui.QLineEdit()
         rangeL.addWidget(self.Qt_rangevar)
         self.Qt_rangevar.textChanged.connect(self.Qt_rangevar_change)
-        self.Qt_rangevar.setFixedWidth(16)
+        self.Qt_rangevar.setFixedWidth(32)
         regexp = QtCore.QRegExp("[a-zA-Z]+")
         validator = QtGui.QRegExpValidator(regexp, self)
         self.Qt_rangevar.setValidator(validator)
@@ -115,7 +115,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         setupL.addWidget(nrepW)
         nrepL = QtGui.QHBoxLayout()
         nrepW.setLayout(nrepL)
-        nrepL.setContentsMargins(16, 0, 12, 0)
+        nrepL.setContentsMargins(16, 0, 12, 4)
 
         # window > top > setup > nrep > "repeat"
         nrepL.addWidget(QtGui.QLabel("repeat"))
@@ -135,6 +135,39 @@ class GUI_Qt(GUI, QtGui.QApplication):
         # window > top > setup > range
         nrepL.addStretch(1)
 
+        # window > top > setup > sumrange
+        self.Qt_sumrangeW = QtGui.QWidget()
+        setupL.addWidget(self.Qt_sumrangeW)
+        sumrangeL = QtGui.QHBoxLayout()
+        self.Qt_sumrangeW.setLayout(sumrangeL)
+        sumrangeL.setContentsMargins(32, 0, 12, 0)
+
+        # window > top > setup > sumrange > "for"
+        sumrangeL.addWidget(QtGui.QLabel("sum over"))
+
+        # window > top > setup > sumrange > sumrangevar
+        self.Qt_sumrangevar = QtGui.QLineEdit()
+        sumrangeL.addWidget(self.Qt_sumrangevar)
+        self.Qt_sumrangevar.textChanged.connect(self.Qt_sumrangevar_change)
+        self.Qt_sumrangevar.setFixedWidth(32)
+        regexp = QtCore.QRegExp("[a-zA-Z]+")
+        validator = QtGui.QRegExpValidator(regexp, self)
+        self.Qt_sumrangevar.setValidator(validator)
+
+        # window > top > setup > sumrange > "="
+        sumrangeL.addWidget(QtGui.QLabel("="))
+
+        # window > top > setup > sumrange > sumrange
+        self.Qt_sumrange = QtGui.QLineEdit()
+        sumrangeL.addWidget(self.Qt_sumrange)
+        self.Qt_sumrange.textChanged.connect(self.Qt_sumrange_change)
+        regexp = QtCore.QRegExp("(?:-?\d+)?:(?:(?:-?\d+)?:)?(-?\d+)?")
+        validator = QtGui.QRegExpValidator(regexp, self)
+        self.Qt_sumrange.setValidator(validator)
+
+        # window > top > setup > sumrange
+        sumrangeL.addStretch(1)
+
         # window > top > features
         features = QtGui.QGroupBox("features")
         topL.addWidget(features)
@@ -142,9 +175,14 @@ class GUI_Qt(GUI, QtGui.QApplication):
         features.setLayout(featuresL)
 
         # window > top > features > userange
-        self.Qt_userange = QtGui.QCheckBox("use range")
+        self.Qt_userange = QtGui.QCheckBox("for every range")
         self.Qt_userange.stateChanged.connect(self.Qt_userange_change)
         featuresL.addWidget(self.Qt_userange)
+
+        # window > top > features > usesumrange
+        self.Qt_usesumrange = QtGui.QCheckBox("sum over range")
+        self.Qt_usesumrange.stateChanged.connect(self.Qt_usesumrange_change)
+        featuresL.addWidget(self.Qt_usesumrange)
 
         # window > top > features > usepapi
         self.Qt_usepapi = QtGui.QCheckBox("use PAPI")
@@ -320,6 +358,14 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def UI_userange_apply(self):
         self.Qt_rangeW.setVisible(self.userange)
 
+    def UI_usesumrange_set(self):
+        self.setting = True
+        self.Qt_usesumrange.setChecked(self.usesumrange)
+        self.setting = False
+
+    def UI_usesumrange_apply(self):
+        self.Qt_sumrangeW.setVisible(self.usesumrange)
+
     def UI_usepapi_setenabled(self):
         self.Qt_usepapi.setEnabled(self.sampler["papi_counters_max"] > 0)
 
@@ -398,6 +444,26 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def UI_nrep_set(self):
         self.setting = True
         self.Qt_nrep.setText(str(self.nrep))
+        self.setting = False
+
+    def UI_sumrangevar_set(self):
+        self.setting = True
+        self.Qt_sumrangevar.setText(self.sumrangevar)
+        self.setting = False
+
+    def UI_sumrange_set(self):
+        self.setting = True
+        lower, upper, step = self.sumrange
+        if step:
+            self.Qt_sumrange.setText("%d:%d:%d" % (lower, step, upper - 1))
+        elif lower and upper:
+            self.Qt_sumrange.setText("%d:%d" % (lower, upper - 1))
+        elif lower:
+            self.Qt_sumrange.setText("%d:" % lower)
+        elif upper:
+            self.Qt_sumrange.setText(":%d" % upper)
+        else:
+            self.Qt_sumrange.setText("")
         self.setting = False
 
     def UI_calls_init(self):
@@ -513,6 +579,11 @@ class GUI_Qt(GUI, QtGui.QApplication):
             return
         self.UI_userange_change(self.Qt_userange.isChecked())
 
+    def Qt_usesumrange_change(self):
+        if self.setting:
+            return
+        self.UI_usesumrange_change(self.Qt_usesumrange.isChecked())
+
     def Qt_usepapi_change(self):
         if self.setting:
             return
@@ -565,6 +636,20 @@ class GUI_Qt(GUI, QtGui.QApplication):
             return
         text = str(self.Qt_nrep.text())
         self.UI_nrep_change(int(text) if text else None)
+
+    def Qt_sumrangevar_change(self):
+        if self.setting:
+            return
+        self.UI_sumrangevar_change(str(self.Qt_sumrangevar.text()))
+
+    def Qt_sumrange_change(self):
+        if self.setting:
+            return
+        parts = str(self.Qt_sumrange.text()).split(":")
+        lower = int(parts[0]) if len(parts) >= 1 and parts[0] else None
+        step = int(parts[1]) if len(parts) == 3 and parts[1] else 1
+        upper = int(parts[-1]) + 1 if len(parts) >= 2 and parts[-1] else None
+        self.UI_sumrange_change((lower, upper, step))
 
     def Qt_submit_click(self):
         filename = QtGui.QFileDialog.getSaveFileName(
