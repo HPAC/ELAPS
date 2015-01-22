@@ -125,9 +125,9 @@ class GUI_Qt(GUI, QtGui.QApplication):
         nrepL.addWidget(self.Qt_nrep)
         self.Qt_nrep.textChanged.connect(self.Qt_nrep_change)
         self.Qt_nrep.setFixedWidth(32)
-        validator = QtGui.QIntValidator()
+        regexp = QtCore.QRegExp("[1-9][0-9]*")
+        validator = QtGui.QRegExpValidator(regexp, self)
         self.Qt_nrep.setValidator(validator)
-        validator.setBottom(1)
 
         # window > top > setup > nrep > "times"
         nrepL.addWidget(QtGui.QLabel("times"))
@@ -443,7 +443,8 @@ class GUI_Qt(GUI, QtGui.QApplication):
 
     def UI_nrep_set(self):
         self.setting = True
-        self.Qt_nrep.setText(str(self.nrep))
+        text = str(self.nrep) if self.nrep else ""
+        self.Qt_nrep.setText(text)
         self.setting = False
 
     def UI_sumrangevar_set(self):
