@@ -354,7 +354,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         for _ in range(self.sampler["papi_counters_max"]):
             Qcounter = QtGui.QComboBox()
             QcountersL.addWidget(Qcounter)
-            Qcounter.addItems([""] + self.sampler["papi_counters_avail"])
+            Qcounter.addItems(("",) + self.sampler["papi_counters_avail"])
             Qcounter.currentIndexChanged.connect(self.Qt_counter_change)
 
     def UI_counters_set(self):
