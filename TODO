@@ -2,7 +2,6 @@ Sampler:
 - Automatic hardware analysis (cfg generation)
 
 GUI:
-- symbols in sumrange
 - work variables
 - "file" backend
 

@@ -211,49 +211,58 @@ class GUI(object):
         else:
             return [lower]
 
-    def sumrange_get(self, rangevalue=None):
+    def sumrange_get(self, rangeval=None):
         if not self.usesumrange:
             return [None]
         lower, step, upper = self.sumrange
-        if rangevalue is not None:
-            lower = self.range_eval(lower, rangevalue, dosumrange=False)
-            step = self.range_eval(step, rangevalue, dosumrange=False)
-            upper = self.range_eval(upper, rangevalue, dosumrange=False)
+        if rangeval is not None:
+            lower = self.range_eval(lower, rangeval, dosumrange=False)
+            step = self.range_eval(step, rangeval, dosumrange=False)
+            upper = self.range_eval(upper, rangeval, dosumrange=False)
         if lower <= upper:
             return range(lower, upper + 1, step)
         else:
             return [lower]
 
-    def range_eval(self, expr, rangevalue=None, sumrangevalue=None,
+    def range_eval(self, expr, rangeval=None, sumrangeval=None,
                    dorange=True, dosumrange=True):
-        if rangevalue is None and dorange:
-            return [
-                self.range_eval(expr, val, sumrangevalue, dorange, dosumrange)
-                for val in self.range_get()
-            ]
-        if sumrangevalue is None and dosumrange:
-            lower, step, upper = self.sumrange
-            return [
-                self.range_eval(expr, rangevalue, val, dorange, dosumrange)
-                for val in self.sumrange_get(rangevalue)
-            ]
+        if rangeval is None and dorange:
+            if self.userange:
+                return [
+                    self.range_eval(expr, val, sumrangeval, dorange, dosumrange)
+                    for val in self.range_get()
+                ]
+            else:
+                return [
+                    self.range_eval(expr, None, sumrangeval, False, dosumrange)
+                ]
+        if sumrangeval is None and dosumrange:
+            if self.usesumrange:
+                return [
+                    self.range_eval(expr, rangeval, val, dorange, dosumrange)
+                    for val in self.sumrange_get(rangeval)
+                ]
+            else:
+                return [
+                    self.range_eval(expr, rangeval, None, dorange, False)
+                ]
         symdict = {}
-        if self.userange:
-            symdict[self.rangevar] = rangevalue
-        if self.usesumrange:
-            symdict[self.sumrangevar] = sumrangevalue
+        if self.userange and dorange:
+            symdict[self.rangevar] = rangeval
+        if self.usesumrange and dosumrange:
+            symdict[self.sumrangevar] = sumrangeval
         if isinstance(expr, symbolic.Expression):
             return expr(**symdict)
         return expr
 
-    def range_parse(self, value, dorange=True, dosumrange=True):
+    def range_parse(self, text, dorange=True, dosumrange=True):
         try:
             symbols = {}
             if self.userange and dorange:
                 symbols[self.rangevar] = symbolic.Symbol(self.rangevar)
             if self.usesumrange and dosumrange:
                 symbols[self.sumrangevar] = symbolic.Symbol(self.sumrangevar)
-            return eval(value, {}, symbols)
+            return eval(text, {}, symbols)
         except:
             return None
 
@@ -263,8 +272,8 @@ class GUI(object):
         for data in self.data.itervalues():
             sym = data["sym"]
             if isinstance(sym, symbolic.Prod):
-                datamax = max(max(sum(self.range_eval(value), []))
-                              for value in sym[1:])
+                datamax = max(max(sum(self.range_eval(val), []))
+                              for val in sym[1:])
             else:
                 datamax = max(sum(self.range_eval(sym), []))
             result = max(result, datamax)
@@ -318,7 +327,7 @@ class GUI(object):
         compcall.complete()
         mincall.complete()
         symcall.complete()
-        argdict = {"." + arg.name: value for arg, value in zip(call.sig, call)}
+        argdict = {"." + arg.name: val for arg, val in zip(call.sig, call)}
         argnamedict = {"." + arg.name: symbolic.Symbol(arg.name)
                        for arg in call.sig}
         for argid in call.sig.dataargs():
@@ -727,7 +736,7 @@ class GUI(object):
                                 else:
                                     parsed = self.range_parse(value)
                                     if parsed is not None:
-                                        value = self.sumrange_eval(
+                                        value = self.range_eval(
                                             parsed, rangeval, sumrangeval
                                         )
                                         call[argid] = str(value)
@@ -897,10 +906,12 @@ class GUI(object):
     def UI_usesumrange_change(self, state):
         if not state:
             for call in self.calls:
+                print(call)
                 for argid, arg in enumerate(call):
-                    call[argid] = self.sumrange_eval(
+                    call[argid] = self.range_eval(
                         arg, sumrangeval=self.sumrange[-1], dorange=False
                     )
+                print(call)
             self.data_update()
             self.UI_calls_set()
         self.usesumrange = state

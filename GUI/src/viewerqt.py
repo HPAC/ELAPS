@@ -44,10 +44,10 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         # window > left > reports > list
         self.Qt_reports = QtGui.QTreeWidget()
         reportsL.addWidget(self.Qt_reports, 1)
-        self.Qt_reports.setHeaderLabels(("report", "", "color", "system", "#t",
-                                         "blas", "range"))
+        self.Qt_reports.setHeaderLabels(
+            ("report", "", "color", "system", "#t", "blas")
+        )
         self.Qt_columns_resize()
-        self.Qt_reports.setMinimumWidth(400)
         self.Qt_reports.currentItemChanged.connect(self.Qt_report_select)
         self.Qt_reports.itemExpanded.connect(self.Qt_report_expanded)
 
@@ -61,7 +61,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
 
         # window > left > metrics > list
         self.Qt_metricslist = QtGui.QComboBox()
-        metricselectL.addWidget(self.Qt_metricslist)
+        metricselectL.addWidget(self.Qt_metricslist, 1)
         self.Qt_metricslist.currentIndexChanged.connect(
             self.Qt_metricselect_change
         )
@@ -70,7 +70,6 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         metricplot = QtGui.QPushButton("&plot")
         metricselectL.addWidget(metricplot)
         metricplot.clicked.connect(self.Qt_plot_clicked)
-        metricselectL.addStretch(1)
 
         # window > left > metrics > info
         metricinfobox = QtGui.QFrame()
@@ -142,13 +141,6 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         sampler = report["sampler"]
 
         #  tree item
-        rangestr = ""
-        if report["userange"]:
-            rangestr = "%d:%d:%d" % (
-                report["range"][0],
-                report["range"][2],
-                report["range"][1] - 1
-            )
         Qreport = QtGui.QTreeWidgetItem((
             report["name"],
             "",
@@ -156,7 +148,6 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             sampler["system_name"],
             str(report["nt"]),
             sampler["blas_name"],
-            rangestr,
         ))
         self.Qt_reports.addTopLevelItem(Qreport)
         self.Qt_Qreports[reportid] = Qreport

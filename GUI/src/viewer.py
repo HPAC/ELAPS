@@ -127,19 +127,27 @@ class Viewer(object):
         if report["userange"]:
             lower, step, upper = report["range"]
             rangevals = range(lower, upper + 1, step)
-        sumrangevals = (None,)
-        if report["usesumrange"]:
-            lower, step, upper = report["sumrange"]
-            sumrangevals = range(lower, upper + 1, step)
         reportdata = {}
         report["data"] = reportdata
         for rangeval in rangevals:
+            sumrangevals = (None,)
+            if report["usesumrange"]:
+                sumrange = report["sumrange"]
+                if report["userange"]:
+                    sumrange = [
+                        val(**{report["rangevar"]: rangeval})
+                        if isinstance(val, symbolic.Expression) else val
+                        for val in sumrange
+                    ]
+                lower, step, upper = sumrange
+                sumrangevals = range(lower, upper + 1, step)
             rangevaldata = []
             reportdata[rangeval] = rangevaldata
             for rep in range(report["nrep"] + 1):
                 repdata = {}
                 if rep > 0:
                     rangevaldata.append(repdata)
+
                 for sumrangeval in sumrangevals:
                     sumrangevaldata = []
                     repdata[sumrangeval] = sumrangevaldata
@@ -177,14 +185,15 @@ class Viewer(object):
         else:
             result += "<tr><td>:</td><td><b>Invalid Report!</b></td></tr>"
         if report["userange"]:
-            result += ("<tr><td>For each:</td><td>%s = %d:%d:%d</td></tr>"
-                       % (report["rangevar"], report["range"][0],
-                          report["range"][2], report["range"][1] - 1))
+            result += (
+                "<tr><td>For each:</td><td>%s = %d:%d:%d</td></tr>"
+                % ((report["rangevar"],) +  report["range"])
+            )
         if report["usesumrange"]:
-            result += ("<tr><td>Summed over:</td><td>%s = %d:%d:%d</td></tr>"
-                       % (report["sumrangevar"], report["sumrange"][0],
-                          report["sumrange"][2], report["sumrange"][1] - 1))
-
+            result += (
+                "<tr><td>Sum over:</td><td>%s = %s:%s:%s</td></tr>"
+                % tuple([report["sumrangevar"]] + map(str, report["sumrange"]))
+            )
         def format_call(call):
             return call[0] + "(" + ", ".join(map(str, call[1:])) + ")"
 
@@ -210,10 +219,7 @@ class Viewer(object):
         # ifrangeval not given: return all
         if report["userange"] and rangeval is None:
             plotdata = []
-            rangevals = (None,)
-            if report["userange"]:
-                rangevals = range(*report["range"])
-            for rangeval in rangevals:
+            for rangeval in sorted(report["data"]):
                 plotdata.append((rangeval, self.generateplotdata(
                     reportid, callid, metricname, rangeval)))
             plotdata = tuple((x, y) for x, y in plotdata if y is not None)
@@ -232,9 +238,6 @@ class Viewer(object):
             callids = range(len(calls))
         data = defaultdict(lambda: None)
 
-        lower, step, upper = report["sumrange"]
-        sumrangevals = range(lower, upper + 1, step)
-
         rangevardict = {}
         if report["userange"]:
             rangevardict[report["rangevar"]] = rangeval
@@ -245,7 +248,7 @@ class Viewer(object):
             data["complexity"] = 0
             for callid2 in callids:
                 call = calls[callid2]
-                for sumrangeval in sumrangevals:
+                for sumrangeval in rangevaldata[0]:
                     if report["usesumrange"]:
                         rangevardict[report["sumrangevar"]] = sumrangeval
                     complexity = call.complexity()
@@ -263,16 +266,13 @@ class Viewer(object):
 
         # generate plotdata
         plotdata = []
-        for rep in range(report["nrep"]):
-            repdata = rangevaldata[rep]
+        for repdata in rangevaldata:
             # set up data
-            # TODO: defaultdict?
             data["rdtsc"] = 0
             if report["usepapi"]:
                 for counter in report["counters"]:
                     data[counter] = 0
-            for sumrangenum, sumrangeval in enumerate(sumrangevals):
-                sumrangevaldata = repdata[sumrangeval]
+            for sumrangevaldata in repdata.itervalues():
                 data["rdtsc"] += sum(sumrangevaldata[callid][0]
                                      for callid in callids)
                 if report["usepapi"]:
