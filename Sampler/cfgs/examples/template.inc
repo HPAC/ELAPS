@@ -17,7 +17,11 @@ BLAS_NAME=
 
 # Name of the System (e.g., "local", "cluster", "E5450")
 #
-SYSTEM_NAME=
+#SYSTEM_NAME="local"
+
+# Name of the Sampler
+#
+#NAME=#{SYSTEM_NAME}_${BLAS_NAME}
 
 # Number of cores
 #
@@ -41,7 +45,7 @@ SYSTEM_NAME=
 
 # Linker flags (e.g., "-lopenblas")
 #
-LINK_FLAGS=
+#LINK_FLAGS=
 
 # Include flags (e.g. "-I${PAPI_ROOT}/include)
 #
@@ -90,9 +94,9 @@ LINK_FLAGS=
 
 # Additional options passed to submit() [GUI]
 # Format: python dictionary representation
-# (for future purposes only(
+# (for future use)
 #
-#BACKEND_OPTIONS=
+#BACKEND_OPTIONS="{}"
 
 
 # CPU INFORMATION
