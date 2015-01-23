@@ -20,14 +20,7 @@ fi
 [ -z "$BACKEND" ] && BACKEND="local"
 [ -z "$BACKEND_HEADER" ] && BACKEND_HEADER=""
 [ -z "$BACKEND_OPTIONS" ] && BACKEND_OPTIONS=""
-if [ -z "$NT_MAX" ]; then
-    if [ "$BACKEND" = "local" ]; then
-        NT_MAX=`grep -c ^processor /proc/cpuinfo`
-    else
-        echo "assuming NT_MAX=1 for non-local system"
-        NT_MAX=1
-    fi
-fi
+[ -z "$NT_MAX" ] && NT_MAX=1
 [ -z "$FLOPS_PER_CYCLE" ] && echo "FLOPS_PER_CYCLE not provided (no GFLOPS and efficiencies)"
 [ -z "$CC" ] && CC="gcc"
 [ -z "$CXX" ] && CXX="g++"
@@ -35,7 +28,7 @@ fi
 export BLAS_NAME SYSTEM_NAME NAME KERNEL_HEADERS
 export BACKEND BACKEND_HEADER BACKEND_OPTIONS
 export PAPI_COUNTERS_MAX PAPI_COUNTERS_AVAIL
-export FLOPS_PER_CYCLE DFLOPS_PER_CYCLE SFLOPS_PER_CYCLE 
+export DFLOPS_PER_CYCLE SFLOPS_PER_CYCLE 
 export CPU_MODEL FREQUENCY_MHZ NT_MAX
 
 target_dir=build/$NAME
