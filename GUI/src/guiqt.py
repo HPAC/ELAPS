@@ -628,7 +628,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         lower = int(parts[0]) if len(parts) >= 1 and parts[0] else None
         step = int(parts[1]) if len(parts) == 3 and parts[1] else 1
         upper = int(parts[-1]) if len(parts) >= 2 and parts[-1] else None
-        self.UI_range_change((lower, upper, step))
+        self.UI_range_change((lower, step, upper))
 
     def Qt_nrep_change(self):
         if self.setting:
@@ -645,10 +645,10 @@ class GUI_Qt(GUI, QtGui.QApplication):
         if self.setting:
             return
         parts = str(self.Qt_sumrange.text()).split(":")
-        lower = parts[0] if len(parts) >= 1 and parts[0] else None
-        step = parts[1] if len(parts) == 3 and parts[1] else 1
-        upper = parts[-1] if len(parts) >= 2 and parts[-1] else None
-        self.UI_sumrange_change((lower, upper, step))
+        lower = parts[0] if len(parts) >= 1 else None
+        step = parts[1] if len(parts) == 3 else 1
+        upper = parts[-1] if len(parts) >= 2 else None
+        self.UI_sumrange_change((lower, step, upper))
 
     def Qt_submit_click(self):
         filename = QtGui.QFileDialog.getSaveFileName(

@@ -202,48 +202,56 @@ class GUI(object):
         info += "\nBLAS:\t%s\n" % sampler["blas_name"]
         return info
 
-    def range_eval(self, expr, value=None):
+    def range_get(self):
         if not self.userange:
-            if isinstance(expr, symbolic.Expression):
-                expr = expr()
-            if value is None:
-                return [expr]
-            return expr
-        if value is None:
-            if self.range[1] > self.range[0]:
-                lower, step, upper = self.range
-                rangevals = range(lower, upper + 1, step)
-            else:
-                rangevals = [self.range[0]]
-            return [self.range_eval(expr, val) for val in rangevals]
-        if isinstance(expr, symbolic.Expression):
-            return expr(**{self.rangevar: value})
-        return expr
+            return [None]
+        lower, step, upper = self.range
+        if lower <= upper:
+            return range(lower, upper + 1, step)
+        else:
+            return [lower]
 
-    def sumrange_eval(self, expr, value=None):
+    def sumrange_get(self, rangevalue=None):
         if not self.usesumrange:
-            if isinstance(expr, symbolic.Expression):
-                expr = expr()
-            if value is None:
-                return [expr]
-            return expr
-        if value is None:
-            if self.sumrange[1] > self.sumrange[0]:
-                lower, step, upper = self.sumrange
-                sumrangevals = range(lower, upper + 1, step)
-            else:
-                sumrangevals = [self.sumrange[0]]
-            return [self.sumrange_eval(expr, val) for val in sumrangevals]
+            return [None]
+        lower, step, upper = self.sumrange
+        if rangevalue is not None:
+            lower = self.range_eval(lower, rangevalue, dosumrange=False)
+            step = self.range_eval(step, rangevalue, dosumrange=False)
+            upper = self.range_eval(upper, rangevalue, dosumrange=False)
+        if lower <= upper:
+            return range(lower, upper + 1, step)
+        else:
+            return [lower]
+
+    def range_eval(self, expr, rangevalue=None, sumrangevalue=None,
+                   dorange=True, dosumrange=True):
+        if rangevalue is None and dorange:
+            return [
+                self.range_eval(expr, val, sumrangevalue, dorange, dosumrange)
+                for val in self.range_get()
+            ]
+        if sumrangevalue is None and dosumrange:
+            lower, step, upper = self.sumrange
+            return [
+                self.range_eval(expr, rangevalue, val, dorange, dosumrange)
+                for val in self.sumrange_get(rangevalue)
+            ]
+        symdict = {}
+        if self.userange:
+            symdict[self.rangevar] = rangevalue
+        if self.usesumrange:
+            symdict[self.sumrangevar] = sumrangevalue
         if isinstance(expr, symbolic.Expression):
-            return expr(**{self.sumrangevar: value})
+            return expr(**symdict)
         return expr
 
-    def range_parse(self, value):
+    def range_parse(self, value, dorange=True, dosumrange=True):
         try:
             symbols = {}
-            if self.userange:
+            if self.userange and dorange:
                 symbols[self.rangevar] = symbolic.Symbol(self.rangevar)
-            if self.usesumrange:
+            if self.usesumrange and dosumrange:
                 symbols[self.sumrangevar] = symbolic.Symbol(self.sumrangevar)
             return eval(value, {}, symbols)
         except:
@@ -255,12 +263,10 @@ class GUI(object):
         for data in self.data.itervalues():
             sym = data["sym"]
             if isinstance(sym, symbolic.Prod):
-                datamax = max(max(sum(map(self.sumrange_eval,
-                                          self.range_eval(value)), []))
+                datamax = max(max(sum(self.range_eval(value), []))
                               for value in sym[1:])
             else:
-                datamax = max(sum(map(self.sumrange_eval,
-                                      self.range_eval(sym)), []))
+                datamax = max(sum(self.range_eval(sym), []))
             result = max(result, datamax)
         return result
 
@@ -614,12 +620,7 @@ class GUI(object):
 
         rangevals = [0]
         if self.userange:
-            lower, step, upper = self.range
-            rangevals = range(lower, upper + 1, step)
-        sumrangevals = [0]
-        if self.usesumrange:
-            lower, step, upper = self.sumrange
-            sumrangevals = range(lower, uppe + 1, step)
+            rangevals = self.range_get()
 
         if len(self.counters):
             cmds.append(["########################################"])
@@ -634,51 +635,47 @@ class GUI(object):
             cmds.append(["########################################"])
             cmds.append(["# data                                 #"])
             cmds.append(["########################################"])
-
-            cmdprefixes = {
-                signature.Data: "",
-                signature.iData: "i",
-                signature.sData: "s",
-                signature.dData: "d",
-                signature.cData: "s",
-                signature.zData: "z",
-            }
-            for name, data in self.data.iteritems():
-                cmds.append([])
-                cmds.append(["# %s" % name])
-                cmdprefix = cmdprefixes[data["type"]]
-                if name not in self.vary:
-                    size = max(sum(map(self.sumrange_eval,
-                                       self.range_eval(data["comp"])), []))
-                    cmds.append([cmdprefix + "malloc", name, size])
-                    continue
-                # argument varies
-                lower, step, upper = self.range
-                size = (self.nrep + 1) * max(
-                    sum(self.sumrange_eval(self.range_eval(data["comp"],
-                                                           rangeval)))
-                    for rangeval in range(lower, upper + 1, step)
-                )
+        cmdprefixes = {
+            signature.Data: "",
+            signature.iData: "i",
+            signature.sData: "s",
+            signature.dData: "d",
+            signature.cData: "s",
+            signature.zData: "z",
+        }
+        for name, data in self.data.iteritems():
+            cmds.append([])
+            cmds.append(["# %s" % name])
+            cmdprefix = cmdprefixes[data["type"]]
+            if name not in self.vary:
+                size = max(sum(self.range_eval(data["comp"]), []))
                 cmds.append([cmdprefix + "malloc", name, size])
-                rangesizes = self.range_eval(data["comp"])
-                for rangeval, rangesize in zip(rangevals, rangesizes):
-                    if self.userange:
-                        if self.usesumrange:
-                            cmds.append([])
-                        cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
-                    sumrangesizes = self.sumrange_eval(rangesize)
-                    offset = 0
-                    for rep in range(self.nrep + 1):
-                        if self.usesumrange:
-                            cmds.append(["# repetition %d" % rep])
-                        for sumrangeval, sumrangesize in zip(sumrangevals,
-                                                             sumrangesizes):
-                            cmds.append([
-                                cmdprefix + "offset", name, offset,
-                                "%s_%d_%d_%d" % (name, rangeval, rep,
-                                                 sumrangeval)
-                            ])
-                            offset += sumrangesize
+                continue
+            # argument varies
+            size = (self.nrep + 1) * max(
+                map(sum, self.range_eval(data["comp"]))
+            )
+            cmds.append([cmdprefix + "malloc", name, size])
+            for rangeval in rangevals:
+                if self.userange:
+                    if self.usesumrange:
+                        cmds.append([])
+                    cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
+                sumrangevals = [0]
+                if self.usesumrange:
+                    sumrangevals = self.sumrange_get(rangeval)
+                offset = 0
+                for rep in range(self.nrep + 1):
+                    if self.usesumrange:
+                        cmds.append(["# repetition %d" % rep])
+                    for sumrangeval in sumrangevals:
+                        cmds.append([
+                            cmdprefix + "offset", name, offset,
+                            "%s_%d_%d_%d" % (name, rangeval, rep, sumrangeval)
+                        ])
+                        offset += self.range_eval(data["comp"], rangeval,
+                                                  sumrangeval)
+        if len(self.data):
             cmds.append([])
             cmds.append([])
 
@@ -690,6 +687,9 @@ class GUI(object):
             if self.userange:
                 cmds.append([])
                 cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
+            sumrangevals = [0]
+            if self.usesumrange:
+                sumrangevals = self.sumrange_get(rangeval)
             for rep in range(self.nrep + 1):
                 if self.usesumrange:
                     cmds.append([])
@@ -698,16 +698,13 @@ class GUI(object):
                     for call in self.calls:
                         if isinstance(call, signature.Call):
                             call = call.sig(*[
-                                self.sumrange_eval(self.range_eval(value,
-                                                                   rangeval),
-                                                   sumrangeval)
+                                self.range_eval(value, rangeval, sumrangeval)
                                 for value in call[1:]
                             ])
                             cmd = call.format_sampler()
                             for argid in call.sig.dataargs():
                                 name = call[argid]
                                 if name in self.vary:
-                                    # TODO: sumrange ?
                                     cmd[argid] = "%s_%d_%d_%d" % (
                                         name, rangeval, rep, sumrangeval
                                     )
@@ -723,17 +720,15 @@ class GUI(object):
                                     if value[0] == "[" and value[-1] == "]":
                                         parsed = self.range_parse(value[1:-1])
                                         if parsed is not None:
-                                            value = self.sumrange_eval(
-                                                self.range_eval(parsed,
-                                                                rangeval)
+                                            value = self.range_eval(
+                                                parsed, rangeval, sumrangeval
                                             )
-                                            call[argid] = ("[" + str(value) +
-                                                           "]")
+                                        call[argid] = "[" + str(value) + "]"
                                 else:
                                     parsed = self.range_parse(value)
                                     if parsed is not None:
                                         value = self.sumrange_eval(
-                                            self.range_eval(parsed, rangeval)
+                                            parsed, rangeval, sumrangeval
                                         )
                                         call[argid] = str(value)
                         cmds.append(cmd)
@@ -791,15 +786,8 @@ class GUI(object):
 
     # jobprogress
     def jobprogress_add(self, jobid, filename):
-        nlines = 1
-        if self.userange:
-            lower, step, upper = self.range
-            nlines *= len(range(lower, upper + 1, step))
-        nlines *= self.nrep + 1
-        if self.usesumrange:
-            lower, step, upper = self.sumrange
-            nlines *= len(range(lower, upper + 1, step))
-        nlines *= len(self.calls)
+        nlines = len(sum(self.range_eval(0), []))
+        nlines *= (self.nrep + 1) * len(self.calls)
         self.jobprogress.append({
             "backend": self.sampler["backend"],
             "id": jobid,
@@ -886,7 +874,9 @@ class GUI(object):
         if not state:
             for call in self.calls:
                 for argid, arg in enumerate(call):
-                    call[argid] = self.range_eval(arg, self.range[1] - 1)
+                    call[argid] = self.range_eval(
+                        arg, self.range[-1], dosumrange=False
+                    )
             self.data_update()
             self.UI_calls_set()
         self.userange = state
@@ -908,7 +898,9 @@ class GUI(object):
         if not state:
             for call in self.calls:
                 for argid, arg in enumerate(call):
-                    call[argid] = self.sumrange_eval(arg, self.sumrange[1])
+                    call[argid] = self.sumrange_eval(
+                        arg, sumrangeval=self.sumrange[-1], dorange=False
+                    )
             self.data_update()
             self.UI_calls_set()
         self.usesumrange = state
@@ -920,11 +912,14 @@ class GUI(object):
         self.state_write()
 
     def UI_sumrange_change(self, sumrange):
-        sumrange = map(self.range_parse, sumrange)
-        if sumrange[2] is None:
-            sumrange[2] = 1
-        if all(val is not None for val in sumrange):
-            self.sumrange = sumrange
+        lower, step, upper = sumrange
+        lower = self.range_parse(lower, dosumrange=False)
+        step = self.range_parse(step, dosumrange=False)
+        upper = self.range_parse(upper, dosumrange=False)
+        if step is None:
+            step = 1
+        if lower is not None and upper is not None:
+            self.sumrange = (lower, step, upper)
             self.data_update()
             self.UI_data_viz()
             self.state_write()
