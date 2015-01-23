@@ -749,6 +749,8 @@ class GUI(object):
         return cmds
 
     def submit(self, filename):
+        if filename[-5:] != ".smpl":
+            filename += ".smpl"
         callfile = filename[:-5] + ".calls"
         errfile = filename[:-5] + ".err"
         jobname = os.path.basename(filename)[:-5]
