@@ -1,14 +1,23 @@
 Sampler:
+- icc 
 - Automatic hardware analysis (cfg generation)
 
 GUI:
 - work variables
 - "file" backend
+- single Viewer from sampler
+- environment variables
+- nt slider/text feld
+- change sampler
+
+- vary number of threads (alternative to range)
 
 - (include BLAS/LAPACK documentation from doxygen)
 
 Viewer:
 - barplots
+
+- pop plots (how/where?)
 
 - (memory metrics)
 
