@@ -430,7 +430,7 @@ class GUI(object):
 
         # remove unavailable calls
         self.calls = [call for call in self.calls
-                      if call[0] in self.sampler["routines"]]
+                      if call[0] in self.sampler["kernels"]]
 
         # update UI
         self.UI_nt_setmax()

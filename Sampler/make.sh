@@ -9,7 +9,7 @@
 # set default values
 [ -z "$BLAS_NAME" ] && echo "BLAS_NAME is not set" && exit
 [ -z "$SYSTEM_NAME" ] && SYSTEM_NAME="local"
-[ -z "$NAME" ] && NAME=${SYSTEM_NAME}_{$BLAS_NAME}
+[ -z "$NAME" ] && NAME=${SYSTEM_NAME}_${BLAS_NAME}
 [ -z "$NT_MAX" ] && NT_MAX=1
 [ -z "$CC" ] && CC="gcc"
 [ -z "$CFLAGS" ] && CFLAGS=""

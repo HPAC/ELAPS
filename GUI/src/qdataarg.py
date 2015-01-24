@@ -294,6 +294,8 @@ class QDataArg(QtGui.QWidget):
             QtCore.QLine(points[1][0][1], points[1][1][1]),  # -
             QtCore.QLine(points[0][0][1], points[1][0][1]),  # |
         ]
+        if d != 0:
+            self.linesmaxback = []
         # minimum
         h, w, d = dimmin
         points = [[[QtCore.QPoint(woff + x + z // 2, hoff + y + (d - z) // 2)
