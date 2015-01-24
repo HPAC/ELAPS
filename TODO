@@ -6,10 +6,9 @@ GUI:
 - work variables
 - "file" backend
 - single Viewer from sampler
-- environment variables
-- nt slider/text feld
-- change sampler
+t- environment variables
 
+- nt slider/text feld
 - vary number of threads (alternative to range)
 
 - (include BLAS/LAPACK documentation from doxygen)
