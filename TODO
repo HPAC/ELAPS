@@ -1,12 +1,11 @@
 Sampler:
-- icc 
 - Automatic hardware analysis (cfg generation)
 
 GUI:
 - work variables
 - "file" backend
 - single Viewer from sampler
-t- environment variables
+- environment variables
 
 - nt slider/text feld
 - vary number of threads (alternative to range)
@@ -15,10 +14,14 @@ t- environment variables
 
 Viewer:
 - barplots
-
 - pop plots (how/where?)
 
 - (memory metrics)
+
+
+Other:
+- Documentation
+- Readme
 
 
 TOOL (MS thesis) - identification of processor's parameters.
