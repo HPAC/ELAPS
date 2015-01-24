@@ -19,15 +19,14 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.UI_hasHTML = True
 
         # window
-        self.Qt_window = QtGui.QWidget()
+        self.Qt_window = QtGui.QSplitter()
         self.Qt_window.setWindowTitle("Viewer")
-        windowL = QtGui.QHBoxLayout()
-        self.Qt_window.setLayout(windowL)
 
         # window > left
+        leftW = QtGui.QWidget()
+        self.Qt_window.addWidget(leftW)
         leftL = QtGui.QVBoxLayout()
-        windowL.addLayout(leftL)
-        leftL.setContentsMargins(0, 0, 0, 0)
+        leftW.setLayout(leftL)
 
         # window > left > reports
         reports = QtGui.QGroupBox("reports")
@@ -66,11 +65,6 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             self.Qt_metricselect_change
         )
 
-        # window > left > metrics > plot
-        metricplot = QtGui.QPushButton("&plot")
-        metricselectL.addWidget(metricplot)
-        metricplot.clicked.connect(self.Qt_plot_clicked)
-
         # window > left > metrics > info
         metricinfobox = QtGui.QFrame()
         metricsL.addWidget(metricinfobox)
@@ -81,22 +75,43 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         metricinfobox.setLayout(metricinfoL)
         self.Qt_metricinfo = QtGui.QLabel()
         metricinfoL.addWidget(self.Qt_metricinfo)
+        self.Qt_metricinfo.setWordWrap(True)
+
+        # window > left > stats
+        stats = QtGui.QGroupBox("statistics")
+        leftL.addWidget(stats)
+        statsL = QtGui.QHBoxLayout()
+        stats.setLayout(statsL)
+
+        # window > left > stats > *
+        for statname, desc in self.stats_desc:
+            stat = QtGui.QCheckBox(statname)
+            statsL.addWidget(stat)
+            stat.statname = statname
+            if statname in self.stats_showing:
+                stat.setChecked(True)
+            stat.stateChanged.connect(self.Qt_stat_change)
+            stat.setToolTip(desc)
 
         # window > right
+        rightW = QtGui.QWidget()
+        self.Qt_window.addWidget(rightW)
         rightL = QtGui.QVBoxLayout()
-        windowL.addLayout(rightL)
+        rightW.setLayout(rightL)
 
         # window > right > tabs
-        self.Qt_reportinfotabs = QtGui.QTabWidget()
-        rightL.addWidget(self.Qt_reportinfotabs)
+        tabs = QtGui.QTabWidget()
+        rightL.addWidget(tabs)
+        tabs.setContentsMargins(0, 0, 0, 0)
 
-        # window > right > tabs > preview
-        self.Qt_preview = self.plotfactory.Preview(self, "time [ms]")
-        self.Qt_reportinfotabs.addTab(self.Qt_preview, "preview")
+        # window > right > tabs > plot
+        self.Qt_plot = self.plotfactory(self, self.metric_selected,
+                                        self.plots_showing, self.stats_showing)
+        tabs.addTab(self.Qt_plot, "plot")
 
         # window > right > tabs > table
         self.Qt_data = QtGui.QTableWidget()
-        self.Qt_reportinfotabs.addTab(self.Qt_data, "data")
+        tabs.addTab(self.Qt_data, "data")
         self.Qt_data.setColumnCount(4)
         self.Qt_data.setHorizontalHeaderLabels(["med", "min", "avg", "max"])
 
@@ -226,32 +241,14 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             self.Qt_metricslist.findData(QtCore.QVariant(self.metric_selected))
         )
 
-    def UI_plot_show(self, metric, state=True):
-        self.setting = True
-        if metric not in self.Qt_Qplots:
-            self.Qt_Qplots[metric] = self.plotfactory(self, metric,
-                                                      self.plots_showing)
-        Qplot = self.Qt_Qplots[metric]
-        if state:
-            Qplot.plot_update()
-            Qplot.show()
-        else:
-            Qplot.hide()
-        self.setting = False
-
     def UI_metricinfo_set(self, infostr):
         self.Qt_metricinfo.setText(infostr)
 
     def UI_reportinfo_update(self):
         infostr = self.report_infostr_HTML()
         self.Qt_reportinfo.setText(infostr)
-        showing = [(self.reportid_selected, self.callid_selected)]
         report = self.reports[self.reportid_selected]
-        if len(report["calls"]) > 1 and self.callid_selected is None:
-            showing += [(self.reportid_selected, callid)
-                        for callid in range(len(report["calls"]))]
-        self.Qt_preview.plots_showing_set(showing)
-        self.Qt_preview.plot_update()
+
         self.Qt_data.setRowCount(len(self.metrics))
         names = [self.metricnames[metric] for metric in sorted(self.metrics)]
         self.Qt_data.setVerticalHeaderLabels(names)
@@ -280,14 +277,9 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
                 for j in range(4):
                     self.Qt_data.setItem(i, j, QtGui.QTableWidgetItem("NA"))
 
-    def UI_plots_update(self):
-        for metric in self.Qt_Qplots:
-            self.UI_plot_update(metric)
-
-    def UI_plot_update(self, metric):
-        if metric not in self.Qt_Qplots:
-            return
-        self.Qt_Qplots[metric].plot_update()
+    def UI_plot_update(self):
+        self.Qt_plot.metric = self.metric_selected
+        self.Qt_plot.plot_update()
 
     # event handlers
     def Qt_load_click(self):
@@ -332,5 +324,15 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
             self.Qt_metricslist.currentIndex()
         ).toString()))
 
-    def Qt_plot_clicked(self):
-        self.UI_plot_clicked()
+    def Qt_stat_change(self):
+        if self.setting:
+            return
+        sender = self.sender()
+        self.UI_state_change(sender.statname, sender.isChecked())
+
+    def Qt_pop_click(self):
+        plot = self.plotfactory(self, self.metric_selected,
+                                self.plots_showing.copy(),
+                                self.stats_showing.copy())
+        plot.plot_update()
+        plot.show()

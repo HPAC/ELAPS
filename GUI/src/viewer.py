@@ -13,6 +13,7 @@ import imp
 import random
 from numbers import Number
 from collections import defaultdict
+from math import sqrt
 
 
 class Viewer(object):
@@ -44,6 +45,7 @@ class Viewer(object):
         self.reports = []
         self.showplots = defaultdict(lambda: defaultdict(lambda: False))
         self.metrics_init()
+        self.stats_init()
         self.reportid_selected = None
         self.callid_selected = None
         self.plots_showing = set()
@@ -71,8 +73,39 @@ class Viewer(object):
         if len(self.metrics) == 0:
             raise Exception("No metrics found")
         self.metric_selected = min(self.metrics)
-        if "cycles" in self.metrics:
-            self.metric_selected = "cycles"
+        if "time [ms]" in self.metrics:
+            self.metric_selected = "time [ms]"
+
+    def stats_init(self):
+        self.stats_desc = [
+            ("med", "median"),
+            ("min", "minimum"),
+            ("avg", "average"),
+            ("max", "maximum"),
+            ("min-max", "range: minimum - maximum"),
+            ("std", "standard deviation"),
+            ("all", "all data points"),
+        ]
+        self.stats_funs = {
+            "med": lambda l: sum(sorted(l)[
+                ((len(l) - 1) // 2):(len(l) // 2 + 1)
+            ]) / (2 - len(l) % 2),
+            "min": min,
+            "avg": lambda l: sum(l) / len(l),
+            "max": max,
+            "min-max": lambda l: [min(l), max(l)],
+            "std": lambda l: sqrt(sum(x ** 2 for x in l) -
+                                  (sum(l) / len(l)) ** 2),
+            "std": lambda l: [
+                sum(l) / len(l) - sqrt(sum(x ** 2 for x in l) -
+                                       (sum(l) / len(l)) ** 2),
+                sum(l) / len(l) + sqrt(sum(x ** 2 for x in l) -
+                                       (sum(l) / len(l)) ** 2)
+            ],
+            "all": lambda l: l
+        }
+        self.stats_showing = set(["med"])
+
 
     def metrics_adddefaultmetric(self, name):
         event = papi.events[name]
@@ -187,13 +220,14 @@ class Viewer(object):
         if report["userange"]:
             result += (
                 "<tr><td>For each:</td><td>%s = %d:%d:%d</td></tr>"
-                % ((report["rangevar"],) +  report["range"])
+                % ((report["rangevar"],) + report["range"])
             )
         if report["usesumrange"]:
             result += (
                 "<tr><td>Sum over:</td><td>%s = %s:%s:%s</td></tr>"
                 % tuple([report["sumrangevar"]] + map(str, report["sumrange"]))
             )
+
         def format_call(call):
             return call[0] + "(" + ", ".join(map(str, call[1:])) + ")"
 
@@ -315,7 +349,7 @@ class Viewer(object):
                     self.metrics_adddefaultmetric(counter)
             self.UI_metriclist_update()
         self.UI_report_add(reportid)
-        self.UI_plots_update()
+        self.UI_plot_update()
 
     def UI_report_select(self, reportid, callid):
         self.reportid_selected = reportid
@@ -327,14 +361,14 @@ class Viewer(object):
             self.plots_showing.add((reportid, callid))
         else:
             self.plots_showing.discard((reportid, callid))
-        self.UI_plots_update()
+        self.UI_plot_update()
 
     def UI_reportcolor_change(self, reportid, callid, color):
         self.reports[reportid]["plotcolors"][callid] = color
         self.UI_report_update(reportid)
         if reportid == self.reportid_selected:
             self.UI_reportinfo_update()
-        self.UI_plots_update()
+        self.UI_plot_update()
 
     def UI_metricselect_change(self, metric):
         self.metric_selected = metric
@@ -343,6 +377,11 @@ class Viewer(object):
             self.UI_metricinfo_set(info.strip())
         else:
             self.UI_metricinfo_set("[no docstring for %s]" % metric)
+        self.UI_plot_update()
 
-    def UI_plot_clicked(self):
-        self.UI_plot_show(self.metric_selected)
+    def UI_stat_change(self, statname, state):
+        if state:
+            self.plots_showing.add(statname)
+        else:
+            self.plots_showing.discard(statname)
+        self.UI_plot_update()

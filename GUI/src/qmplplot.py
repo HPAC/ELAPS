@@ -9,48 +9,32 @@ import matplotlib.patches as MPLpatches
 
 
 class QMPLplot(QtGui.QWidget):
-    def __init__(self, app, metric, plots_showing):
+    def __init__(self, app, metric, plots_showing, stats_showing):
         QtGui.QWidget.__init__(self)
-        self.metric = metric
         self.app = app
+        self.metric = metric
         self.plots_showing = plots_showing
-        self.statlegend_showing = True
+        self.stats_showing = stats_showing
 
         self.setting = False
         self.fig_init()
-        self.plottypes_init()
+        self.stat_styles_init()
         self.UI_init()
 
     def fig_init(self):
         self.fig = MPLfig.Figure()
 
-    def plottypes_init(self):
-        def med(data):
-            sorteddata = sorted(data)
-            datalen = len(sorteddata)
-            mid = (datalen - 1) // 2
-            if datalen % 2 == 0:
-                return sorteddata[mid]
-            return (sorteddata[mid] + sorteddata[mid + 1]) / 2
-        self.plottypes = {
-            "med": med,
-            "min": min,
-            "max": max,
-            "min-max": lambda data: (min(data), max(data)),
-            "avg": lambda data: sum(data) / len(data),
-            "all": lambda data: data
-        }
-        self.plottype_styles = {
+    def stat_styles_init(self):
+        self.stat_styles = {
             "legend": {},
             "med": {"linestyle": "-"},
             "min": {"linestyle": "--"},
             "max": {"linestyle": ":"},
             "avg": {"linestyle": "-."},
             "min-max": {"alpha": .25},
+            "std": {"alpha": .5, "hatch": "."},
             "all": {"linestyle": "None", "marker": "."},
         }
-
-        self.plottypes_showing = set(["med"])
 
     def UI_init(self):
         self.setWindowTitle(self.app.metricnames[self.metric])
@@ -66,27 +50,10 @@ class QMPLplot(QtGui.QWidget):
         layout.addWidget(self.Qcanvas, 1)
 
         # toolbar
+        toolbarL = QtGui.QHBoxLayout()
+        layout.addLayout(toolbarL)
         self.Qtoolbar = QtMPL.NavigationToolbar2QT(self.Qcanvas, self)
-        layout.addWidget(self.Qtoolbar)
-
-        # plottypes
-        self.Qplottypesbox = QtGui.QWidget()
-        layout.addWidget(self.Qplottypesbox)
-        plottypesL = QtGui.QHBoxLayout()
-        self.Qplottypesbox.setLayout(plottypesL)
-        plottypesL.addStretch(1)
-        plottypesL.addWidget(QtGui.QLabel("statistics:"))
-        self.Qplottypes = {}
-        for plottype in ("med", "min", "avg", "max", "min-max", "all"):
-            plottype_showing = QtGui.QCheckBox(plottype)
-            plottypesL.addWidget(plottype_showing)
-            plottype_showing.setChecked(plottype in self.plottypes_showing)
-            plottype_showing.stateChanged.connect(self.plottype_changed)
-            plottype_showing.plottype = plottype
-        plottypesL.addStretch(1)
-
-    def plots_showing_set(self, showing):
-        self.plots_showing = showing
+        toolbarL.addWidget(self.Qtoolbar)
 
     def plot_update(self):
         # prepare data
@@ -103,10 +70,10 @@ class QMPLplot(QtGui.QWidget):
                 continue
             rangevals.update(zip(*rawdata)[0])
             linedatas = {
-                plottype: [(x, self.plottypes[plottype](y))
+                statname: [(x, self.app.stats_funs[statname](y))
                            for x, y in rawdata
                            if y is not None]
-                for plottype in self.plottypes_showing
+                for statname in self.stats_showing
             }
             if "all" in linedatas:
                 linedatas["all"] = [(x, y) for x, ys in linedatas["all"]
@@ -144,15 +111,15 @@ class QMPLplot(QtGui.QWidget):
         legend = []
         for (reportid, callid), linedatas in data.iteritems():
             color = self.app.reports[reportid]["plotcolors"][callid]
-            for plottype, linedata in linedatas.iteritems():
+            for statname, linedata in linedatas.iteritems():
                 x, y = zip(*linedata)
-                if plottype == "min-max":
+                if statname in ["min-max", "std"]:
                     y1, y2 = zip(*y)
                     axes.fill_between(x, y1, y2, color=color,
-                                      **self.plottype_styles[plottype])
+                                      **self.stat_styles[statname])
                 else:
                     axes.plot(x, y, color=color,
-                              **self.plottype_styles[plottype])
+                              **self.stat_styles[statname])
 
         # add legend
         for (reportid, callid), linedatas in data.iteritems():
@@ -162,19 +129,18 @@ class QMPLplot(QtGui.QWidget):
             if callid is not None:
                 legendlabel += " (%s)" % str(report["calls"][callid][0])
             legend.append((MPLlines.Line2D(
-                [], [], color=color, **self.plottype_styles["legend"]
+                [], [], color=color, **self.stat_styles["legend"]
             ), legendlabel))
-        if self.statlegend_showing:
-            for plottype in self.plottypes_showing:
-                if plottype == "min-max":
-                    legend.append((MPLpatches.Patch(
-                        color="#888888", **self.plottype_styles[plottype]
-                    ), plottype))
-                else:
-                    legend.append((MPLlines.Line2D(
-                        [], [], color="#888888",
-                        **self.plottype_styles[plottype]
-                    ), plottype))
+        for statname in self.stats_showing:
+            if statname in ["min-max", "std"]:
+                legend.append((MPLpatches.Patch(
+                    color="#888888", **self.stat_styles[statname]
+                ), statname))
+            else:
+                legend.append((MPLlines.Line2D(
+                    [], [], color="#888888",
+                    **self.stat_styles[statname]
+                ), statname))
 
         if legend:
             axes.legend(*zip(*legend), loc=0, numpoints=3)
@@ -182,24 +148,3 @@ class QMPLplot(QtGui.QWidget):
         limits = axes.axis()
         axes.axis((limits[0], limits[1], 0, limits[3]))
         self.Qcanvas.draw()
-
-    # event handers
-    def plottype_changed(self):
-        sender = self.app.sender()
-        if sender.isChecked():
-            self.plottypes_showing.add(sender.plottype)
-        else:
-            self.plottypes_showing.discard(sender.plottype)
-        self.plot_update()
-
-    @classmethod
-    def Preview(cls, app, metric):
-        return QMPLpreview(app, metric)
-
-
-class QMPLpreview(QMPLplot):
-    def __init__(self, app, metric):
-        QMPLplot.__init__(self, app, metric, [])
-        self.statlegend_showing = False
-        self.Qtoolbar.hide()
-        self.Qplottypesbox.hide()
