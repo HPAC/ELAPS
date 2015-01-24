@@ -566,7 +566,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.UI_sampler_change(str(self.Qt_sampler.currentText()))
 
     def Qt_sampler_about(self):
-        self.UI_alert(self.get_infostr())
+        self.UI_alert(self.get_infostr(), title=self.samplername)
 
     def Qt_nt_change(self):
         if self.setting:

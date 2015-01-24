@@ -195,11 +195,17 @@ class GUI(object):
     def get_infostr(self):
         sampler = self.sampler
         info = "System:\t%s\n" % sampler["system_name"]
+        info += "BLAS:\t%s\n" % sampler["blas_name"]
         if sampler["backend"] != "local":
-            info += "  (via %s(\n" % sampler["backend"]
-        info += "  %s\n" % sampler["cpu_model"]
-        info += "  %.2f MHz\n" % (sampler["frequency"] / 1e6)
-        info += "\nBLAS:\t%s\n" % sampler["blas_name"]
+            info += "  (via %s)\n" % sampler["backend"]
+        info += "\n"
+        info += "CPU:\t%s\n" % sampler["cpu_model"]
+        info += "Mhz:\t%.2f\n" % (sampler["frequency"] / 1e6)
+        info += "Cores:\t%d\n" % sampler["nt_max"]
+        info += "Gflops/s:\t%.2f (peak)" % (
+            sampler["dflops/cycle"] * sampler["frequency"] * sampler["nt_max"]
+            / 1e9
+        )
         return info
 
     def range_get(self):
