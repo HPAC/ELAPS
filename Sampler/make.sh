@@ -59,4 +59,4 @@ done
 $CC $CFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/sample.c -o $target_dir/sample.o || exit
 
 # build sampler
-$CXX $CXXFLAGS $LINK_FLAGS $target_dir/*.o -o $target_dir/sampler.x || exit
+$CXX $CXXFLAGS $target_dir/*.o -o $target_dir/sampler.x $LINK_FLAGS || exit

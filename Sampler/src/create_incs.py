@@ -22,22 +22,21 @@ def main():
     papi_counters_max = int(os.environ["PAPI_COUNTERS_MAX"])
 
     # read and prepare kernels
-    kernels = sys.stdin.read()
+    kernels = sys.stdin.read().strip()
 
     # clean kernel.h
     for p, s in (
-            ("#.*\n", ""),
-            ("\n", ""),
-            ("{[^{]*?}", ""),
-            ("typedef .*?;", ""),
-            (";extern ", ";"),
-            ("\s+", " "),
-            (", ", ","),
-            (" ?\( ?", "("),
-            (" \)", ")"),
-            ("; ?", ";\n"),
-            (" \*", "*"),
-            ("\*\w+", "*")):
+            ("#.*\n\s*", ""),  # remove comments
+            ("\s*\n\s*", ""),  # remove newlines (and surrounding spaces)
+            ("\s+", " "),  # all spaces are " "
+            ("{[^{]*?}", ""),  # remove anything between {} (no nesting)
+            ("typedef .*?;", ""),  # remove typedefs
+            (", ", ","),  # remove spaces after kommas
+            (" ?\( ?", "("),  # remove spaces before openingparentheses
+            (" \)", ")"),  # remove spaces before closing parentheses
+            (" \*", "*"),  # remove spaces before asterisks
+            ("\*\w+", "*"),  # remove variable names
+            ("; ?", ";\n")):  # reintroduce newlines
         kernels = re.sub(p, s, kernels)
     kernels = kernels.split("\n")[:-1]
 
@@ -55,7 +54,9 @@ def main():
         for line in kernels:
             match = re.match("(?:extern )?\w+ (\w+)\(([^)]*)\);", line)
             if not match:
-                print(line, file=sys.stdout)
+                print("Could not parse:", repr(line), file=sys.stderr)
+                continue
+
             name, args = match.groups()
             if args:
                 args = map(intern, args.split(","))
