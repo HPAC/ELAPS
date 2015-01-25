@@ -281,7 +281,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
 
     def UI_plot_update(self):
         self.Qt_plot.metric = self.metric_selected
-        self.Qt_plot.plot_update()
+        self.Qt_plot.UI_update()
 
     # event handlers
     def Qt_load_click(self):

@@ -16,6 +16,8 @@ GUI:
 
 
 Viewer:
+- state (selected metric, stats)
+
 - barplots
 - pop plots (how/where?)
 
