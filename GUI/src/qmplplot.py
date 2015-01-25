@@ -20,6 +20,7 @@ class QMPLplot(QtGui.QWidget):
         self.fig_init()
         self.stat_styles_init()
         self.UI_init()
+        self.plot_update()
 
     def fig_init(self):
         self.fig = MPLfig.Figure()
@@ -32,7 +33,8 @@ class QMPLplot(QtGui.QWidget):
             "max": {"linestyle": ":"},
             "avg": {"linestyle": "-."},
             "min-max": {"alpha": .25},
-            "std": {"alpha": .5, "hatch": "."},
+            "min-max": {"hatch": "...", "facecolor": (0, 0, 0, 0)},
+            "std": {"alpha": .25},
             "all": {"linestyle": "None", "marker": "."},
         }
 
@@ -55,9 +57,9 @@ class QMPLplot(QtGui.QWidget):
         self.Qtoolbar = QtMPL.NavigationToolbar2QT(self.Qcanvas, self)
         toolbarL.addWidget(self.Qtoolbar)
 
-    def plot_update(self):
+    def data_update(self):
         # prepare data
-        data = {}
+        self.data = {}
         rangevarnames = set()
         rangevals = set()
         for reportid, callid in self.plots_showing:
@@ -80,8 +82,8 @@ class QMPLplot(QtGui.QWidget):
             if "all" in linedatas:
                 linedatas["all"] = [(x, y) for x, ys in linedatas["all"]
                                     for y in ys]
-            data[reportid, callid] = linedatas
-        rangevarname = " = ".join(rangevarnames)
+            self.data[reportid, callid] = linedatas
+        self.rangevarname = " = ".join(rangevarnames)
 
         # set up pseudo range for reports without range
         rangevals.discard(None)
@@ -92,26 +94,28 @@ class QMPLplot(QtGui.QWidget):
             # TODO: use barplot
             rangemin = 0
             rangemax = 1
-        for linedatas in data.values():
+        for linedatas in self.data.values():
             for linedata in linedatas.values():
                 for i, (x, y) in enumerate(linedata[:]):
                     if x is None:
                         linedata += [(rangemin, y), (rangemax, y)]
                         del linedata[i]
 
+    def plot_update(self):
+        self.data_update()
         axes = self.fig.gca()
 
         # set up figure
         self.fig.set_facecolor("#ffffff")
         axes.cla()
         axes.set_axis_bgcolor("#f0f0f0")
-        axes.set_xlabel(rangevarname)
+        axes.set_xlabel(self.rangevarname)
         axes.set_ylabel(self.app.metricnames[self.metric])
         axes.hold(True)
 
         # add plots
         legend = []
-        for (reportid, callid), linedatas in data.iteritems():
+        for (reportid, callid), linedatas in self.data.iteritems():
             color = self.app.reports[reportid]["plotcolors"][callid]
             for statname, linedata in linedatas.iteritems():
                 x, y = zip(*linedata)
@@ -124,7 +128,7 @@ class QMPLplot(QtGui.QWidget):
                               **self.stat_styles[statname])
 
         # add legend
-        for (reportid, callid), linedatas in data.iteritems():
+        for (reportid, callid), linedatas in self.data.iteritems():
             report = self.app.reports[reportid]
             color = report["plotcolors"][callid]
             legendlabel = report["name"]
@@ -133,10 +137,18 @@ class QMPLplot(QtGui.QWidget):
             legend.append((MPLlines.Line2D(
                 [], [], color=color, **self.stat_styles["legend"]
             ), legendlabel))
-        for statname in self.stats_showing:
-            if statname in ["min-max", "std"]:
+        for statname, _ in self.app.stats_desc:
+            if statname not in self.stats_showing:
+                continue
+            if statname == "min-max":
                 legend.append((MPLpatches.Patch(
-                    color="#888888", **self.stat_styles[statname]
+                    edgecolor="#888888",
+                    **self.stat_styles[statname]
+                ), statname))
+            elif statname == "std":
+                legend.append((MPLpatches.Patch(
+                    color="#888888",
+                    **self.stat_styles[statname]
                 ), statname))
             else:
                 legend.append((MPLlines.Line2D(

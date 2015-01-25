@@ -94,12 +94,10 @@ class Viewer(object):
             "avg": lambda l: sum(l) / len(l),
             "max": max,
             "min-max": lambda l: [min(l), max(l)],
-            "std": lambda l: sqrt(sum(x ** 2 for x in l) -
-                                  (sum(l) / len(l)) ** 2),
             "std": lambda l: [
-                sum(l) / len(l) - sqrt(sum(x ** 2 for x in l) -
+                sum(l) / len(l) - sqrt(sum(x ** 2 for x in l) / len(l) -
                                        (sum(l) / len(l)) ** 2),
-                sum(l) / len(l) + sqrt(sum(x ** 2 for x in l) -
+                sum(l) / len(l) + sqrt(sum(x ** 2 for x in l) / len(l) -
                                        (sum(l) / len(l)) ** 2)
             ],
             "all": lambda l: l
@@ -402,7 +400,7 @@ class Viewer(object):
 
     def UI_stat_change(self, statname, state):
         if state:
-            self.plots_showing.add(statname)
+            self.stats_showing.add(statname)
         else:
-            self.plots_showing.discard(statname)
+            self.stats_showing.discard(statname)
         self.UI_plot_update()

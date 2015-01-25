@@ -330,11 +330,8 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         if self.setting:
             return
         sender = self.sender()
-        self.UI_state_change(sender.statname, sender.isChecked())
+        self.UI_stat_change(sender.statname, sender.isChecked())
 
     def Qt_pop_click(self):
-        plot = self.plotfactory(self, self.metric_selected,
-                                self.plots_showing.copy(),
-                                self.stats_showing.copy())
-        plot.plot_update()
-        plot.show()
+        self.plotfactory(self, self.metric_selected, self.plots_showing.copy(),
+                         self.stats_showing.copy()).show()
