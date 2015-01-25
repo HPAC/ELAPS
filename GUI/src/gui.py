@@ -847,9 +847,6 @@ class GUI(object):
         backend = self.backends[self.sampler["backend"]]
         jobid = backend.submit(script, nt=self.nt, jobname=jobname)
 
-        # DEBUG
-        print(script)
-
         # track progress
         self.jobprogress_add(jobid, filename)
         self.UI_jobprogress_show()

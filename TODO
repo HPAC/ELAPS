@@ -10,10 +10,7 @@ GUI:
 - single Viewer from sampler
 - environment variables
 
-- sflops/cycle bug
-
-- nt slider/text feld
-
+- (nt slider/text feld)
 - (multiple BLAS at once)
 - (include BLAS/LAPACK documentation from doxygen)
 

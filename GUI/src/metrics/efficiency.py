@@ -26,7 +26,7 @@ def metric(data, report, callid):
 
     # get ipc
     sampler = report["sampler"]
-    if "single" in datatypes:
+    if "single" in datatype:
         ipc = sampler["sflops/cycle"]
     elif "double" in datatype:
         ipc = sampler["dflops/cycle"]
