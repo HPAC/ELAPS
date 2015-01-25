@@ -94,10 +94,6 @@ def main():
         print("#endif /* SAMPLERCFG_H */", file=fout)
 
     # create info.py
-    try:
-        options = eval(os.environ["BACKEND_OPTIONS"])
-    except:
-        options = {}
     info = {
         "buildtime": time(),
         "name":  os.environ["NAME"],
@@ -105,7 +101,9 @@ def main():
         "blas_name": os.environ["BLAS_NAME"],
         "backend": os.environ["BACKEND"],
         "backend_header": os.environ["BACKEND_HEADER"],
-        "backend_options": options,
+        "backend_prefix": os.environ["BACKEND_PREFIX"],
+        "backend_suffix": os.environ["BACKEND_SUFFIX"],
+        "backend_footer": os.environ["BACKEND_FOOTER"],
         "nt_max": int(os.environ["NT_MAX"]),
         "kernels": tuple(sorted(kernelsigs)),
         "papi_counters_max": papi_counters_max,

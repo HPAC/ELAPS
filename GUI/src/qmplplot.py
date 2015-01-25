@@ -64,6 +64,8 @@ class QMPLplot(QtGui.QWidget):
             report = self.app.reports[reportid]
             if report["userange"]:
                 rangevarnames.add(report["rangevar"])
+            elif report["usentrange"]:
+                rangevarnames.add("#threads")
             rawdata = self.app.generateplotdata(reportid, callid,
                                                 self.metric)
             if not rawdata:

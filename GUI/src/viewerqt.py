@@ -156,12 +156,15 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         sampler = report["sampler"]
 
         #  tree item
+        ntstr = str(report["nt"])
+        if report["usentrange"]:
+            ntstr = "%d:%d:%d" % report["ntrange"]
         Qreport = QtGui.QTreeWidgetItem((
             report["name"],
             "",
             "",
             sampler["system_name"],
-            str(report["nt"]),
+            ntstr,
             sampler["blas_name"],
         ))
         self.Qt_reports.addTopLevelItem(Qreport)
@@ -247,7 +250,6 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
     def UI_reportinfo_update(self):
         infostr = self.report_infostr_HTML()
         self.Qt_reportinfo.setText(infostr)
-        report = self.reports[self.reportid_selected]
 
         self.Qt_data.setRowCount(len(self.metrics))
         names = [self.metricnames[metric] for metric in sorted(self.metrics)]

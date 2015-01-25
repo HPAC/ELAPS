@@ -64,7 +64,8 @@ class GUI_Qt(GUI, QtGui.QApplication):
                             QtGui.QSizePolicy.MinimumExpanding)
 
         # window > top > setup > sampler > nt
-        samplerL.addWidget(QtGui.QLabel("#threads:"), 1, 0)
+        self.Qt_ntlabel = QtGui.QLabel("#threads:")
+        samplerL.addWidget(self.Qt_ntlabel, 1, 0)
         self.Qt_nt = QtGui.QComboBox()
         samplerL.addWidget(self.Qt_nt, 1, 1)
         self.Qt_nt.currentIndexChanged.connect(self.Qt_nt_change)
@@ -76,6 +77,27 @@ class GUI_Qt(GUI, QtGui.QApplication):
         line.setFrameShadow(QtGui.QFrame.Sunken)
         setupL.addWidget(line)
         setupL.addStretch(1)
+
+        # window > top > setup > ntrange
+        self.Qt_ntrangeW = QtGui.QWidget()
+        setupL.addWidget(self.Qt_ntrangeW)
+        ntrangeL = QtGui.QHBoxLayout()
+        self.Qt_ntrangeW.setLayout(ntrangeL)
+        ntrangeL.setContentsMargins(0, 12, 12, 4)
+
+        # window > top > setup > ntrange > "for #threads nt ="
+        ntrangeL.addWidget(QtGui.QLabel("for #threads nt ="))
+
+        # window > top > setup > ntrange > ntrange
+        self.Qt_ntrange = QtGui.QLineEdit()
+        ntrangeL.addWidget(self.Qt_ntrange)
+        self.Qt_ntrange.textChanged.connect(self.Qt_ntrange_change)
+        regexp = QtCore.QRegExp("(?:\d+)?:(?:(?:\d+)?:)?(\d+)?")
+        validator = QtGui.QRegExpValidator(regexp, self)
+        self.Qt_ntrange.setValidator(validator)
+
+        # window > top > setup > ntrange
+        ntrangeL.addStretch(1)
 
         # window > top > setup > range
         self.Qt_rangeW = QtGui.QWidget()
@@ -173,6 +195,11 @@ class GUI_Qt(GUI, QtGui.QApplication):
         topL.addWidget(features)
         featuresL = QtGui.QVBoxLayout()
         features.setLayout(featuresL)
+
+        # window > top > features > usentrange
+        self.Qt_usentrange = QtGui.QCheckBox("#threads range")
+        self.Qt_usentrange.stateChanged.connect(self.Qt_usentrange_change)
+        featuresL.addWidget(self.Qt_usentrange)
 
         # window > top > features > userange
         self.Qt_userange = QtGui.QCheckBox("for every range")
@@ -350,6 +377,20 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_nt.setCurrentIndex(self.nt - 1)
         self.setting = False
 
+    def UI_userange_setenabled(self):
+        self.Qt_usentrange.setEnabled(not self.userange)
+        self.Qt_userange.setEnabled(not self.usentrange)
+        self.Qt_ntlabel.setVisible(not self.usentrange)
+        self.Qt_nt.setVisible(not self.usentrange)
+
+    def UI_usentrange_set(self):
+        self.setting = True
+        self.Qt_usentrange.setChecked(self.usentrange)
+        self.setting = False
+
+    def UI_usentrange_apply(self):
+        self.Qt_ntrangeW.setVisible(self.usentrange)
+
     def UI_userange_set(self):
         self.setting = True
         self.Qt_userange.setChecked(self.userange)
@@ -419,6 +460,20 @@ class GUI_Qt(GUI, QtGui.QApplication):
             if countername:
                 tip = countername + "\n" + papi.events[countername]["long"]
             Qcounter.setToolTip(tip)
+        self.setting = False
+
+    def UI_ntrange_set(self):
+        self.setting = True
+        lower, step, upper = self.ntrange
+        text = ""
+        if lower is not None:
+            text += str(lower)
+        if step != 1:
+            text += ":" + str(step)
+        text += ":"
+        if upper is not None:
+            text += str(upper)
+        self.Qt_ntrange.setText(text)
         self.setting = False
 
     def UI_rangevar_set(self):
@@ -573,6 +628,11 @@ class GUI_Qt(GUI, QtGui.QApplication):
             return
         self.UI_nt_change(int(self.Qt_nt.currentText()))
 
+    def Qt_usentrange_change(self):
+        if self.setting:
+            return
+        self.UI_usentrange_change(self.Qt_usentrange.isChecked())
+
     def Qt_userange_change(self):
         if self.setting:
             return
@@ -615,6 +675,15 @@ class GUI_Qt(GUI, QtGui.QApplication):
                 tip = countername + "\n" + papi.events[countername]["long"]
             Qcounter.setToolTip(tip)
         self.UI_counters_change(counternames)
+
+    def Qt_ntrange_change(self):
+        if self.setting:
+            return
+        parts = str(self.Qt_ntrange.text()).split(":")
+        lower = int(parts[0]) if len(parts) >= 1 and parts[0] else None
+        step = int(parts[1]) if len(parts) == 3 and parts[1] else 1
+        upper = int(parts[-1]) if len(parts) >= 2 and parts[-1] else None
+        self.UI_ntrange_change((lower, step, upper))
 
     def Qt_rangevar_change(self):
         if self.setting:

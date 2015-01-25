@@ -106,7 +106,6 @@ class Viewer(object):
         }
         self.stats_showing = set(["med"])
 
-
     def metrics_adddefaultmetric(self, name):
         event = papi.events[name]
         metric = lambda data, report, callid: data.get(name)
@@ -149,8 +148,11 @@ class Viewer(object):
             report["starttime"] = int(fin.readline())
         except:
             raise IOError(name, "doesn't contain a valid report")
+        # TODO: remove compatibility settings
         if "usesumrange" not in report:
             report["usesumrange"] = False
+        if "usentrange" not in report:
+            report["usentrange"] = False
         report["filename"] = os.path.relpath(filename)
         report["valid"] = False
         report["endtime"] = None
@@ -159,6 +161,9 @@ class Viewer(object):
         rangevals = (None,)
         if report["userange"]:
             lower, step, upper = report["range"]
+            rangevals = range(lower, upper + 1, step)
+        elif report["usentrange"]:
+            lower, step, upper = report["ntrange"]
             rangevals = range(lower, upper + 1, step)
         reportdata = {}
         report["data"] = reportdata
@@ -169,6 +174,12 @@ class Viewer(object):
                 if report["userange"]:
                     sumrange = [
                         val(**{report["rangevar"]: rangeval})
+                        if isinstance(val, symbolic.Expression) else val
+                        for val in sumrange
+                    ]
+                elif report["usentrange"]:
+                    sumrange = [
+                        val(**{"nt": rangeval})
                         if isinstance(val, symbolic.Expression) else val
                         for val in sumrange
                     ]
@@ -198,8 +209,10 @@ class Viewer(object):
         except:
             self.alert(name, "was truncated")
             return report
-        if len(fin.readlines()):
+        extralines = fin.readlines()
+        if len(extralines):
             self.alert(name, "contained extra lines")
+            print(*extralines)
         else:
             report["valid"] = True
         return report
@@ -210,13 +223,19 @@ class Viewer(object):
         result = "<table>"
         result += "<tr><td>File:</td><td>%s</td></tr>" % report["filename"]
         result += "<tr><td>CPU:</td><td>%s</td></tr>" % sampler["cpu_model"]
-        result += "<tr><td>#threads:</td><td>%d</td></tr>" % report["nt"]
+        if report["usentrange"]:
+            result += (
+                "<tr><td>#threads:</td><td>%d:%d:%d</td></tr>"
+                % report["ntrange"]
+            )
+        else:
+            result += "<tr><td>#threads:</td><td>%d</td></tr>" % report["nt"]
         result += "<tr><td>BLAS:</td><td>%s</td></tr>" % sampler["blas_name"]
         if report["valid"]:
             date = time.strftime("%c", time.localtime(report["endtime"]))
             result += "<tr><td>Date:</td><td>%s</td></tr>" % date
         else:
-            result += "<tr><td>:</td><td><b>Invalid Report!</b></td></tr>"
+            result += "<tr><td></td><td><b>Invalid Report!</b></td></tr>"
         if report["userange"]:
             result += (
                 "<tr><td>For each:</td><td>%s = %d:%d:%d</td></tr>"
@@ -251,7 +270,7 @@ class Viewer(object):
     def generateplotdata(self, reportid, callid, metricname, rangeval=None):
         report = self.reports[reportid]
         # ifrangeval not given: return all
-        if report["userange"] and rangeval is None:
+        if (report["userange"] or report["usentrange"]) and rangeval is None:
             plotdata = []
             for rangeval in sorted(report["data"]):
                 plotdata.append((rangeval, self.generateplotdata(
@@ -275,6 +294,8 @@ class Viewer(object):
         rangevardict = {}
         if report["userange"]:
             rangevardict[report["rangevar"]] = rangeval
+        elif report["usentrange"]:
+            rangevardict["nt"] = rangeval
 
         # complexity is constant across repetitions
         if all(isinstance(calls[callid2], signature.Call)
@@ -322,7 +343,7 @@ class Viewer(object):
         if not plotdata:
             return None
         plotdata = tuple(plotdata)
-        if report["userange"]:
+        if report["userange"] or report["usentrange"]:
             return plotdata
         return ((None, plotdata),)
 

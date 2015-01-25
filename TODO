@@ -1,16 +1,22 @@
 Sampler:
 - Automatic hardware analysis (cfg generation)
 
+- (OpenMP)
+
+
 GUI:
 - work variables
 - "file" backend
 - single Viewer from sampler
 - environment variables
 
-- nt slider/text feld
-- vary number of threads (alternative to range)
+- sflops/cycle bug
 
+- nt slider/text feld
+
+- (multiple BLAS at once)
 - (include BLAS/LAPACK documentation from doxygen)
+
 
 Viewer:
 - barplots
@@ -18,11 +24,9 @@ Viewer:
 
 - (memory metrics)
 
+- export data
+
 
 Other:
 - Documentation
 - Readme
-
-
-TOOL (MS thesis) - identification of processor's parameters.
--> Email to FLAME.   simple/lightweight too

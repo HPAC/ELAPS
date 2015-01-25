@@ -121,6 +121,7 @@ class GUI(object):
             "statetime": time.time(),
             "samplername": sampler["name"],
             "nt": 1,
+            "usentrange": False,
             "userange": True,
             "usesumrange": False,
             "usepapi": False,
@@ -132,6 +133,7 @@ class GUI(object):
                 "infos": False
             },
             "counters": sampler["papi_counters_max"] * [None],
+            "ntrange": (1, 1, 1),
             "rangevar": "n",
             "range": (8, 32, 1000),
             "nrep": 10,
@@ -209,13 +211,20 @@ class GUI(object):
         return info
 
     def range_get(self):
-        if not self.userange:
-            return [None]
-        lower, step, upper = self.range
-        if lower <= upper:
-            return range(lower, upper + 1, step)
+        if self.userange:
+            lower, step, upper = self.range
+            if lower <= upper:
+                return range(lower, upper + 1, step)
+            else:
+                return [lower]
+        elif self.usentrange:
+            lower, step, upper = self.ntrange
+            if lower <= upper:
+                return range(lower, upper + 1, step)
+            else:
+                return [lower]
         else:
-            return [lower]
+            return [None]
 
     def sumrange_get(self, rangeval=None):
         if not self.usesumrange:
@@ -233,7 +242,7 @@ class GUI(object):
     def range_eval(self, expr, rangeval=None, sumrangeval=None,
                    dorange=True, dosumrange=True):
         if rangeval is None and dorange:
-            if self.userange:
+            if self.userange or self.usentrange:
                 return [
                     self.range_eval(expr, val, sumrangeval, dorange, dosumrange)
                     for val in self.range_get()
@@ -253,9 +262,12 @@ class GUI(object):
                     self.range_eval(expr, rangeval, None, dorange, False)
                 ]
         symdict = {}
-        if self.userange and dorange:
-            symdict[self.rangevar] = rangeval
-        if self.usesumrange and dosumrange:
+        if dorange:
+            if self.usentrange:
+                symdict["nt"] = rangeval
+            elif self.userange:
+                symdict[self.rangevar] = rangeval
+        if dosumrange and self.usesumrange:
             symdict[self.sumrangevar] = sumrangeval
         if isinstance(expr, symbolic.Expression):
             return expr(**symdict)
@@ -264,6 +276,8 @@ class GUI(object):
     def range_parse(self, text, dorange=True, dosumrange=True):
         try:
             symbols = {}
+            if self.usentrange and dorange:
+                symbols["nt"] = symbolic.Symbol("nt")
             if self.userange and dorange:
                 symbols[self.rangevar] = symbolic.Symbol(self.rangevar)
             if self.usesumrange and dosumrange:
@@ -626,14 +640,12 @@ class GUI(object):
         return True
 
     # submit
-    def generate_cmds(self, reportinfo):
+    def generate_cmds(self, ntrangeval=None):
         cmds = []
-        cmds.append(["print", repr(reportinfo)])
-
-        cmds.append(["date"])
-        cmds.append([])
 
         rangevals = [0]
+        if self.usentrange:
+            rangevals = [ntrangeval]
         if self.userange:
             rangevals = self.range_get()
 
@@ -663,13 +675,18 @@ class GUI(object):
             cmds.append(["# %s" % name])
             cmdprefix = cmdprefixes[data["type"]]
             if name not in self.vary:
-                size = max(sum(self.range_eval(data["comp"]), []))
+                if self.usentrange:
+                    size = max(self.range_eval(data["comp"], ntrangeval))
+                else:
+                    size = max(sum(self.range_eval(data["comp"]), []))
                 cmds.append([cmdprefix + "malloc", name, size])
                 continue
             # argument varies
-            size = (self.nrep + 1) * max(
-                map(sum, self.range_eval(data["comp"]))
-            )
+            size = (self.nrep + 1)
+            if self.usentrange:
+                size *= sum(self.range_eval(data["comp"], ntrangeval))
+            else:
+                size *= max(map(sum, self.range_eval(data["comp"])))
             cmds.append([cmdprefix + "malloc", name, size])
             for rangeval in rangevals:
                 if self.userange:
@@ -698,7 +715,7 @@ class GUI(object):
         cmds.append(["########################################"])
         cmds.append(["# calls                                #"])
         cmds.append(["########################################"])
-        for rangeid, rangeval in enumerate(rangevals):
+        for rangeval in rangevals:
             if self.userange:
                 cmds.append([])
                 cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
@@ -709,7 +726,7 @@ class GUI(object):
                 if self.usesumrange:
                     cmds.append([])
                     cmds.append(["# repetition %d" % rep])
-                for sumrangeid, sumrangeval in enumerate(sumrangevals):
+                for sumrangeval in sumrangevals:
                     for call in self.calls:
                         if isinstance(call, signature.Call):
                             call = call.sig(*[
@@ -749,19 +766,32 @@ class GUI(object):
                         cmds.append(cmd)
             cmds.append(["go"])
 
-        cmds.append([])
-        cmds.append(["date"])
-
         return cmds
 
     def submit(self, filename):
-        if filename[-5:] != ".smpl":
-            filename += ".smpl"
-        callfile = filename[:-5] + ".calls"
-        errfile = filename[:-5] + ".err"
-        jobname = os.path.basename(filename)[:-5]
+        filebase = filename
+        if filename[-5:] == ".smpl":
+            filebase = filebase[:-5]
+        smplfile = filebase + ".smpl"
+        errfile = filebase + ".err"
+        jobname = os.path.basename(filebase)
 
-        # create report header
+        header = self.sampler["backend_header"]
+        prefix = self.sampler["backend_prefix"]
+        suffix = self.sampler["backend_suffix"]
+        footer = self.sampler["backend_footer"]
+
+        # emptly output files
+        open(smplfile, "w").close()
+        open(errfile, "w").close()
+
+        script = ""
+
+        # header
+        if header:
+            script += header.format(nt=self.nt) + "\n"
+
+        # report header
         reportinfo = self.state.copy()
         sampler = self.sampler.copy()
         reportinfo["counters"] = tuple(filter(None, reportinfo["counters"]))
@@ -770,31 +800,55 @@ class GUI(object):
             "sampler": sampler,
             "submittime": time.time()
         })
+        script += "cat > %s <<REPORTINFO\n%s\nREPORTINFO\n" % (smplfile,
+                                                               repr(reportinfo))
 
-        # generate commands
-        cmds = self.generate_cmds(reportinfo)
+        # timing
+        script += "date +%%s >> %s\n" % smplfile
 
-        # write cmds to file
-        with open(callfile, "w") as fout:
-            for cmd in cmds:
-                print(*cmd, file=fout)
+        ntrangevals = [self.nt]
+        if self.usentrange:
+            ntrangevals = self.range_get()
+        for ntrangeval in ntrangevals:
+            if self.usentrange:
+                callfile = filebase + ".%d.calls" % ntrangeval
+            else:
+                callfile = filebase + ".calls"
 
-        # generate script
-        script = "%(x)s < %(i)s > %(o)s 2> %(e)s && [ -s %(e)s ] || rm %(e)s"
-        script %= {
-            "x": self.sampler["sampler"],  # executable
-            "i": callfile,  # input
-            "o": filename,  # output
-            "e": errfile  # error
-        }
-        # add header from sampler
-        header = self.sampler["backend_header"].format(nt=self.nt)
-        if header:
-            script = header + "\n" + script
+            # generate commands file
+            cmds = self.generate_cmds(ntrangeval)
+            with open(callfile, "w") as fout:
+                for cmd in cmds:
+                    print(*cmd, file=fout)
+
+            # add script part
+            if prefix:
+                script += prefix.format(nt=ntrangeval) + " "
+            script += "%(x)s < %(i)s >> %(o)s 2>> %(e)s" % {
+                "x": self.sampler["sampler"],  # executable
+                "i": callfile,  # input
+                "o": smplfile,  # output
+                "e": errfile  # error
+            }
+            if suffix:
+                script += " " + suffix.format(nt=ntrangeval)
+            script += "\n"
+
+        # timing
+        script += "date +%%s >> %s\n" % smplfile
+
+        # if empty, delete errfile
+        script += "[ -s %(e)s ] || rm %(e)s" % {"e": errfile}
+
+        if footer:
+            script += "\n" + footer.format(nt=self.nt)
 
         # submit
         backend = self.backends[self.sampler["backend"]]
         jobid = backend.submit(script, nt=self.nt, jobname=jobname)
+
+        # DEBUG
+        print(script)
 
         # track progress
         self.jobprogress_add(jobid, filename)
@@ -832,11 +886,15 @@ class GUI(object):
         self.UI_usepapi_set()
         self.UI_showargs_set()
         self.UI_usevary_set()
+        self.UI_userange_setenabled()
+        self.UI_usentrange_set()
         self.UI_userange_set()
         self.UI_usesumrange_set()
         self.UI_counters_setvisible()
         self.UI_counters_setoptions()
         self.UI_counters_set()
+        self.UI_usentrange_apply()
+        self.UI_ntrange_set()
         self.UI_userange_apply()
         self.UI_rangevar_set()
         self.UI_range_set()
@@ -887,6 +945,36 @@ class GUI(object):
         self.counters = counters
         self.state_write()
 
+    def UI_usentrange_change(self, state):
+        if state:
+            self.ntrange = (self.nt, 1, self.nt)
+            self.UI_ntrange_set()
+        else:
+            self.UI_nt_set()
+            for call in self.calls:
+                for argid, arg in enumerate(call):
+                    call[argid] = self.range_eval(
+                        arg, self.nt, dosumrange=False,
+                    )
+            self.data_update()
+            self.UI_calls_set()
+        self.usentrange = state
+        self.state_write()
+        self.UI_userange_setenabled()
+        self.UI_usentrange_apply()
+
+    def UI_ntrange_change(self, ntrange):
+        lower, step, upper = ntrange
+        if lower is None or lower <= 0:
+            return
+        if upper is None:
+            return
+        self.ntrange = ntrange
+        self.nt = upper
+        self.data_update()
+        self.UI_data_viz()
+        self.state_write()
+
     def UI_userange_change(self, state):
         if not state:
             for call in self.calls:
@@ -898,6 +986,7 @@ class GUI(object):
             self.UI_calls_set()
         self.userange = state
         self.state_write()
+        self.UI_userange_setenabled()
         self.UI_userange_apply()
 
     def UI_rangevar_change(self, varname):
@@ -905,11 +994,15 @@ class GUI(object):
         self.state_write()
 
     def UI_range_change(self, range):
-        if all(val is not None for val in range):
-            self.range = range
-            self.data_update()
-            self.UI_data_viz()
-            self.state_write()
+        lower, step, upper = range
+        if lower is None:
+            return
+        if upper is None:
+            return
+        self.range = range
+        self.data_update()
+        self.UI_data_viz()
+        self.state_write()
 
     def UI_usesumrange_change(self, state):
         if not state:
@@ -935,13 +1028,16 @@ class GUI(object):
         lower = self.range_parse(lower, dosumrange=False)
         step = self.range_parse(step, dosumrange=False)
         upper = self.range_parse(upper, dosumrange=False)
+        if lower is None:
+            return
         if step is None:
             step = 1
-        if lower is not None and upper is not None:
-            self.sumrange = (lower, step, upper)
-            self.data_update()
-            self.UI_data_viz()
-            self.state_write()
+        if upper is None:
+            return
+        self.sumrange = (lower, step, upper)
+        self.data_update()
+        self.UI_data_viz()
+        self.state_write()
 
     def UI_nrep_change(self, nrep):
         self.nrep = nrep

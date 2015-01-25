@@ -86,17 +86,27 @@ BLAS_NAME=
 #
 #BACKEND="local"
 
-# Additional script lines required before running the Sampler [GUI]
+# Header inserted at the top of job scripts [GUI]
 # {nt} will be replaced by the number of threads.
-# e.g.: "export OMP_NUM_THREADS={nt}"
+# e.g.: "#BSUB -a phi"
 #
-#BACKEND_HEADER="export VECLIB_MAXIMUM_THREADS={nt}"
+#BACKEND_HEADER=
 
-# Additional options passed to submit() [GUI]
-# Format: python dictionary representation
-# (for future use)
+# Prefix immediately before the sampler invocation [GUI]
+# {nt} will be replaced by the number of threads.
+# e.g.: "OMP_NUM_THREADS={nt}"
 #
-#BACKEND_OPTIONS="{}"
+#BACKEND_PREFIX=
+
+# Suffix immediately after sampler invocation [GUI]
+# {nt} will be replaced by the number of threads.
+#
+#BACKEND_SUFFIX=
+
+# Footer inserted at the end of the job script [GUI]
+# {nt} will be replaced by the number of threads.
+#
+#BACKEND_FOOTER=
 
 
 # CPU INFORMATION

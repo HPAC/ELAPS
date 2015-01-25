@@ -6,7 +6,7 @@ SYSTEM_NAME="local"
 LINK_FLAGS="-framework Accelerate"
 KERNEL_HEADERS="headers/blas.h headers/lapack.h"
 
-BACKEND_HEADER="export VECLIB_MAXIMUM_THREADS={nt}"
+BACKEND_PREFIX="VECLIB_MAXIMUM_THREADS={nt}"
 
 NT_MAX=2
 FREQUENCY_MHZ=2000
