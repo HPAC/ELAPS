@@ -25,7 +25,7 @@ class Viewer(object):
         thispath = os.path.dirname(__file__)
         if thispath not in sys.path:
             sys.path.append(thispath)
-        self.rootpath = os.path.join(thispath, "..", "..")
+        self.rootpath = os.path.abspath(os.path.join(thispath, "..", ".."))
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
         self.statefile = os.path.join(self.rootpath, "GUI", ".viewerstate.py")
 
@@ -40,7 +40,6 @@ class Viewer(object):
         for arg in sys.argv[1:]:
             if arg[-5:] == ".smpl" and os.path.isfile(arg):
                 self.UI_load_report(arg)
-
 
     # state access attributes
     def __getattr__(self, name):
@@ -102,7 +101,7 @@ class Viewer(object):
             ("std", "standard deviation"),
             ("all", "all data points"),
         ]
-        self.stats_funs = {
+        self.stat_funs = {
             "med": lambda l: sum(sorted(l)[
                 ((len(l) - 1) // 2):(len(l) // 2 + 1)
             ]) / (2 - len(l) % 2),
@@ -408,7 +407,7 @@ class Viewer(object):
             if not rawdata:
                 continue
             linedatas = {
-                statname: [(x, self.stats_funs[statname](y))
+                statname: [(x, self.stat_funs[statname](y))
                            for x, y in rawdata
                            if y is not None]
                 for statname in self.stats_showing
@@ -501,3 +500,42 @@ class Viewer(object):
         self.plotdata_update()
         self.state_write()
         self.UI_plot_update()
+
+    def UI_export(self, filename):
+        # TODO: ordering of data
+        data = {}
+        rows = set()
+        cols = set()
+        for name, linedatas in self.plotdata.iteritems():
+            for stat, linedata in linedatas.iteritems():
+                for rangeval, val in linedata:
+                    data[rangeval, name, stat] = val
+                    rows.add(rangeval)
+                cols.add((name, stat))
+        lines = []
+        reportline = ["#"]
+        statline = ["#" + self.plotrangevar]
+        for name, stat in sorted(cols):
+            if name in reportline:
+                reportline.append("")
+            else:
+                reportline.append(name)
+            statline.append(stat)
+        lines.append(reportline)
+        lines.append(statline)
+        for rangeval in sorted(rows):
+            line = [rangeval]
+            for name, stat in sorted(cols):
+                if (rangeval, name, stat) in data:
+                    val = data[rangeval, name, stat]
+                    if stat == "std":
+                        val = (val[1] - val[0]) / 2
+                    if isinstance(val, list):
+                        val = ",".join(map(str, val))
+                    val = str(val)
+                    line.append(val)
+            lines.append(line)
+        # TODO: alignment
+        with open(filename, "w") as fout:
+            for line in lines:
+                print(*line, sep="\t", file=fout)

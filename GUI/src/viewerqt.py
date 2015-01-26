@@ -4,6 +4,7 @@ from __future__ import division, print_function
 from viewer import Viewer
 
 import sys
+from copy import deepcopy
 
 from PyQt4 import QtCore, QtGui
 
@@ -105,14 +106,38 @@ class Viewer_Qt(Viewer):
         tabs.setContentsMargins(0, 0, 0, 0)
 
         # window > right > tabs > plot
+        plotW = QtGui.QWidget()
+        tabs.addTab(plotW, "plot")
+        plotL = QtGui.QVBoxLayout()
+        plotW.setLayout(plotL)
+        plotL.setContentsMargins(0, 0, 0, 0)
+        plotL.setSpacing(0)
+
+        # window > right > tabs > plot > buttons
+        buttonsL = QtGui.QHBoxLayout()
+        plotL.addLayout(buttonsL)
+        buttonsL.addStretch(1)
+
+        # window > right > tabs > plot > buttons > export
+        export = QtGui.QPushButton("export plot data")
+        buttonsL.addWidget(export)
+        export.clicked.connect(self.Qt_export_click)
+
+        # window > right > tabs > plot > buttons > pop
+        pop = QtGui.QPushButton("pop plot")
+        buttonsL.addWidget(pop)
+        pop.clicked.connect(self.Qt_pop_click)
+
+        # window > right > tabs > plot > plot
         self.Qt_plot = self.plotfactory()
-        tabs.addTab(self.Qt_plot, "plot")
+        plotL.addWidget(self.Qt_plot)
 
         # window > right > tabs > table
         self.Qt_data = QtGui.QTableWidget()
         tabs.addTab(self.Qt_data, "data")
-        self.Qt_data.setColumnCount(4)
-        self.Qt_data.setHorizontalHeaderLabels(["med", "min", "avg", "max"])
+        self.Qt_data.setColumnCount(5)
+        self.Qt_data.setHorizontalHeaderLabels(["med", "min", "avg", "max",
+                                                "std"])
 
         # window > info
         reportinfobox = QtGui.QFrame()
@@ -259,24 +284,12 @@ class Viewer_Qt(Viewer):
                                        self.callid_selected, metricname)
             if data is not None:
                 data = list(sum((values for key, values in data), ()))
-                data.sort()
-                datalen = len(data)
-                mid = (datalen - 1) // 2
-                if datalen % 2 == 0:
-                    med = data[mid]
-                else:
-                    med = (data[mid] + data[mid + 1]) / 2
-                avg = sum(data) / len(data)
-                self.Qt_data.setItem(
-                    i, 0, QtGui.QTableWidgetItem(str(med)))
-                self.Qt_data.setItem(
-                    i, 1, QtGui.QTableWidgetItem(str(data[0])))
-                self.Qt_data.setItem(
-                    i, 2, QtGui.QTableWidgetItem(str(avg)))
-                self.Qt_data.setItem(
-                    i, 3, QtGui.QTableWidgetItem(str(data[-1])))
+                for j, stat in enumerate(("med", "min", "avg", "max", "std")):
+                    self.Qt_data.setItem(i, j, QtGui.QTableWidgetItem(
+                        str(self.stat_funs[stat](data))
+                    ))
             else:
-                for j in range(4):
+                for j in range(5):
                     self.Qt_data.setItem(i, j, QtGui.QTableWidgetItem("NA"))
 
     def UI_plot_update(self):
@@ -336,6 +349,23 @@ class Viewer_Qt(Viewer):
         sender = self.app.sender()
         self.UI_stat_change(sender.statname, sender.isChecked())
 
+    def Qt_export_click(self):
+        filename = QtGui.QFileDialog.getSaveFileName(
+            None,
+            "Export plot data",
+            self.reportpath,
+            "*.dat"
+        )
+        filename = str(filename)
+        if filename:
+            self.UI_export(filename)
+
     def Qt_pop_click(self):
-        self.plotfactory(self, self.metric_selected, self.plots_showing.copy(),
-                         self.stats_showing.copy()).show()
+        plot = self.plotfactory()
+        plot.plot(
+            xlabel=self.plotrangevar,
+            ylabel=self.metricnames[self.metric_selected],
+            data=deepcopy(self.plotdata),
+            colors=deepcopy(self.plotcolors)
+        )
+        plot.show()

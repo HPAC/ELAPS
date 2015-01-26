@@ -6,7 +6,6 @@ Sampler:
 
 GUI:
 - environment variables
-- single Viewer from sampler
 - work variables
 - "file" backend
 
@@ -16,9 +15,6 @@ GUI:
 
 
 Viewer:
-- export data
-- pop plots (how/where?)
-
 - barplots
 
 - (memory metrics)
