@@ -15,7 +15,6 @@ class GUI_Qt(GUI):
     def __init__(self, app=None, loadstate=True):
         self.app = app if app else QtGui.QApplication(sys.argv)
         self.setting = False
-        self.nosigwarning_shown = False
         GUI.__init__(self, loadstate)
 
     def UI_init(self):
@@ -310,6 +309,8 @@ class GUI_Qt(GUI):
         }
 
         self.Qt_jobprogress_init()
+
+        self.Qt_viewer = None
 
     def Qt_jobprogress_init(self):
         # window
@@ -613,6 +614,13 @@ class GUI_Qt(GUI):
         self.Qt_jobprogress.show()
         self.UI_jobprogress_update()
         self.Qt_jobprogress_timer.start()
+
+    def UI_viewer_load(self, filename):
+        if self.Qt_viewer is None:
+            from viewerqtmpl import Viewer_Qt_MPL
+            self.Qt_viewer = Viewer_Qt_MPL(self.app)
+        self.Qt_viewer.UI_load_report(filename)
+        self.Qt_viewer.Qt_window.show()
 
     # event handlers
     def Qt_sampler_change(self):

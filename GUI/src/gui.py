@@ -9,7 +9,6 @@ import os
 import imp
 import pprint
 import time
-import subprocess
 from collections import defaultdict
 from __builtin__ import intern  # fix for pyflake error
 
@@ -1122,5 +1121,4 @@ class GUI(object):
 
     def UI_jobview(self, jobid):
         job = self.jobprogress[jobid]
-        viewerpath = os.path.join(self.rootpath, "GUI", "Viewer.py")
-        subprocess.Popen([viewerpath, job["filename"]])
+        self.UI_viewer_load(job["filename"])
