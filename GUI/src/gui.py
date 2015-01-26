@@ -15,8 +15,8 @@ from __builtin__ import intern  # fix for pyflake error
 
 
 class GUI(object):
-    requiresbuildtime = 1420744815
-    requiresstatetime = 1421936605
+    requiredbuildversion = 1422278229
+    requiredstateversion = 1422278229
     state = {}
 
     def __init__(self, loadstate=True):
@@ -81,7 +81,7 @@ class GUI(object):
             if "info.py" in files and "sampler.x" in files:
                 with open(os.path.join(path, "info.py")) as fin:
                     sampler = eval(fin.read())
-                if sampler["buildtime"] < self.requiresbuildtime:
+                if sampler["buildtime"] < self.requiredbuildversion:
                     self.alert("backend", sampler["name"],
                                "is outdated.  Please rebuild!")
                     continue
@@ -119,6 +119,7 @@ class GUI(object):
         sampler = self.samplers[min(self.samplers)]
         state = {
             "statetime": time.time(),
+            "stateverions": self.requiredstateversion,
             "samplername": sampler["name"],
             "nt": 1,
             "usentrange": False,
@@ -153,7 +154,7 @@ class GUI(object):
             try:
                 with open(self.statefile) as fin:
                     oldstate = eval(fin.read(), symbolic.__dict__)
-                if oldstate["statetime"] > self.requiresstatetime:
+                if oldstate["stateversion"] > self.requiredstateversion:
                     state = oldstate
                     self.log("loaded state from",
                              os.path.relpath(self.statefile))

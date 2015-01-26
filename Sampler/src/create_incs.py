@@ -96,6 +96,7 @@ def main():
     # create info.py
     info = {
         "buildtime": time(),
+        "builtversion": 1422278229,
         "name":  os.environ["NAME"],
         "system_name":  os.environ["SYSTEM_NAME"],
         "blas_name": os.environ["BLAS_NAME"],

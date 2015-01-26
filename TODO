@@ -6,12 +6,12 @@ Sampler:
 
 GUI:
 - environment variables
+- single Viewer from sampler
 - work variables
 - "file" backend
-- single Viewer from sampler
 
-- (nt slider/text input)
 - (include BLAS/LAPACK documentation from doxygen)
+- (nt slider/text input)
 - (multiple BLAS at once)
 
 
