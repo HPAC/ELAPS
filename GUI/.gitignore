@@ -1,3 +1,5 @@
 .state.py
+.guistate.py
+.viewerstate.py
 reports/*
 !reports/.gitignore
