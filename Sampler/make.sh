@@ -16,7 +16,7 @@
 [ -z "$CXX" ] && CXX="g++"
 [ -z "$CXXFLAGS" ] && CXXFLAGS=""
 [ -z "$LINK_FLAGS" ] && LINK_FLAGS=""
-[ -z "$INCLIDE_FLAGS" ] && INCLUDE_FLAGS=""
+[ -z "$INCLUDE_FLAGS" ] && INCLUDE_FLAGS=""
 [ -z "$KERNEL_HEADERS" ] && KERNEL_HEADERS="headers/blas.h headers/lapack.h"
 [ -z "$PAPI_COUNTERS_MAX" ] && PAPI_COUNTERS_MAX=0
 [ -z "$PAPI_COUNTERS_AVAIL" ] && PAPI_COUNTERS_AVAIL=""

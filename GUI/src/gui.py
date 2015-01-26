@@ -247,7 +247,8 @@ class GUI(object):
         if rangeval is None and dorange:
             if self.userange or self.usentrange:
                 return [
-                    self.range_eval(expr, val, sumrangeval, dorange, dosumrange)
+                    self.range_eval(expr, val, sumrangeval, dorange,
+                                    dosumrange)
                     for val in self.range_get()
                 ]
             else:
@@ -803,8 +804,9 @@ class GUI(object):
             "sampler": sampler,
             "submittime": time.time()
         })
-        script += "cat > %s <<REPORTINFO\n%s\nREPORTINFO\n" % (smplfile,
-                                                               repr(reportinfo))
+        script += "cat > %s <<REPORTINFO\n%s\nREPORTINFO\n" % (
+            smplfile, repr(reportinfo)
+        )
 
         # timing
         script += "date +%%s >> %s\n" % smplfile
@@ -851,7 +853,7 @@ class GUI(object):
         jobid = backend.submit(script, nt=self.nt, jobname=jobname)
 
         # track progress
-        self.jobprogress_add(jobid, filename)
+        self.jobprogress_add(jobid, smplfile)
         self.UI_jobprogress_show()
         self.log("submitted %r to %r" % (jobname, self.sampler["backend"]))
 
@@ -868,7 +870,7 @@ class GUI(object):
         })
 
     def jobprogress_update(self):
-        for i, job in enumerate(self.jobprogress):
+        for job in self.jobprogress:
             if job:
                 with open(job["filename"]) as fin:
                     job["progress"] = len(fin.readlines()) - 2
