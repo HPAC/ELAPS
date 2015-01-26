@@ -11,9 +11,9 @@ import sys
 from PyQt4 import QtCore, QtGui
 
 
-class GUI_Qt(GUI, QtGui.QApplication):
-    def __init__(self, loadstate=True):
-        QtGui.QApplication.__init__(self, sys.argv)
+class GUI_Qt(GUI):
+    def __init__(self, app=None, loadstate=True):
+        self.app = app if app else QtGui.QApplication(sys.argv)
         self.setting = False
         self.nosigwarning_shown = False
         GUI.__init__(self, loadstate)
@@ -56,7 +56,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_sampler.currentIndexChanged.connect(self.Qt_sampler_change)
 
         # window > top > setup > sampler > about
-        icon = self.style().standardIcon(QtGui.QStyle.SP_FileDialogInfoView)
+        icon = self.app.style().standardIcon(QtGui.QStyle.SP_FileDialogInfoView)
         about = QtGui.QPushButton(icon, "")
         about.clicked.connect(self.Qt_sampler_about)
         samplerL.addWidget(about, 0, 2, 2, 1)
@@ -93,7 +93,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         ntrangeL.addWidget(self.Qt_ntrange)
         self.Qt_ntrange.textChanged.connect(self.Qt_ntrange_change)
         regexp = QtCore.QRegExp("(?:\d+)?:(?:(?:\d+)?:)?(\d+)?")
-        validator = QtGui.QRegExpValidator(regexp, self)
+        validator = QtGui.QRegExpValidator(regexp, self.app)
         self.Qt_ntrange.setValidator(validator)
 
         # window > top > setup > ntrange
@@ -115,7 +115,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_rangevar.textChanged.connect(self.Qt_rangevar_change)
         self.Qt_rangevar.setFixedWidth(32)
         regexp = QtCore.QRegExp("[a-zA-Z]+")
-        validator = QtGui.QRegExpValidator(regexp, self)
+        validator = QtGui.QRegExpValidator(regexp, self.app)
         self.Qt_rangevar.setValidator(validator)
 
         # window > top > setup > range > "="
@@ -126,7 +126,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         rangeL.addWidget(self.Qt_range)
         self.Qt_range.textChanged.connect(self.Qt_range_change)
         regexp = QtCore.QRegExp("(?:-?\d+)?:(?:(?:-?\d+)?:)?(-?\d+)?")
-        validator = QtGui.QRegExpValidator(regexp, self)
+        validator = QtGui.QRegExpValidator(regexp, self.app)
         self.Qt_range.setValidator(validator)
 
         # window > top > setup > range
@@ -148,7 +148,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_nrep.textChanged.connect(self.Qt_nrep_change)
         self.Qt_nrep.setFixedWidth(32)
         regexp = QtCore.QRegExp("[1-9][0-9]*")
-        validator = QtGui.QRegExpValidator(regexp, self)
+        validator = QtGui.QRegExpValidator(regexp, self.app)
         self.Qt_nrep.setValidator(validator)
 
         # window > top > setup > nrep > "times"
@@ -173,7 +173,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_sumrangevar.textChanged.connect(self.Qt_sumrangevar_change)
         self.Qt_sumrangevar.setFixedWidth(32)
         regexp = QtCore.QRegExp("[a-zA-Z]+")
-        validator = QtGui.QRegExpValidator(regexp, self)
+        validator = QtGui.QRegExpValidator(regexp, self.app)
         self.Qt_sumrangevar.setValidator(validator)
 
         # window > top > setup > sumrange > "="
@@ -184,7 +184,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         sumrangeL.addWidget(self.Qt_sumrange)
         self.Qt_sumrange.textChanged.connect(self.Qt_sumrange_change)
         regexp = QtCore.QRegExp("(?:.*)?:(?:(?:.*)?:)?(.*)?")
-        validator = QtGui.QRegExpValidator(regexp, self)
+        validator = QtGui.QRegExpValidator(regexp, self.app)
         self.Qt_sumrange.setValidator(validator)
 
         # window > top > setup > sumrange
@@ -287,7 +287,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_window.show()
 
         # style
-        self.setStyleSheet("""
+        self.app.setStyleSheet("""
             QLineEdit[invalid="true"],
             *[invalid="true"] QLineEdit {
                 background: #FFDDDD;
@@ -328,7 +328,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.Qt_jobprogress_timer.timeout.connect(self.UI_jobprogress_update)
 
     def UI_start(self):
-        sys.exit(self.exec_())
+        sys.exit(self.app.exec_())
 
     # dialogs
     def UI_alert(self, *args, **kwargs):
@@ -651,7 +651,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
     def Qt_showargs_change(self):
         if self.setting:
             return
-        sender = self.sender()
+        sender = self.app.sender()
         self.UI_showargs_change(sender.argtype, sender.isChecked())
 
     def Qt_usevary_change(self):
@@ -734,7 +734,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
         self.UI_call_add()
 
     def Qt_jobprogress_click(self):
-        sender = self.sender()
+        sender = self.app.sender()
         jobid = sender.jobid
         job = self.jobprogress[jobid]
         if job["progress"] <= job["progressend"]:
@@ -747,7 +747,7 @@ def main():
     import signal
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     loadstate = "--reset" not in sys.argv[1:]
-    GUI_Qt(loadstate)
+    GUI_Qt(loadstate=loadstate).start()
 
 
 if __name__ == "__main__":

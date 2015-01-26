@@ -8,10 +8,10 @@ import sys
 from PyQt4 import QtCore, QtGui
 
 
-class Viewer_Qt(Viewer, QtGui.QApplication):
-    def __init__(self, plotfactory, loadstate=True):
+class Viewer_Qt(Viewer):
+    def __init__(self, plotfactory, app=None, loadstate=True):
+        self.app = app if app else QtGui.QApplication(sys.argv)
         self.plotfactory = plotfactory
-        QtGui.QApplication.__init__(self, sys.argv)
         self.setting = False
         Viewer.__init__(self, loadstate)
 
@@ -35,7 +35,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         reports.setLayout(reportsL)
 
         # window > left > reports >load
-        icon = self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton)
+        icon = self.app.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton)
         load = QtGui.QPushButton(icon, "&load")
         reportsL.addWidget(load)
         load.clicked.connect(self.Qt_load_click)
@@ -129,6 +129,8 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
 
         rightL.addStretch(1)
 
+        self.Qt_window.show()
+
         # Qt objects
         self.Qt_Qreports = {}
         self.Qt_Qplots = {}
@@ -137,8 +139,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         self.UI_metriclist_update()
 
     def UI_start(self):
-        self.Qt_window.show()
-        sys.exit(self.exec_())
+        sys.exit(self.app.exec_())
 
     def UI_alert(self, *args, **kwargs):
         msg = " ".join(map(str, args))
@@ -309,12 +310,12 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
     def Qt_reportcheck_change(self):
         if self.setting:
             return
-        sender = self.sender()
+        sender = self.app.sender()
         self.UI_reportcheck_change(sender.item.reportid, sender.item.callid,
                                    sender.isChecked())
 
     def Qt_color_click(self):
-        sender = self.sender().item
+        sender = self.app.sender().item
         reportid = sender.reportid
         callid = sender.callid
         Qcolor = QtGui.QColor(self.reports[reportid]["plotcolors"][callid])
@@ -332,7 +333,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
     def Qt_stat_change(self):
         if self.setting:
             return
-        sender = self.sender()
+        sender = self.app.sender()
         self.UI_stat_change(sender.statname, sender.isChecked())
 
     def Qt_pop_click(self):

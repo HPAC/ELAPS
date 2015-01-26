@@ -41,7 +41,6 @@ class Viewer(object):
             if arg[-5:] == ".smpl" and os.path.isfile(arg):
                 self.UI_load_report(arg)
 
-        self.UI_start()
 
     # state access attributes
     def __getattr__(self, name):
@@ -55,6 +54,9 @@ class Viewer(object):
             self.state[name] = value
         else:
             super(Viewer, self).__setattr__(name, value)
+
+    def start(self):
+        self.UI_start()
 
     # utility
     def log(self, *args):

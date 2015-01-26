@@ -8,9 +8,9 @@ from PyQt4 import QtCore, QtGui
 
 
 class QCall(QtGui.QFrame):
-    def __init__(self, app, callid):
+    def __init__(self, viewer, callid):
         QtGui.QGroupBox.__init__(self)
-        self.app = app
+        self.viewer = viewer
         self.callid = callid
         self.sig = None
 
@@ -21,7 +21,7 @@ class QCall(QtGui.QFrame):
         # frame
         self.setFrameStyle(QtGui.QFrame.StyledPanel | QtGui.QFrame.Raised)
 
-        routines = list(self.app.sampler["kernels"])
+        routines = list(self.viewer.sampler["kernels"])
 
         # layout
         layout = QtGui.QGridLayout()
@@ -83,7 +83,7 @@ class QCall(QtGui.QFrame):
         self.sig = None
 
     def movers_setvisibility(self):
-        ncalls = len(self.app.calls)
+        ncalls = len(self.viewer.calls)
         if ncalls > 1:
             self.Qt_removeS.setCurrentIndex(0)
             if self.callid > 0:
@@ -100,17 +100,17 @@ class QCall(QtGui.QFrame):
             self.Qt_movedownS.setCurrentIndex(1)
 
     def args_init(self):
-        call = self.app.calls[self.callid]
+        call = self.viewer.calls[self.callid]
         self.Qt_args[0].setProperty("invalid", False)
         if isinstance(call, signature.Call):
             self.sig = call.sig
         else:
-            minsig = self.app.sampler["kernels"][call[0]]
+            minsig = self.viewer.sampler["kernels"][call[0]]
             self.sig = None
-            if not self.app.nosigwarning_shown:
-                self.app.UI_alert("No signature found for %r!\n" % call[0] +
-                                  "Hover arguments for input syntax.")
-                self.app.nosigwarning_shown = True
+            if not self.viewer.nosigwarning_shown:
+                self.viewer.UI_alert("No signature found for %r!\n" % call[0] +
+                                     "Hover arguments for input syntax.")
+                self.viewer.nosigwarning_shown = True
         for argid in range(len(call))[1:]:
             tooltip = None
             if self.sig:
@@ -176,7 +176,7 @@ class QCall(QtGui.QFrame):
                 ("infos", signature.Info)
             ):
                 if isinstance(arg, classes):
-                    showing = self.app.showargs[name]
+                    showing = self.viewer.showargs[name]
                     self.Qt_arglabels[argid].setVisible(showing)
                     self.Qt_args[argid].setVisible(showing)
 
@@ -188,9 +188,9 @@ class QCall(QtGui.QFrame):
                 Qarg.usevary_apply()
 
     def args_set(self, fromargid=None):
-        call = self.app.calls[self.callid]
+        call = self.viewer.calls[self.callid]
         # set widgets
-        if call[0] not in self.app.sampler["kernels"]:
+        if call[0] not in self.viewer.sampler["kernels"]:
             self.args_clear()
             return
         if isinstance(call, signature.Call):
@@ -221,21 +221,21 @@ class QCall(QtGui.QFrame):
     def data_viz(self):
         if not self.sig:
             return
-        for argid in self.app.calls[self.callid].sig.dataargs():
+        for argid in self.viewer.calls[self.callid].sig.dataargs():
             self.Qt_args[argid].viz()
 
     # event handlers
     def remove_click(self):
-        self.app.UI_call_remove(self.callid)
+        self.viewer.UI_call_remove(self.callid)
 
     def moveup_click(self):
-        self.app.UI_call_moveup(self.callid)
+        self.viewer.UI_call_moveup(self.callid)
 
     def movedown_click(self):
-        self.app.UI_call_movedown(self.callid)
+        self.viewer.UI_call_movedown(self.callid)
 
     def arg_change(self):
-        sender = self.app.sender()
+        sender = self.viewer.app.sender()
         if isinstance(sender, QtGui.QLineEdit):
             # adjust widt no matter where the change came from
             val = str(sender.text())
@@ -244,10 +244,10 @@ class QCall(QtGui.QFrame):
                 width += sender.minimumSizeHint().width()
                 height = sender.sizeHint().height()
                 sender.setFixedSize(max(height, width), height)
-        if self.app.setting:
+        if self.viewer.setting:
             return
         if isinstance(sender, QtGui.QComboBox):
             val = str(sender.currentText())
         if not val:
             val = None
-        self.app.UI_arg_change(self.callid, sender.argid, val)
+        self.viewer.UI_arg_change(self.callid, sender.argid, val)

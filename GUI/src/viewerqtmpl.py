@@ -11,7 +11,7 @@ def main():
     import signal
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     loadstate = "--reset" not in sys.argv[1:]
-    Viewer_Qt(QMPLPlot, loadstate)
+    Viewer_Qt(QMPLPlot, loadstate=loadstate).start()
 
 if __name__ == "__main__":
     main()

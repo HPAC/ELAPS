@@ -34,7 +34,6 @@ class GUI(object):
         self.jobprogress_init()
         self.UI_init()
         self.UI_setall()
-        self.UI_start()
 
     # state access attributes
     def __getattr__(self, name):
@@ -50,6 +49,9 @@ class GUI(object):
             self.state[name] = value
         else:
             super(GUI, self).__setattr__(name, value)
+
+    def start(self):
+        self.UI_start()
 
     # utility
     def log(self, *args):
