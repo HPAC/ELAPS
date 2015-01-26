@@ -502,19 +502,23 @@ class Viewer(object):
         self.UI_plot_update()
 
     def UI_export(self, filename):
-        # TODO: ordering of data
+        # data layout
         data = {}
         rows = set()
         cols = set()
         for name, linedatas in self.plotdata.iteritems():
             for stat, linedata in linedatas.iteritems():
                 for rangeval, val in linedata:
+                    if stat == "std":
+                        val = (val[1] - val[0]) / 2
                     data[rangeval, name, stat] = val
                     rows.add(rangeval)
                 cols.add((name, stat))
         lines = []
+
+        # header
         reportline = ["#"]
-        statline = ["#" + self.plotrangevar]
+        statline = ["# " + self.plotrangevar]
         for name, stat in sorted(cols):
             if name in reportline:
                 reportline.append("")
@@ -523,19 +527,29 @@ class Viewer(object):
             statline.append(stat)
         lines.append(reportline)
         lines.append(statline)
+
+        # content
         for rangeval in sorted(rows):
-            line = [rangeval]
+            line = [str(rangeval)]
             for name, stat in sorted(cols):
                 if (rangeval, name, stat) in data:
                     val = data[rangeval, name, stat]
-                    if stat == "std":
-                        val = (val[1] - val[0]) / 2
                     if isinstance(val, list):
                         val = ",".join(map(str, val))
-                    val = str(val)
+                    else:
+                        val = str(val)
                     line.append(val)
+                else:
+                    line.append("NaN")
             lines.append(line)
-        # TODO: alignment
+
+        # alignment
+        colwidths = [max(map(len, col)) for col in zip(*lines)]
+        lines[0][0] = lines[0][0].ljust(colwidths[0])
+        lines[1][0] = lines[1][0].ljust(colwidths[0])
+        lines = [[v.rjust(w) for v, w in zip(l, colwidths)] for l in lines]
+
+        # write file
         with open(filename, "w") as fout:
             for line in lines:
-                print(*line, sep="\t", file=fout)
+                print(*line, sep="  ", file=fout)
