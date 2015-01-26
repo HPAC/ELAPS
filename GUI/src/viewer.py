@@ -87,9 +87,6 @@ class Viewer(object):
                  *map(repr, sorted(self.metrics)))
         if len(self.metrics) == 0:
             raise Exception("No metrics found")
-        self.metric_selected = min(self.metrics)
-        if "time [ms]" in self.metrics:
-            self.metric_selected = "time [ms]"
 
     def stats_init(self):
         self.stats_desc = [
