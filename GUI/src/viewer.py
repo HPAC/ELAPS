@@ -32,6 +32,7 @@ class Viewer(object):
         self.metrics_init()
         self.stats_init()
         self.reports_init()
+        self.plotdata_init()
         self.state_init(loadstate)
         self.UI_init()
 
@@ -121,7 +122,11 @@ class Viewer(object):
         self.showplots = defaultdict(lambda: defaultdict(lambda: False))
         self.reportid_selected = None
         self.callid_selected = None
+
+    def plotdata_init(self):
+        self.plotdata = {}
         self.plots_showing = set()
+        self.plotrangevar = ""
 
     def state_init(self, load=True):
         state = {
@@ -310,13 +315,14 @@ class Viewer(object):
         result = re.sub("<.*?>", "", result)
         return result
 
-    def generateplotdata(self, reportid, callid, metricname, rangeval=None):
+    # data generation
+    def get_metricdata(self, reportid, callid, metricname, rangeval=None):
         report = self.reports[reportid]
         # ifrangeval not given: return all
         if (report["userange"] or report["usentrange"]) and rangeval is None:
             plotdata = []
             for rangeval in sorted(report["data"]):
-                plotdata.append((rangeval, self.generateplotdata(
+                plotdata.append((rangeval, self.get_metricdata(
                     reportid, callid, metricname, rangeval)))
             plotdata = tuple((x, y) for x, y in plotdata if y is not None)
             if not plotdata:
@@ -390,6 +396,43 @@ class Viewer(object):
             return plotdata
         return ((None, plotdata),)
 
+    def plotdata_update(self):
+        self.plotdata = {}
+        self.plotcolors = {}
+        rangevars = set()
+        for reportid, callid in self.plots_showing:
+            rawdata = self.get_metricdata(reportid, callid,
+                                          self.metric_selected)
+            if not rawdata:
+                continue
+            linedatas = {
+                statname: [(x, self.stats_funs[statname](y))
+                           for x, y in rawdata
+                           if y is not None]
+                for statname in self.stats_showing
+            }
+
+            report = self.reports[reportid]
+
+            # rangevar
+            if report["userange"]:
+                rangevars.add(report["rangevar"])
+            elif report["usentrange"]:
+                rangevars.add("#threads")
+
+            # name
+            name = report["name"]
+            if callid is not None:
+                name += " (%s)" % report["calls"][callid][0]
+
+            self.plotdata[name] = linedatas
+            self.plotcolors[name] = report["plotcolors"][callid]
+        self.plotrangevar = " = ".join(rangevars)
+
+    # user interface
+    def UI_init(self):
+        raise Exception("Viewer needs to be subclassed")
+
     # event handlers
     def UI_load_report(self, filename):
         try:
@@ -412,6 +455,7 @@ class Viewer(object):
                 if counter not in self.metrics:
                     self.metrics_adddefaultmetric(counter)
             self.UI_metriclist_update()
+        self.plotdata_update()
         self.UI_report_add(reportid)
         self.UI_plot_update()
 
@@ -425,6 +469,7 @@ class Viewer(object):
             self.plots_showing.add((reportid, callid))
         else:
             self.plots_showing.discard((reportid, callid))
+        self.plotdata_update()
         self.UI_plot_update()
 
     def UI_reportcolor_change(self, reportid, callid, color):
@@ -432,6 +477,7 @@ class Viewer(object):
         self.UI_report_update(reportid)
         if reportid == self.reportid_selected:
             self.UI_reportinfo_update()
+        self.plotdata_update()
         self.UI_plot_update()
 
     def UI_metricselect_change(self, metric):
@@ -441,6 +487,7 @@ class Viewer(object):
             self.UI_metricinfo_set(info.strip())
         else:
             self.UI_metricinfo_set("[no docstring for %s]" % metric)
+        self.plotdata_update()
         self.state_write()
         self.UI_plot_update()
 
@@ -449,5 +496,6 @@ class Viewer(object):
             self.stats_showing.add(statname)
         else:
             self.stats_showing.discard(statname)
+        self.plotdata_update()
         self.state_write()
         self.UI_plot_update()

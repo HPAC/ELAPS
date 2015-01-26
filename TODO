@@ -5,14 +5,14 @@ Sampler:
 
 
 GUI:
+- environment variables
 - work variables
 - "file" backend
 - single Viewer from sampler
-- environment variables
 
-- (nt slider/text feld)
-- (multiple BLAS at once)
+- (nt slider/text input)
 - (include BLAS/LAPACK documentation from doxygen)
+- (multiple BLAS at once)
 
 
 Viewer:

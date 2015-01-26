@@ -105,8 +105,7 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         tabs.setContentsMargins(0, 0, 0, 0)
 
         # window > right > tabs > plot
-        self.Qt_plot = self.plotfactory(self, self.metric_selected,
-                                        self.plots_showing, self.stats_showing)
+        self.Qt_plot = self.plotfactory()
         tabs.addTab(self.Qt_plot, "plot")
 
         # window > right > tabs > table
@@ -255,8 +254,8 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
         names = [self.metricnames[metric] for metric in sorted(self.metrics)]
         self.Qt_data.setVerticalHeaderLabels(names)
         for i, metricname in enumerate(sorted(self.metrics)):
-            data = self.generateplotdata(self.reportid_selected,
-                                         self.callid_selected, metricname)
+            data = self.get_metricdata(self.reportid_selected,
+                                       self.callid_selected, metricname)
             if data is not None:
                 data = list(sum((values for key, values in data), ()))
                 data.sort()
@@ -280,8 +279,12 @@ class Viewer_Qt(Viewer, QtGui.QApplication):
                     self.Qt_data.setItem(i, j, QtGui.QTableWidgetItem("NA"))
 
     def UI_plot_update(self):
-        self.Qt_plot.metric = self.metric_selected
-        self.Qt_plot.UI_update()
+        self.Qt_plot.plot(
+            xlabel=self.plotrangevar,
+            ylabel=self.metricnames[self.metric_selected],
+            data=self.plotdata,
+            colors=self.plotcolors
+        )
 
     # event handlers
     def Qt_load_click(self):
