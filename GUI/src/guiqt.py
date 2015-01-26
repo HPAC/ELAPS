@@ -746,7 +746,7 @@ class GUI_Qt(GUI, QtGui.QApplication):
 def main():
     import signal
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    loadstate = "-newstate" not in sys.argv[1:]
+    loadstate = "--reset" not in sys.argv[1:]
     GUI_Qt(loadstate)
 
 

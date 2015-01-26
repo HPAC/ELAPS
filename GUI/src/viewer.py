@@ -5,11 +5,12 @@ import signature
 import symbolic
 import papi
 
-import os
 import sys
+import os
+import imp
+import pprint
 import time
 import re
-import imp
 import random
 from numbers import Number
 from collections import defaultdict
@@ -17,14 +18,21 @@ from math import sqrt
 
 
 class Viewer(object):
-    def __init__(self):
+    requiresstatetime = 1422244231
+    state = {}
+
+    def __init__(self, loadstate=True):
         thispath = os.path.dirname(__file__)
         if thispath not in sys.path:
             sys.path.append(thispath)
         self.rootpath = os.path.join(thispath, "..", "..")
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
+        self.statefile = os.path.join(self.rootpath, "GUI", ".viewerstate.py")
 
-        self.init()
+        self.metrics_init()
+        self.stats_init()
+        self.reports_init()
+        self.state_init(loadstate)
         self.UI_init()
 
         # load reports from command line
@@ -34,6 +42,19 @@ class Viewer(object):
 
         self.UI_start()
 
+    # state access attributes
+    def __getattr__(self, name):
+        if name in self.__dict__["state"]:
+            return self.__dict__["state"][name]
+        raise AttributeError("%r object has no attribute %r" %
+                             (self.__class__, name))
+
+    def __setattr__(self, name, value):
+        if name in self.state:
+            self.state[name] = value
+        else:
+            super(Viewer, self).__setattr__(name, value)
+
     # utility
     def log(self, *args):
         print(*args)
@@ -41,15 +62,7 @@ class Viewer(object):
     def alert(self, *args):
         print(*args, file=sys.stderr)
 
-    def init(self):
-        self.reports = []
-        self.showplots = defaultdict(lambda: defaultdict(lambda: False))
-        self.metrics_init()
-        self.stats_init()
-        self.reportid_selected = None
-        self.callid_selected = None
-        self.plots_showing = set()
-
+    # initializers
     def metrics_init(self):
         self.metrics = {}
         self.metricnames = {}
@@ -102,8 +115,38 @@ class Viewer(object):
             ],
             "all": lambda l: l
         }
-        self.stats_showing = set(["med"])
 
+    def reports_init(self):
+        self.reports = []
+        self.showplots = defaultdict(lambda: defaultdict(lambda: False))
+        self.reportid_selected = None
+        self.callid_selected = None
+        self.plots_showing = set()
+
+    def state_init(self, load=True):
+        state = {
+            "statetime": time.time(),
+            "metric_selected": "time [ms]",
+            "stats_showing": set(["med"])
+        }
+        if load:
+            try:
+                with open(self.statefile) as fin:
+                    oldstate = eval(fin.read(), symbolic.__dict__)
+                if oldstate["statetime"] > self.requiresstatetime:
+                    state = oldstate
+                    self.log("loaded state from",
+                             os.path.relpath(self.statefile))
+            except:
+                pass
+        self.state = state
+        self.state_write()
+
+    def state_write(self):
+        with open(self.statefile, "w") as fout:
+            print(pprint.pformat(self.state, 4), file=fout)
+
+    # papi metrics
     def metrics_adddefaultmetric(self, name):
         event = papi.events[name]
         metric = lambda data, report, callid: data.get(name)
@@ -111,6 +154,7 @@ class Viewer(object):
         self.metrics[name] = metric
         self.metricnames[name] = event["short"]
 
+    # default colors
     def nextcolor(self, colors=[
         "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff",
         "#880000", "#008800", "#000088", "#888800", "#008888", "#880088",
@@ -119,6 +163,7 @@ class Viewer(object):
             return colors.pop(0)
         "#%06x" % random.randint(0, 0xffffff)
 
+    # report handling
     def report_load(self, filename):
         name = os.path.basename(filename)[:-5]
         errfile = filename + ".err"
@@ -396,6 +441,7 @@ class Viewer(object):
             self.UI_metricinfo_set(info.strip())
         else:
             self.UI_metricinfo_set("[no docstring for %s]" % metric)
+        self.state_write()
         self.UI_plot_update()
 
     def UI_stat_change(self, statname, state):
@@ -403,4 +449,5 @@ class Viewer(object):
             self.stats_showing.add(statname)
         else:
             self.stats_showing.discard(statname)
+        self.state_write()
         self.UI_plot_update()

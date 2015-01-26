@@ -16,14 +16,12 @@ GUI:
 
 
 Viewer:
-- state (selected metric, stats)
-
-- barplots
+- export data
 - pop plots (how/where?)
 
-- (memory metrics)
+- barplots
 
-- export data
+- (memory metrics)
 
 
 Other:

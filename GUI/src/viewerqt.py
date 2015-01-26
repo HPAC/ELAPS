@@ -9,11 +9,11 @@ from PyQt4 import QtCore, QtGui
 
 
 class Viewer_Qt(Viewer, QtGui.QApplication):
-    def __init__(self, plotfactory):
+    def __init__(self, plotfactory, loadstate=True):
         self.plotfactory = plotfactory
         QtGui.QApplication.__init__(self, sys.argv)
         self.setting = False
-        Viewer.__init__(self)
+        Viewer.__init__(self, loadstate)
 
     def UI_init(self):
         self.UI_hasHTML = True

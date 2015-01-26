@@ -25,7 +25,7 @@ class GUI(object):
             sys.path.append(thispath)
         self.rootpath = os.path.abspath(os.path.join(thispath, "..", ".."))
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
-        self.statefile = os.path.join(self.rootpath, "GUI", ".state.py")
+        self.statefile = os.path.join(self.rootpath, "GUI", ".guistate.py")
 
         self.backends_init()
         self.samplers_init()
@@ -167,7 +167,7 @@ class GUI(object):
     def jobprogress_init(self):
         self.jobprogress = []
 
-    # utility type routines
+    # state routines
     def state_toflat(self):
         state = self.state.copy()
         state["calls"] = tuple(map(tuple, self.calls))
@@ -194,6 +194,7 @@ class GUI(object):
         with open(self.statefile, "w") as fout:
             print(pprint.pformat(self.state_toflat(), 4), file=fout)
 
+    # info string
     def get_infostr(self):
         sampler = self.sampler
         info = "System:\t%s\n" % sampler["system_name"]
@@ -210,6 +211,7 @@ class GUI(object):
         )
         return info
 
+    # range routines
     def range_get(self):
         if self.userange:
             lower, step, upper = self.range
@@ -520,8 +522,8 @@ class GUI(object):
         self.calls[callid] = call
         self.connections_update()
         self.data_update()
-        self.UI_call_set(callid, 0)
         self.state_write()
+        self.UI_call_set(callid, 0)
 
     def arg_set(self, callid, argid, value):
         call = self.calls[callid]
@@ -925,8 +927,8 @@ class GUI(object):
 
     def UI_usepapi_change(self, state):
         self.usepapi = state
-        self.UI_counters_setvisible()
         self.state_write()
+        self.UI_counters_setvisible()
 
     def UI_showargs_change(self, name, state):
         self.showargs[name] = state
@@ -969,8 +971,8 @@ class GUI(object):
         self.ntrange = ntrange
         self.nt = upper
         self.data_update()
-        self.UI_data_viz()
         self.state_write()
+        self.UI_data_viz()
 
     def UI_userange_change(self, state):
         if not state:
@@ -998,8 +1000,8 @@ class GUI(object):
             return
         self.range = range
         self.data_update()
-        self.UI_data_viz()
         self.state_write()
+        self.UI_data_viz()
 
     def UI_usesumrange_change(self, state):
         if not state:
@@ -1033,8 +1035,8 @@ class GUI(object):
             return
         self.sumrange = (lower, step, upper)
         self.data_update()
-        self.UI_data_viz()
         self.state_write()
+        self.UI_data_viz()
 
     def UI_nrep_change(self, nrep):
         self.nrep = nrep
