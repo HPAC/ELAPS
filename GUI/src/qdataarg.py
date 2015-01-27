@@ -174,7 +174,8 @@ class QDataArg(QtGui.QWidget):
         scale = self.viewer.datascale / max(1, self.viewer.data_maxdim())
         dimmin = [int(round(scale * dim)) for dim in dimmin]
         dimmax = [int(round(scale * dim)) for dim in dimmax]
-        properties = self.viewer.calls[self.Qt_call.callid].properties(self.argid)
+        call = self.viewer.calls[self.Qt_call.callid]
+        properties = call.properties(self.argid)
         for prop in properties:
             if prop in ("lower", "upper"):
                 self.viz_triangular(dimmin, dimmax, properties)
@@ -337,13 +338,13 @@ class QDataArg(QtGui.QWidget):
         width += self.Qt_name.minimumSizeHint().width()
         height = self.Qt_name.sizeHint().height()
         self.Qt_name.setFixedSize(max(height, width), height)
-        if self.viewer.setting:
+        if self.viewer.Qt_setting:
             return
         value = str(self.Qt_name.text())
         self.viewer.UI_arg_change(self.Qt_call.callid, self.argid, value)
 
     def vary_change(self):
-        if self.viewer.setting:
+        if self.viewer.Qt_setting:
             return
         self.viewer.UI_vary_change(self.Qt_call.callid, self.argid,
-                                self.Qt_vary.isChecked())
+                                   self.Qt_vary.isChecked())

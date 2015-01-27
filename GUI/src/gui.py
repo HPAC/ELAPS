@@ -24,7 +24,8 @@ class GUI(object):
             sys.path.append(thispath)
         self.rootpath = os.path.abspath(os.path.join(thispath, "..", ".."))
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
-        self.statefile = os.path.join(self.rootpath, "GUI", ".guistate.py")
+        self.statepath = os.path.join(self.rootpath, "GUI", "states")
+        self.statefile = os.path.join(self.statepath, ".state.py")
 
         self.backends_init()
         self.samplers_init()
@@ -54,9 +55,11 @@ class GUI(object):
 
     # utility
     def log(self, *args):
+        self.UI_setstatus(*args)
         print(*args)
 
     def alert(self, *args):
+        self.UI_setstatus(*args)
         print(*args, file=sys.stderr)
 
     # initializers
@@ -117,10 +120,46 @@ class GUI(object):
                  *sorted(self.signatures))
 
     def state_init(self, load=True):
+        if load:
+            if not self.state_load(self.statefile):
+                self.state_reset()
+        else:
+            self.state_reset()
+        self.state_write()
+
+    def jobprogress_init(self):
+        self.jobprogress = []
+
+    # state routines
+    def state_toflat(self):
+        state = self.state.copy()
+        state["calls"] = tuple(map(tuple, self.calls))
+        state["counters"] = tuple(state["counters"])
+        return state
+
+    def state_fromflat(self, state):
+        state = state.copy()
+        calls = list(map(list, state["calls"]))
+        for callid, call in enumerate(calls):
+            if call[0] in self.signatures:
+                sig = self.signatures[call[0]]
+                try:
+                    calls[callid] = sig(*call[1:])
+                except:
+                    self.UI_alert(
+                        ("Could not applying the signature '%s' to '%s(%s)'.\n"
+                         "Signature Ignored.") % (str(sig), call[0], call[1:])
+                    )
+        state["calls"] = calls
+        self.state = state
+        self.connections_update()
+        self.data_update()
+
+    def state_reset(self):
         sampler = self.samplers[min(self.samplers)]
         state = {
             "statetime": time.time(),
-            "stateverions": self.requiredstateversion,
+            "stateversion": self.requiredstateversion,
             "samplername": sampler["name"],
             "nt": 1,
             "usentrange": False,
@@ -151,50 +190,28 @@ class GUI(object):
             state["calls"] = [
                 ("dgemm_", "N", "N", n, n, n, 1, "A", n, "B", n, 1, "C", n)
             ]
-        if load:
-            try:
-                with open(self.statefile) as fin:
-                    oldstate = eval(fin.read(), symbolic.__dict__)
-                if oldstate["stateversion"] > self.requiredstateversion:
-                    state = oldstate
-                    self.log("loaded state from",
-                             os.path.relpath(self.statefile))
-            except:
-                pass
         self.state_fromflat(state)
-        self.connections_update()
-        self.data_update()
-        self.state_write()
 
-    def jobprogress_init(self):
-        self.jobprogress = []
+    def state_load(self, filename):
+        try:
+            with open(filename) as fin:
+                state = eval(fin.read(), symbolic.__dict__)
+            if state["stateversion"] < self.requiredstateversion:
+                raise Exception
+            self.state_fromflat(state)
+            self.log("loaded state from", os.path.relpath(filename))
+            return True
+        except:
+            self.alert("could not load state from", os.path.relpath(filename))
+            return False
 
-    # state routines
-    def state_toflat(self):
-        state = self.state.copy()
-        state["calls"] = tuple(map(tuple, self.calls))
-        state["counters"] = tuple(state["counters"])
-        return state
-
-    def state_fromflat(self, state):
-        state = state.copy()
-        calls = list(map(list, state["calls"]))
-        for callid, call in enumerate(calls):
-            if call[0] in self.signatures:
-                sig = self.signatures[call[0]]
-                try:
-                    calls[callid] = sig(*call[1:])
-                except:
-                    self.UI_alert(
-                        ("Could not applying the signature '%s' to '%s(%s)'.\n"
-                         "Signature Ignored.") % (str(sig), call[0], call[1:])
-                    )
-        state["calls"] = calls
-        self.state = state
-
-    def state_write(self):
-        with open(self.statefile, "w") as fout:
+    def state_write(self, filename=None):
+        if filename is None:
+            filename = self.statefile
+        with open(filename, "w") as fout:
             print(pprint.pformat(self.state_toflat(), 4), file=fout)
+        if filename != self.statefile:
+            self.log("written state to", filename)
 
     # info string
     def get_infostr(self):
@@ -908,6 +925,41 @@ class GUI(object):
         self.UI_submit_setenabled()
 
     # event handlers
+    def UI_submit(self, filename):
+        msg = None
+        if not any(isinstance(arg, symbolic.Expression)
+                   for call in self.calls for arg in call):
+            if self.userange:
+                if self.usesumrange:
+                    msg = ("Range and sum over are"
+                           "but %r and %r are not used in any call")
+                    msg %= (self.rangevar, self.sumrangevar)
+                else:
+                    msg = "Range is enabled but %r is not used in any call"
+                    msg %= self.rangevar
+            elif self.usesumrange:
+                msg = "Sum over is enabled but %r is not used in any call"
+                msg %= self.sumrangevar
+        if msg:
+            self.UI_dialog(
+                "warning", "range not used", msg, {
+                    "Ok": (self.submit, (filename,)),
+                    "Cancel": None
+                })
+        else:
+            self.submit(filename)
+
+    def UI_state_reset(self):
+        self.state_reset()
+        self.UI_setall()
+
+    def UI_state_load(self, filename):
+        self.state_load(filename)
+        self.UI_setall()
+
+    def UI_state_save(self, filename):
+        self.state_write(filename)
+
     def UI_sampler_change(self, samplername):
         newsampler = self.samplers[samplername]
         missing = set(call[0] for call in self.calls
@@ -1045,30 +1097,6 @@ class GUI(object):
     def UI_nrep_change(self, nrep):
         self.nrep = nrep
         self.state_write()
-
-    def UI_submit(self, filename):
-        msg = None
-        if not any(isinstance(arg, symbolic.Expression)
-                   for call in self.calls for arg in call):
-            if self.userange:
-                if self.usesumrange:
-                    msg = ("Range and sum over are"
-                           "but %r and %r are not used in any call")
-                    msg %= (self.rangevar, self.sumrangevar)
-                else:
-                    msg = "Range is enabled but %r is not used in any call"
-                    msg %= self.rangevar
-            elif self.usesumrange:
-                msg = "Sum over is enabled but %r is not used in any call"
-                msg %= self.sumrangevar
-        if msg:
-            self.UI_dialog(
-                "warning", "range not used", msg, {
-                    "Ok": (self.submit, (filename,)),
-                    "Cancel": None
-                })
-        else:
-            self.submit(filename)
 
     def UI_call_add(self):
         self.calls.append([""])

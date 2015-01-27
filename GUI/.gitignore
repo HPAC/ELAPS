@@ -3,3 +3,5 @@
 .viewerstate.py
 reports/*
 !reports/.gitignore
+states/*
+!states/.gitignore

@@ -244,7 +244,7 @@ class QCall(QtGui.QFrame):
                 width += sender.minimumSizeHint().width()
                 height = sender.sizeHint().height()
                 sender.setFixedSize(max(height, width), height)
-        if self.viewer.setting:
+        if self.viewer.Qt_setting:
             return
         if isinstance(sender, QtGui.QComboBox):
             val = str(sender.currentText())
