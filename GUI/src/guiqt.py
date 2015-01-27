@@ -69,7 +69,6 @@ class GUI_Qt(GUI):
             # ranges
             rangesM = menu.addMenu("Ranges")
 
-
             # ranges > usentrange
             self.Qt_usentrange = QtGui.QAction("#threads range", window)
             rangesM.addAction(self.Qt_usentrange)
@@ -132,7 +131,9 @@ class GUI_Qt(GUI):
             self.Qt_sampler.currentIndexChanged.connect(self.Qt_sampler_change)
 
             # sampler > about
-            icon = self.app.style().standardIcon(QtGui.QStyle.SP_FileDialogInfoView)
+            icon = self.app.style().standardIcon(
+                QtGui.QStyle.SP_FileDialogInfoView
+            )
             about = QtGui.QAction(icon, "about", window)
             about.triggered.connect(self.Qt_sampler_about)
             samplerT.addAction(about)
@@ -318,10 +319,10 @@ class GUI_Qt(GUI):
                 None: QtGui.QColor(0, 0, 255, 0),
                 "maxfront": QtGui.QColor(127, 127, 255, 127),
                 "maxback": QtGui.QPen(QtGui.QColor(127, 127, 255, 127), 0,
-                                    style=QtCore.Qt.DashLine),
+                                      style=QtCore.Qt.DashLine),
                 "minfront": QtGui.QColor(127, 127, 255),
                 "minback": QtGui.QPen(QtGui.QColor(127, 127, 255), 0,
-                                    style=QtCore.Qt.DashLine),
+                                      style=QtCore.Qt.DashLine),
             }
             self.Qt_brushes = {
                 "max": QtGui.QColor(255, 255, 255, 127),
