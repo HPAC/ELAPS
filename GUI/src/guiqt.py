@@ -281,6 +281,7 @@ class GUI_Qt(GUI):
             window.addToolBar(QtCore.Qt.RightToolBarArea, self.Qt_counters)
             self.Qt_counters.setOrientation(QtCore.Qt.Vertical)
             self.Qt_Qcounters = []
+            self.Qt_counters.addWidget(QtGui.QLabel("PAPI Counters:"))
 
         def create_calls():
             # window > calls

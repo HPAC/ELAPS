@@ -1062,12 +1062,10 @@ class GUI(object):
     def UI_usesumrange_change(self, state):
         if not state:
             for call in self.calls:
-                print(call)
                 for argid, arg in enumerate(call):
                     call[argid] = self.range_eval(
                         arg, sumrangeval=self.sumrange[-1], dorange=False
                     )
-                print(call)
             self.data_update()
             self.UI_calls_set()
         self.usesumrange = state
