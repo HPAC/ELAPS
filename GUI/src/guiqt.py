@@ -431,8 +431,7 @@ class GUI_Qt(GUI):
 
     def UI_counters_set(self):
         self.setting = True
-        Qcounters = self.Qt_counters.children()[1:]
-        for Qcounter, countername in zip(Qcounters, self.counters):
+        for Qcounter, countername in zip(self.Qt_Qcounters, self.counters):
             index = Qcounter.findData(QtCore.QVariant(countername))
             Qcounter.setCurrentIndex(index)
             tip = ""
