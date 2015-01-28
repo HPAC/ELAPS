@@ -219,10 +219,11 @@ class GUI(object):
         info += "CPU:\t%s\n" % sampler["cpu_model"]
         info += "Mhz:\t%.2f\n" % (sampler["frequency"] / 1e6)
         info += "Cores:\t%d\n" % sampler["nt_max"]
-        info += "Gflops/s:\t%.2f (peak)" % (
-            sampler["dflops/cycle"] * sampler["frequency"] * sampler["nt_max"]
-            / 1e9
-        )
+        if "dflops/cycle" in sampler:
+            info += "Gflops/s:\t%.2f (peak)" % (
+                sampler["dflops/cycle"] * sampler["frequency"] * sampler["nt_max"]
+                / 1e9
+            )
         return info
 
     # range routines

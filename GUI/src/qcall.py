@@ -23,7 +23,6 @@ class QCall(QtGui.QListWidgetItem):
         self.widget = QtGui.QWidget()
         layout = QtGui.QGridLayout()
         self.widget.setLayout(layout)
-        # layout.setContentsMargins(5, 5, 5, 5)
         layout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
 
         # routine
@@ -54,19 +53,15 @@ class QCall(QtGui.QListWidgetItem):
 
     def update_size(self):
         argheight = 0
-        labelheight = 0
         layout = self.widget.layout()
         for i, Qarg in enumerate(self.Qt_args):
-            item = layout.itemAtPosition(0, i)
-            if item:
-                labelheight = max(labelheight,
-                                  item.widget().sizeHint().height())
             argheight = max(argheight, Qarg.size().height())
+        lineheight = self.widget.fontMetrics().lineSpacing()
         margins = layout.contentsMargins()
         top = margins.top()
         bottom = margins.bottom()
         spacing = layout.spacing()
-        height = top + labelheight + spacing + argheight + bottom
+        height = top + lineheight + spacing + argheight + bottom + 4
         size = self.widget.sizeHint()
         size.setHeight(height)
         self.setSizeHint(size)
