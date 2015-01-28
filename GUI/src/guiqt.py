@@ -21,20 +21,25 @@ class GUI_Qt(GUI):
     def state_init(self, load=True):
         if load:
             settings = QtCore.QSettings("HPAC", "Sampler")
+            self.Qt_setting = True
             self.Qt_window.restoreGeometry(
                 settings.value("geometry").toByteArray()
             )
             self.Qt_window.restoreState(
                 settings.value("windowState").toByteArray()
             )
+            self.Qt_setting = False
             try:
                 self.state_fromstring(str(
                     settings.value("appState").toString()
                 ))
             except:
                 self.state_reset()
+        else:
+            self.state_reset()
 
     def UI_init(self):
+        self.Qt_setting = True
         # window
         self.Qt_window = QtGui.QMainWindow()
         window = self.Qt_window
@@ -357,6 +362,11 @@ class GUI_Qt(GUI):
             self.Qt_countersD.setObjectName("PAPI Coutners")
             self.Qt_counters = QtGui.QWidget()
             self.Qt_countersD.setWidget(self.Qt_counters)
+            self.Qt_counters.setLayout(QtGui.QVBoxLayout())
+            self.Qt_counters.setSizePolicy(
+                QtGui.QSizePolicy.Minimum,
+                QtGui.QSizePolicy.Fixed,
+            )
             self.Qt_Qcounters = []
 
         def create_calls():
@@ -592,9 +602,10 @@ class GUI_Qt(GUI):
             Qcounter.deleteLater()
 
         # add new
+        layout = self.Qt_counters.layout()
         for _ in range(self.sampler["papi_counters_max"]):
             Qcounter = QtGui.QComboBox()
-            self.Qt_counters.addWidget(Qcounter)
+            layout.addWidget(Qcounter)
             Qcounter.addItem("", QtCore.QVariant(""))
             for i, name in enumerate(self.sampler["papi_counters_avail"]):
                 event = papi.events[name]
