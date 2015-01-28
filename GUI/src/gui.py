@@ -15,7 +15,7 @@ from __builtin__ import intern  # fix for pyflake error
 
 class GUI(object):
     requiredbuildversion = 1422278229
-    requiredstateversion = 1422278229
+    requiredstateversion = 1422385928
     state = {}
 
     def __init__(self, loadstate=True):
@@ -30,9 +30,9 @@ class GUI(object):
         self.backends_init()
         self.samplers_init()
         self.signatures_init()
+        self.UI_init()
         self.state_init(loadstate)
         self.jobprogress_init()
-        self.UI_init()
         self.UI_setall()
 
     # state access attributes
@@ -125,7 +125,6 @@ class GUI(object):
                 self.state_reset()
         else:
             self.state_reset()
-        self.state_write()
 
     def jobprogress_init(self):
         self.jobprogress = []
@@ -166,6 +165,7 @@ class GUI(object):
             "userange": True,
             "usesumrange": False,
             "usepapi": False,
+            "useheader": False,
             "usevary": False,
             "showargs": {
                 "flags": True,
@@ -174,6 +174,7 @@ class GUI(object):
                 "infos": False
             },
             "counters": sampler["papi_counters_max"] * [None],
+            "header": "# script header\n",
             "ntrange": (1, 1, 1),
             "rangevar": "n",
             "range": (8, 32, 1000),
@@ -192,13 +193,16 @@ class GUI(object):
             ]
         self.state_fromflat(state)
 
+    def state_fromstring(self, string):
+        state = eval(string, symbolic.__dict__)
+        if state["stateversion"] < self.requiredstateversion:
+            raise Exception
+        self.state_fromflat(state)
+
     def state_load(self, filename):
         try:
             with open(filename) as fin:
-                state = eval(fin.read(), symbolic.__dict__)
-            if state["stateversion"] < self.requiredstateversion:
-                raise Exception
-            self.state_fromflat(state)
+                self.state_fromstring(fin.read())
             self.log("loaded state from", os.path.relpath(filename))
             return True
         except:
@@ -542,7 +546,6 @@ class GUI(object):
         self.calls[callid] = call
         self.connections_update()
         self.data_update()
-        self.state_write()
         self.UI_call_set(callid, 0)
 
     def arg_set(self, callid, argid, value):
@@ -556,7 +559,6 @@ class GUI(object):
             self.connections_update()
             self.connections_apply(callid)
             self.data_update()
-            self.state_write()
             self.UI_calls_set(callid, argid)
             self.UI_data_viz()
         elif isinstance(arg, signature.Scalar):
@@ -568,7 +570,6 @@ class GUI(object):
             self.connections_apply(callid, argid)
             self.infer_lds()
             self.data_update()
-            self.state_write()
             self.UI_calls_set(callid, argid)
             self.UI_data_viz()
         elif isinstance(arg, signature.Data):
@@ -581,12 +582,10 @@ class GUI(object):
                 call[argid] = value
                 self.connections_update()
                 self.data_update()
-                self.state_write()
                 self.UI_call_set(callid, argid)
         elif isinstance(arg, (signature.Ld, signature.Inc)):
             call[argid] = self.range_parse(value)
             self.data_update()
-            self.state_write()
             self.UI_calls_set(callid, argid)
         # calls without proper signatures
         else:
@@ -602,7 +601,6 @@ class GUI(object):
                     call[argid] = "[" + str(parsed) + "]"
             else:
                 call[argid] = self.range_parse(value)
-            self.state_write()
             self.UI_call_set(callid, argid)
         self.UI_submit_setenabled()
 
@@ -647,7 +645,6 @@ class GUI(object):
         self.connections_apply(callid)
         self.infer_lds()
         self.data_update()
-        self.state_write()
         self.UI_calls_set()
 
     def data_override_cancel(self, callid, argid, value):
@@ -813,6 +810,9 @@ class GUI(object):
         if header:
             script += header.format(nt=self.nt) + "\n"
 
+        if self.useheader:
+            script += self.header + "\n"
+
         # report header
         reportinfo = self.state.copy()
         sampler = self.sampler.copy()
@@ -913,6 +913,9 @@ class GUI(object):
         self.UI_counters_setvisible()
         self.UI_counters_setoptions()
         self.UI_counters_set()
+        self.UI_useheader_set()
+        self.UI_header_setvisible()
+        self.UI_header_set()
         self.UI_usentrange_apply()
         self.UI_ntrange_set()
         self.UI_userange_apply()
@@ -925,6 +928,9 @@ class GUI(object):
         self.UI_submit_setenabled()
 
     # event handlers
+    def UI_window_close(self):
+        self.state_write()
+
     def UI_submit(self, filename):
         msg = None
         if not any(isinstance(arg, symbolic.Expression)
@@ -979,26 +985,28 @@ class GUI(object):
 
     def UI_nt_change(self, nt):
         self.nt = nt
-        self.state_write()
 
     def UI_usepapi_change(self, state):
         self.usepapi = state
-        self.state_write()
         self.UI_counters_setvisible()
+
+    def UI_useheader_change(self, state):
+        self.useheader = state
+        self.UI_header_setvisible()
 
     def UI_showargs_change(self, name, state):
         self.showargs[name] = state
-        self.state_write()
         self.UI_showargs_apply()
 
     def UI_usevary_change(self, state):
         self.usevary = state
-        self.state_write()
         self.UI_usevary_apply()
 
     def UI_counters_change(self, counters):
         self.counters = counters
-        self.state_write()
+
+    def UI_header_change(self, header):
+        self.header = header
 
     def UI_usentrange_change(self, state):
         if state:
@@ -1014,7 +1022,6 @@ class GUI(object):
             self.data_update()
             self.UI_calls_set()
         self.usentrange = state
-        self.state_write()
         self.UI_userange_setenabled()
         self.UI_usentrange_apply()
 
@@ -1027,7 +1034,6 @@ class GUI(object):
         self.ntrange = ntrange
         self.nt = upper
         self.data_update()
-        self.state_write()
         self.UI_data_viz()
 
     def UI_userange_change(self, state):
@@ -1040,13 +1046,11 @@ class GUI(object):
             self.data_update()
             self.UI_calls_set()
         self.userange = state
-        self.state_write()
         self.UI_userange_setenabled()
         self.UI_userange_apply()
 
     def UI_rangevar_change(self, varname):
         self.rangevar_set(varname)
-        self.state_write()
 
     def UI_range_change(self, range):
         lower, step, upper = range
@@ -1056,7 +1060,6 @@ class GUI(object):
             return
         self.range = range
         self.data_update()
-        self.state_write()
         self.UI_data_viz()
 
     def UI_usesumrange_change(self, state):
@@ -1069,12 +1072,10 @@ class GUI(object):
             self.data_update()
             self.UI_calls_set()
         self.usesumrange = state
-        self.state_write()
         self.UI_usesumrange_apply()
 
     def UI_sumrangevar_change(self, varname):
         self.sumrangevar_set(varname)
-        self.state_write()
 
     def UI_sumrange_change(self, sumrange):
         lower, step, upper = sumrange
@@ -1089,23 +1090,19 @@ class GUI(object):
             return
         self.sumrange = (lower, step, upper)
         self.data_update()
-        self.state_write()
         self.UI_data_viz()
 
     def UI_nrep_change(self, nrep):
         self.nrep = nrep
-        self.state_write()
 
     def UI_call_add(self):
         self.calls.append([""])
-        self.state_write()
         self.UI_calls_init()
         self.UI_submit_setenabled()
 
     def UI_call_remove(self, callid):
         del self.calls[callid]
         self.connections_update()
-        self.state_write()
         self.UI_calls_init()
         self.UI_submit_setenabled()
 
@@ -1113,14 +1110,12 @@ class GUI(object):
         calls = self.calls
         calls[callid], calls[callid - 1] = calls[callid - 1], calls[callid]
         self.connections_update()
-        self.state_write()
         self.UI_calls_init()
 
     def UI_call_movedown(self, callid):
         calls = self.calls
         calls[callid + 1], calls[callid] = calls[callid], calls[callid + 1]
         self.connections_update()
-        self.state_write()
         self.UI_calls_init()
 
     def UI_arg_change(self, callid, argid, value):
@@ -1137,7 +1132,6 @@ class GUI(object):
             self.vary.add(name)
         else:
             self.vary.discard(name)
-        self.state_write()
         self.UI_data_viz()
 
     def UI_jobkill(self, jobid):
