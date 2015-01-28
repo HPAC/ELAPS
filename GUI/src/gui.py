@@ -23,8 +23,6 @@ class GUI(object):
             sys.path.append(thispath)
         self.rootpath = os.path.abspath(os.path.join(thispath, "..", ".."))
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
-        self.statepath = os.path.join(self.rootpath, "GUI", "states")
-        self.statefile = os.path.join(self.statepath, ".state.py")
 
         self.backends_init()
         self.samplers_init()
@@ -119,11 +117,7 @@ class GUI(object):
                  *sorted(self.signatures))
 
     def state_init(self, load=True):
-        if load:
-            if not self.state_load(self.statefile):
-                self.state_reset()
-        else:
-            self.state_reset()
+        self.state_reset()
 
     def jobprogress_init(self):
         self.jobprogress = []
@@ -213,14 +207,6 @@ class GUI(object):
         except:
             self.alert("could not load state from", os.path.relpath(filename))
             return False
-
-    def state_write(self, filename=None):
-        if filename is None:
-            filename = self.statefile
-        with open(filename, "w") as fout:
-            print(repr(self.state_toflat()), file=fout)
-        if filename != self.statefile:
-            self.log("written state to", filename)
 
     # info string
     def sampler_about_str(self):
@@ -935,9 +921,6 @@ class GUI(object):
         self.UI_submit_setenabled()
 
     # event handlers
-    def UI_window_close(self):
-        self.state_write()
-
     def UI_submit(self, filename):
         msg = None
         if not any(isinstance(arg, symbolic.Expression)
