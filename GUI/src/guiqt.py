@@ -378,7 +378,6 @@ class GUI_Qt(GUI):
             centralL.addWidget(self.Qt_calls)
             self.Qt_calls.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
             self.Qt_calls.model().layoutChanged.connect(self.Qt_calls_reorder)
-            self.Qt_Qcalls = []
             self.Qt_calls.focusOutEvent = self.Qt_calls_focusout
 
             # add
@@ -687,7 +686,6 @@ class GUI_Qt(GUI):
         self.Qt_setting = True
         # delete old
         self.Qt_calls.clear()
-        self.Qt_Qcalls = []
         # add new
         for callid in range(len(self.calls)):
             self.UI_call_add(callid)
@@ -699,33 +697,34 @@ class GUI_Qt(GUI):
         Qcall = QCall(self, callid)
         self.Qt_calls.addItem(Qcall)
         self.Qt_calls.setItemWidget(Qcall, Qcall.widget)
-        self.Qt_Qcalls.append(Qcall)
         Qcall.args_set()
 
     def UI_call_set(self, callid, fromargid=None):
         self.Qt_setting = True
-        self.Qt_Qcalls[callid].args_set(fromargid)
+        self.Qt_calls.item(callid).args_set(fromargid)
         self.Qt_setting = False
 
     def UI_calls_set(self, fromcallid=None, fromargid=None):
         self.Qt_setting = True
-        for callid, Qcall in enumerate(self.Qt_Qcalls):
-            Qcall.args_set(fromargid if fromcallid == callid else None)
+        for callid in range(self.Qt_calls.count()):
+            self.Qt_calls.item(callid).args_set(
+                fromargid if fromcallid == callid else None
+            )
         self.Qt_setting = False
 
     def UI_data_viz(self):
         self.Qt_setting = True
-        for Qcall in self.Qt_Qcalls:
-            Qcall.data_viz()
+        for callid in range(self.Qt_calls.count()):
+            self.Qt_calls.item(callid).data_viz()
         self.Qt_setting = False
 
     def UI_showargs_apply(self):
-        for Qcall in self.Qt_Qcalls:
-            Qcall.showargs_apply()
+        for callid in range(self.Qt_calls.count()):
+            self.Qt_calls.item(callid).showargs_apply()
 
     def UI_usevary_apply(self):
-        for Qcall in self.Qt_Qcalls:
-            Qcall.usevary_apply()
+        for callid in range(self.Qt_calls.count()):
+            self.Qt_calls.item(callid).usevary_apply()
 
     def UI_submit_setenabled(self):
         enabled = self.calls_checksanity()
@@ -952,14 +951,16 @@ class GUI_Qt(GUI):
         self.UI_call_add_click()
 
     def Qt_calls_reorder(self):
-        order = [self.Qt_calls.item(i).callid
-                 for i in range(self.Qt_calls.count())]
+        order = []
+        for i in range(self.Qt_calls.count()):
+            Qcall = self.Qt_calls.item(i)
+            order.append(Qcall.callid)
+            Qcall.callid = i
         self.UI_calls_reorder(order)
-        self.Qt_Qcalls = [self.Qt_Qcalls[i] for i in order]
 
     def Qt_calls_focusout(self, event):
-        for Qcall in self.Qt_Qcalls:
-            self.Qt_calls.setItemSelected(Qcall, False)
+        for callid in range(self.Qt_calls.count()):
+            self.Qt_calls.setItemSelected(self.Qt_calls.item(callid), False)
 
     def Qt_jobprogress_click(self):
         sender = self.app.sender()
