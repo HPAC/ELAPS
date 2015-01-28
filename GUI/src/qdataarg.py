@@ -28,6 +28,11 @@ class QDataArg(QtGui.QWidget):
         layout.setMargin(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        self.setSizePolicy(
+            QtGui.QSizePolicy.Fixed,
+            QtGui.QSizePolicy.Fixed
+        )
+
         # name
         self.Qt_name = QtGui.QLineEdit()
         layout.addWidget(self.Qt_name, 1, QtCore.Qt.AlignHCenter |
@@ -88,6 +93,12 @@ class QDataArg(QtGui.QWidget):
     # getter
     def text(self):
         return self.Qt_name.text()
+
+    def sizeHint(self):
+        return self.size()
+
+    def minimumSizeHint(self):
+        return self.size()
 
     # setters
     def set(self):
@@ -159,7 +170,7 @@ class QDataArg(QtGui.QWidget):
             self.viz_tensor(dimmin, dimmax)
 
     def viz_none(self):
-        hoff, woff = self.setsize(0, 0)
+        self.setsize(0, 0)
         self.polygonmax = None
         self.linesmaxfront = None
         self.linesmaxback = None

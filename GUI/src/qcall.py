@@ -7,7 +7,7 @@ from qdataarg import QDataArg
 from PyQt4 import QtCore, QtGui
 
 
-class QCall(QtGui.QFrame):
+class QCall(QtGui.QListWidgetItem):
     def __init__(self, viewer, callid):
         QtGui.QGroupBox.__init__(self)
         self.viewer = viewer
@@ -15,54 +15,16 @@ class QCall(QtGui.QFrame):
         self.sig = None
 
         self.UI_init()
-        self.movers_setvisibility()
 
     def UI_init(self):
-        # frame
-        self.setFrameStyle(QtGui.QFrame.StyledPanel | QtGui.QFrame.Raised)
-
         routines = list(self.viewer.sampler["kernels"])
 
         # layout
+        self.widget = QtGui.QWidget()
         layout = QtGui.QGridLayout()
-        self.setLayout(layout)
-        layout.setContentsMargins(5, 5, 5, 5)
+        self.widget.setLayout(layout)
+        # layout.setContentsMargins(5, 5, 5, 5)
         layout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
-
-        # buttons
-        buttonsL = QtGui.QHBoxLayout()
-        layout.addLayout(buttonsL, 0, 0)
-
-        # buttons > remove
-        self.Qt_removeS = QtGui.QStackedWidget()
-        buttonsL.addWidget(self.Qt_removeS)
-        remove = QtGui.QToolButton()
-        self.Qt_removeS.addWidget(remove)
-        icon = self.style().standardIcon(QtGui.QStyle.SP_DialogDiscardButton)
-        remove.setIcon(icon)
-        remove.clicked.connect(self.remove_click)
-        self.Qt_removeS.addWidget(QtGui.QWidget())
-
-        # buttons > down
-        self.Qt_movedownS = QtGui.QStackedWidget()
-        buttonsL.addWidget(self.Qt_movedownS)
-        movedown = QtGui.QToolButton()
-        movedown.setArrowType(QtCore.Qt.DownArrow)
-        self.Qt_movedownS.addWidget(movedown)
-        movedown.clicked.connect(self.movedown_click)
-        self.Qt_movedownS.addWidget(QtGui.QWidget())
-
-        # buttons > up
-        self.Qt_moveupS = QtGui.QStackedWidget()
-        buttonsL.addWidget(self.Qt_moveupS)
-        moveup = QtGui.QToolButton()
-        moveup.setArrowType(QtCore.Qt.UpArrow)
-        self.Qt_moveupS.addWidget(moveup)
-        moveup.clicked.connect(self.moveup_click)
-        self.Qt_moveupS.addWidget(QtGui.QWidget())
-
-        # buttons
-        buttonsL.addStretch(1)
 
         # routine
         routine = QtGui.QLineEdit()
@@ -77,27 +39,37 @@ class QCall(QtGui.QFrame):
         # spaces
         layout.setColumnStretch(100, 1)
 
+        self.Qt_remove = QtGui.QToolButton()
+        layout.addWidget(self.Qt_remove, 1, 101)
+        icon = self.widget.style().standardIcon(
+            QtGui.QStyle.SP_DialogCloseButton
+        )
+        self.Qt_remove.setIcon(icon)
+        self.Qt_remove.clicked.connect(self.remove_click)
+
         # attributes
         self.Qt_args = [routine]
         self.Qt_arglabels = [None]
         self.sig = None
 
-    def movers_setvisibility(self):
-        ncalls = len(self.viewer.calls)
-        if ncalls > 1:
-            self.Qt_removeS.setCurrentIndex(0)
-            if self.callid > 0:
-                self.Qt_moveupS.setCurrentIndex(0)
-            else:
-                self.Qt_moveupS.setCurrentIndex(1)
-            if self.callid < ncalls - 1:
-                self.Qt_movedownS.setCurrentIndex(0)
-            else:
-                self.Qt_movedownS.setCurrentIndex(1)
-        else:
-            self.Qt_removeS.setCurrentIndex(1)
-            self.Qt_moveupS.setCurrentIndex(1)
-            self.Qt_movedownS.setCurrentIndex(1)
+    def update_size(self):
+        argheight = 0
+        labelheight = 0
+        layout = self.widget.layout()
+        for i, Qarg in enumerate(self.Qt_args):
+            item = layout.itemAtPosition(0, i)
+            if item:
+                labelheight = max(labelheight,
+                                  item.widget().sizeHint().height())
+            argheight = max(argheight, Qarg.size().height())
+        margins = layout.contentsMargins()
+        top = margins.top()
+        bottom = margins.bottom()
+        spacing = layout.spacing()
+        height = top + labelheight + spacing + argheight + bottom
+        size = self.widget.sizeHint()
+        size.setHeight(height)
+        self.setSizeHint(size)
 
     def args_init(self):
         call = self.viewer.calls[self.callid]
@@ -126,7 +98,7 @@ class QCall(QtGui.QFrame):
             Qarglabel = QtGui.QLabel(argname)
             if tooltip:
                 Qarglabel.setToolTip(tooltip)
-            self.layout().addWidget(Qarglabel, 0, argid)
+            self.widget.layout().addWidget(Qarglabel, 0, argid)
             self.Qt_arglabels.append(Qarglabel)
             Qarglabel.setAlignment(QtCore.Qt.AlignCenter)
             if self.sig:
@@ -149,7 +121,7 @@ class QCall(QtGui.QFrame):
                     Qarg.setToolTip(tooltip)
             Qarg.argid = argid
             Qarg.setProperty("invalid", True)
-            self.layout().addWidget(Qarg, 1, argid)
+            self.widget.layout().addWidget(Qarg, 1, argid)
             self.Qt_args.append(Qarg)
         if self.sig:
             self.showargs_apply()
@@ -163,6 +135,7 @@ class QCall(QtGui.QFrame):
         for Qarglabel in self.Qt_arglabels[1:]:
             Qarglabel.deleteLater()
         self.Qt_arglabels = self.Qt_arglabels[:1]
+        self.update_size()
         self.sig = None
 
     def showargs_apply(self):
@@ -217,22 +190,18 @@ class QCall(QtGui.QFrame):
                 Qarg.setCurrentIndex(Qarg.findText(val))
             elif isinstance(Qarg, QDataArg):
                 Qarg.set()
+        self.update_size()
 
     def data_viz(self):
         if not self.sig:
             return
         for argid in self.viewer.calls[self.callid].sig.dataargs():
             self.Qt_args[argid].viz()
+        self.update_size()
 
     # event handlers
     def remove_click(self):
         self.viewer.UI_call_remove(self.callid)
-
-    def moveup_click(self):
-        self.viewer.UI_call_moveup(self.callid)
-
-    def movedown_click(self):
-        self.viewer.UI_call_movedown(self.callid)
 
     def arg_change(self):
         sender = self.viewer.app.sender()

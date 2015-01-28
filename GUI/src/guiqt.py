@@ -58,22 +58,14 @@ class GUI_Qt(GUI):
             fileM.addSeparator()
 
             # file > reset
-            reset = QtGui.QAction("Reset State", window)
+            reset = QtGui.QAction("Reset Setup", window)
             fileM.addAction(reset)
-            reset.setShortcut(QtGui.QKeySequence.New)
             reset.triggered.connect(self.Qt_state_reset_click)
 
             # file > load
-            load = QtGui.QAction("Load State", window)
+            load = QtGui.QAction("Import Setup ...", window)
             fileM.addAction(load)
-            load.setShortcut(QtGui.QKeySequence.Open)
             load.triggered.connect(self.Qt_state_load_click)
-
-            # file > save
-            save = QtGui.QAction("Save State", window)
-            fileM.addAction(save)
-            save.setShortcut(QtGui.QKeySequence.Save)
-            save.triggered.connect(self.Qt_state_save_click)
 
             # file
             fileM.addSeparator()
@@ -144,6 +136,13 @@ class GUI_Qt(GUI):
                 showarg.argtype = name
                 self.Qt_showargs[name] = showarg
 
+            # view
+            viewM.addSeparator()
+
+            showinfo = QtGui.QAction("Show Sampler Info", window)
+            viewM.addAction(showinfo)
+            showinfo.triggered.connect(self.Qt_sampler_about_show)
+
         def create_sampler():
             samplerT = window.addToolBar("Sampler")
             samplerT.setMovable(False)
@@ -155,20 +154,29 @@ class GUI_Qt(GUI):
             self.Qt_sampler.addItems(sorted(self.samplers.keys()))
             self.Qt_sampler.currentIndexChanged.connect(self.Qt_sampler_change)
 
-            # about
-            icon = self.app.style().standardIcon(
-                QtGui.QStyle.SP_FileDialogInfoView
-            )
-            about = QtGui.QAction(icon, "about", window)
-            about.triggered.connect(self.Qt_sampler_about)
-            samplerT.addAction(about)
-
             # nt
             self.Qt_ntlabel = QtGui.QLabel("#threads:")
             samplerT.addWidget(self.Qt_ntlabel)
             self.Qt_nt = QtGui.QComboBox()
             samplerT.addWidget(self.Qt_nt)
             self.Qt_nt.currentIndexChanged.connect(self.Qt_nt_change)
+
+            # about
+            self.Qt_sampler_aboutD = QtGui.QDockWidget("Sampler")
+            self.Qt_sampler_aboutD.setObjectName("About Sampler")
+            self.Qt_sampler_aboutD.setFeatures(
+                QtGui.QDockWidget.DockWidgetClosable |
+                QtGui.QDockWidget.DockWidgetFloatable |
+                QtGui.QDockWidget.DockWidgetMovable |
+                QtGui.QDockWidget.DockWidgetVerticalTitleBar
+            )
+            self.Qt_window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
+                                         self.Qt_sampler_aboutD)
+            self.Qt_sampler_aboutD.setFloating(True)
+            self.Qt_sampler_aboutD.hide()
+            self.Qt_sampler_about = QtGui.QLabel()
+            self.Qt_sampler_aboutD.setWidget(self.Qt_sampler_about)
+            self.Qt_sampler_about.setContentsMargins(4, 4, 4, 4)
 
         def create_submit():
             samplerT = window.addToolBar("Submit")
@@ -192,9 +200,7 @@ class GUI_Qt(GUI):
             window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
                                  rangesD)
             rangesD.setObjectName("Ranges")
-            rangesD.setFeatures(QtGui.QDockWidget.DockWidgetFloatable |
-                                QtGui.QDockWidget.DockWidgetMovable |
-                                QtGui.QDockWidget.DockWidgetVerticalTitleBar)
+            rangesD.setFeatures(QtGui.QDockWidget.DockWidgetVerticalTitleBar)
             rangesW = QtGui.QWidget()
             rangesD.setWidget(rangesW)
             rangesW.setSizePolicy(
@@ -354,30 +360,24 @@ class GUI_Qt(GUI):
             self.Qt_Qcounters = []
 
         def create_calls():
-            # window > calls
-            callsSA = QtGui.QScrollArea()
-            window.setCentralWidget(callsSA)
-            self.Qt_calls = QtGui.QWidget()
-            callsSA.setWidget(self.Qt_calls)
-            callsL = QtGui.QVBoxLayout()
-            self.Qt_calls.setLayout(callsL)
-            callsL.setSizeConstraint(QtGui.QLayout.SetFixedSize)
-            self.Qt_calls.setSizePolicy(
-                QtGui.QSizePolicy.Expanding,
-                QtGui.QSizePolicy.Expanding
-            )
+            centralW = QtGui.QWidget()
+            window.setCentralWidget(centralW)
+            centralL = QtGui.QVBoxLayout()
+            centralW.setLayout(centralL)
+            self.Qt_calls = QtGui.QListWidget()
+            centralL.addWidget(self.Qt_calls)
+            self.Qt_calls.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
+            self.Qt_calls.model().layoutChanged.connect(self.Qt_calls_reorder)
             self.Qt_Qcalls = []
+            self.Qt_calls.focusOutEvent = self.Qt_calls_focusout
 
-            # window > calls > add
+            # add
             add = QtGui.QPushButton("+")
-            callsL.addWidget(add)
-            add.clicked.connect(self.Qt_call_add)
-
-            # window > calls
-            callsL.addStretch(1)
+            centralL.addWidget(add)
+            add.clicked.connect(self.Qt_call_add_click)
+            add.setShortcut(QtGui.QKeySequence.New)
 
         def create_jobprogress():
-            # window
             self.Qt_jobprogressD = QtGui.QDockWidget("Job Progress")
             window.addDockWidget(QtCore.Qt.BottomDockWidgetArea,
                                  self.Qt_jobprogressD)
@@ -407,26 +407,35 @@ class GUI_Qt(GUI):
                     background: #FFDDDD;
                 }
                 QScrollArea {
-                    border: 1px solid palette(dark);
+                    border: 0px;
+                    background: palette(dark);
+                }
+                QScrollArea > * > QWidget {
+                    background: palette(dark);
                 }
                 QScrollArea QCall {
-                    background: palette(light);
+                    background: palette(window);
                 }
             """)
 
+            palette = self.app.palette()
+            dark = palette.text().color()
+            darka = palette.text().color()
+            darka.setAlpha(127)
             # pens and brushes (for dataargs)
             self.Qt_pens = {
                 None: QtGui.QColor(0, 0, 255, 0),
-                "maxfront": QtGui.QColor(127, 127, 255, 127),
-                "maxback": QtGui.QPen(QtGui.QColor(127, 127, 255, 127), 0,
-                                      style=QtCore.Qt.DashLine),
-                "minfront": QtGui.QColor(127, 127, 255),
-                "minback": QtGui.QPen(QtGui.QColor(127, 127, 255), 0,
-                                      style=QtCore.Qt.DashLine),
+                "maxfront": darka,
+                "maxback": QtGui.QPen(darka, 0, style=QtCore.Qt.DashLine),
+                "minfront": dark,
+                "minback": QtGui.QPen(dark, 0, style=QtCore.Qt.DashLine),
             }
+            window = palette.window().color()
+            windowa = palette.window().color()
+            windowa.setAlpha(127)
             self.Qt_brushes = {
-                "max": QtGui.QColor(255, 255, 255, 127),
-                "min": QtGui.QColor(255, 255, 255, 255),
+                "max": windowa,
+                "min": window
             }
 
         create_menus()
@@ -490,6 +499,9 @@ class GUI_Qt(GUI):
             self.Qt_sampler.findText(self.samplername)
         )
         self.Qt_setting = False
+
+    def UI_sampler_about_set(self):
+        self.Qt_sampler_about.setText(self.sampler_about_str())
 
     def UI_nt_setmax(self):
         self.Qt_setting = True
@@ -663,19 +675,21 @@ class GUI_Qt(GUI):
     def UI_calls_init(self):
         self.Qt_setting = True
         # delete old
-        for Qcall in self.Qt_Qcalls:
-            Qcall.deleteLater()
+        self.Qt_calls.clear()
         self.Qt_Qcalls = []
         # add new
-        QcallsL = self.Qt_calls.layout()
         for callid in range(len(self.calls)):
-            Qcall = QCall(self, callid)
-            QcallsL.insertWidget(callid, Qcall)
-            self.Qt_Qcalls.append(Qcall)
-            Qcall.args_set()
-        QcallsL.invalidate()
-        QcallsL.activate()
+            self.UI_call_add(callid)
         self.Qt_setting = False
+
+    def UI_call_add(self, callid=None):
+        if callid is None:
+            callid = len(self.calls) - 1
+        Qcall = QCall(self, callid)
+        self.Qt_calls.addItem(Qcall)
+        self.Qt_calls.setItemWidget(Qcall, Qcall.widget)
+        self.Qt_Qcalls.append(Qcall)
+        Qcall.args_set()
 
     def UI_call_set(self, callid, fromargid=None):
         self.Qt_setting = True
@@ -771,7 +785,6 @@ class GUI_Qt(GUI):
     def Qt_window_close(self, event):
         self.UI_window_close()
 
-
     def Qt_submit_click(self):
         filename = QtGui.QFileDialog.getSaveFileName(
             self.Qt_window,
@@ -788,30 +801,20 @@ class GUI_Qt(GUI):
     def Qt_state_load_click(self):
         filename = QtGui.QFileDialog.getOpenFileName(
             self.Qt_window,
-            "Load State",
-            self.statepath,
-            "*.state"
+            "Import Setup from Report",
+            self.reportpath,
+            "*.smpl"
         )
         if filename:
-            self.UI_state_load(str(filename))
-
-    def Qt_state_save_click(self):
-        filename = QtGui.QFileDialog.getSaveFileName(
-            self.Qt_window,
-            "Save State",
-            self.statepath,
-            "*.state"
-        )
-        if filename:
-            self.UI_state_save(str(filename))
+            self.UI_state_import(str(filename))
 
     def Qt_sampler_change(self):
         if self.Qt_setting:
             return
         self.UI_sampler_change(str(self.Qt_sampler.currentText()))
 
-    def Qt_sampler_about(self):
-        self.UI_alert(self.get_infostr(), title=self.samplername)
+    def Qt_sampler_about_show(self):
+        self.Qt_sampler_aboutD.show()
 
     def Qt_nt_change(self):
         if self.Qt_setting:
@@ -934,8 +937,18 @@ class GUI_Qt(GUI):
         upper = parts[-1] if len(parts) >= 2 else None
         self.UI_sumrange_change((lower, step, upper))
 
-    def Qt_call_add(self):
-        self.UI_call_add()
+    def Qt_call_add_click(self):
+        self.UI_call_add_click()
+
+    def Qt_calls_reorder(self):
+        order = [self.Qt_calls.item(i).callid
+                 for i in range(self.Qt_calls.count())]
+        self.UI_calls_reorder(order)
+        self.Qt_Qcalls = [self.Qt_Qcalls[i] for i in order]
+
+    def Qt_calls_focusout(self, event):
+        for Qcall in self.Qt_Qcalls:
+            self.Qt_calls.setItemSelected(Qcall, False)
 
     def Qt_jobprogress_click(self):
         sender = self.app.sender()

@@ -5,10 +5,10 @@ Sampler:
 
 
 GUI:
-- environment variables
 - work variables
 - "file" backend
 
+- (status tips)
 - (include BLAS/LAPACK documentation from doxygen)
 - (nt slider/text input)
 - (multiple BLAS at once)
@@ -18,6 +18,8 @@ Viewer:
 - barplots
 
 - consistent ordering of lines (plot, export)
+
+- mainwindow layout
 
 - (memory metrics)
 

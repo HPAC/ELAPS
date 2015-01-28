@@ -191,6 +191,7 @@ class Viewer(object):
         evaldir.update(signature.__dict__)
         try:
             report = eval(fin.readline(), evaldir)
+            report["counters"] = filter(None, report["counters"])
             report["starttime"] = int(fin.readline())
         except:
             raise IOError(name, "doesn't contain a valid report")

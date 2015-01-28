@@ -7,7 +7,6 @@ import symbolic
 import sys
 import os
 import imp
-import pprint
 import time
 from collections import defaultdict
 from __builtin__ import intern  # fix for pyflake error
@@ -194,9 +193,15 @@ class GUI(object):
         self.state_fromflat(state)
 
     def state_fromstring(self, string):
-        state = eval(string, symbolic.__dict__)
+        env = symbolic.__dict__.copy()
+        env.update(signature.__dict__)
+        state = eval(string, env)
         if state["stateversion"] < self.requiredstateversion:
             raise Exception
+        if "sampler" in state:
+            del state["sampler"]
+        if "submittime" in state:
+            del state["submittime"]
         self.state_fromflat(state)
 
     def state_load(self, filename):
@@ -213,12 +218,12 @@ class GUI(object):
         if filename is None:
             filename = self.statefile
         with open(filename, "w") as fout:
-            print(pprint.pformat(self.state_toflat(), 4), file=fout)
+            print(repr(self.state_toflat()), file=fout)
         if filename != self.statefile:
             self.log("written state to", filename)
 
     # info string
-    def get_infostr(self):
+    def sampler_about_str(self):
         sampler = self.sampler
         info = "System:\t%s\n" % sampler["system_name"]
         info += "BLAS:\t%s\n" % sampler["blas_name"]
@@ -479,6 +484,7 @@ class GUI(object):
         self.UI_usepapi_set()
         self.UI_counters_setoptions()
         self.UI_counters_set()
+        self.UI_sampler_about_set()
         self.UI_calls_init()
 
     def rangevar_set(self, varname):
@@ -546,6 +552,7 @@ class GUI(object):
         self.calls[callid] = call
         self.connections_update()
         self.data_update()
+        self.UI_submit_setenabled()
         self.UI_call_set(callid, 0)
 
     def arg_set(self, callid, argid, value):
@@ -816,7 +823,6 @@ class GUI(object):
         # report header
         reportinfo = self.state.copy()
         sampler = self.sampler.copy()
-        reportinfo["counters"] = tuple(filter(None, reportinfo["counters"]))
         del sampler["kernels"]
         reportinfo.update({
             "sampler": sampler,
@@ -899,6 +905,7 @@ class GUI(object):
 
     def UI_setall(self):
         self.UI_sampler_set()
+        self.UI_sampler_about_set()
         self.UI_nt_setmax()
         self.UI_nt_set()
         self.UI_nrep_set()
@@ -959,12 +966,9 @@ class GUI(object):
         self.state_reset()
         self.UI_setall()
 
-    def UI_state_load(self, filename):
+    def UI_state_import(self, filename):
         self.state_load(filename)
         self.UI_setall()
-
-    def UI_state_save(self, filename):
-        self.state_write(filename)
 
     def UI_sampler_change(self, samplername):
         newsampler = self.samplers[samplername]
@@ -1095,9 +1099,9 @@ class GUI(object):
     def UI_nrep_change(self, nrep):
         self.nrep = nrep
 
-    def UI_call_add(self):
+    def UI_call_add_click(self):
         self.calls.append([""])
-        self.UI_calls_init()
+        self.UI_call_add()
         self.UI_submit_setenabled()
 
     def UI_call_remove(self, callid):
@@ -1106,17 +1110,9 @@ class GUI(object):
         self.UI_calls_init()
         self.UI_submit_setenabled()
 
-    def UI_call_moveup(self, callid):
-        calls = self.calls
-        calls[callid], calls[callid - 1] = calls[callid - 1], calls[callid]
+    def UI_calls_reorder(self, order):
+        self.calls = [self.calls[i] for i in order]
         self.connections_update()
-        self.UI_calls_init()
-
-    def UI_call_movedown(self, callid):
-        calls = self.calls
-        calls[callid + 1], calls[callid] = calls[callid], calls[callid + 1]
-        self.connections_update()
-        self.UI_calls_init()
 
     def UI_arg_change(self, callid, argid, value):
         if argid == 0:
