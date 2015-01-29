@@ -239,6 +239,20 @@ class Viewer_Qt(Viewer):
             self.Qt_reports.resizeColumnToContents(colid)
 
     # setters
+    def UI_metrics_update(self):
+        self.Qt_setting = True
+        self.Qt_metric.clear()
+        for i, name in enumerate(sorted(self.metrics)):
+            self.Qt_metric.addItem(self.metricnames[name],
+                                   QtCore.QVariant(name))
+            self.Qt_metric.setItemData(
+                i, self.metrics[name].__doc__.strip(), QtCore.Qt.ToolTipRole
+            )
+        self.Qt_setting = False
+        self.Qt_metric.setCurrentIndex(
+            self.Qt_metric.findData(QtCore.QVariant(self.metric_selected))
+        )
+
     def UI_metric_set(self):
         self.Qt_metric.setCurrentIndex(
             self.Qt_metric.findData(QtCore.QVariant(self.metric_selected))
@@ -327,21 +341,10 @@ class Viewer_Qt(Viewer):
         report = self.reports[reportid]
         Qreport = self.Qt_Qreports[reportid]
         for callid, Qitem in Qreport.items.iteritems():
-            Qitem.checkbox.setChecked(report["plotting"][callid])
+            Qitem.checkbox.setChecked((reportid, callid) in self.plots_showing)
             color = report["plotcolors"][callid]
             Qitem.color.setStyleSheet("background-color: %s;" % color)
             Qitem.color.setToolTip(color)
-
-    def UI_metriclist_update(self):
-        self.Qt_setting = True
-        self.Qt_metric.clear()
-        for name in sorted(self.metrics):
-            self.Qt_metric.addItem(self.metricnames[name],
-                                   QtCore.QVariant(name))
-        self.Qt_setting = False
-        self.Qt_metric.setCurrentIndex(
-            self.Qt_metric.findData(QtCore.QVariant(self.metric_selected))
-        )
 
     def UI_metricinfo_set(self, infostr):
         self.Qt_metricinfo.setText(infostr)

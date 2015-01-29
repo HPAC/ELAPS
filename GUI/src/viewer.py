@@ -34,7 +34,6 @@ class Viewer(object):
         self.plotdata_init()
         self.UI_init()
         self.state_init(loadstate)
-        self.UI_metriclist_update()
         self.UI_setall()
 
         # load reports from command line
@@ -119,7 +118,7 @@ class Viewer(object):
         self.callid_selected = None
 
     def plotdata_init(self):
-        self.plotdata = {}
+        self.plotdata = []
         self.plots_showing = set()
         self.plotrangevar = ""
 
@@ -381,10 +380,10 @@ class Viewer(object):
         return ((None, plotdata),)
 
     def plotdata_update(self):
-        self.plotdata = {}
+        self.plotdata = []
         self.plotcolors = {}
         rangevars = set()
-        for reportid, callid in self.plots_showing:
+        for reportid, callid in sorted(self.plots_showing):
             rawdata = self.get_metricdata(reportid, callid,
                                           self.metric_selected)
             if not rawdata:
@@ -409,7 +408,7 @@ class Viewer(object):
             if callid is not None:
                 name += " (%s)" % report["calls"][callid][0]
 
-            self.plotdata[name] = linedatas
+            self.plotdata.append((name, linedatas))
             self.plotcolors[name] = report["plotcolors"][callid]
         self.plotrangevar = " = ".join(rangevars)
 
@@ -418,6 +417,7 @@ class Viewer(object):
         raise Exception("Viewer needs to be subclassed")
 
     def UI_setall(self):
+        self.UI_metrics_update()
         self.UI_metric_set()
         self.UI_stats_set()
 
@@ -431,11 +431,10 @@ class Viewer(object):
         except:
             self.alert("could not load", os.path.relpath(filename))
             return
+        reportid = len(self.reports)
         self.reports.append(report)
-        report["plotting"] = {None: True}
         report["plotcolors"] = {None: self.nextcolor()}
         for callid in range(len(report["calls"])):
-            report["plotting"][callid] = False
             if len(report["calls"]) == 1:
                 report["plotcolors"][0] = report["plotcolors"][None]
             else:
@@ -445,6 +444,7 @@ class Viewer(object):
                 if counter not in self.metrics:
                     self.metrics_adddefaultmetric(counter)
             self.UI_metriclist_update()
+        self.plots_showing.add((reportid, None))
         self.plotdata_update()
         self.UI_report_add()
         self.UI_plot_update()
@@ -465,8 +465,6 @@ class Viewer(object):
     def UI_reportcolor_change(self, reportid, callid, color):
         self.reports[reportid]["plotcolors"][callid] = color
         self.UI_report_update(reportid)
-        if reportid == self.reportid_selected:
-            self.UI_reportinfo_update()
         self.plotdata_update()
         self.UI_plot_update()
 
@@ -493,7 +491,7 @@ class Viewer(object):
         data = {}
         rows = set()
         cols = set()
-        for name, linedatas in self.plotdata.iteritems():
+        for name, linedatas in self.plotdata:
             for stat, linedata in linedatas.iteritems():
                 for rangeval, val in linedata:
                     data[rangeval, name, stat] = val

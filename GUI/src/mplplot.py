@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import division, print_function
 
+from copy import deepcopy
+
 import matplotlib.figure as MPLfig
 import matplotlib.lines as MPLlines
 import matplotlib.patches as MPLpatches
@@ -30,12 +32,13 @@ class MPLPlot(object):
     def set_all(self, xlabel, ylabel, data, colors, title):
         self.xlabel = xlabel
         self.ylabel = ylabel
-        self.data = {}
+        self.data = []
         self.colors = colors.copy()
         self.title = ylabel if title is None else title
         stats = set()
         rangevals = set()
-        for name, linedatas in data.iteritems():
+        for name, linedatas in data:
+            linedatas = deepcopy(linedatas)
             # flatten all data
             if "all" in linedatas:
                 linedatas["all"] = [(x, y) for x, ys in linedatas["all"]
@@ -50,21 +53,20 @@ class MPLPlot(object):
             stats.update(linedatas.keys())
             rangevals.update(sum((zip(*linedata)[0]
                                   for linedata in linedatas.values()), tuple()))
-            self.data[name] = linedatas
+            self.data.append((name, linedatas))
 
         rangevals.discard(None)
-        if not rangevals:
-            # TODO: barplot
-            rangevals = set([0, 1])
-        rangemin = min(rangevals)
-        rangemax = max(rangevals)
-        # whole range for norange datasets
-        for linedatas in self.data.values():
-            for linedata in linedatas.values():
-                for i, (x, y) in enumerate(linedata[:]):
-                    if x is None:
-                        linedata += [(rangemin, y), (rangemax, y)]
-                        del linedata[i]
+        self.barplot = (not rangevals) and self.data
+        if not self.barplot and self.data:
+            rangemin = min(rangevals)
+            rangemax = max(rangevals)
+            # whole range for norange datasets
+            for name, linedatas in self.data:
+                for linedata in linedatas.values():
+                    for i, (x, y) in enumerate(linedata[:]):
+                        if x is None:
+                            linedata += [(rangemin, y), (rangemax, y)]
+                            del linedata[i]
 
         # stats ordering
         self.stats = [stat for stat in self.stats_order if stat in stats]
@@ -82,9 +84,22 @@ class MPLPlot(object):
         axes.set_ylabel(self.ylabel)
         axes.hold(True)
 
+        if self.barplot:
+            self.plot_barplot()
+        else:
+            self.plot_lineplot()
+
+        # ymin = 0
+        limits = axes.axis()
+        axes.axis((limits[0], limits[1], 0, limits[3]))
+
+        self.UI_update()
+
+    def plot_lineplot(self):
+        axes = self.fig.gca()
+
         # add plots
-        legend = []
-        for name, linedatas in self.data.iteritems():
+        for name, linedatas in self.data:
             color = self.colors[name]
             for statname, linedata in linedatas.iteritems():
                 x, y = zip(*linedata)
@@ -97,7 +112,8 @@ class MPLPlot(object):
                               **self.stat_styles[statname])
 
         # add legend
-        for name, linedatas in self.data.iteritems():
+        legend = []
+        for name, linedatas in self.data:
             color = self.colors[name]
             legend.append((MPLlines.Line2D(
                 [], [], color=color, **self.stat_styles["legend"]
@@ -121,9 +137,62 @@ class MPLPlot(object):
         if legend:
             axes.legend(*zip(*legend), loc=0, numpoints=3)
 
-        # ymin = 0
+    def plot_barplot(self):
+        axes = self.fig.gca()
+
+        width = .8 / len(self.data)
+
+        # add plots
+        for i, (name, linedatas) in enumerate(self.data):
+            color = self.colors[name]
+            statcount = 0
+            for statname in self.stats:
+                if statname not in linedatas:
+                    continue
+                val = linedatas[statname][0][1]
+                left = statcount + i * width
+                if statname in ("med", "min", "max", "avg"):
+                    axes.bar(left, val, width, color=color)
+                    statcount += 1
+                elif statname == "min-max":
+                    bottom = val[0]
+                    height = val[1] - bottom
+                    axes.bar(left, height, width, bottom, color=color)
+                    statcount += 1
+                elif statname == "std":
+                    if "avg" not in self.stats:
+                        continue
+                    avg = linedatas["avg"][0][1]
+                    std = val[1] - avg
+                    left = self.stats.index("avg") + (i + .5) * width
+                    axes.errorbar(left, avg, std, color="#000000")
+                elif statname == "all":
+                    linedata = linedatas["all"]
+                    x = len(linedata) * [statcount + (i + .5) * width]
+                    y = zip(*linedata)[1]
+                    axes.plot(x, y, color=color, **self.stat_styles["all"])
+                    statcount += 1
+
+        # add legend
+        legend = []
+        for name, linedatas in self.data:
+            color = self.colors[name]
+            legend.append((MPLpatches.Patch(color=color), name))
+        if legend:
+            axes.legend(*zip(*legend), loc=0, numpoints=3)
+
+        # add xlabels
+        xlabels = list(self.stats)
+        if "std" in self.stats:
+            xlabels.remove("std")
+            if "avg" in self.stats:
+                xlabels[xlabels.index("avg")] = "avg / std"
+        axes.set_xticks([i + .4 for i in range(len(xlabels))])
+        axes.set_xticklabels(xlabels)
+
+        # xaxis
         limits = axes.axis()
-        axes.axis((limits[0], limits[1], 0, limits[3]))
+        axes.axis((-.2, len(xlabels), limits[2], limits[3]))
 
         self.UI_update()
 
