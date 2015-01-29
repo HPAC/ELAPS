@@ -13,7 +13,12 @@ from PyQt4 import QtCore, QtGui
 
 class GUI_Qt(GUI):
     def __init__(self, app=None, loadstate=True):
-        self.app = app if app else QtGui.QApplication(sys.argv)
+        if app:
+            self.Qt_app = app
+        else:
+            self.Qt_app = QtGui.QApplication(sys.argv)
+            self.Qt_app.viewer = None
+        self.Qt_app.gui = self
         self.Qt_setting = False
         self.Qt_initialized = False
         GUI.__init__(self, loadstate)
@@ -71,6 +76,13 @@ class GUI_Qt(GUI):
             load = QtGui.QAction("Import Setup ...", window)
             fileM.addAction(load)
             load.triggered.connect(self.Qt_state_load_click)
+
+            # file
+            fileM.addSeparator()
+
+            viewer = QtGui.QAction("Start Viewer", window)
+            fileM.addAction(viewer)
+            viewer.triggered.connect(self.Qt_viewer_start_click)
 
             # file
             fileM.addSeparator()
@@ -195,8 +207,9 @@ class GUI_Qt(GUI):
             samplerT.addWidget(spacer)
 
             # submit
-            icon = self.app.style().standardIcon(QtGui.QStyle.SP_DialogOkButton)
-            self.Qt_submit = QtGui.QAction(icon, "Run", window)
+            self.Qt_submit = QtGui.QAction(self.Qt_app.style().standardIcon(
+                QtGui.QStyle.SP_DialogOkButton
+            ), "Run", window)
             samplerT.addAction(self.Qt_submit)
             self.Qt_submit.triggered.connect(self.Qt_submit_click)
 
@@ -234,7 +247,7 @@ class GUI_Qt(GUI):
             ntrangeL.addWidget(self.Qt_ntrange)
             self.Qt_ntrange.textChanged.connect(self.Qt_ntrange_change)
             regexp = QtCore.QRegExp("(?:\d+)?:(?:(?:\d+)?:)?(\d+)?")
-            validator = QtGui.QRegExpValidator(regexp, self.app)
+            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
             self.Qt_ntrange.setValidator(validator)
 
             # ntrange > "(#threads)"
@@ -259,7 +272,7 @@ class GUI_Qt(GUI):
             self.Qt_rangevar.textChanged.connect(self.Qt_rangevar_change)
             self.Qt_rangevar.setFixedWidth(32)
             regexp = QtCore.QRegExp("[a-zA-Z]+")
-            validator = QtGui.QRegExpValidator(regexp, self.app)
+            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
             self.Qt_rangevar.setValidator(validator)
 
             # range > "="
@@ -270,7 +283,7 @@ class GUI_Qt(GUI):
             rangeL.addWidget(self.Qt_range)
             self.Qt_range.textChanged.connect(self.Qt_range_change)
             regexp = QtCore.QRegExp("(?:-?\d+)?:(?:(?:-?\d+)?:)?(-?\d+)?")
-            validator = QtGui.QRegExpValidator(regexp, self.app)
+            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
             self.Qt_range.setValidator(validator)
 
             # range
@@ -292,7 +305,7 @@ class GUI_Qt(GUI):
             self.Qt_nrep.textChanged.connect(self.Qt_nrep_change)
             self.Qt_nrep.setFixedWidth(32)
             regexp = QtCore.QRegExp("[1-9][0-9]*")
-            validator = QtGui.QRegExpValidator(regexp, self.app)
+            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
             self.Qt_nrep.setValidator(validator)
 
             # nrep > "times"
@@ -317,7 +330,7 @@ class GUI_Qt(GUI):
             self.Qt_sumrangevar.textChanged.connect(self.Qt_sumrangevar_change)
             self.Qt_sumrangevar.setFixedWidth(32)
             regexp = QtCore.QRegExp("[a-zA-Z]+")
-            validator = QtGui.QRegExpValidator(regexp, self.app)
+            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
             self.Qt_sumrangevar.setValidator(validator)
 
             # sumrange > "="
@@ -328,7 +341,7 @@ class GUI_Qt(GUI):
             sumrangeL.addWidget(self.Qt_sumrange)
             self.Qt_sumrange.textChanged.connect(self.Qt_sumrange_change)
             regexp = QtCore.QRegExp("(?:.*)?:(?:(?:.*)?:)?(.*)?")
-            validator = QtGui.QRegExpValidator(regexp, self.app)
+            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
             self.Qt_sumrange.setValidator(validator)
 
             # sumrange
@@ -410,7 +423,7 @@ class GUI_Qt(GUI):
 
         def create_style():
             # stylesheet
-            self.app.setStyleSheet("""
+            self.Qt_app.setStyleSheet("""
                 QLineEdit[invalid="true"],
                 *[invalid="true"] QLineEdit {
                     background: #FFDDDD;
@@ -427,7 +440,7 @@ class GUI_Qt(GUI):
                 }
             """)
 
-            palette = self.app.palette()
+            palette = self.Qt_app.palette()
             dark = palette.text().color()
             darka = palette.text().color()
             darka.setAlpha(127)
@@ -459,15 +472,13 @@ class GUI_Qt(GUI):
         create_style()
         window.show()
 
-        self.Qt_viewer = None
-
         self.Qt_setting = False
         self.Qt_initialized = True
 
     def UI_start(self):
         import signal
         signal.signal(signal.SIGINT, signal.SIG_DFL)
-        sys.exit(self.app.exec_())
+        sys.exit(self.Qt_app.exec_())
 
     # dialogs
     def UI_alert(self, *args, **kwargs):
@@ -777,23 +788,29 @@ class GUI_Qt(GUI):
         self.UI_jobprogress_update()
         self.Qt_jobprogress_timer.start()
 
+    def UI_viewer_start(self):
+        from viewerqtmpl import Viewer_Qt_MPL
+        self.Qt_viewer = Viewer_Qt_MPL(self.Qt_app)
+
     def UI_viewer_load(self, filename):
-        if self.Qt_viewer is None:
-            from viewerqtmpl import Viewer_Qt_MPL
-            self.Qt_viewer = Viewer_Qt_MPL(self.app)
-        self.Qt_viewer.UI_load_report(filename)
-        self.Qt_viewer.Qt_window.show()
+        if self.Qt_app.viewer is None:
+            self.UI_viewer_start()
+        self.Qt_app.viewer.UI_load_report(filename)
+        self.UI_viewer_show()
+
+    def UI_viewer_show(self):
+        self.Qt_app.viewer.Qt_window.show()
 
     # event handlers
-    def UI_window_close(self):
+    def Qt_window_close(self, event):
         settings = QtCore.QSettings("HPAC", "Sampler")
         settings.setValue("geometry", self.Qt_window.saveGeometry())
         settings.setValue("windowState", self.Qt_window.saveState())
         settings.setValue("appState",
                           QtCore.QVariant(repr(self.state_toflat())))
 
-    def Qt_window_close(self, event):
-        self.UI_window_close()
+    def Qt_viewer_start_click(self):
+        self.UI_viewer_start()
 
     def Qt_submit_click(self):
         filename = QtGui.QFileDialog.getSaveFileName(
@@ -864,7 +881,7 @@ class GUI_Qt(GUI):
     def Qt_showarg_toggle(self, checked):
         if self.Qt_setting:
             return
-        argtype = self.app.sender().argtype
+        argtype = self.Qt_app.sender().argtype
         self.UI_showargs_change(argtype, checked)
 
     def Qt_counters_visibility_change(self, visible):
@@ -963,7 +980,7 @@ class GUI_Qt(GUI):
             self.Qt_calls.setItemSelected(self.Qt_calls.item(callid), False)
 
     def Qt_jobprogress_click(self):
-        sender = self.app.sender()
+        sender = self.Qt_app.sender()
         jobid = sender.jobid
         job = self.jobprogress[jobid]
         if job["progress"] <= job["progressend"]:

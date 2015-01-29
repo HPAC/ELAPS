@@ -11,7 +11,12 @@ from PyQt4 import QtCore, QtGui
 
 class Viewer_Qt(Viewer):
     def __init__(self, plotfactory, app=None, loadstate=True):
-        self.app = app if app else QtGui.QApplication(sys.argv)
+        if app:
+            self.Qt_app = app
+        else:
+            self.Qt_app = QtGui.QApplication(sys.argv)
+            self.Qt_app.gui = None
+        self.Qt_app.viewer = self
         self.plotfactory = plotfactory
         self.setting = False
         Viewer.__init__(self, loadstate)
@@ -36,8 +41,8 @@ class Viewer_Qt(Viewer):
         reports.setLayout(reportsL)
 
         # window > left > reports >load
-        icon = self.app.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton)
-        load = QtGui.QPushButton(icon, "&load")
+        load = QtGui.QPushButton(self.Qt_app.style().standardIcon(
+            QtGui.QStyle.SP_DialogOpenButton), "&load")
         reportsL.addWidget(load)
         load.clicked.connect(self.Qt_load_click)
 
@@ -164,7 +169,7 @@ class Viewer_Qt(Viewer):
         self.UI_metriclist_update()
 
     def UI_start(self):
-        sys.exit(self.app.exec_())
+        sys.exit(self.Qt_app.exec_())
 
     def UI_alert(self, *args, **kwargs):
         msg = " ".join(map(str, args))
@@ -323,12 +328,12 @@ class Viewer_Qt(Viewer):
     def Qt_reportcheck_change(self):
         if self.setting:
             return
-        sender = self.app.sender()
+        sender = self.Qt_app.sender()
         self.UI_reportcheck_change(sender.item.reportid, sender.item.callid,
                                    sender.isChecked())
 
     def Qt_color_click(self):
-        sender = self.app.sender().item
+        sender = self.Qt_app.sender().item
         reportid = sender.reportid
         callid = sender.callid
         Qcolor = QtGui.QColor(self.reports[reportid]["plotcolors"][callid])
@@ -346,7 +351,7 @@ class Viewer_Qt(Viewer):
     def Qt_stat_change(self):
         if self.setting:
             return
-        sender = self.app.sender()
+        sender = self.Qt_app.sender()
         self.UI_stat_change(sender.statname, sender.isChecked())
 
     def Qt_export_click(self):

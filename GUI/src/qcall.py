@@ -199,7 +199,7 @@ class QCall(QtGui.QListWidgetItem):
         self.viewer.UI_call_remove(self.callid)
 
     def arg_change(self):
-        sender = self.viewer.app.sender()
+        sender = self.viewer.Qt_app.sender()
         if isinstance(sender, QtGui.QLineEdit):
             # adjust widt no matter where the change came from
             val = str(sender.text())

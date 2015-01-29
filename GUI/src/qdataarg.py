@@ -40,7 +40,7 @@ class QDataArg(QtGui.QWidget):
         self.Qt_name.setAlignment(QtCore.Qt.AlignHCenter)
         self.Qt_name.textChanged.connect(self.change)
         regexp = QtCore.QRegExp("[a-zA-Z]+")
-        validator = QtGui.QRegExpValidator(regexp, self.viewer.app)
+        validator = QtGui.QRegExpValidator(regexp, self.viewer.Qt_app)
         self.Qt_name.setValidator(validator)
 
         # vary
