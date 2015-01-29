@@ -18,155 +18,213 @@ class Viewer_Qt(Viewer):
             self.Qt_app.gui = None
         self.Qt_app.viewer = self
         self.plotfactory = plotfactory
-        self.setting = False
+        self.Qt_setting = False
         Viewer.__init__(self, loadstate)
+
+    def state_init(self, load=True):
+        if load:
+            settings = QtCore.QSettings("HPAC", "Viewer")
+            self.Qt_setting = True
+            self.Qt_window.restoreGeometry(
+                settings.value("geometry").toByteArray()
+            )
+            self.Qt_window.restoreState(
+                settings.value("windowState").toByteArray()
+            )
+            self.Qt_setting = False
+            try:
+                self.state = eval(str(settings.value("appState").toString()))
+            except:
+                self.state_reset()
+        else:
+            self.state_reset()
 
     def UI_init(self):
         self.UI_hasHTML = True
-
         # window
-        self.Qt_window = QtGui.QSplitter()
-        self.Qt_window.setWindowTitle("Viewer")
+        self.Qt_window = QtGui.QMainWindow()
+        window = self.Qt_window
+        window.setWindowTitle("Viewer")
+        window.setUnifiedTitleAndToolBarOnMac(True)
+        window.closeEvent = self.Qt_window_close
+        window.setDockNestingEnabled(True)
+        window.setTabPosition(QtCore.Qt.LeftDockWidgetArea,
+                              QtGui.QTabWidget.North)
 
-        # window > left
-        leftW = QtGui.QWidget()
-        self.Qt_window.addWidget(leftW)
-        leftL = QtGui.QVBoxLayout()
-        leftW.setLayout(leftL)
+        center = QtGui.QWidget()
+        window.setCentralWidget(center)
+        center.hide()
 
-        # window > left > reports
-        reports = QtGui.QGroupBox("reports")
-        leftL.addWidget(reports)
-        reportsL = QtGui.QVBoxLayout()
-        reports.setLayout(reportsL)
+        def create_menus():
+            menu = window.menuBar()
 
-        # window > left > reports >load
-        load = QtGui.QPushButton(self.Qt_app.style().standardIcon(
-            QtGui.QStyle.SP_DialogOpenButton), "&load")
-        reportsL.addWidget(load)
-        load.clicked.connect(self.Qt_load_click)
+            # file
+            fileM = menu.addMenu("File")
 
-        # window > left > reports > list
-        self.Qt_reports = QtGui.QTreeWidget()
-        reportsL.addWidget(self.Qt_reports, 1)
-        self.Qt_reports.setHeaderLabels(
-            ("report", "", "color", "system", "#t", "blas")
-        )
-        self.Qt_columns_resize()
-        self.Qt_reports.currentItemChanged.connect(self.Qt_report_select)
-        self.Qt_reports.itemExpanded.connect(self.Qt_report_expanded)
+            # file > load
+            load = QtGui.QAction("Open Report", window)
+            fileM.addAction(load)
+            load.setShortcut(QtGui.QKeySequence.Open)
+            load.triggered.connect(self.Qt_report_load_click)
 
-        # window > left > metrics
-        metrics = QtGui.QGroupBox("metrics")
-        leftL.addWidget(metrics)
-        metricsL = QtGui.QVBoxLayout()
-        metrics.setLayout(metricsL)
-        metricselectL = QtGui.QHBoxLayout()
-        metricsL.addLayout(metricselectL)
+            # file
+            fileM.addSeparator()
 
-        # window > left > metrics > list
-        self.Qt_metricslist = QtGui.QComboBox()
-        metricselectL.addWidget(self.Qt_metricslist, 1)
-        self.Qt_metricslist.currentIndexChanged.connect(
-            self.Qt_metricselect_change
-        )
+            # gui
+            gui = QtGui.QAction("Start Sampler", window)
+            fileM.addAction(gui)
+            gui.triggered.connect(self.Qt_sampler_start_click)
+
+            # file
+            fileM.addSeparator()
+
+            # file > quit
+            quit = QtGui.QAction("Quit", window)
+            fileM.addAction(quit)
+            quit.setMenuRole(QtGui.QAction.QuitRole)
+
+            # plot
+            plotM = menu.addMenu("Plot")
+
+            # duplicate
+            duplicate = QtGui.QAction("Duplicate", window)
+            plotM.addAction(duplicate)
+            duplicate.triggered.connect(self.Qt_plot_duplicate)
+
+            # export raw data
+            export = QtGui.QAction("Export Data", window)
+            plotM.addAction(export)
+            export.triggered.connect(self.Qt_plot_duplicate)
+
+        def create_toolbars():
+            # load
+            reportsT = window.addToolBar("Reports")
+            reportsT.setObjectName("ReportsToolbar")
+            load = QtGui.QAction(self.Qt_app.style().standardIcon(
+                QtGui.QStyle.SP_DialogOpenButton
+            ), "Open", window)
+            reportsT.addAction(load)
+            load.triggered.connect(self.Qt_report_load_click)
+
+            # metric
+            metricsT = window.addToolBar("Metrics")
+            metricsT.setObjectName("Metrics")
+            self.Qt_metric = QtGui.QComboBox()
+            metricsT.addWidget(self.Qt_metric)
+            self.Qt_metric.currentIndexChanged.connect(self.Qt_metric_change)
+            window.addToolBarBreak()
+
+            # statistics
+            self.Qt_Qstats = {}
+            statsT = window.addToolBar("Statistics")
+            statsT.setObjectName("Statistics")
+            for statname, desc in self.stats_desc:
+                stat = QtGui.QCheckBox(statname)
+                statsT.addWidget(stat)
+                stat.statname = statname
+                stat.stateChanged.connect(self.Qt_stat_change)
+                stat.setToolTip(desc)
+                self.Qt_Qstats[statname] = stat
+
+        def create_reports():
+            reportsD = QtGui.QDockWidget("Reports")
+            reportsD.setObjectName("Reports")
+            reportsD.setFeatures(
+                QtGui.QDockWidget.DockWidgetFloatable |
+                QtGui.QDockWidget.DockWidgetMovable
+            )
+            self.Qt_reports = QtGui.QTreeWidget()
+            reportsD.setWidget(self.Qt_reports)
+            self.Qt_reports.setHeaderLabels(
+                ("report", "", "color", "system", "#t", "blas")
+            )
+            self.Qt_columns_resize()
+            self.Qt_reports.currentItemChanged.connect(self.Qt_report_select)
+            self.Qt_reports.itemExpanded.connect(self.Qt_report_expanded)
+
+            return reportsD
+
+        def create_center():
+            tabs = QtGui.QTabWidget()
+            window.setCentralWidget(tabs)
+
+            # window > right > tabs > plot
+            self.Qt_plot = self.plotfactory()
+            tabs.addTab(self.Qt_plot, "Plot")
+
+            # window > right > tabs > table
+            self.Qt_data = QtGui.QTableWidget()
+            tabs.addTab(self.Qt_data, "data")
+            self.Qt_data.setColumnCount(5)
+            self.Qt_data.setHorizontalHeaderLabels(
+                ["med", "min", "avg", "max", "std"]
+            )
+
+        def create_plot():
+            plotD = QtGui.QDockWidget("Plot")
+            plotD.setObjectName("Plot")
+            plotD.setFeatures(
+                QtGui.QDockWidget.DockWidgetFloatable |
+                QtGui.QDockWidget.DockWidgetMovable
+            )
+            self.Qt_plot = self.plotfactory()
+            plotD.setWidget(self.Qt_plot)
+
+            return plotD
+
+        def create_table():
+            tableD = QtGui.QDockWidget("Table")
+            tableD.setObjectName("Table")
+            tableD.setFeatures(
+                QtGui.QDockWidget.DockWidgetFloatable |
+                QtGui.QDockWidget.DockWidgetMovable
+            )
+            self.Qt_data = QtGui.QTableWidget()
+            tableD.setWidget(self.Qt_data)
+            self.Qt_data.setColumnCount(5)
+            self.Qt_data.setHorizontalHeaderLabels(
+                ["med", "min", "avg", "max", "std"]
+            )
+
+            return tableD
+
+        def create_info():
+            infoD = QtGui.QDockWidget("Report Info")
+            infoD.setObjectName("Report Info")
+            infoD.setFeatures(
+                QtGui.QDockWidget.DockWidgetFloatable |
+                QtGui.QDockWidget.DockWidgetMovable
+            )
+
+            # info
+            self.Qt_reportinfo = QtGui.QLabel()
+            infoD.setWidget(self.Qt_reportinfo)
+            self.Qt_reportinfo.setTextInteractionFlags(
+                QtCore.Qt.TextSelectableByMouse
+            )
+
+            return infoD
+
+        create_menus()
+        create_toolbars()
+        reportsD = create_reports()
+        window.addDockWidget(QtCore.Qt.LeftDockWidgetArea, reportsD)
+        plotD = create_plot()
+        window.splitDockWidget(reportsD, plotD, QtCore.Qt.Horizontal)
+        infoD = create_info()
+        window.splitDockWidget(plotD, infoD, QtCore.Qt.Vertical)
+        tableD = create_table()
+        window.addDockWidget(QtCore.Qt.LeftDockWidgetArea, tableD)
+        window.tabifyDockWidget(plotD, tableD)
+        plotD.raise_()
 
         # window > left > metrics > info
-        metricinfobox = QtGui.QFrame()
-        metricsL.addWidget(metricinfobox)
-        metricinfobox.setContentsMargins(0, 0, 0, 0)
-        metricinfobox.setFrameStyle(QtGui.QFrame.StyledPanel |
-                                    QtGui.QFrame.Sunken)
-        metricinfoL = QtGui.QVBoxLayout()
-        metricinfobox.setLayout(metricinfoL)
         self.Qt_metricinfo = QtGui.QLabel()
-        metricinfoL.addWidget(self.Qt_metricinfo)
-        self.Qt_metricinfo.setWordWrap(True)
-
-        # window > left > stats
-        stats = QtGui.QGroupBox("statistics")
-        leftL.addWidget(stats)
-        statsL = QtGui.QHBoxLayout()
-        stats.setLayout(statsL)
-
-        # window > left > stats > *
-        for statname, desc in self.stats_desc:
-            stat = QtGui.QCheckBox(statname)
-            statsL.addWidget(stat)
-            stat.statname = statname
-            if statname in self.stats_showing:
-                stat.setChecked(True)
-            stat.stateChanged.connect(self.Qt_stat_change)
-            stat.setToolTip(desc)
-
-        # window > right
-        rightW = QtGui.QWidget()
-        self.Qt_window.addWidget(rightW)
-        rightL = QtGui.QVBoxLayout()
-        rightW.setLayout(rightL)
-
-        # window > right > tabs
-        tabs = QtGui.QTabWidget()
-        rightL.addWidget(tabs)
-        tabs.setContentsMargins(0, 0, 0, 0)
-
-        # window > right > tabs > plot
-        plotW = QtGui.QWidget()
-        tabs.addTab(plotW, "plot")
-        plotL = QtGui.QVBoxLayout()
-        plotW.setLayout(plotL)
-        plotL.setContentsMargins(0, 0, 0, 0)
-        plotL.setSpacing(0)
-
-        # window > right > tabs > plot > buttons
-        buttonsL = QtGui.QHBoxLayout()
-        plotL.addLayout(buttonsL)
-        buttonsL.addStretch(1)
-
-        # window > right > tabs > plot > buttons > export
-        export = QtGui.QPushButton("export plot data")
-        buttonsL.addWidget(export)
-        export.clicked.connect(self.Qt_export_click)
-
-        # window > right > tabs > plot > buttons > pop
-        pop = QtGui.QPushButton("pop plot")
-        buttonsL.addWidget(pop)
-        pop.clicked.connect(self.Qt_pop_click)
-
-        # window > right > tabs > plot > plot
-        self.Qt_plot = self.plotfactory()
-        plotL.addWidget(self.Qt_plot)
-
-        # window > right > tabs > table
-        self.Qt_data = QtGui.QTableWidget()
-        tabs.addTab(self.Qt_data, "data")
-        self.Qt_data.setColumnCount(5)
-        self.Qt_data.setHorizontalHeaderLabels(["med", "min", "avg", "max",
-                                                "std"])
-
-        # window > info
-        reportinfobox = QtGui.QFrame()
-        rightL.addWidget(reportinfobox)
-        reportinfobox.setFrameStyle(QtGui.QFrame.StyledPanel |
-                                    QtGui.QFrame.Sunken)
-        reportinfoL = QtGui.QVBoxLayout()
-        reportinfobox.setLayout(reportinfoL)
-        self.Qt_reportinfo = QtGui.QLabel()
-        reportinfoL.addWidget(self.Qt_reportinfo)
-        self.Qt_reportinfo.setTextInteractionFlags(
-            QtCore.Qt.TextSelectableByMouse
-        )
-
-        rightL.addStretch(1)
 
         self.Qt_window.show()
 
         # Qt objects
-        self.Qt_Qreports = {}
-        self.Qt_Qplots = {}
-
-        # select metric
-        self.UI_metriclist_update()
+        self.Qt_Qreports = []
 
     def UI_start(self):
         sys.exit(self.Qt_app.exec_())
@@ -181,7 +239,18 @@ class Viewer_Qt(Viewer):
             self.Qt_reports.resizeColumnToContents(colid)
 
     # setters
-    def UI_report_add(self, reportid):
+    def UI_metric_set(self):
+        self.Qt_metric.setCurrentIndex(
+            self.Qt_metric.findData(QtCore.QVariant(self.metric_selected))
+        )
+
+    def UI_stats_set(self):
+        for stat, Qstat in self.Qt_Qstats.iteritems():
+            Qstat.setChecked(stat in self.stats_showing)
+
+    def UI_report_add(self, reportid=None):
+        if reportid is None:
+            reportid = len(self.reports) - 1
         report = self.reports[reportid]
         sampler = report["sampler"]
 
@@ -198,7 +267,6 @@ class Viewer_Qt(Viewer):
             sampler["blas_name"],
         ))
         self.Qt_reports.addTopLevelItem(Qreport)
-        self.Qt_Qreports[reportid] = Qreport
         Qreport.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
         # tooltips
@@ -250,6 +318,7 @@ class Viewer_Qt(Viewer):
             Qitem.reportid = reportid
             Qitem.callid = callid
 
+        self.Qt_Qreports.append(Qreport)
         self.UI_report_update(reportid)
         self.Qt_columns_resize()
         self.Qt_reports.setCurrentItem(Qreport)
@@ -264,14 +333,14 @@ class Viewer_Qt(Viewer):
             Qitem.color.setToolTip(color)
 
     def UI_metriclist_update(self):
-        self.setting = True
-        self.Qt_metricslist.clear()
+        self.Qt_setting = True
+        self.Qt_metric.clear()
         for name in sorted(self.metrics):
-            self.Qt_metricslist.addItem(self.metricnames[name],
-                                        QtCore.QVariant(name))
-        self.setting = False
-        self.Qt_metricslist.setCurrentIndex(
-            self.Qt_metricslist.findData(QtCore.QVariant(self.metric_selected))
+            self.Qt_metric.addItem(self.metricnames[name],
+                                   QtCore.QVariant(name))
+        self.Qt_setting = False
+        self.Qt_metric.setCurrentIndex(
+            self.Qt_metric.findData(QtCore.QVariant(self.metric_selected))
         )
 
     def UI_metricinfo_set(self, infostr):
@@ -306,7 +375,17 @@ class Viewer_Qt(Viewer):
         )
 
     # event handlers
-    def Qt_load_click(self):
+    def Qt_window_close(self, event):
+        settings = QtCore.QSettings("HPAC", "Viewer")
+        settings.setValue("geometry", self.Qt_window.saveGeometry())
+        settings.setValue("windowState", self.Qt_window.saveState())
+        settings.setValue("appState",
+                          QtCore.QVariant(repr(self.state)))
+
+    def Qt_sampler_start_click(self):
+        self.UI_sampler_start()
+
+    def Qt_report_load_click(self):
         filename = QtGui.QFileDialog.getOpenFileName(
             self.Qt_window,
             "open report",
@@ -315,18 +394,18 @@ class Viewer_Qt(Viewer):
         )
         filename = str(filename)
         if filename:
-            self.UI_load_report(filename)
+            self.UI_report_load(filename)
 
     def Qt_report_expanded(self, item):
         self.Qt_reports.resizeColumnToContents(0)
 
     def Qt_report_select(self, item):
-        if self.setting:
+        if self.Qt_setting:
             return
         self.UI_report_select(item.reportid, item.callid)
 
     def Qt_reportcheck_change(self):
-        if self.setting:
+        if self.Qt_setting:
             return
         sender = self.Qt_app.sender()
         self.UI_reportcheck_change(sender.item.reportid, sender.item.callid,
@@ -341,20 +420,20 @@ class Viewer_Qt(Viewer):
         if Qcolor.isValid():
             self.UI_reportcolor_change(reportid, callid, str(Qcolor.name()))
 
-    def Qt_metricselect_change(self):
-        if self.setting:
+    def Qt_metric_change(self):
+        if self.Qt_setting:
             return
-        self.UI_metricselect_change(str(self.Qt_metricslist.itemData(
-            self.Qt_metricslist.currentIndex()
+        self.UI_metric_change(str(self.Qt_metric.itemData(
+            self.Qt_metric.currentIndex()
         ).toString()))
 
     def Qt_stat_change(self):
-        if self.setting:
+        if self.Qt_setting:
             return
         sender = self.Qt_app.sender()
         self.UI_stat_change(sender.statname, sender.isChecked())
 
-    def Qt_export_click(self):
+    def Qt_plot_export(self):
         filename = QtGui.QFileDialog.getSaveFileName(
             None,
             "Export plot data",
@@ -365,7 +444,8 @@ class Viewer_Qt(Viewer):
         if filename:
             self.UI_export(filename)
 
-    def Qt_pop_click(self):
+    def Qt_plot_duplicate(self):
+        # TODO: DockWidget
         plot = self.plotfactory()
         plot.plot(
             xlabel=self.plotrangevar,

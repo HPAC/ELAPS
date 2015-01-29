@@ -8,7 +8,6 @@ import papi
 import sys
 import os
 import imp
-import pprint
 import time
 import re
 import random
@@ -33,13 +32,15 @@ class Viewer(object):
         self.stats_init()
         self.reports_init()
         self.plotdata_init()
-        self.state_init(loadstate)
         self.UI_init()
+        self.state_init(loadstate)
+        self.UI_metriclist_update()
+        self.UI_setall()
 
         # load reports from command line
         for arg in sys.argv[1:]:
             if arg[-5:] == ".smpl" and os.path.isfile(arg):
-                self.UI_load_report(arg)
+                self.UI_report_load(arg)
 
     # state access attributes
     def __getattr__(self, name):
@@ -127,27 +128,14 @@ class Viewer(object):
         self.plotrangevar = ""
 
     def state_init(self, load=True):
-        state = {
+        self.state_reset()
+
+    def state_reset(self):
+        self.state = {
             "statetime": time.time(),
             "metric_selected": "time [ms]",
             "stats_showing": set(["med"])
         }
-        if load:
-            try:
-                with open(self.statefile) as fin:
-                    oldstate = eval(fin.read(), symbolic.__dict__)
-                if oldstate["statetime"] > self.requiresstatetime:
-                    state = oldstate
-                    self.log("loaded state from",
-                             os.path.relpath(self.statefile))
-            except:
-                pass
-        self.state = state
-        self.state_write()
-
-    def state_write(self):
-        with open(self.statefile, "w") as fout:
-            print(pprint.pformat(self.state, 4), file=fout)
 
     # papi metrics
     def metrics_adddefaultmetric(self, name):
@@ -193,6 +181,7 @@ class Viewer(object):
             report = eval(fin.readline(), evaldir)
             report["counters"] = filter(None, report["counters"])
             report["starttime"] = int(fin.readline())
+            report["filename"] = filename
         except:
             raise IOError(name, "doesn't contain a valid report")
         # TODO: remove compatibility settings
@@ -432,8 +421,15 @@ class Viewer(object):
     def UI_init(self):
         raise Exception("Viewer needs to be subclassed")
 
+    def UI_setall(self):
+        self.UI_metric_set()
+        self.UI_stats_set()
+
     # event handlers
-    def UI_load_report(self, filename):
+    def UI_report_load(self, filename):
+        if any(report["filename"] == filename for report in self.reports):
+            self.UI_alert(filename, "already loaded")
+            return
         try:
             report = self.report_load(filename)
         except:
@@ -455,7 +451,7 @@ class Viewer(object):
                     self.metrics_adddefaultmetric(counter)
             self.UI_metriclist_update()
         self.plotdata_update()
-        self.UI_report_add(reportid)
+        self.UI_report_add()
         self.UI_plot_update()
 
     def UI_report_select(self, reportid, callid):
@@ -479,7 +475,7 @@ class Viewer(object):
         self.plotdata_update()
         self.UI_plot_update()
 
-    def UI_metricselect_change(self, metric):
+    def UI_metric_change(self, metric):
         self.metric_selected = metric
         info = self.metrics[metric].__doc__
         if isinstance(info, str):
@@ -487,7 +483,6 @@ class Viewer(object):
         else:
             self.UI_metricinfo_set("[no docstring for %s]" % metric)
         self.plotdata_update()
-        self.state_write()
         self.UI_plot_update()
 
     def UI_stat_change(self, statname, state):
@@ -496,7 +491,6 @@ class Viewer(object):
         else:
             self.stats_showing.discard(statname)
         self.plotdata_update()
-        self.state_write()
         self.UI_plot_update()
 
     def UI_export(self, filename):

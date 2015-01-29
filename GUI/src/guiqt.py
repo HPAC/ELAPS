@@ -87,10 +87,9 @@ class GUI_Qt(GUI):
             # file
             fileM.addSeparator()
 
-            # file > quite
+            # file > quit
             quit = QtGui.QAction("Quit", window)
             fileM.addAction(quit)
-            quit.triggered.connect(self.Qt_submit_click)
             quit.setMenuRole(QtGui.QAction.QuitRole)
 
             # ranges
@@ -215,8 +214,7 @@ class GUI_Qt(GUI):
 
         def create_ranges():
             rangesD = QtGui.QDockWidget("Ranges")
-            window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
-                                 rangesD)
+            window.addDockWidget(QtCore.Qt.TopDockWidgetArea, rangesD)
             rangesD.setObjectName("Ranges")
             rangesD.setFeatures(QtGui.QDockWidget.DockWidgetVerticalTitleBar)
             rangesW = QtGui.QWidget()
