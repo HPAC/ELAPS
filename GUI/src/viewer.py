@@ -96,7 +96,7 @@ class Viewer(object):
             ("avg", "average"),
             ("max", "maximum"),
             ("min-max", "range: minimum - maximum"),
-            ("std", "standard deviation"),
+            ("std", "standard deviation\n(requies avg to be plotted)"),
             ("all", "all data points"),
         ]
         self.stat_funs = {
@@ -107,12 +107,8 @@ class Viewer(object):
             "avg": lambda l: sum(l) / len(l),
             "max": max,
             "min-max": lambda l: [min(l), max(l)],
-            "std": lambda l: [
-                sum(l) / len(l) - sqrt(sum(x ** 2 for x in l) / len(l) -
-                                       (sum(l) / len(l)) ** 2),
-                sum(l) / len(l) + sqrt(sum(x ** 2 for x in l) / len(l) -
-                                       (sum(l) / len(l)) ** 2)
-            ],
+            "std": lambda l: sqrt(sum(x ** 2 for x in l) / len(l)
+                                  - (sum(l) / len(l)) ** 2),
             "all": lambda l: l
         }
 
@@ -435,7 +431,6 @@ class Viewer(object):
         except:
             self.alert("could not load", os.path.relpath(filename))
             return
-        reportid = len(self.reports)
         self.reports.append(report)
         report["plotting"] = {None: True}
         report["plotcolors"] = {None: self.nextcolor()}
@@ -501,8 +496,6 @@ class Viewer(object):
         for name, linedatas in self.plotdata.iteritems():
             for stat, linedata in linedatas.iteritems():
                 for rangeval, val in linedata:
-                    if stat == "std":
-                        val = (val[1] - val[0]) / 2
                     data[rangeval, name, stat] = val
                     rows.add(rangeval)
                 cols.add((name, stat))

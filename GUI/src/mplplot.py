@@ -40,6 +40,13 @@ class MPLPlot(object):
             if "all" in linedatas:
                 linedatas["all"] = [(x, y) for x, ys in linedatas["all"]
                                     for y in ys]
+            if "std" in linedatas:
+                if "avg" in linedatas:
+                    stddict = dict(linedatas["std"])
+                    linedatas["std"] = [(x, (y - stddict[x], y + stddict[x]))
+                                        for x, y in linedatas["avg"]]
+                else:
+                    del linedatas["std"]
             stats.update(linedatas.keys())
             rangevals.update(sum((zip(*linedata)[0]
                                   for linedata in linedatas.values()), tuple()))
