@@ -6,16 +6,16 @@ Sampler:
 
 GUI:
 - work variables
-- "file" backend
 
+- ("file" backend)
 - (status tips)
 - (include BLAS/LAPACK documentation from doxygen)
-- (nt slider/text input)
 - (multiple BLAS at once)
 
 
 Viewer:
 - (memory metrics)
+- (status tips)
 
 
 Other:
