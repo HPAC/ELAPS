@@ -84,14 +84,6 @@ class GUI_Qt(GUI):
             fileM.addAction(viewer)
             viewer.triggered.connect(self.Qt_viewer_start_click)
 
-            # file
-            fileM.addSeparator()
-
-            # file > quit
-            quit = QtGui.QAction("Quit", window)
-            fileM.addAction(quit)
-            quit.setMenuRole(QtGui.QAction.QuitRole)
-
             # ranges
             rangesM = menu.addMenu("Ranges")
 

@@ -75,14 +75,6 @@ class Viewer_Qt(Viewer):
             fileM.addAction(gui)
             gui.triggered.connect(self.Qt_sampler_start_click)
 
-            # file
-            fileM.addSeparator()
-
-            # file > quit
-            quit = QtGui.QAction("Quit", window)
-            fileM.addAction(quit)
-            quit.setMenuRole(QtGui.QAction.QuitRole)
-
             # plot
             plotM = menu.addMenu("Plot")
 
