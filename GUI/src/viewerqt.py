@@ -381,15 +381,17 @@ class Viewer_Qt(Viewer):
         self.UI_sampler_start()
 
     def Qt_report_load_click(self):
-        filename = QtGui.QFileDialog.getOpenFileName(
+        filenames = QtGui.QFileDialog.getOpenFileNames(
             self.Qt_window,
-            "open report",
+            "Open Report(s)",
             self.reportpath,
             "*.smpl"
         )
-        filename = str(filename)
-        if filename:
-            self.UI_report_load(filename)
+        for filename in filenames:
+            filename = str(filename)
+            print(filename)
+            if filename:
+                self.UI_report_load(filename)
 
     def Qt_report_expanded(self, item):
         self.Qt_reports.resizeColumnToContents(0)

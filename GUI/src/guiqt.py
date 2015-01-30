@@ -213,7 +213,7 @@ class GUI_Qt(GUI):
             rangesD.setWidget(rangesW)
             rangesW.setSizePolicy(
                 QtGui.QSizePolicy.Minimum,
-                QtGui.QSizePolicy.Fixed,
+                QtGui.QSizePolicy.Fixed
             )
             rangesL = QtGui.QVBoxLayout()
             rangesW.setLayout(rangesL)
@@ -368,7 +368,7 @@ class GUI_Qt(GUI):
             self.Qt_counters.setLayout(QtGui.QVBoxLayout())
             self.Qt_counters.setSizePolicy(
                 QtGui.QSizePolicy.Minimum,
-                QtGui.QSizePolicy.Fixed,
+                QtGui.QSizePolicy.Fixed
             )
             self.Qt_Qcounters = []
 
@@ -438,9 +438,9 @@ class GUI_Qt(GUI):
             self.Qt_pens = {
                 None: QtGui.QColor(0, 0, 255, 0),
                 "maxfront": darka,
-                "maxback": QtGui.QPen(darka, 0, style=QtCore.Qt.DashLine),
+                "maxback": QtGui.QPen(darka, 0, QtCore.Qt.DashLine),
                 "minfront": dark,
-                "minback": QtGui.QPen(dark, 0, style=QtCore.Qt.DashLine),
+                "minback": QtGui.QPen(dark, 0, QtCore.Qt.DashLine)
             }
             window = palette.window().color()
             windowa = palette.window().color()
@@ -785,7 +785,7 @@ class GUI_Qt(GUI):
     def UI_viewer_load(self, filename):
         if self.Qt_app.viewer is None:
             self.UI_viewer_start()
-        self.Qt_app.viewer.UI_load_report(filename)
+        self.Qt_app.viewer.UI_report_load(filename)
         self.UI_viewer_show()
 
     def UI_viewer_show(self):

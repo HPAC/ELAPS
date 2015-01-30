@@ -132,6 +132,7 @@ class GUI(object):
     def state_fromflat(self, state):
         state = state.copy()
         calls = list(map(list, state["calls"]))
+        # apply signatures
         for callid, call in enumerate(calls):
             if call[0] in self.signatures:
                 sig = self.signatures[call[0]]
@@ -143,7 +144,14 @@ class GUI(object):
                          "Signature Ignored.") % (str(sig), call[0], call[1:])
                     )
         state["calls"] = calls
+        # check if sampler is available
+        samplername = state["samplername"]
+        if samplername not in self.samplers:
+            samplername = min(self.sampler)
+            self.alert("sampler %r is not available, using %r instead"
+                       % (state["samplername"], samplername))
         self.state = state
+        self.sampler_set(samplername)
         self.connections_update()
         self.data_update()
 
@@ -464,6 +472,7 @@ class GUI(object):
         self.calls = [call for call in self.calls
                       if call[0] in self.sampler["kernels"]]
 
+        self.data_update()
         # update UI
         self.UI_nt_setmax()
         self.UI_nt_set()
