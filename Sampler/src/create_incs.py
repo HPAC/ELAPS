@@ -105,7 +105,10 @@ def main():
         "backend_prefix": os.environ["BACKEND_PREFIX"],
         "backend_suffix": os.environ["BACKEND_SUFFIX"],
         "backend_footer": os.environ["BACKEND_FOOTER"],
-        "nt_max": int(os.environ["NT_MAX"]),
+        "ncores": int(os.environ["NCORES"]),
+        "threads_per_core": int(os.environ["THREADS_PER_CORE"]),
+        "nt_max": (int(os.environ["NCORES"]) *
+                   int(os.environ["THREADS_PER_CORE"])),
         "kernels": tuple(sorted(kernelsigs)),
         "papi_counters_max": papi_counters_max,
         "cpu_model": os.environ["CPU_MODEL"],

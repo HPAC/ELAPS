@@ -33,7 +33,7 @@ def metric(data, report, callid):
     else:
         return None
 
-    nt = report["nt"]
+    nt = report["ncores"]
     return nops / (rdtsc * ipc * nt)
 
 name = "efficiency"

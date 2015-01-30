@@ -10,7 +10,8 @@
 [ -z "$BLAS_NAME" ] && echo "BLAS_NAME is not set" && exit
 [ -z "$SYSTEM_NAME" ] && SYSTEM_NAME="local"
 [ -z "$NAME" ] && NAME=`basename "$1" .cfg`
-[ -z "$NT_MAX" ] && NT_MAX=1
+[ -z "$NCORES" ] && NCORES=1
+[ -z "$THREADS_PER_CORE" ] && THREADS_PER_CORE=1
 [ -z "$CC" ] && CC="gcc"
 [ -z "$CFLAGS" ] && CFLAGS=""
 [ -z "$CXX" ] && CXX="g++"
@@ -30,7 +31,7 @@ export BLAS_NAME SYSTEM_NAME NAME KERNEL_HEADERS
 export BACKEND BACKEND_HEADER BACKEND_PREFIX BACKEND_SUFFIX BACKEND_FOOTER
 export PAPI_COUNTERS_MAX PAPI_COUNTERS_AVAIL
 export DFLOPS_PER_CYCLE SFLOPS_PER_CYCLE 
-export CPU_MODEL FREQUENCY_MHZ NT_MAX
+export CPU_MODEL FREQUENCY_MHZ NCORES THREADS_PER_CORE
 
 # set paths
 target_dir=build/$NAME
