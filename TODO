@@ -6,11 +6,10 @@ Sampler:
 
 
 GUI:
-- dynamically load signatures
-- reduce BLAS/LAPACK doc size (21MB)
 - work variables
 - README
 
+- (dynamically load signatures => flatten signature folder)
 - ("file" backend)
 - (status tips)
 - (multiple BLAS at once)
