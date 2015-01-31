@@ -10,7 +10,7 @@ class QDataArg(QtGui.QWidget):
     def __init__(self, call):
         QtGui.QWidget.__init__(self)
         self.Qt_call = call
-        self.Qt_gui = call.gui
+        self.Qt_gui = call.Qt_gui
         self.polygonmin = None
         self.linesminfront = None
         self.linesminback = None
