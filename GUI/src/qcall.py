@@ -78,18 +78,26 @@ class QCall(QtGui.QListWidgetItem):
                 self.viewer.UI_alert("No signature found for %r!\n" % call[0] +
                                      "Hover arguments for input syntax.")
                 self.viewer.nosigwarning_shown = True
+        doc = self.gui.docs_get(call[0])
+        if doc:
+            self.Qt_args[0].setToolTip(doc[0][1])
         for argid in range(len(call))[1:]:
-            tooltip = None
+            tooltip = ""
             if self.sig:
                 argname = self.sig[argid].name
+                if doc:
+                    tooltip = doc[argid][1]
             else:
                 argname = minsig[argid].replace("*", " *")
-                if "char" in argname:
-                    tooltip = "Any string"
-                elif argname in ("int *", "float *", "double *"):
-                    tooltip = ("Scalar:\tvalue\t\te.g. 1, -0.5\n"
-                               "Array:\t[#elements]"
-                               "\te.g. [10000] for a 100x100 matrix")
+                if doc:
+                    argname += doc[argid][0]
+                    tooltip = doc[argid][1]
+                if argname in ("int *", "float *", "double *"):
+                    if doc:
+                        tooltip += "\n\n*Format*:\n" if doc else ""
+                    tooltip += ("Scalar:\tvalue\t\te.g. 1, -0.5\n"
+                                "Array:\t[#elements]"
+                                "\te.g. [10000] for a 100x100 matrix")
             Qarglabel = QtGui.QLabel(argname)
             if tooltip:
                 Qarglabel.setToolTip(tooltip)
@@ -114,6 +122,8 @@ class QCall(QtGui.QListWidgetItem):
                 Qarg.textChanged.connect(self.arg_change)
                 if tooltip:
                     Qarg.setToolTip(tooltip)
+            if tooltip:
+                Qarg.setToolTip(tooltip)
             Qarg.argid = argid
             Qarg.setProperty("invalid", True)
             self.widget.layout().addWidget(Qarg, 1, argid)
@@ -130,6 +140,7 @@ class QCall(QtGui.QListWidgetItem):
         for Qarglabel in self.Qt_arglabels[1:]:
             Qarglabel.deleteLater()
         self.Qt_arglabels = self.Qt_arglabels[:1]
+        self.Qt_args[0].setToolTip("")
         self.update_size()
         self.sig = None
 
