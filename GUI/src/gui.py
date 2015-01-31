@@ -1129,6 +1129,7 @@ class GUI(object):
         self.calls.append([""])
         self.UI_call_add()
         self.UI_submit_setenabled()
+        self.UI_arg_setfocus(len(self.calls) - 1, 0)
 
     def UI_call_remove(self, callid):
         del self.calls[callid]

@@ -727,6 +727,9 @@ class GUI_Qt(GUI):
         for callid in range(self.Qt_calls.count()):
             self.Qt_calls.item(callid).usevary_apply()
 
+    def UI_arg_setfocus(self, callid, argid):
+        self.Qt_calls.item(callid).Qt_args[argid].setFocus()
+
     def UI_submit_setenabled(self):
         enabled = self.calls_checksanity()
         self.Qt_submit.setEnabled(enabled)
