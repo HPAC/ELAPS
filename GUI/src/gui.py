@@ -236,8 +236,8 @@ class GUI(object):
         info += "Cores:\t%d\n" % sampler["nt_max"]
         if "dflops/cycle" in sampler:
             info += "Gflops/s:\t%.2f (peak)" % (
-                sampler["dflops/cycle"] * sampler["frequency"] * sampler["nt_max"]
-                / 1e9
+                sampler["dflops/cycle"] * sampler["frequency"] *
+                sampler["nt_max"] / 1e9
             )
         return info
 
@@ -600,7 +600,7 @@ class GUI(object):
         # calls without proper signatures
         else:
             if value is None:
-                call[callid] = None
+                call[argid] = None
             elif arg == "char*":
                 call[argid] = value
             elif value[0] == "[" and value[-1] == "]":

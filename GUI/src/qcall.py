@@ -52,18 +52,19 @@ class QCall(QtGui.QListWidgetItem):
         self.sig = None
 
     def update_size(self):
-        argheight = 0
-        layout = self.widget.layout()
-        for i, Qarg in enumerate(self.Qt_args):
-            argheight = max(argheight, Qarg.size().height())
-        lineheight = self.widget.fontMetrics().lineSpacing()
-        margins = layout.contentsMargins()
-        top = margins.top()
-        bottom = margins.bottom()
-        spacing = layout.spacing()
-        height = top + lineheight + spacing + argheight + bottom + 4
         size = self.widget.sizeHint()
-        size.setHeight(height)
+        if self.sig:
+            argheight = 0
+            layout = self.widget.layout()
+            for i, Qarg in enumerate(self.Qt_args):
+                argheight = max(argheight, Qarg.sizeHint().height())
+            lineheight = self.widget.fontMetrics().lineSpacing()
+            margins = layout.contentsMargins()
+            top = margins.top()
+            bottom = margins.bottom()
+            spacing = layout.spacing()
+            height = top + lineheight + spacing + argheight + bottom + 4
+            size.setHeight(height)
         self.setSizeHint(size)
 
     def args_init(self):
@@ -126,7 +127,8 @@ class QCall(QtGui.QListWidgetItem):
                 Qarg.setToolTip(tooltip)
             Qarg.argid = argid
             Qarg.setProperty("invalid", True)
-            self.widget.layout().addWidget(Qarg, 1, argid)
+            self.widget.layout().addWidget(Qarg, 1, argid,
+                                           QtCore.Qt.AlignCenter)
             self.Qt_args.append(Qarg)
         if self.sig:
             self.showargs_apply()
@@ -176,11 +178,13 @@ class QCall(QtGui.QListWidgetItem):
             return
         if isinstance(call, signature.Call):
             if call.sig != self.sig:
-                self.args_clear()
+                if len(self.Qt_args) > 1:
+                    self.args_clear()
                 self.args_init()
         else:
             if len(self.Qt_args) != len(call):
-                self.args_clear()
+                if len(self.Qt_args) > 1:
+                    self.args_clear()
                 self.args_init()
         # set values
         for argid, val in enumerate(call):
