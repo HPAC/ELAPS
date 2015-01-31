@@ -1,23 +1,23 @@
 Sampler:
 - Automatic hardware analysis (cfg generation)
+- README
 
 - (OpenMP)
 
 
 GUI:
+- dynamically load signatures
+- reduce BLAS/LAPACK doc size (21MB)
 - work variables
+- README
 
 - ("file" backend)
 - (status tips)
-- (include BLAS/LAPACK documentation from doxygen)
 - (multiple BLAS at once)
 
 
 Viewer:
+- README
+
 - (memory metrics)
 - (status tips)
-
-
-Other:
-- Documentation
-- Readme
