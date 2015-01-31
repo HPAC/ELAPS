@@ -30,9 +30,8 @@ class GUI(object):
         self.signatures_init()
         self.docs_init()
         self.UI_init()
-        self.state_init(loadstate)
         self.jobprogress_init()
-        self.UI_setall()
+        self.state_init(loadstate)
 
     # state access attributes
     def __getattr__(self, name):
@@ -117,6 +116,7 @@ class GUI(object):
                     self.alert("couldn't load", os.path.relpath(filename))
         self.log("loaded", len(self.signatures), "signatures:",
                  *sorted(self.signatures))
+        self.nosigwarning_shown = False
 
     def state_init(self, load=True):
         self.state_reset()
@@ -160,6 +160,7 @@ class GUI(object):
         self.sampler_set(samplername)
         self.connections_update()
         self.data_update()
+        self.UI_setall()
 
     def state_reset(self):
         sampler = self.samplers[min(self.samplers)]
