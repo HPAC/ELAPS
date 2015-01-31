@@ -8,16 +8,16 @@ from PyQt4 import QtCore, QtGui
 
 
 class QCall(QtGui.QListWidgetItem):
-    def __init__(self, viewer, callid):
+    def __init__(self, gui, callid):
         QtGui.QGroupBox.__init__(self)
-        self.viewer = viewer
+        self.Qt_gui = gui
         self.callid = callid
         self.sig = None
 
         self.UI_init()
 
     def UI_init(self):
-        routines = list(self.viewer.sampler["kernels"])
+        routines = list(self.Qt_gui.sampler["kernels"])
 
         # layout
         self.widget = QtGui.QWidget()
@@ -67,18 +67,18 @@ class QCall(QtGui.QListWidgetItem):
         self.setSizeHint(size)
 
     def args_init(self):
-        call = self.viewer.calls[self.callid]
+        call = self.Qt_gui.calls[self.callid]
         self.Qt_args[0].setProperty("invalid", False)
         if isinstance(call, signature.Call):
             self.sig = call.sig
         else:
-            minsig = self.viewer.sampler["kernels"][call[0]]
+            minsig = self.Qt_gui.sampler["kernels"][call[0]]
             self.sig = None
-            if not self.viewer.nosigwarning_shown:
-                self.viewer.UI_alert("No signature found for %r!\n" % call[0] +
+            if not self.Qt_gui.nosigwarning_shown:
+                self.Qt_gui.UI_alert("No signature found for %r!\n" % call[0] +
                                      "Hover arguments for input syntax.")
-                self.viewer.nosigwarning_shown = True
-        doc = self.gui.docs_get(call[0])
+                self.Qt_gui.nosigwarning_shown = True
+        doc = self.Qt_gui.docs_get(call[0])
         if doc:
             self.Qt_args[0].setToolTip(doc[0][1])
         for argid in range(len(call))[1:]:
@@ -118,7 +118,7 @@ class QCall(QtGui.QListWidgetItem):
                 elif isinstance(arg, signature.Data):
                     Qarg = QDataArg(self)
             else:
-                Qarg = QtGui.QLineEdit()
+                Qarg = QtGui.QLineEdit(" ")
                 Qarg.textChanged.connect(self.arg_change)
                 if tooltip:
                     Qarg.setToolTip(tooltip)
@@ -155,7 +155,7 @@ class QCall(QtGui.QListWidgetItem):
                 ("infos", signature.Info)
             ):
                 if isinstance(arg, classes):
-                    showing = self.viewer.showargs[name]
+                    showing = self.Qt_gui.showargs[name]
                     self.Qt_arglabels[argid].setVisible(showing)
                     self.Qt_args[argid].setVisible(showing)
 
@@ -167,10 +167,12 @@ class QCall(QtGui.QListWidgetItem):
                 Qarg.usevary_apply()
 
     def args_set(self, fromargid=None):
-        call = self.viewer.calls[self.callid]
+        self.Qt_gui.Qt_setting = True
+        call = self.Qt_gui.calls[self.callid]
         # set widgets
-        if call[0] not in self.viewer.sampler["kernels"]:
+        if call[0] not in self.Qt_gui.sampler["kernels"]:
             self.args_clear()
+            self.Qt_gui.Qt_setting = False
             return
         if isinstance(call, signature.Call):
             if call.sig != self.sig:
@@ -197,20 +199,21 @@ class QCall(QtGui.QListWidgetItem):
             elif isinstance(Qarg, QDataArg):
                 Qarg.set()
         self.update_size()
+        self.Qt_gui.Qt_setting = False
 
     def data_viz(self):
         if not self.sig:
             return
-        for argid in self.viewer.calls[self.callid].sig.dataargs():
+        for argid in self.Qt_gui.calls[self.callid].sig.dataargs():
             self.Qt_args[argid].viz()
         self.update_size()
 
     # event handlers
     def remove_click(self):
-        self.viewer.UI_call_remove(self.callid)
+        self.Qt_gui.UI_call_remove(self.callid)
 
     def arg_change(self):
-        sender = self.viewer.Qt_app.sender()
+        sender = self.Qt_gui.Qt_app.sender()
         if isinstance(sender, QtGui.QLineEdit):
             # adjust widt no matter where the change came from
             val = str(sender.text())
@@ -219,10 +222,10 @@ class QCall(QtGui.QListWidgetItem):
                 width += sender.minimumSizeHint().width()
                 height = sender.sizeHint().height()
                 sender.setFixedSize(max(height, width), height)
-        if self.viewer.Qt_setting:
+        if self.Qt_gui.Qt_setting:
             return
         if isinstance(sender, QtGui.QComboBox):
             val = str(sender.currentText())
         if not val:
             val = None
-        self.viewer.UI_arg_change(self.callid, sender.argid, val)
+        self.Qt_gui.UI_arg_change(self.callid, sender.argid, val)

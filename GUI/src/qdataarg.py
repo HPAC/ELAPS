@@ -10,7 +10,7 @@ class QDataArg(QtGui.QWidget):
     def __init__(self, call):
         QtGui.QWidget.__init__(self)
         self.Qt_call = call
-        self.viewer = call.viewer
+        self.Qt_gui = call.gui
         self.polygonmin = None
         self.linesminfront = None
         self.linesminback = None
@@ -40,7 +40,7 @@ class QDataArg(QtGui.QWidget):
         self.Qt_name.setAlignment(QtCore.Qt.AlignHCenter)
         self.Qt_name.textChanged.connect(self.change)
         regexp = QtCore.QRegExp("[a-zA-Z]+")
-        validator = QtGui.QRegExpValidator(regexp, self.viewer.Qt_app)
+        validator = QtGui.QRegExpValidator(regexp, self.Qt_gui.Qt_app)
         self.Qt_name.setValidator(validator)
 
         # vary
@@ -68,8 +68,8 @@ class QDataArg(QtGui.QWidget):
         if not self.polygonmax:
             return QtGui.QWidget.paintEvent(self, event)
 
-        brushes = self.viewer.Qt_brushes
-        pens = self.viewer.Qt_pens
+        brushes = self.Qt_gui.Qt_brushes
+        pens = self.Qt_gui.Qt_pens
         painter = QtGui.QPainter(self)
 
         # max
@@ -102,13 +102,13 @@ class QDataArg(QtGui.QWidget):
 
     # setters
     def set(self):
-        value = self.viewer.calls[self.Qt_call.callid][self.argid]
+        value = self.Qt_gui.calls[self.Qt_call.callid][self.argid]
         if value is None:
             self.Qt_name.setText("")
             self.Qt_vary.setChecked(False)
         else:
             self.Qt_name.setText(value)
-            self.Qt_vary.setChecked(value in self.viewer.vary)
+            self.Qt_vary.setChecked(value in self.Qt_gui.vary)
         self.viz()
 
     def setsize(self, height, width):
@@ -117,7 +117,7 @@ class QDataArg(QtGui.QWidget):
         namewidth += self.Qt_name.fontMetrics().width(self.Qt_name.text())
         namewidth = max(namewidth, nameheight)
         varywidth = varyheight = 0
-        if self.viewer.usevary:
+        if self.Qt_gui.usevary:
             varyheight = self.Qt_vary.minimumSizeHint().height()
             varywidth = self.Qt_vary.minimumSizeHint().width()
         contentheight = nameheight + varyheight
@@ -130,12 +130,12 @@ class QDataArg(QtGui.QWidget):
         return hoff, woff
 
     def viz(self):
-        value = self.viewer.calls[self.Qt_call.callid][self.argid]
+        value = self.Qt_gui.calls[self.Qt_call.callid][self.argid]
         if value is None:
             self.viz_none()
             return
-        self.Qt_vary.setChecked(value in self.viewer.vary)
-        data = self.viewer.data[value]
+        self.Qt_vary.setChecked(value in self.Qt_gui.vary)
+        data = self.Qt_gui.data[value]
         if data["sym"] is None:
             self.viz_none()
             return
@@ -156,7 +156,7 @@ class QDataArg(QtGui.QWidget):
         dimmin = []
         dimmax = []
         for expr in dim:
-            values = sum(self.viewer.range_eval(expr), [])
+            values = sum(self.Qt_gui.range_eval(expr), [])
             if any(value is None for value in values):
                 self.viz_none()
                 return
@@ -182,10 +182,10 @@ class QDataArg(QtGui.QWidget):
         self.viz_matrix(dimmin + [1], dimmax + [1])
 
     def viz_matrix(self, dimmin, dimmax):
-        scale = self.viewer.datascale / max(1, self.viewer.data_maxdim())
+        scale = self.Qt_gui.datascale / max(1, self.Qt_gui.data_maxdim())
         dimmin = [int(round(scale * dim)) for dim in dimmin]
         dimmax = [int(round(scale * dim)) for dim in dimmax]
-        call = self.viewer.calls[self.Qt_call.callid]
+        call = self.Qt_gui.calls[self.Qt_call.callid]
         properties = call.properties(self.argid)
         for prop in properties:
             if prop in ("lower", "upper"):
@@ -340,7 +340,7 @@ class QDataArg(QtGui.QWidget):
         ]
 
     def usevary_apply(self):
-        self.Qt_vary.setVisible(self.viewer.usevary)
+        self.Qt_vary.setVisible(self.Qt_gui.usevary)
 
     # event handlers
     def change(self):
@@ -349,13 +349,13 @@ class QDataArg(QtGui.QWidget):
         width += self.Qt_name.minimumSizeHint().width()
         height = self.Qt_name.sizeHint().height()
         self.Qt_name.setFixedSize(max(height, width), height)
-        if self.viewer.Qt_setting:
+        if self.Qt_gui.Qt_setting:
             return
         value = str(self.Qt_name.text())
-        self.viewer.UI_arg_change(self.Qt_call.callid, self.argid, value)
+        self.Qt_gui.UI_arg_change(self.Qt_call.callid, self.argid, value)
 
     def vary_change(self):
-        if self.viewer.Qt_setting:
+        if self.Qt_gui.Qt_setting:
             return
-        self.viewer.UI_vary_change(self.Qt_call.callid, self.argid,
+        self.Qt_gui.UI_vary_change(self.Qt_call.callid, self.argid,
                                    self.Qt_vary.isChecked())
