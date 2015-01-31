@@ -8,7 +8,6 @@ import sys
 import os
 import imp
 import time
-import xml.etree.ElementTree
 from collections import defaultdict
 from __builtin__ import intern  # fix for pyflake error
 
@@ -122,7 +121,7 @@ class GUI(object):
         self.state_reset()
 
     def docs_init(self):
-        self.docspath = os.path.join(self.rootpath, "GUI", "xml-doc", "lapack")
+        self.docspath = os.path.join(self.rootpath, "GUI", "kerneldocs")
         self.docs = {}
 
     def jobprogress_init(self):
@@ -906,23 +905,9 @@ class GUI(object):
     def docs_get(self, routine):
         if routine not in self.docs:
             try:
-                root = xml.etree.ElementTree.parse(
-                    os.path.join(self.docspath, routine + "8f.xml")
-                ).getroot().iter("detaileddescription").next()
-                desc = root.iter("simplesect").next().\
-                    iter("verbatim").next().text
-                doc = [[routine, desc]]
-                for param in root.iter("parameteritem"):
-                    name = param.iter("parametername").next().text
-                    desc = param.iter("parameterdescription").next().\
-                        iter("verbatim").next().text
-                    doc.append([name, desc])
-                for argid, (name, desc) in enumerate(doc):
-                    lines = desc.split("\n")
-                    prelen = len(lines[0]) - len(lines[0].lstrip())
-                    lines = [line[prelen:] for line in lines]
-                    doc[argid] = (name, "\n".join(lines))
-                self.docs[routine] = tuple(doc)
+                filename = os.path.join(self.docspath, routine + ".pydoc")
+                with open(filename) as fin:
+                    self.docs[routine] = eval(fin.read(), {}, {})
                 self.log("loaded documentation for %r" % routine)
             except:
                 self.docs[routine] = None
