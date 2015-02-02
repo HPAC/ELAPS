@@ -14,7 +14,7 @@ from __builtin__ import intern  # fix for pyflake error
 
 class GUI(object):
     requiredbuildversion = 1422278229
-    requiredstateversion = 1422385928
+    requiredstateversion = 1422896804
     state = {}
 
     def __init__(self, loadstate=True):
@@ -131,7 +131,10 @@ class GUI(object):
     def state_toflat(self):
         state = self.state.copy()
         state["calls"] = tuple(map(tuple, self.calls))
-        state["counters"] = tuple(state["counters"])
+        state["counters"] = tuple(self.counters)
+        state["ntrange"] = tuple(self.ntrange.subranges)
+        state["range"] = tuple(self.range.subranges)
+        state["sumrange"] = tuple(self.sumrange.subranges)
         return state
 
     def state_fromflat(self, state):
@@ -148,6 +151,10 @@ class GUI(object):
                         ("Could not applying the signature '%s' to '%s(%s)'.\n"
                          "Signature Ignored.") % (str(sig), call[0], call[1:])
                     )
+        # set ranges
+        state["ntrange"] = symbolic.Range(*state["ntrange"])
+        state["range"] = symbolic.Range(*state["range"])
+        state["sumrange"] = symbolic.Range(*state["sumrange"])
         state["calls"] = calls
         # check if sampler is available
         samplername = state["samplername"]
@@ -182,12 +189,12 @@ class GUI(object):
             },
             "counters": sampler["papi_counters_max"] * [None],
             "header": "# script header\n",
-            "ntrange": (1, 1, 1),
+            "ntrange": ((1, 0, 1),),
             "rangevar": "n",
-            "range": (8, 32, 1000),
+            "range": ((8, 32, 1000),),
             "nrep": 10,
             "sumrangevar": "m",
-            "sumrange": (1, 1, 10),
+            "sumrange": ((1, 1, 10),),
             "calls": [[""]],
             "vary": set(),
             "datascale": 100,
@@ -241,34 +248,37 @@ class GUI(object):
         return info
 
     # range routines
+    def range_symdict(self, dorange=True, dosumrange=True):
+        symbols = {}
+        if self.usentrange and dorange:
+            symbols["nt"] = symbolic.Symbol("nt")
+        if self.userange and dorange:
+            symbols[self.rangevar] = symbolic.Symbol(self.rangevar)
+        if self.usesumrange and dosumrange:
+            symbols[self.sumrangevar] = symbolic.Symbol(self.sumrangevar)
+        return symbols
+
+    def range_parse(self, text, dorange=True, dosumrange=True):
+        try:
+            return eval(text, {}, self.range_symdict())
+        except:
+            return None
+
     def range_get(self):
         if self.userange:
-            lower, step, upper = self.range
-            if lower <= upper:
-                return range(lower, upper + 1, step)
-            else:
-                return [lower]
+            return iter(self.range)
         elif self.usentrange:
-            lower, step, upper = self.ntrange
-            if lower <= upper:
-                return range(lower, upper + 1, step)
-            else:
-                return [lower]
+            return iter(self.ntrange)
         else:
             return [None]
 
     def sumrange_get(self, rangeval=None):
         if not self.usesumrange:
             return [None]
-        lower, step, upper = self.sumrange
+        sumrange = self.sumrange
         if rangeval is not None:
-            lower = self.range_eval(lower, rangeval, dosumrange=False)
-            step = self.range_eval(step, rangeval, dosumrange=False)
-            upper = self.range_eval(upper, rangeval, dosumrange=False)
-        if lower <= upper:
-            return range(lower, upper + 1, step)
-        else:
-            return [lower]
+            sumrange = self.sumrange(**self.range_symdict(dosumrange=False))
+        return iter(sumrange)
 
     def range_eval(self, expr, rangeval=None, sumrangeval=None,
                    dorange=True, dosumrange=True):
@@ -304,19 +314,6 @@ class GUI(object):
         if isinstance(expr, symbolic.Expression):
             return expr(**symdict)
         return expr
-
-    def range_parse(self, text, dorange=True, dosumrange=True):
-        try:
-            symbols = {}
-            if self.usentrange and dorange:
-                symbols["nt"] = symbolic.Symbol("nt")
-            if self.userange and dorange:
-                symbols[self.rangevar] = symbolic.Symbol(self.rangevar)
-            if self.usesumrange and dosumrange:
-                symbols[self.sumrangevar] = symbolic.Symbol(self.sumrangevar)
-            return eval(text, {}, symbols)
-        except:
-            return None
 
     # simple data operations
     def data_maxdim(self):
@@ -1051,16 +1048,15 @@ class GUI(object):
         self.UI_userange_setenabled()
         self.UI_usentrange_apply()
 
-    def UI_ntrange_change(self, ntrange):
-        lower, step, upper = ntrange
-        if lower is None or lower <= 0:
-            return
-        if upper is None:
-            return
-        self.ntrange = ntrange
-        self.nt = upper
-        self.data_update()
-        self.UI_data_viz()
+    def UI_ntrange_change(self, value):
+        try:
+            self.ntrange = symbolic.Range(value)
+            self.nt = self.ntrange.max()
+            self.data_update()
+            self.UI_data_viz()
+        except:
+            # TODO: error alert?
+            pass
 
     def UI_userange_change(self, state):
         if not state:
@@ -1078,15 +1074,14 @@ class GUI(object):
     def UI_rangevar_change(self, varname):
         self.rangevar_set(varname)
 
-    def UI_range_change(self, range):
-        lower, step, upper = range
-        if lower is None:
-            return
-        if upper is None:
-            return
-        self.range = range
-        self.data_update()
-        self.UI_data_viz()
+    def UI_range_change(self, value):
+        try:
+            self.range = symbolic.Range(value)
+            self.data_update()
+            self.UI_data_viz()
+        except:
+            # TODO: error alert?
+            pass
 
     def UI_usesumrange_change(self, state):
         if not state:
@@ -1103,20 +1098,15 @@ class GUI(object):
     def UI_sumrangevar_change(self, varname):
         self.sumrangevar_set(varname)
 
-    def UI_sumrange_change(self, sumrange):
-        lower, step, upper = sumrange
-        lower = self.range_parse(lower, dosumrange=False)
-        step = self.range_parse(step, dosumrange=False)
-        upper = self.range_parse(upper, dosumrange=False)
-        if lower is None:
-            return
-        if step is None:
-            step = 1
-        if upper is None:
-            return
-        self.sumrange = (lower, step, upper)
-        self.data_update()
-        self.UI_data_viz()
+    def UI_sumrange_change(self, value):
+        try:
+            symdict = self.range_symdict(dosumrange=False)
+            self.sumrange = symbolic.Range(value, **symdict)
+            self.data_update()
+            self.UI_data_viz()
+        except:
+            # TODO: error alert?
+            pass
 
     def UI_nrep_change(self, nrep):
         self.nrep = nrep

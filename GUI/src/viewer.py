@@ -191,31 +191,44 @@ class Viewer(object):
 
         rangevals = (None,)
         if report["userange"]:
-            lower, step, upper = report["range"]
-            rangevals = range(lower, upper + 1, step)
+            if isinstance(report["range"], symbolic.Range):
+                rangevals = list(report["range"])
+            else:
+                # TODO: remove compatibility settings
+                lower, step, upper = report["range"]
+                rangevals = range(lower, upper + 1, step)
         elif report["usentrange"]:
-            lower, step, upper = report["ntrange"]
-            rangevals = range(lower, upper + 1, step)
+            if isinstance(report["ntrange"], symbolic.Range):
+                rangevals = list(report["ntrange"])
+            else:
+                # TODO: remove compatibility settings
+                lower, step, upper = report["ntrange"]
+                rangevals = range(lower, upper + 1, step)
         reportdata = {}
         report["data"] = reportdata
         for rangeval in rangevals:
             sumrangevals = (None,)
             if report["usesumrange"]:
                 sumrange = report["sumrange"]
+                symdict = {}
                 if report["userange"]:
+                    symdict[report["rangevar"]] = rangeval
+                elif report["usentrange"]:
+                    symdict["nt"] = rangeval
+                if isinstance(sumrange, symbolic.Range):
+                    sumrange = sumrange(**symdict)
+                else:
+                    # TODO: remove compatibility settings
                     sumrange = [
                         val(**{report["rangevar"]: rangeval})
                         if isinstance(val, symbolic.Expression) else val
                         for val in sumrange
                     ]
-                elif report["usentrange"]:
-                    sumrange = [
-                        val(**{"nt": rangeval})
-                        if isinstance(val, symbolic.Expression) else val
-                        for val in sumrange
-                    ]
-                lower, step, upper = sumrange
-                sumrangevals = range(lower, upper + 1, step)
+                if isinstance(sumrange, symbolic.Range):
+                    sumrangevals = list(sumrange)
+                else:
+                    lower, step, upper = sumrange
+                    sumrangevals = range(lower, upper + 1, step)
             rangevaldata = []
             reportdata[rangeval] = rangevaldata
             for rep in range(report["nrep"] + 1):
@@ -256,7 +269,7 @@ class Viewer(object):
         result += "<tr><td>CPU:</td><td>%s</td></tr>" % sampler["cpu_model"]
         if report["usentrange"]:
             result += (
-                "<tr><td>#threads:</td><td>%d:%d:%d</td></tr>"
+                "<tr><td>#threads:</td><td>%s</td></tr>"
                 % report["ntrange"]
             )
         else:
@@ -269,13 +282,13 @@ class Viewer(object):
             result += "<tr><td></td><td><b>Invalid Report!</b></td></tr>"
         if report["userange"]:
             result += (
-                "<tr><td>For each:</td><td>%s = %d:%d:%d</td></tr>"
-                % ((report["rangevar"],) + report["range"])
+                "<tr><td>For each:</td><td>%s = %s</td></tr>"
+                % (report["rangevar"], report["range"])
             )
         if report["usesumrange"]:
             result += (
-                "<tr><td>Sum over:</td><td>%s = %s:%s:%s</td></tr>"
-                % tuple([report["sumrangevar"]] + map(str, report["sumrange"]))
+                "<tr><td>Sum over:</td><td>%s = %s</td></tr>"
+                % (report["sumrangevar"], + report["sumrange"])
             )
 
         def format_call(call):
@@ -426,6 +439,7 @@ class Viewer(object):
         if any(report["filename"] == filename for report in self.reports):
             self.UI_alert(filename, "already loaded")
             return
+        report = self.report_load(filename)
         try:
             report = self.report_load(filename)
         except:

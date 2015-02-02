@@ -293,6 +293,146 @@ class Max(Operation):
         return self.__class__(*args)
 
 
+class Range(object):
+    def __init__(self, *args, **kwargs):
+        self.subranges = []
+        if len(args) == 1 and isinstance(args[0], str):
+            rangeparts = args[0].split(",")
+            for rangepart in rangeparts:
+                rangepart = rangepart.strip()
+                parts = rangepart.split(":")
+                parts = [eval(part, {}, kwargs) for part in parts]
+                if len(parts) == 1:
+                    subrange = (parts[0], 1, parts[0])
+                elif len(parts) == 2:
+                    subrange = (parts[0], 1, parts[1])
+                elif len(parts) == 3:
+                    subrange = (parts[0], parts[1], parts[2])
+                else:
+                    raise Exception("Inavlid subrange: %r" % rangepart)
+                self.subranges.append(subrange)
+        else:
+            for arg in args:
+                if not isinstance(arg, tuple):
+                    raise Exception("Invalid subrange: %r" % arg)
+                if len(arg) != 3:
+                    print(arg, len(arg))
+                    raise Exception("Invalid subrange: %r" % arg)
+                for val in arg:
+                    if not isinstance(val, (numbers.Number, Expression)):
+                        raise Exception("Invalid value in range:%r" % arg)
+                self.subranges.append(arg)
+
+    def min(self):
+        result = float("inf")
+        for subrange in self.subranges:
+            if not all(isinstance(val, numbers.Number) for val in subrange):
+                raise Exception("Not numberic: %r" % subrange)
+            start, step, stop = subrange
+            if step > 0:
+                if start <= stop:
+                    result = min(result, start)
+            elif step == 0:
+                if start == stop:
+                    result = min(result, start)
+            else:
+                if start >= stop:
+                    result = min(result,
+                                 start + ((stop - start) // step) * step)
+        return result
+
+    def max(self):
+        result = -float("inf")
+        for subrange in self.subranges:
+            if not all(isinstance(val, numbers.Number) for val in subrange):
+                raise Exception("Not numberic: %r" % subrange)
+            start, step, stop = subrange
+            if step > 0:
+                if start <= stop:
+                    result = min(result,
+                                 start + ((stop - start) // step) * step)
+            elif step == 0:
+                if start == stop:
+                    result = min(result, start)
+            else:
+                if start >= stop:
+                    result = min(result, start)
+        return result
+
+    def substitute(self, **kwargs):
+        subranges = []
+        for subrange in self.subranges:
+            subrange = []
+            for val in subrange:
+                if isinstance(val, Expression):
+                    subrange.append(val.substitute(**kwargs))
+                else:
+                    subrange.append(val)
+            subranges.append(tuple(subrange))
+        return Range(*subranges)
+
+    def simplify(self):
+        subranges = []
+        for subrange in self.subranges:
+            subrange = []
+            for val in subrange:
+                if isinstance(val, Expression):
+                    subrange.append(val.simplify())
+                else:
+                    subrange.append(val)
+            subranges.append(tuple(subrange))
+        return Range(*subranges)
+
+    def __call__(self, **kwargs):
+        return self.substittute(**kwargs).simplify()
+
+    def __iter__(self):
+        for subrange in self.subranges:
+            if not all(isinstance(val, numbers.Number) for val in subrange):
+                raise Exception("Not numeric: %r" % subrange)
+            start, step, stop = subrange
+            if step > 0:
+                val = start
+                while val <= stop:
+                    yield val
+                    val += step
+            elif step == 0:
+                if start == stop:
+                    yield val
+            else:
+                val = start
+                while val >= stop:
+                    yield val
+                    val += step
+
+    def __len__(self):
+        result = 0
+        for subrange in self.subranges:
+            if not all(isinstance(val, numbers.Number) for val in subrange):
+                raise Exception("Not numberic: %r" % subrange)
+            start, step, stop = subrange
+            if step == 0:
+                if start == stop:
+                    result += 1
+            else:
+                result += 1 + (stop - start) // step
+        return result
+
+    def __str__(self):
+        parts = []
+        for start, step, stop in self.subranges:
+            if start == stop:
+                parts.append(str(start))
+            elif step == 1:
+                parts.append("%s:%s" % (start, stop))
+            else:
+                parts.append("%s:%s:%s" % (start, step, stop))
+        return ",".join(parts)
+
+    def __repr__(self):
+        return "Range(" + ", ".join(map(repr, self.subranges)) + ")"
+
+
 def min_sym(*args, **kwargs):
     if len(args) == 1:
         if any(isinstance(arg, Expression) for arg in args[0]):

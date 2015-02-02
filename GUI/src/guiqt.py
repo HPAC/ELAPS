@@ -236,9 +236,6 @@ class GUI_Qt(GUI):
             self.Qt_ntrange = QtGui.QLineEdit()
             ntrangeL.addWidget(self.Qt_ntrange)
             self.Qt_ntrange.textChanged.connect(self.Qt_ntrange_change)
-            regexp = QtCore.QRegExp("(?:\d+)?:(?:(?:\d+)?:)?(\d+)?")
-            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
-            self.Qt_ntrange.setValidator(validator)
 
             # ntrange > "(#threads)"
             ntrangeL.addWidget(QtGui.QLabel("(#threads)"))
@@ -272,9 +269,6 @@ class GUI_Qt(GUI):
             self.Qt_range = QtGui.QLineEdit()
             rangeL.addWidget(self.Qt_range)
             self.Qt_range.textChanged.connect(self.Qt_range_change)
-            regexp = QtCore.QRegExp("(?:-?\d+)?:(?:(?:-?\d+)?:)?(-?\d+)?")
-            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
-            self.Qt_range.setValidator(validator)
 
             # range
             rangeL.addStretch(1)
@@ -330,9 +324,6 @@ class GUI_Qt(GUI):
             self.Qt_sumrange = QtGui.QLineEdit()
             sumrangeL.addWidget(self.Qt_sumrange)
             self.Qt_sumrange.textChanged.connect(self.Qt_sumrange_change)
-            regexp = QtCore.QRegExp("(?:.*)?:(?:(?:.*)?:)?(.*)?")
-            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
-            self.Qt_sumrange.setValidator(validator)
 
             # sumrange
             sumrangeL.addStretch(1)
@@ -627,16 +618,7 @@ class GUI_Qt(GUI):
 
     def UI_ntrange_set(self):
         self.Qt_setting = True
-        lower, step, upper = self.ntrange
-        text = ""
-        if lower is not None:
-            text += str(lower)
-        if step != 1:
-            text += ":" + str(step)
-        text += ":"
-        if upper is not None:
-            text += str(upper)
-        self.Qt_ntrange.setText(text)
+        self.Qt_ntrange.setText(str(self.ntrange))
         self.Qt_setting = False
 
     def UI_rangevar_set(self):
@@ -646,16 +628,7 @@ class GUI_Qt(GUI):
 
     def UI_range_set(self):
         self.Qt_setting = True
-        lower, step, upper = self.range
-        text = ""
-        if lower is not None:
-            text += str(lower)
-        if step != 1:
-            text += ":" + str(step)
-        text += ":"
-        if upper is not None:
-            text += str(upper)
-        self.Qt_range.setText(text)
+        self.Qt_range.setText(str(self.range))
         self.Qt_setting = False
 
     def UI_nrep_set(self):
@@ -671,16 +644,7 @@ class GUI_Qt(GUI):
 
     def UI_sumrange_set(self):
         self.Qt_setting = True
-        lower, step, upper = map(str, self.sumrange)
-        text = ""
-        if lower is not None:
-            text += str(lower)
-        if step != 1:
-            text += ":" + str(step)
-        text += ":"
-        if upper is not None:
-            text += str(upper)
-        self.Qt_sumrange.setText(text)
+        self.Qt_sumrange.setText(str(self.sumrange))
         self.Qt_setting = False
 
     def UI_calls_init(self):
@@ -917,11 +881,7 @@ class GUI_Qt(GUI):
     def Qt_ntrange_change(self):
         if self.Qt_setting:
             return
-        parts = str(self.Qt_ntrange.text()).split(":")
-        lower = int(parts[0]) if len(parts) >= 1 and parts[0] else None
-        step = int(parts[1]) if len(parts) == 3 and parts[1] else 1
-        upper = int(parts[-1]) if len(parts) >= 2 and parts[-1] else None
-        self.UI_ntrange_change((lower, step, upper))
+        self.UI_ntrange_change(str(self.Qt_ntrange.text()))
 
     def Qt_rangevar_change(self):
         if self.Qt_setting:
@@ -931,11 +891,7 @@ class GUI_Qt(GUI):
     def Qt_range_change(self):
         if self.Qt_setting:
             return
-        parts = str(self.Qt_range.text()).split(":")
-        lower = int(parts[0]) if len(parts) >= 1 and parts[0] else None
-        step = int(parts[1]) if len(parts) == 3 and parts[1] else 1
-        upper = int(parts[-1]) if len(parts) >= 2 and parts[-1] else None
-        self.UI_range_change((lower, step, upper))
+        self.UI_range_change(str(self.Qt_range.text()))
 
     def Qt_nrep_change(self):
         if self.Qt_setting:
@@ -951,11 +907,7 @@ class GUI_Qt(GUI):
     def Qt_sumrange_change(self):
         if self.Qt_setting:
             return
-        parts = str(self.Qt_sumrange.text()).split(":")
-        lower = parts[0] if len(parts) >= 1 else None
-        step = parts[1] if len(parts) == 3 else 1
-        upper = parts[-1] if len(parts) >= 2 else None
-        self.UI_sumrange_change((lower, step, upper))
+        self.UI_sumrange_change(str(self.Qt_sumrange.text()))
 
     def Qt_call_add_click(self):
         self.UI_call_add_click()
