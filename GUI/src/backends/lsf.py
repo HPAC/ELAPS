@@ -9,8 +9,8 @@ import re
 
 class lsf(Backend):
     def __init__(self, header=("#!/bin/bash -l\n"
-                               "#BSUB -o /dev/null\n"
                                "#BSUB -W 2:00\n")):
+                               # "#BSUB -o /dev/null\n"
         Backend.__init__(self)
         self.jobs = []
         self.header = header

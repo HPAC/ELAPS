@@ -800,6 +800,7 @@ class GUI(object):
         filebase = filename
         if filename[-5:] == ".smpl":
             filebase = filebase[:-5]
+        scriptfile = filebase + ".script"
         smplfile = filebase + ".smpl"
         errfile = filebase + ".err"
         jobname = os.path.basename(filebase)
@@ -873,6 +874,9 @@ class GUI(object):
 
         if footer:
             script += "\n" + footer.format(nt=self.nt)
+
+        with open(scriptfile, "w") as fout:
+            fout.write(script)
 
         # submit
         backend = self.backends[self.sampler["backend"]]
