@@ -112,7 +112,7 @@ def main():
         "kernels": tuple(sorted(kernelsigs)),
         "papi_counters_max": papi_counters_max,
         "cpu_model": os.environ["CPU_MODEL"],
-        "frequency": 1e6 * float(os.environ["FREQUENCY_MHZ"]),
+        "frequency": float(os.environ["FREQUENCY_HZ"]),
     }
     if papi_counters_max:
         info["papi_counters_avail"] = tuple(
