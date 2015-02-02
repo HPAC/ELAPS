@@ -866,15 +866,22 @@ class GUI(object):
                 script += " " + suffix.format(nt=ntrangeval)
             script += "\n"
 
+            # delete call file
+            script += "rm %s\n" % callfile
+
         # timing
         script += "date +%%s >> %s\n" % smplfile
 
         # if empty, delete errfile
         script += "[ -s %(e)s ] || rm %(e)s" % {"e": errfile}
 
+        # delete script file
+        script += "\nrm " + scriptfile
+
         if footer:
             script += "\n" + footer.format(nt=self.nt)
 
+        # write script file (dubug)
         with open(scriptfile, "w") as fout:
             fout.write(script)
 
