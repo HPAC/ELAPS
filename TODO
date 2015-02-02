@@ -1,11 +1,12 @@
 Sampler:
-- Automatic hardware analysis (cfg generation)
 - README
 
 - (OpenMP)
 
 
 GUI:
+- size of calls
+- negative range bug
 - advanced range syntax
 - work variables
 - README

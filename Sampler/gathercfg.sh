@@ -13,7 +13,7 @@ if [ -e /proc/cpuinfo ]; then
 elif hash sysctl 2>/dev/null; then
     # MAC stuff
     CPU_MODEL="`sysctl -n machdep.cpu.brand_string`"
-    FREQUENCY_HZ=`sysctl -n hw.cpufrequency`
+    HZ=`sysctl -n hw.cpufrequency`
     NCORES=`sysctl -n hw.physicalcpu`
     THREADS_PER_CORE=$((`sysctl -n hw.logicalcpu` / `sysctl -n hw.physicalcpu`))
 fi

@@ -212,7 +212,7 @@ class GUI_Qt(GUI):
             rangesW = QtGui.QWidget()
             rangesD.setWidget(rangesW)
             rangesW.setSizePolicy(
-                QtGui.QSizePolicy.Minimum,
+                QtGui.QSizePolicy.Fixed,
                 QtGui.QSizePolicy.Fixed
             )
             rangesL = QtGui.QVBoxLayout()
@@ -339,9 +339,7 @@ class GUI_Qt(GUI):
                 QtGui.QDockWidget.DockWidgetMovable |
                 QtGui.QDockWidget.DockWidgetVerticalTitleBar
             )
-            self.Qt_headerD.visibilityChanged.connect(
-                self.Qt_header_visibility_change
-            )
+            self.Qt_headerD.closeEvent = self.Qt_header_close
             self.Qt_header = QtGui.QPlainTextEdit()
             self.Qt_headerD.setWidget(self.Qt_header)
             self.Qt_header.textChanged.connect(self.Qt_header_change)
@@ -350,10 +348,8 @@ class GUI_Qt(GUI):
             self.Qt_countersD = QtGui.QDockWidget("PAPI Counters")
             window.addDockWidget(QtCore.Qt.RightDockWidgetArea,
                                  self.Qt_countersD)
-            self.Qt_headerD.visibilityChanged.connect(
-                self.Qt_counters_visibility_change
-            )
             self.Qt_countersD.setObjectName("PAPI Coutners")
+            self.Qt_countersD.closeEvent = self.Qt_counters_close
             self.Qt_counters = QtGui.QWidget()
             self.Qt_countersD.setWidget(self.Qt_counters)
             self.Qt_counters.setLayout(QtGui.QVBoxLayout())
@@ -841,12 +837,11 @@ class GUI_Qt(GUI):
         argtype = self.Qt_app.sender().argtype
         self.UI_showargs_change(argtype, checked)
 
-    def Qt_counters_visibility_change(self, visible):
+    def Qt_counters_close(self, event):
         if self.Qt_setting:
             return
-        if not visible:
-            self.UI_usepapi_change(False)
-            self.UI_usepapi_set()
+        self.UI_usepapi_change(False)
+        self.UI_usepapi_set()
 
     def Qt_counter_change(self):
         if self.Qt_setting:
@@ -871,12 +866,11 @@ class GUI_Qt(GUI):
             return
         self.UI_header_change(text)
 
-    def Qt_header_visibility_change(self, visible):
+    def Qt_header_close(self, event):
         if self.Qt_setting:
             return
-        if not visible:
-            self.UI_useheader_change(False)
-            self.UI_useheader_set()
+        self.UI_useheader_change(False)
+        self.UI_useheader_set()
 
     def Qt_ntrange_change(self):
         if self.Qt_setting:

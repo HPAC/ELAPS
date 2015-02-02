@@ -8,24 +8,24 @@
 
 # set default values
 [ -z "$BLAS_NAME" ] && echo "BLAS_NAME is not set" && exit
-[ -z "$SYSTEM_NAME" ] && SYSTEM_NAME="local"
-[ -z "$NAME" ] && NAME=`basename "$1" .cfg`
-[ -z "$NCORES" ] && NCORES=1
-[ -z "$THREADS_PER_CORE" ] && THREADS_PER_CORE=1
-[ -z "$CC" ] && CC="gcc"
-[ -z "$CFLAGS" ] && CFLAGS=""
-[ -z "$CXX" ] && CXX="g++"
-[ -z "$CXXFLAGS" ] && CXXFLAGS=""
-[ -z "$LINK_FLAGS" ] && LINK_FLAGS=""
-[ -z "$INCLUDE_FLAGS" ] && INCLUDE_FLAGS=""
-[ -z "$KERNEL_HEADERS" ] && KERNEL_HEADERS="headers/blas.h headers/lapack.h"
-[ -z "$PAPI_COUNTERS_MAX" ] && PAPI_COUNTERS_MAX=0
-[ -z "$PAPI_COUNTERS_AVAIL" ] && PAPI_COUNTERS_AVAIL=""
-[ -z "$BACKEND" ] && BACKEND="local"
-[ -z "$BACKEND_HEADER" ] && BACKEND_HEADER=""
-[ -z "$BACKEND_PREFIX" ] && BACKEND_PREFIX=""
-[ -z "$BACKEND_SUFFIX" ] && BACKEND_SUFFIX=""
-[ -z "$BACKEND_FOOTER" ] && BACKEND_FOOTER=""
+: ${SYSTEM_NAME:="local"}
+: ${NAME:=`basename "$1" .cfg`}
+: ${NCORES:=1}
+: ${THREADS_PER_CORE:=1}
+: ${CC:=gcc}
+: ${CFLAGS:=""}
+: ${CXX:=g++}
+: ${CXXFLAGS:=""}
+: ${LINK_FLAGS:=""}
+: ${INCLUDE_FLAGS:=""}
+: ${KERNEL_HEADERS:="headers/blas.h headers/lapack.h"}
+: ${PAPI_COUNTERS_MAX:=0}
+: ${PAPI_COUNTERS_AVAIL:=""}
+: ${BACKEND:="local"}
+: ${BACKEND_HEADER:=""}
+: ${BACKEND_PREFIX:=""}
+: ${BACKEND_SUFFIX:=""}
+: ${BACKEND_FOOTER:=""}
 
 export BLAS_NAME SYSTEM_NAME NAME KERNEL_HEADERS
 export BACKEND BACKEND_HEADER BACKEND_PREFIX BACKEND_SUFFIX BACKEND_FOOTER
