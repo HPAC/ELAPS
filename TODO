@@ -5,9 +5,7 @@ Sampler:
 
 
 GUI:
-- size of calls
-- negative range bug
-- advanced range syntax
+- number of calls in header
 - work variables
 - README
 
