@@ -317,7 +317,7 @@ class Range(object):
                     raise Exception("Invalid subrange: %r" % arg)
                 if len(arg) != 3:
                     print(arg, len(arg))
-                    raise Exception("Invalid subrange: %r" % arg)
+                    raise Exception("Invalid subrange: " + repr(arg))
                 for val in arg:
                     if not isinstance(val, (numbers.Number, Expression)):
                         raise Exception("Invalid value in range:%r" % arg)
@@ -349,42 +349,42 @@ class Range(object):
             start, step, stop = subrange
             if step > 0:
                 if start <= stop:
-                    result = min(result,
+                    result = max(result,
                                  start + ((stop - start) // step) * step)
             elif step == 0:
                 if start == stop:
-                    result = min(result, start)
+                    result = max(result, start)
             else:
                 if start >= stop:
-                    result = min(result, start)
+                    result = max(result, start)
         return result
 
     def substitute(self, **kwargs):
         subranges = []
         for subrange in self.subranges:
-            subrange = []
+            newsubrange = []
             for val in subrange:
                 if isinstance(val, Expression):
-                    subrange.append(val.substitute(**kwargs))
+                    newsubrange.append(val.substitute(**kwargs))
                 else:
-                    subrange.append(val)
-            subranges.append(tuple(subrange))
+                    newsubrange.append(val)
+            subranges.append(tuple(newsubrange))
         return Range(*subranges)
 
     def simplify(self):
         subranges = []
         for subrange in self.subranges:
-            subrange = []
+            newsubrange = []
             for val in subrange:
                 if isinstance(val, Expression):
-                    subrange.append(val.simplify())
+                    newsubrange.append(val.simplify())
                 else:
-                    subrange.append(val)
-            subranges.append(tuple(subrange))
+                    newsubrange.append(val)
+            subranges.append(tuple(newsubrange))
         return Range(*subranges)
 
     def __call__(self, **kwargs):
-        return self.substittute(**kwargs).simplify()
+        return self.substitute(**kwargs).simplify()
 
     def __iter__(self):
         for subrange in self.subranges:

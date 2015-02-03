@@ -1033,7 +1033,7 @@ class GUI(object):
 
     def UI_usentrange_change(self, state):
         if state:
-            self.ntrange = (self.nt, 1, self.nt)
+            self.ntrange = symbolic.Range((1, 1, self.nt))
             self.UI_ntrange_set()
         else:
             self.UI_nt_set()
@@ -1063,7 +1063,7 @@ class GUI(object):
             for call in self.calls:
                 for argid, arg in enumerate(call):
                     call[argid] = self.range_eval(
-                        arg, self.range[-1], dosumrange=False
+                        arg, self.range.max(), dosumrange=False
                     )
             self.data_update()
             self.UI_calls_set()
@@ -1088,7 +1088,7 @@ class GUI(object):
             for call in self.calls:
                 for argid, arg in enumerate(call):
                     call[argid] = self.range_eval(
-                        arg, sumrangeval=self.sumrange[-1], dorange=False
+                        arg, sumrangeval=self.sumrange.max(), dorange=False
                     )
             self.data_update()
             self.UI_calls_set()

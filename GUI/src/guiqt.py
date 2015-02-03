@@ -162,29 +162,14 @@ class GUI_Qt(GUI):
             self.Qt_sampler.addItems(sorted(self.samplers.keys()))
             self.Qt_sampler.currentIndexChanged.connect(self.Qt_sampler_change)
 
-            # nt
-            self.Qt_ntlabel = QtGui.QLabel("#threads:")
-            samplerT.addWidget(self.Qt_ntlabel)
+        def create_nt():
+            self.Qt_ntT = window.addToolBar("#threads")
+            self.Qt_ntT.setMovable(False)
+            self.Qt_ntT.setObjectName("Sampler")
+            self.Qt_ntT.addWidget(QtGui.QLabel("#threads:"))
             self.Qt_nt = QtGui.QComboBox()
-            samplerT.addWidget(self.Qt_nt)
+            self.Qt_ntT.addWidget(self.Qt_nt)
             self.Qt_nt.currentIndexChanged.connect(self.Qt_nt_change)
-
-            # about
-            self.Qt_sampler_aboutD = QtGui.QDockWidget("Sampler")
-            self.Qt_sampler_aboutD.setObjectName("About Sampler")
-            self.Qt_sampler_aboutD.setFeatures(
-                QtGui.QDockWidget.DockWidgetClosable |
-                QtGui.QDockWidget.DockWidgetFloatable |
-                QtGui.QDockWidget.DockWidgetMovable |
-                QtGui.QDockWidget.DockWidgetVerticalTitleBar
-            )
-            self.Qt_window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
-                                         self.Qt_sampler_aboutD)
-            self.Qt_sampler_aboutD.setFloating(True)
-            self.Qt_sampler_aboutD.hide()
-            self.Qt_sampler_about = QtGui.QLabel()
-            self.Qt_sampler_aboutD.setWidget(self.Qt_sampler_about)
-            self.Qt_sampler_about.setContentsMargins(4, 4, 4, 4)
 
         def create_submit():
             samplerT = window.addToolBar("Submit")
@@ -328,6 +313,24 @@ class GUI_Qt(GUI):
             # sumrange
             sumrangeL.addStretch(1)
 
+        def create_sampler_about():
+            # about
+            self.Qt_sampler_aboutD = QtGui.QDockWidget("Sampler")
+            self.Qt_sampler_aboutD.setObjectName("About Sampler")
+            self.Qt_sampler_aboutD.setFeatures(
+                QtGui.QDockWidget.DockWidgetClosable |
+                QtGui.QDockWidget.DockWidgetFloatable |
+                QtGui.QDockWidget.DockWidgetMovable |
+                QtGui.QDockWidget.DockWidgetVerticalTitleBar
+            )
+            self.Qt_window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
+                                         self.Qt_sampler_aboutD)
+            self.Qt_sampler_aboutD.setFloating(True)
+            self.Qt_sampler_aboutD.hide()
+            self.Qt_sampler_about = QtGui.QLabel()
+            self.Qt_sampler_aboutD.setWidget(self.Qt_sampler_about)
+            self.Qt_sampler_about.setContentsMargins(4, 4, 4, 4)
+
         def create_header():
             self.Qt_headerD = QtGui.QDockWidget("Header")
             window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
@@ -439,8 +442,10 @@ class GUI_Qt(GUI):
 
         create_menus()
         create_sampler()
+        create_nt()
         create_submit()
         create_ranges()
+        create_sampler_about()
         create_header()
         create_counters()
         create_calls()
@@ -514,8 +519,6 @@ class GUI_Qt(GUI):
     def UI_userange_setenabled(self):
         self.Qt_usentrange.setEnabled(not self.userange)
         self.Qt_userange.setEnabled(not self.usentrange)
-        self.Qt_ntlabel.setVisible(not self.usentrange)
-        self.Qt_nt.setVisible(not self.usentrange)
 
     def UI_usentrange_set(self):
         self.Qt_setting = True
@@ -524,6 +527,7 @@ class GUI_Qt(GUI):
 
     def UI_usentrange_apply(self):
         self.Qt_ntrangeW.setVisible(self.usentrange)
+        self.Qt_ntT.setVisible(not self.usentrange)
 
     def UI_userange_set(self):
         self.Qt_setting = True
