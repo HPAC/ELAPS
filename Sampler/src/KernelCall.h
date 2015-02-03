@@ -10,7 +10,7 @@ extern "C" {
 typedef struct {
     char argc;
     void *argv[KERNEL_MAX_ARGS + 1];
-#ifdef _OPENMP_ENABLED
+#ifdef OPENMP_ENABLED
     char parallel;
 #endif
     unsigned long rdtsc;
