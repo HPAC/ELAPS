@@ -183,6 +183,16 @@ void CallParser::register_args() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Set omp_active                                                             //
+////////////////////////////////////////////////////////////////////////////////
+
+#ifdef _OPENMP
+void CallParser::set_omp_active(bool active) {
+    omp_active = active;
+}
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
 // Produce call                                                               //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -206,5 +216,10 @@ KernelCall CallParser::get_call() const {
                 call.argv[i] = mem->dynamic_get(ids[i]);
                 break;
         }
+
+#ifdef _OPENMP
+    call.parallel = omp_active;
+#endif
+
     return call;
 }

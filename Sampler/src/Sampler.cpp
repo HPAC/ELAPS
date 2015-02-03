@@ -52,6 +52,36 @@ void Sampler::set_counters(const vector<string> &tokens) {
 #endif
 }
 
+void Sampler::omp_start(const vector<string>&tokens) {
+#ifdef _OPENMP
+    if (tokens.size() > 1)
+        cerr << "Ignoring arguments for " << tokens[0] << endl;
+    if (omp_active) {
+        cerr << "Implicitly ending last parallel region, starting a new one" << endl;
+        omp_end(vector<string>());
+    }
+    omp_active = true;
+#else
+    cerr << "OpenMP support not enabled (command ignored)" << endl;
+#endif
+}
+
+void Sampler::omp_end(const vector<string>&tokens) {
+#ifdef _OPENMP
+    if (tokens.size() > 1)
+        cerr << "Ignoring arguments for " << tokens[0] << endl;
+    if (!omp_active) {
+        cerr << "Not in parallel region (comand ignored)" << endl;
+        return;
+    }
+    omp_active = false;
+    if (!callparsers.empty())
+        callparsers.back().set_omp_active(false);
+#else
+    cerr << "OpenMP support not enabled (command ignored)" << endl;
+#endif
+}
+
 template <typename T>
 void Sampler::named_malloc(const vector<string> &tokens) {
     // require 2 arguments: name, size
@@ -163,6 +193,9 @@ void Sampler::add_call(const vector<string> &tokens) {
     const Signature &signature = signatures[routine];
     try {
         CallParser callparser(tokens, signature, mem);
+#ifdef _OPENMP
+        callparser.set_omp_active(omp_active);
+#endif 
         callparsers.push_back(callparser);
     } catch (CallParserException &e) {
         // the call could not be parserd
@@ -171,6 +204,14 @@ void Sampler::add_call(const vector<string> &tokens) {
 }
 
 void Sampler::go(const vector<string> &tokens) {
+    // end parallel region if active
+#ifdef _OPENMP
+    if (omp_active) {
+        cerr << "Implicitly ending last parallel region" << endl;
+        omp_end(vector<string>());
+    }
+#endif
+
     size_t ncalls = callparsers.size();
     KernelCall *calls = new KernelCall[ncalls];
 
@@ -187,6 +228,10 @@ void Sampler::go(const vector<string> &tokens) {
 
     // print results
     for (size_t i = 0; i < ncalls; i++) {
+#ifdef _OPENMP
+        if (calls[i].parallel)
+            continue;
+#endif
         cout << calls[i].rdtsc;
 #ifdef PAPI
         for (size_t j = 0; j < counters.size(); j++)
@@ -209,6 +254,8 @@ void Sampler::start() {
     map<string, void (Sampler:: *)(const vector<string> &)> commands;
     commands["go"] = &Sampler::go;
     commands["set_counters"] = &Sampler::set_counters;
+    commands["{omp"] = &Sampler::omp_start;
+    commands["}"] = &Sampler::omp_end;
     commands["malloc"] = &Sampler::named_malloc<char>;
     commands["imalloc"] = &Sampler::named_malloc<int>;
     commands["smalloc"] = &Sampler::named_malloc<float>;
@@ -224,6 +271,11 @@ void Sampler::start() {
     commands["free"] = &Sampler::named_free;
     commands["print"] = &Sampler::print;
     commands["date"] = &Sampler::date;
+
+    // default: not parallel
+#ifdef _OPENMP
+    omp_active = false;
+#endif
 
     // read stdin by lines
     string line;

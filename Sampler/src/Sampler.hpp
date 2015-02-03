@@ -16,8 +16,16 @@ class Sampler {
         MemoryManager mem;
         std::vector<CallParser> callparsers;
 
-        std::vector<int> counters;
+#ifdef _OPENMP
+        bool omp_active;
+#endif
 
+#ifdef PAPI
+        std::vector<int> counters;
+#endif
+
+        void omp_start(const std::vector<std::string> &tokens);
+        void omp_end(const std::vector<std::string> &tokens);
         template <typename T> void named_malloc(const std::vector<std::string> &tokens);
         template <typename T> void named_offset(const std::vector<std::string> &tokens);
         void named_free(const std::vector<std::string> &tokens);

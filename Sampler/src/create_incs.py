@@ -72,12 +72,12 @@ def main():
     with open(calls_c_inc, "w") as fout:
         for argc in range(1, argcmax + 1):
             print("case " + str(argc) + ":", file=fout)
-            print("\tCOUNTERS_START();", file=fout)
+            print("\tCOUNTERS_START", file=fout)
             voidlist = (argc - 1) * ["void *"]
             arglist = ["argv[" + str(n) + "]" for n in range(1, argc)]
             print("\t((void (*)(" + ",".join(voidlist) + ")) argv[0])(" +
                   ",".join(arglist) + ");", file=fout)
-            print("\tCOUNTERS_END();", file=fout)
+            print("\tCOUNTERS_END", file=fout)
             print("\t break;", file=fout)
 
     # create cfg.h

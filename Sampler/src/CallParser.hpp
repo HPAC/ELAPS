@@ -25,6 +25,10 @@ class CallParser {
         std::vector<MemType> memtypes;
         std::vector<std::size_t> ids;
 
+#ifdef _OPENMP
+        bool omp_active;
+#endif
+
         // registering args with the memory manager
         template <typename T> T read_static(const char *str) const;
         template <typename T> void register_static(unsigned char i);
@@ -35,6 +39,10 @@ class CallParser {
 
     public:
         CallParser(const std::vector<std::string> &tokens, const Signature &signature, MemoryManager &mem);
+
+#ifdef _OPENMP
+        void set_omp_active(bool active = true);
+#endif
 
         KernelCall get_call() const;
 };

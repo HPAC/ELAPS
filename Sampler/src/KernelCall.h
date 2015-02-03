@@ -10,6 +10,9 @@ extern "C" {
 typedef struct {
     char argc;
     void *argv[KERNEL_MAX_ARGS + 1];
+#ifdef _OPENMP
+    char parallel;
+#endif
     unsigned long rdtsc;
 #ifdef PAPI
     long long counters[MAX_COUNTERS];
