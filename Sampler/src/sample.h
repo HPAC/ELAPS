@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#ifdef PAPI
+#ifdef PAPI_ENABLED
 void sample(KernelCall *calls, size_t ncalls, int *counters, int ncounters);
 #else
 void sample(KernelCall *calls, size_t ncalls);

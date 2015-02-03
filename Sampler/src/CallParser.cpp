@@ -186,7 +186,7 @@ void CallParser::register_args() {
 // Set omp_active                                                             //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
 void CallParser::set_omp_active(bool active) {
     omp_active = active;
 }
@@ -217,7 +217,7 @@ KernelCall CallParser::get_call() const {
                 break;
         }
 
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
     call.parallel = omp_active;
 #endif
 

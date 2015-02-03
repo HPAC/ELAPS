@@ -16,11 +16,11 @@ class Sampler {
         MemoryManager mem;
         std::vector<CallParser> callparsers;
 
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
         bool omp_active;
 #endif
 
-#ifdef PAPI
+#ifdef PAPI_ENABLED
         std::vector<int> counters;
 #endif
 

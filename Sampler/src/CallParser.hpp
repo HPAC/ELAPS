@@ -25,7 +25,7 @@ class CallParser {
         std::vector<MemType> memtypes;
         std::vector<std::size_t> ids;
 
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
         bool omp_active;
 #endif
 
@@ -40,7 +40,7 @@ class CallParser {
     public:
         CallParser(const std::vector<std::string> &tokens, const Signature &signature, MemoryManager &mem);
 
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
         void set_omp_active(bool active = true);
 #endif
 

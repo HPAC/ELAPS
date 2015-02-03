@@ -7,7 +7,7 @@
 #include <iterator>
 #include <complex>
 
-#ifdef PAPI
+#ifdef PAPI_ENABLED
 #include <papi.h>
 #endif
 
@@ -17,7 +17,7 @@
 using namespace std;
 
 void Sampler::set_counters(const vector<string> &tokens) {
-#ifdef PAPI
+#ifdef PAPI_ENABLED
     // ignore excess counters
     const int maxcounters = PAPI_num_counters();
     size_t ncounters = tokens.size() - 1;
@@ -53,7 +53,7 @@ void Sampler::set_counters(const vector<string> &tokens) {
 }
 
 void Sampler::omp_start(const vector<string>&tokens) {
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
     if (tokens.size() > 1)
         cerr << "Ignoring arguments for " << tokens[0] << endl;
     if (omp_active) {
@@ -67,7 +67,7 @@ void Sampler::omp_start(const vector<string>&tokens) {
 }
 
 void Sampler::omp_end(const vector<string>&tokens) {
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
     if (tokens.size() > 1)
         cerr << "Ignoring arguments for " << tokens[0] << endl;
     if (!omp_active) {
@@ -193,7 +193,7 @@ void Sampler::add_call(const vector<string> &tokens) {
     const Signature &signature = signatures[routine];
     try {
         CallParser callparser(tokens, signature, mem);
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
         callparser.set_omp_active(omp_active);
 #endif 
         callparsers.push_back(callparser);
@@ -205,7 +205,7 @@ void Sampler::add_call(const vector<string> &tokens) {
 
 void Sampler::go(const vector<string> &tokens) {
     // end parallel region if active
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
     if (omp_active) {
         cerr << "Implicitly ending last parallel region" << endl;
         omp_end(vector<string>());
@@ -220,7 +220,7 @@ void Sampler::go(const vector<string> &tokens) {
         calls[i] = callparsers[i].get_call();
 
     // run measurements
-#ifdef PAPI
+#ifdef PAPI_ENABLED
     sample(calls, ncalls, &counters[0], counters.size());
 #else
     sample(calls, ncalls);
@@ -228,12 +228,12 @@ void Sampler::go(const vector<string> &tokens) {
 
     // print results
     for (size_t i = 0; i < ncalls; i++) {
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
         if (calls[i].parallel)
             continue;
 #endif
         cout << calls[i].rdtsc;
-#ifdef PAPI
+#ifdef PAPI_ENABLED
         for (size_t j = 0; j < counters.size(); j++)
             cout << "\t" << calls[i].counters[j];
 #endif
@@ -273,7 +273,7 @@ void Sampler::start() {
     commands["date"] = &Sampler::date;
 
     // default: not parallel
-#ifdef _OPENMP
+#ifdef OPENMP_ENABLED
     omp_active = false;
 #endif
 
