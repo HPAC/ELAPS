@@ -17,7 +17,7 @@ from math import sqrt
 
 
 class Viewer(object):
-    requiresstatetime = 1422244231
+    requiresstatetime = 1423087329
     state = {}
 
     def __init__(self, loadstate=True):
@@ -178,74 +178,45 @@ class Viewer(object):
             report["starttime"] = int(fin.readline())
             report["filename"] = filename
         except:
-            raise IOError(name, "doesn't contain a valid report")
-        # TODO: remove compatibility settings
-        if "usesumrange" not in report:
-            report["usesumrange"] = False
-        if "usentrange" not in report:
-            report["usentrange"] = False
+            raise IOError(filename, "doesn't contain a valid report")
         report["filename"] = os.path.relpath(filename)
         report["valid"] = False
         report["endtime"] = None
         report["name"] = name
 
-        rangevals = (None,)
-        if report["userange"]:
-            if isinstance(report["range"], symbolic.Range):
-                rangevals = list(report["range"])
-            else:
-                # TODO: remove compatibility settings
-                lower, step, upper = report["range"]
-                rangevals = range(lower, upper + 1, step)
-        elif report["usentrange"]:
-            if isinstance(report["ntrange"], symbolic.Range):
-                rangevals = list(report["ntrange"])
-            else:
-                # TODO: remove compatibility settings
-                lower, step, upper = report["ntrange"]
-                rangevals = range(lower, upper + 1, step)
+        rangename_outer = report["userange"]["outer"]
+        rangename_inner = report["userange"]["inner"]
+
+        rangevals = None,
+        if rangename_outer:
+            rangevals = report["ranges"][rangename_outer]
         reportdata = {}
         report["data"] = reportdata
         for rangeval in rangevals:
-            sumrangevals = (None,)
-            if report["usesumrange"]:
-                sumrange = report["sumrange"]
-                symdict = {}
-                if report["userange"]:
-                    symdict[report["rangevar"]] = rangeval
-                elif report["usentrange"]:
-                    symdict["nt"] = rangeval
-                if isinstance(sumrange, symbolic.Range):
-                    sumrange = sumrange(**symdict)
-                else:
-                    # TODO: remove compatibility settings
-                    sumrange = [
-                        val(**{report["rangevar"]: rangeval})
-                        if isinstance(val, symbolic.Expression) else val
-                        for val in sumrange
-                    ]
-                if isinstance(sumrange, symbolic.Range):
-                    sumrangevals = list(sumrange)
-                else:
-                    lower, step, upper = sumrange
-                    sumrangevals = range(lower, upper + 1, step)
+            innervals = None,
+            if rangename_inner:
+                innerrange = report["ranges"][rangename_inner]
+                if rangename_outer:
+                    innerrange = innerrange(**{
+                        report["rangevars"][rangename_outer]: rangeval
+                    })
+                innervals = list(innerrange)
             rangevaldata = []
             reportdata[rangeval] = rangevaldata
             for rep in range(report["nrep"] + 1):
                 repdata = {}
                 if rep > 0:
                     rangevaldata.append(repdata)
-
-                for sumrangeval in sumrangevals:
-                    sumrangevaldata = []
-                    repdata[sumrangeval] = sumrangevaldata
+                for innerval in innervals:
+                    innervaldata = []
+                    repdata[innerval] = innervaldata
                     for call in report["calls"]:
                         try:
                             line = fin.readline()
                         except:
                             self.alert(filename, "is truncated")
                             return report
-                        sumrangevaldata.append(tuple(map(int, line.split())))
+                        innervaldata.append(tuple(map(int, line.split())))
         reportdata = {key: tuple(map(tuple, val))
                       for key, val in reportdata.iteritems()}
         try:
@@ -267,10 +238,10 @@ class Viewer(object):
         result = "<table>"
         result += "<tr><td>File:</td><td>%s</td></tr>" % report["filename"]
         result += "<tr><td>CPU:</td><td>%s</td></tr>" % sampler["cpu_model"]
-        if report["usentrange"]:
+        if report["userange"]["outer"] == "threads":
             result += (
                 "<tr><td>#threads:</td><td>%s</td></tr>"
-                % report["ntrange"]
+                % report["range"]["threads"]
             )
         else:
             result += "<tr><td>#threads:</td><td>%d</td></tr>" % report["nt"]
@@ -280,15 +251,15 @@ class Viewer(object):
             result += "<tr><td>Date:</td><td>%s</td></tr>" % date
         else:
             result += "<tr><td></td><td><b>Invalid Report!</b></td></tr>"
-        if report["userange"]:
+        if report["userange"]["outer"] == "range":
             result += (
                 "<tr><td>For each:</td><td>%s = %s</td></tr>"
-                % (report["rangevar"], report["range"])
+                % (report["rangevars"]["range"], report["ranges"]["range"])
             )
-        if report["usesumrange"]:
+        if report["userange"]["inner"]:
             result += (
                 "<tr><td>Sum over:</td><td>%s = %s</td></tr>"
-                % (report["sumrangevar"], + report["sumrange"])
+                % (report["rangevars"]["sum"], report["ranges"]["sum"])
             )
 
         def format_call(call):
@@ -315,7 +286,9 @@ class Viewer(object):
     def get_metricdata(self, reportid, callid, metricname, rangeval=None):
         report = self.reports[reportid]
         # ifrangeval not given: return all
-        if (report["userange"] or report["usentrange"]) and rangeval is None:
+        rangename_outer = report["userange"]["outer"]
+        rangename_inner = report["userange"]["inner"]
+        if rangename_outer and rangeval is None:
             plotdata = []
             for rangeval in sorted(report["data"]):
                 plotdata.append((rangeval, self.get_metricdata(
@@ -336,11 +309,9 @@ class Viewer(object):
             callids = range(len(calls))
         data = defaultdict(lambda: None)
 
-        rangevardict = {}
-        if report["userange"]:
-            rangevardict[report["rangevar"]] = rangeval
-        elif report["usentrange"]:
-            rangevardict["nt"] = rangeval
+        symdict = {}
+        if rangename_outer:
+            symdict[report["rangevars"][rangename_outer]] = rangeval
 
         # complexity is constant across repetitions
         if all(isinstance(calls[callid2], signature.Call)
@@ -348,12 +319,13 @@ class Viewer(object):
             data["complexity"] = 0
             for callid2 in callids:
                 call = calls[callid2]
-                for sumrangeval in rangevaldata[0]:
-                    if report["usesumrange"]:
-                        rangevardict[report["sumrangevar"]] = sumrangeval
+                for innerval in rangevaldata[0]:
+                    if rangename_inner:
+                        symdict[report["rangevars"][rangename_inner]] = \
+                            rangeval
                     complexity = call.complexity()
                     if isinstance(complexity, symbolic.Expression):
-                        data["complexity"] += complexity(**rangevardict)
+                        data["complexity"] += complexity(**symdict)
                     elif isinstance(complexity, Number):
                         data["complexity"] += complexity
                     else:
@@ -372,13 +344,13 @@ class Viewer(object):
             if report["usepapi"]:
                 for counter in report["counters"]:
                     data[counter] = 0
-            for sumrangevaldata in repdata.itervalues():
-                data["rdtsc"] += sum(sumrangevaldata[callid][0]
+            for innervaldata in repdata.itervalues():
+                data["rdtsc"] += sum(innervaldata[callid][0]
                                      for callid in callids)
                 if report["usepapi"]:
                     for counterid, counter in enumerate(report["counters"]):
                         data[counter] += sum(
-                            sumrangevaldata[callid][counterid + 1]
+                            innervaldata[callid][counterid + 1]
                             for callid in callids
                         )
             # call metric
@@ -388,7 +360,7 @@ class Viewer(object):
         if not plotdata:
             return None
         plotdata = tuple(plotdata)
-        if report["userange"] or report["usentrange"]:
+        if rangename_outer:
             return plotdata
         return ((None, plotdata),)
 
@@ -411,10 +383,8 @@ class Viewer(object):
             report = self.reports[reportid]
 
             # rangevar
-            if report["userange"]:
-                rangevars.add(report["rangevar"])
-            elif report["usentrange"]:
-                rangevars.add("#threads")
+            if report["userange"]["outer"]:
+                rangevars.add(report["rangevars"][report["userange"]["outer"]])
 
             # name
             name = report["name"]

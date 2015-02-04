@@ -262,8 +262,8 @@ class Viewer_Qt(Viewer):
 
         #  tree item
         ntstr = str(report["nt"])
-        if report["usentrange"]:
-            ntstr = "%d:%d:%d" % report["ntrange"]
+        if report["userange"]["outer"] == "threads":
+            ntstr = str(report["ranges"]["threads"])
         Qreport = QtGui.QTreeWidgetItem((
             report["name"],
             "",

@@ -14,7 +14,7 @@ from __builtin__ import intern  # fix for pyflake error
 
 class GUI(object):
     requiredbuildversion = 1422278229
-    requiredstateversion = 1422896804
+    requiredstateversion = 1423087329
     state = {}
 
     def __init__(self, loadstate=True):
@@ -637,7 +637,6 @@ class GUI(object):
         if self.userange["outer"] == "threads":
             outervals = ntrangeval,
         elif self.userange["outer"]:
-            # TODO: remove list?
             outervals = self.ranges[self.userange["outer"]]
 
         if len(self.counters):
@@ -682,7 +681,12 @@ class GUI(object):
                                                 outerval)])
                 innervals = None,
                 if self.userange["inner"]:
-                    innervals = self.ranges[self.userange["inner"]]
+                    innerrange = self.ranges[self.userange["inner"]]
+                    if self.userange["outer"]:
+                        innerrange = innerrange(**{
+                            self.rangevar[self.userange["outer"]]: outerval
+                        })
+                    innervals = list(innerrange)
                 offset = 0
                 for rep in range(self.nrep + 1):
                     if self.userange["inner"]:
@@ -710,7 +714,12 @@ class GUI(object):
                                             outerval)])
             innervals = None,
             if self.userange["inner"]:
-                innervals = list(self.ranges[self.userange["inner"]])
+                innerrange = self.ranges[self.userange["inner"]]
+                if self.userange["outer"]:
+                    innerrange = innerrange(**{
+                        self.rangevar[self.userange["outer"]]: outerval
+                    })
+                innervals = list(innerrange)
             for rep in range(self.nrep + 1):
                 if self.userange["inner"]:
                     cmds.append([])
