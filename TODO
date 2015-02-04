@@ -5,6 +5,7 @@ Sampler:
 GUI:
 - parallel range
 - number of calls in header
+- complex vary
 - work variables
 - README
 

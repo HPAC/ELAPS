@@ -152,8 +152,7 @@ class GUI_Qt(GUI):
             samplerT = window.addToolBar("Sampler")
             samplerT.setMovable(False)
             samplerT.setObjectName("Sampler")
-
-            # sampler
+            samplerT.addWidget(QtGui.QLabel("Sampler:"))
             self.Qt_sampler = QtGui.QComboBox()
             samplerT.addWidget(self.Qt_sampler)
             self.Qt_sampler.addItems(sorted(self.samplers.keys()))

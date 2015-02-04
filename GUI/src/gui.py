@@ -638,7 +638,7 @@ class GUI(object):
             outervals = ntrangeval,
         elif self.userange["outer"]:
             # TODO: remove list?
-            outervals = self.ranges[self.userrange["outer"]]
+            outervals = self.ranges[self.userange["outer"]]
 
         if len(self.counters):
             cmds.append(["########################################"])
@@ -706,7 +706,8 @@ class GUI(object):
         for outerval in outervals:
             if self.userange["outer"] == "range":
                 cmds.append([])
-                cmds.append(["# %s = %d" % (self.rangevar["range"], outerval)])
+                cmds.append(["# %s = %d" % (self.rangevars["range"],
+                                            outerval)])
             innervals = None,
             if self.userange["inner"]:
                 innervals = list(self.ranges[self.userange["inner"]])
@@ -787,7 +788,9 @@ class GUI(object):
         del sampler["kernels"]
         reportinfo.update({
             "sampler": sampler,
-            "submittime": time.time()
+            "submittime": time.time(),
+            "ncalls": (len(list(self.range_eval(0))) *
+                       (self.nrep + 1) * len(self.calls))
         })
         script += "cat > %s <<REPORTINFO\n%s\nREPORTINFO\n" % (
             smplfile, repr(reportinfo)
@@ -854,8 +857,8 @@ class GUI(object):
 
     # jobprogress
     def jobprogress_add(self, jobid, filename):
-        nlines = len(sum(self.range_eval(0), []))
-        nlines *= (self.nrep + 1) * len(self.calls)
+        nlines = (len(list(self.range_eval(0))) *
+                  (self.nrep + 1) * len(self.calls))
         self.jobprogress.append({
             "backend": self.sampler["backend"],
             "id": jobid,
@@ -914,15 +917,15 @@ class GUI(object):
                    for call in self.calls for arg in call):
             if self.userange:
                 if self.usesumrange:
-                    msg = ("Range and sum over are"
+                    msg = ("Range and sum over are enabled"
                            "but %r and %r are not used in any call")
-                    msg %= (self.rangevar, self.sumrangevar)
+                    msg %= (self.rangevars["range"], self.rangevars["sum"])
                 else:
                     msg = "Range is enabled but %r is not used in any call"
                     msg %= self.rangevar
             elif self.usesumrange:
                 msg = "Sum over is enabled but %r is not used in any call"
-                msg %= self.sumrangevar
+                msg %= self.rangevars["sum"]
         if msg:
             self.UI_dialog(
                 "warning", "range not used", msg, {
