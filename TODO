@@ -1,10 +1,9 @@
 Sampler:
 - README
 
-- (OpenMP)
-
 
 GUI:
+- parallel range
 - number of calls in header
 - work variables
 - README
