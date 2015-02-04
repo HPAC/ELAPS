@@ -156,7 +156,7 @@ class QDataArg(QtGui.QWidget):
         dimmin = []
         dimmax = []
         for expr in dim:
-            values = sum(self.Qt_gui.range_eval(expr), [])
+            values = list(self.Qt_gui.range_eval(expr))
             if not values:
                 self.viz_none()
                 return

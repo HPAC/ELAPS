@@ -24,24 +24,25 @@ class GUI_Qt(GUI):
         GUI.__init__(self, loadstate)
 
     def state_init(self, load=True):
-        if load:
-            settings = QtCore.QSettings("HPAC", "Sampler")
-            self.Qt_setting = True
-            self.Qt_window.restoreGeometry(
-                settings.value("geometry").toByteArray()
-            )
-            self.Qt_window.restoreState(
-                settings.value("windowState").toByteArray()
-            )
-            self.Qt_setting = False
-            try:
-                self.state_fromstring(str(
-                    settings.value("appState").toString()
-                ))
-            except:
-                self.state_reset()
-        else:
-            self.state_reset()
+        self.state_reset()
+        if not load:
+            return
+        settings = QtCore.QSettings("HPAC", "Sampler")
+        self.Qt_setting = True
+        self.Qt_window.restoreGeometry(
+            settings.value("geometry").toByteArray()
+        )
+        self.Qt_window.restoreState(
+            settings.value("windowState").toByteArray()
+        )
+        self.Qt_setting = False
+        try:
+            self.state_fromstring(str(
+                settings.value("appState").toString()
+            ))
+            self.log("loaded previous state")
+        except:
+            pass
 
     def UI_init(self):
         self.Qt_setting = True
@@ -86,24 +87,20 @@ class GUI_Qt(GUI):
 
             # ranges
             rangesM = menu.addMenu("Ranges")
+            self.Qt_useranges = {}
 
-            # usentrange
-            self.Qt_usentrange = QtGui.QAction("#threads range", window)
-            rangesM.addAction(self.Qt_usentrange)
-            self.Qt_usentrange.setCheckable(True)
-            self.Qt_usentrange.toggled.connect(self.Qt_usentrange_toggle)
+            def userange_create(rangename, desc):
+                userange = QtGui.QAction(desc, window)
+                self.Qt_useranges[rangename] = userange
+                userange.setCheckable(True)
+                userange.rangename = rangename
+                userange.toggled.connect(self.Qt_userange_toggle)
+                return userange
 
-            # userange
-            self.Qt_userange = QtGui.QAction("for each range", window)
-            rangesM.addAction(self.Qt_userange)
-            self.Qt_userange.setCheckable(True)
-            self.Qt_userange.toggled.connect(self.Qt_userange_toggle)
-
-            # usesumrange
-            self.Qt_usesumrange = QtGui.QAction("sum over sumrange", window)
-            rangesM.addAction(self.Qt_usesumrange)
-            self.Qt_usesumrange.setCheckable(True)
-            self.Qt_usesumrange.toggled.connect(self.Qt_usesumrange_toggle)
+            rangesM.addAction(userange_create("threads", "#threads range"))
+            rangesM.addAction(userange_create("range", "for each range"))
+            rangesM.addSeparator()
+            rangesM.addAction(userange_create("sum", "sum over range"))
 
             # options
             optionsM = menu.addMenu("Options")
@@ -203,115 +200,70 @@ class GUI_Qt(GUI):
             rangesL = QtGui.QVBoxLayout()
             rangesW.setLayout(rangesL)
             margins = list(rangesL.getContentsMargins())
-            margins[1] = margins[3] = 0
+            margins[1] = 12
+            margins[3] = 8
             rangesL.setContentsMargins(*margins)
             rangesL.setSpacing(0)
+            self.Qt_ranges = {}
 
-            # ntrange
-            self.Qt_ntrangeW = QtGui.QWidget()
-            rangesL.addWidget(self.Qt_ntrangeW)
-            ntrangeL = QtGui.QHBoxLayout()
-            self.Qt_ntrangeW.setLayout(ntrangeL)
-            ntrangeL.setContentsMargins(0, 12, 12, 4)
+            def create_range(rangename, indent, prefix, showrangevar=True,
+                             suffix=""):
+                rangeW = QtGui.QWidget()
+                self.Qt_ranges[rangename] = rangeW
+                layout = QtGui.QHBoxLayout()
+                rangeW.setLayout(layout)
+                layout.setContentsMargins(indent, 0, 12, 4)
 
-            # ntrange > "for #threads nt ="
-            ntrangeL.addWidget(QtGui.QLabel("for nt ="))
+                # prefix
+                layout.addWidget(QtGui.QLabel(prefix))
 
-            # ntrange > ntrange
-            self.Qt_ntrange = QtGui.QLineEdit()
-            ntrangeL.addWidget(self.Qt_ntrange)
-            self.Qt_ntrange.textChanged.connect(self.Qt_ntrange_change)
+                # rangevar
+                rangevar = QtGui.QLineEdit()
+                rangeW.rangevar = rangevar
+                if showrangevar:
+                    layout.addWidget(rangevar)
+                rangevar.setFixedWidth(32)
+                rangevar.setValidator(QtGui.QRegExpValidator(
+                    QtCore.QRegExp("[a-zA-Z]+"), self.Qt_app)
+                )
+                rangevar.rangename = rangename
+                rangevar.textChanged.connect(self.Qt_rangevar_change)
 
-            # ntrange > "(#threads)"
-            ntrangeL.addWidget(QtGui.QLabel("(#threads)"))
+                # =
+                if showrangevar:
+                    layout.addWidget(QtGui.QLabel("="))
 
-            # ntrange
-            ntrangeL.addStretch(1)
+                # range
+                Qrange = QtGui.QLineEdit()
+                rangeW.range = Qrange
+                layout.addWidget(Qrange)
+                Qrange.rangename = rangename
+                Qrange.textChanged.connect(self.Qt_range_change)
 
-            # range
-            self.Qt_rangeW = QtGui.QWidget()
-            rangesL.addWidget(self.Qt_rangeW)
-            rangeL = QtGui.QHBoxLayout()
-            self.Qt_rangeW.setLayout(rangeL)
-            rangeL.setContentsMargins(0, 12, 12, 4)
+                # reps: allow only intergets
+                if rangename == "reps":
+                    Qrange.setFixedWidth(32)
+                    Qrange.setValidator(QtGui.QRegExpValidator(
+                        QtCore.QRegExp("[1-9][0-9]*"), self.Qt_app)
+                    )
 
-            # range > "for"
-            rangeL.addWidget(QtGui.QLabel("for"))
+                # stretch
+                layout.addStretch(1)
 
-            # range > rangevar
-            self.Qt_rangevar = QtGui.QLineEdit()
-            rangeL.addWidget(self.Qt_rangevar)
-            self.Qt_rangevar.textChanged.connect(self.Qt_rangevar_change)
-            self.Qt_rangevar.setFixedWidth(32)
-            regexp = QtCore.QRegExp("[a-zA-Z]+")
-            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
-            self.Qt_rangevar.setValidator(validator)
+                return rangeW
 
-            # range > "="
-            rangeL.addWidget(QtGui.QLabel("="))
-
-            # range > range
-            self.Qt_range = QtGui.QLineEdit()
-            rangeL.addWidget(self.Qt_range)
-            self.Qt_range.textChanged.connect(self.Qt_range_change)
-
-            # range
-            rangeL.addStretch(1)
-
-            # nrep
-            nrepW = QtGui.QWidget()
-            rangesL.addWidget(nrepW)
-            nrepL = QtGui.QHBoxLayout()
-            nrepW.setLayout(nrepL)
-            nrepL.setContentsMargins(16, 0, 12, 4)
-
-            # nrep > "repeat"
-            nrepL.addWidget(QtGui.QLabel("repeat"))
-
-            # nrep > nrep
-            self.Qt_nrep = QtGui.QLineEdit()
-            nrepL.addWidget(self.Qt_nrep)
-            self.Qt_nrep.textChanged.connect(self.Qt_nrep_change)
-            self.Qt_nrep.setFixedWidth(32)
-            regexp = QtCore.QRegExp("[1-9][0-9]*")
-            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
-            self.Qt_nrep.setValidator(validator)
-
-            # nrep > "times"
-            nrepL.addWidget(QtGui.QLabel("times"))
-
-            # range
-            nrepL.addStretch(1)
-
-            # sumrange
-            self.Qt_sumrangeW = QtGui.QWidget()
-            rangesL.addWidget(self.Qt_sumrangeW)
-            sumrangeL = QtGui.QHBoxLayout()
-            self.Qt_sumrangeW.setLayout(sumrangeL)
-            sumrangeL.setContentsMargins(32, 0, 12, 0)
-
-            # sumrange > "for"
-            sumrangeL.addWidget(QtGui.QLabel("sum over"))
-
-            # sumrange > sumrangevar
-            self.Qt_sumrangevar = QtGui.QLineEdit()
-            sumrangeL.addWidget(self.Qt_sumrangevar)
-            self.Qt_sumrangevar.textChanged.connect(self.Qt_sumrangevar_change)
-            self.Qt_sumrangevar.setFixedWidth(32)
-            regexp = QtCore.QRegExp("[a-zA-Z]+")
-            validator = QtGui.QRegExpValidator(regexp, self.Qt_app)
-            self.Qt_sumrangevar.setValidator(validator)
-
-            # sumrange > "="
-            sumrangeL.addWidget(QtGui.QLabel("="))
-
-            # sumrange > sumrange
-            self.Qt_sumrange = QtGui.QLineEdit()
-            sumrangeL.addWidget(self.Qt_sumrange)
-            self.Qt_sumrange.textChanged.connect(self.Qt_sumrange_change)
-
-            # sumrange
-            sumrangeL.addStretch(1)
+            rangesL.addWidget(create_range(
+                "threads", 0, "for nt = ", False, "(#threads)"
+            ))
+            rangesL.addWidget(create_range(
+                "range", 0, "for"
+            ))
+            rangesL.addWidget(create_range(
+                "reps", 16, "repeat", False, "times"
+            ))
+            rangesL.addWidget(create_range(
+                "sum", 32, "sum over"
+            ))
 
         def create_sampler_about():
             # about
@@ -462,15 +414,24 @@ class GUI_Qt(GUI):
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         sys.exit(self.Qt_app.exec_())
 
+    # utility
+    def log(self, *args):
+        self.UI_setstatus(" ".join(map(str, args)), 2000)
+        GUI.log(self, *args)
+
+    def alert(self, *args):
+        self.UI_setstatus(" ".join(map(str, args)))
+        GUI.alert(self, *args)
+
     # dialogs
     def UI_alert(self, *args, **kwargs):
         msg = " ".join(map(str, args))
         title = kwargs.get("title", "")
         self.UI_dialog("information", title, msg)
 
-    def UI_setstatus(self, *args):
+    def UI_setstatus(self, msg, timeout=0):
         if self.Qt_initialized:
-            self.Qt_statusbar.showMessage(" ".join(map(str, args)))
+            self.Qt_statusbar.showMessage(msg, timeout)
 
     def UI_dialog(self, msgtype, title, text, callbacks={"Ok": None}):
         msgtypes = {
@@ -516,34 +477,14 @@ class GUI_Qt(GUI):
         self.Qt_nt.setCurrentIndex(self.nt - 1)
         self.Qt_setting = False
 
-    def UI_userange_setenabled(self):
-        self.Qt_usentrange.setEnabled(not self.userange)
-        self.Qt_userange.setEnabled(not self.usentrange)
-
-    def UI_usentrange_set(self):
-        self.Qt_setting = True
-        self.Qt_usentrange.setChecked(self.usentrange)
-        self.Qt_setting = False
-
-    def UI_usentrange_apply(self):
-        self.Qt_ntrangeW.setVisible(self.usentrange)
-        self.Qt_ntT.setVisible(not self.usentrange)
-
-    def UI_userange_set(self):
-        self.Qt_setting = True
-        self.Qt_userange.setChecked(self.userange)
-        self.Qt_setting = False
-
-    def UI_userange_apply(self):
-        self.Qt_rangeW.setVisible(self.userange)
-
-    def UI_usesumrange_set(self):
-        self.Qt_setting = True
-        self.Qt_usesumrange.setChecked(self.usesumrange)
-        self.Qt_setting = False
-
-    def UI_usesumrange_apply(self):
-        self.Qt_sumrangeW.setVisible(self.usesumrange)
+    def UI_useranges_set(self):
+        for rangetype, rangenames in self.rangetypes.iteritems():
+            selected = self.userange[rangetype] is not None
+            for rangename in rangenames:
+                active = rangename == self.userange[rangetype]
+                self.Qt_useranges[rangename].setEnabled(active or not selected)
+                self.Qt_useranges[rangename].setChecked(active)
+                self.Qt_ranges[rangename].setVisible(active)
 
     def UI_usepapi_setenabled(self):
         self.Qt_usepapi.setEnabled(self.sampler["papi_counters_max"] > 0)
@@ -616,35 +557,18 @@ class GUI_Qt(GUI):
             Qcounter.setToolTip(tip)
         self.Qt_setting = False
 
-    def UI_ntrange_set(self):
+    def UI_ranges_set(self):
         self.Qt_setting = True
-        self.Qt_ntrange.setText(str(self.ntrange))
-        self.Qt_setting = False
-
-    def UI_rangevar_set(self):
-        self.Qt_setting = True
-        self.Qt_rangevar.setText(self.rangevar)
-        self.Qt_setting = False
-
-    def UI_range_set(self):
-        self.Qt_setting = True
-        self.Qt_range.setText(str(self.range))
+        for rangename in self.ranges:
+            Qrange = self.Qt_ranges[rangename]
+            Qrange.rangevar.setText(self.rangevars[rangename])
+            Qrange.range.setText(str(self.ranges[rangename]))
         self.Qt_setting = False
 
     def UI_nrep_set(self):
         self.Qt_setting = True
         text = str(self.nrep) if self.nrep else ""
-        self.Qt_nrep.setText(text)
-        self.Qt_setting = False
-
-    def UI_sumrangevar_set(self):
-        self.Qt_setting = True
-        self.Qt_sumrangevar.setText(self.sumrangevar)
-        self.Qt_setting = False
-
-    def UI_sumrange_set(self):
-        self.Qt_setting = True
-        self.Qt_sumrange.setText(str(self.sumrange))
+        self.Qt_ranges["reps"].range.setText(text)
         self.Qt_setting = False
 
     def UI_calls_init(self):
@@ -805,20 +729,16 @@ class GUI_Qt(GUI):
             return
         self.UI_nt_change(int(self.Qt_nt.currentText()))
 
-    def Qt_usentrange_toggle(self, checked):
-        if self.Qt_setting:
-            return
-        self.UI_usentrange_change(checked)
-
     def Qt_userange_toggle(self, checked):
         if self.Qt_setting:
             return
-        self.UI_userange_change(checked)
-
-    def Qt_usesumrange_toggle(self, checked):
-        if self.Qt_setting:
-            return
-        self.UI_usesumrange_change(checked)
+        sender = self.Qt_app.sender()
+        rangename = sender.rangename
+        value = rangename if checked else None
+        if rangename in self.rangetypes["outer"]:
+            self.UI_userange_change("outer", value)
+        else:
+            self.UI_userange_change("inner", value)
 
     def Qt_usepapi_toggle(self, checked):
         if self.Qt_setting:
@@ -876,36 +796,24 @@ class GUI_Qt(GUI):
         self.UI_useheader_change(False)
         self.UI_useheader_set()
 
-    def Qt_ntrange_change(self):
-        if self.Qt_setting:
-            return
-        self.UI_ntrange_change(str(self.Qt_ntrange.text()))
-
     def Qt_rangevar_change(self):
         if self.Qt_setting:
             return
-        self.UI_rangevar_change(str(self.Qt_rangevar.text()))
+        sender = self.Qt_app.sender()
+        rangename = sender.rangename
+        value = str(sender.text())
+        self.UI_rangevar_change(rangename, value)
 
     def Qt_range_change(self):
         if self.Qt_setting:
             return
-        self.UI_range_change(str(self.Qt_range.text()))
-
-    def Qt_nrep_change(self):
-        if self.Qt_setting:
-            return
-        text = str(self.Qt_nrep.text())
-        self.UI_nrep_change(int(text) if text else None)
-
-    def Qt_sumrangevar_change(self):
-        if self.Qt_setting:
-            return
-        self.UI_sumrangevar_change(str(self.Qt_sumrangevar.text()))
-
-    def Qt_sumrange_change(self):
-        if self.Qt_setting:
-            return
-        self.UI_sumrange_change(str(self.Qt_sumrange.text()))
+        sender = self.Qt_app.sender()
+        rangename = sender.rangename
+        value = str(sender.text())
+        if rangename == "reps":
+            self.UI_nrep_change(value)
+        else:
+            self.UI_range_change(rangename, value)
 
     def Qt_call_add_click(self):
         self.UI_call_add_click()

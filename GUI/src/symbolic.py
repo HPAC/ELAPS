@@ -391,16 +391,14 @@ class Range(object):
             if not all(isinstance(val, numbers.Number) for val in subrange):
                 raise Exception("Not numeric: %r" % subrange)
             start, step, stop = subrange
+            yield start
             if step > 0:
-                val = start
+                val = start + step
                 while val <= stop:
                     yield val
                     val += step
-            elif step == 0:
-                if start == stop:
-                    yield val
-            else:
-                val = start
+            elif step < 0:
+                val = start + step
                 while val >= stop:
                     yield val
                     val += step

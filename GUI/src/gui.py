@@ -27,6 +27,7 @@ class GUI(object):
         self.backends_init()
         self.samplers_init()
         self.signatures_init()
+        self.ranges_init()
         self.docs_init()
         self.UI_init()
         self.jobprogress_init()
@@ -52,11 +53,9 @@ class GUI(object):
 
     # utility
     def log(self, *args):
-        self.UI_setstatus(*args)
         print(*args)
 
     def alert(self, *args):
-        self.UI_setstatus(*args)
         print(*args, file=sys.stderr)
 
     # initializers
@@ -120,6 +119,12 @@ class GUI(object):
     def state_init(self, load=True):
         self.state_reset()
 
+    def ranges_init(self):
+        self.rangetypes = {
+            "outer": ("threads", "range"),
+            "inner": ("sum",)
+        }
+
     def docs_init(self):
         self.docspath = os.path.join(self.rootpath, "GUI", "kerneldocs")
         self.docs = {}
@@ -132,9 +137,8 @@ class GUI(object):
         state = self.state.copy()
         state["calls"] = tuple(map(tuple, self.calls))
         state["counters"] = tuple(self.counters)
-        state["ntrange"] = tuple(self.ntrange.subranges)
-        state["range"] = tuple(self.range.subranges)
-        state["sumrange"] = tuple(self.sumrange.subranges)
+        state["ranges"] = {rangename: range.subranges
+                           for rangename, range in self.ranges.iteritems()}
         return state
 
     def state_fromflat(self, state):
@@ -151,11 +155,10 @@ class GUI(object):
                         ("Could not applying the signature '%s' to '%s(%s)'.\n"
                          "Signature Ignored.") % (str(sig), call[0], call[1:])
                     )
-        # set ranges
-        state["ntrange"] = symbolic.Range(*state["ntrange"])
-        state["range"] = symbolic.Range(*state["range"])
-        state["sumrange"] = symbolic.Range(*state["sumrange"])
         state["calls"] = calls
+        # set ranges
+        state["ranges"] = {key: symbolic.Range(*val)
+                           for key, val in state["ranges"].iteritems()}
         # check if sampler is available
         samplername = state["samplername"]
         if samplername not in self.samplers:
@@ -175,9 +178,20 @@ class GUI(object):
             "stateversion": self.requiredstateversion,
             "samplername": sampler["name"],
             "nt": 1,
-            "usentrange": False,
-            "userange": True,
-            "usesumrange": False,
+            "ranges": {
+                "threads": ((1, 0, 1),),
+                "range": ((8, 32, 1000),),
+                "sum": ((1, 1, 10),)
+            },
+            "rangevars": {
+                "threads": "nt",
+                "range": "n",
+                "sum": "m"
+            },
+            "userange": {
+                "outer": "range",
+                "inner": None,
+            },
             "usepapi": False,
             "useheader": False,
             "usevary": False,
@@ -189,12 +203,7 @@ class GUI(object):
             },
             "counters": sampler["papi_counters_max"] * [None],
             "header": "# script header\n",
-            "ntrange": ((1, 0, 1),),
-            "rangevar": "n",
-            "range": ((8, 32, 1000),),
             "nrep": 10,
-            "sumrangevar": "m",
-            "sumrange": ((1, 1, 10),),
             "calls": [[""]],
             "vary": set(),
             "datascale": 100,
@@ -248,14 +257,14 @@ class GUI(object):
         return info
 
     # range routines
-    def range_symdict(self, dorange=True, dosumrange=True):
+    def range_symdict(self, outer=True, inner=True):
         symbols = {}
-        if self.usentrange and dorange:
-            symbols["nt"] = symbolic.Symbol("nt")
-        if self.userange and dorange:
-            symbols[self.rangevar] = symbolic.Symbol(self.rangevar)
-        if self.usesumrange and dosumrange:
-            symbols[self.sumrangevar] = symbolic.Symbol(self.sumrangevar)
+        if outer and self.userange["outer"]:
+            rangevar = self.rangevars[self.userange["outer"]]
+            symbols[rangevar] = symbolic.Symbol(rangevar)
+        if inner and self.userange["inner"]:
+            rangevar = self.rangevars[self.userange["inner"]]
+            symbols[rangevar] = symbolic.Symbol(rangevar)
         return symbols
 
     def range_parse(self, text, dorange=True, dosumrange=True):
@@ -264,56 +273,24 @@ class GUI(object):
         except:
             return None
 
-    def range_get(self):
-        if self.userange:
-            return iter(self.range)
-        elif self.usentrange:
-            return iter(self.ntrange)
-        else:
-            return [None]
-
-    def sumrange_get(self, rangeval=None):
-        if not self.usesumrange:
-            return [None]
-        sumrange = self.sumrange
-        if rangeval is not None:
-            sumrange = self.sumrange(**self.range_symdict(dosumrange=False))
-        return iter(sumrange)
-
-    def range_eval(self, expr, rangeval=None, sumrangeval=None,
-                   dorange=True, dosumrange=True):
-        if rangeval is None and dorange:
-            if self.userange or self.usentrange:
-                return [
-                    self.range_eval(expr, val, sumrangeval, dorange,
-                                    dosumrange)
-                    for val in self.range_get()
-                ]
-            else:
-                return [
-                    self.range_eval(expr, None, sumrangeval, False, dosumrange)
-                ]
-        if sumrangeval is None and dosumrange:
-            if self.usesumrange:
-                return [
-                    self.range_eval(expr, rangeval, val, dorange, dosumrange)
-                    for val in self.sumrange_get(rangeval)
-                ]
-            else:
-                return [
-                    self.range_eval(expr, rangeval, None, dorange, False)
-                ]
+    def range_eval(self, expr, outerval=None, innerval=None):
+        if not isinstance(expr, symbolic.Expression):
+            yield expr
+            return
+        outervals = outerval,
+        if outerval is None and self.userange["outer"]:
+            outervals = iter(self.ranges[self.userange["outer"]])
         symdict = {}
-        if dorange:
-            if self.usentrange:
-                symdict["nt"] = rangeval
-            elif self.userange:
-                symdict[self.rangevar] = rangeval
-        if dosumrange and self.usesumrange:
-            symdict[self.sumrangevar] = sumrangeval
-        if isinstance(expr, symbolic.Expression):
-            return expr(**symdict)
-        return expr
+        for outerval2 in outervals:
+            if outerval2 is not None:
+                symdict[self.rangevars[self.userange["outer"]]] = outerval2
+            innervals = innerval,
+            if innerval is None and self.userange["inner"]:
+                innervals = iter(self.ranges[self.userange["inner"]])
+            for innerval2 in innervals:
+                if innerval2 is not None:
+                    symdict[self.rangevars[self.userange["inner"]]] = innerval2
+                yield expr(**symdict)
 
     # simple data operations
     def data_maxdim(self):
@@ -321,10 +298,9 @@ class GUI(object):
         for data in self.data.itervalues():
             sym = data["sym"]
             if isinstance(sym, symbolic.Prod):
-                datamax = max(max(sum(self.range_eval(val), []))
-                              for val in sym[1:])
+                datamax = max(max(self.range_eval(val)) for val in sym[1:])
             else:
-                datamax = max(sum(self.range_eval(sym), []))
+                datamax = max(self.range_eval(sym))
             result = max(result, datamax)
         return result
 
@@ -486,28 +462,6 @@ class GUI(object):
         self.UI_sampler_about_set()
         self.UI_calls_init()
 
-    def rangevar_set(self, varname):
-        if varname:
-            subst = {self.rangevar: symbolic.Symbol(varname)}
-            for callid, call in enumerate(self.calls):
-                for argid, arg in enumerate(call):
-                    if isinstance(arg, symbolic.Expression):
-                        call[argid] = arg.substitute(**subst)
-            self.rangevar = varname
-            self.data_update()
-            self.UI_calls_set()
-
-    def sumrangevar_set(self, varname):
-        if varname:
-            subst = {self.sumrangevar: symbolic.Symbol(varname)}
-            for callid, call in enumerate(self.calls):
-                for argid, arg in enumerate(call):
-                    if isinstance(arg, symbolic.Expression):
-                        call[argid] = arg.substitute(**subst)
-            self.sumrangevar = varname
-            self.data_update()
-            self.UI_calls_set()
-
     def routine_set(self, callid, value):
         if value in self.sampler["kernels"]:
             minsig = self.sampler["kernels"][value]
@@ -668,11 +622,23 @@ class GUI(object):
     def generate_cmds(self, ntrangeval=None):
         cmds = []
 
-        rangevals = [0]
-        if self.usentrange:
-            rangevals = [ntrangeval]
-        if self.userange:
-            rangevals = self.range_get()
+        def varname(name, outerval, rep, innerval):
+            if name not in self.vary:
+                return name
+            parts = [name]
+            if outerval is not None:
+                parts.append(outerval)
+            parts.append(rep)
+            if innerval is not None:
+                parts.append(innerval)
+            return "_".join(map(str, parts))
+
+        outervals = None,
+        if self.userange["outer"] == "threads":
+            outervals = ntrangeval,
+        elif self.userange["outer"]:
+            # TODO: remove list?
+            outervals = self.ranges[self.userrange["outer"]]
 
         if len(self.counters):
             cmds.append(["########################################"])
@@ -699,39 +665,36 @@ class GUI(object):
             cmds.append([])
             cmds.append(["# %s" % name])
             cmdprefix = cmdprefixes[data["type"]]
+            expr = data["comp"]
             if name not in self.vary:
-                if self.usentrange:
-                    size = max(self.range_eval(data["comp"], ntrangeval))
-                else:
-                    size = max(sum(self.range_eval(data["comp"]), []))
+                size = max(self.range_eval(expr, ntrangeval))
                 cmds.append([cmdprefix + "malloc", name, size])
                 continue
             # argument varies
-            size = (self.nrep + 1)
-            if self.usentrange:
-                size *= sum(self.range_eval(data["comp"], ntrangeval))
-            else:
-                size *= max(map(sum, self.range_eval(data["comp"])))
+            size = max(sum(self.range_eval_sum(expr, outerval))
+                       for outerval in outervals) * (self.nrep + 1)
             cmds.append([cmdprefix + "malloc", name, size])
-            for rangeval in rangevals:
-                if self.userange:
-                    if self.usesumrange:
+            for outerval in outervals:
+                if self.userange["outer"] == "range":
+                    if self.userange["inner"]:
                         cmds.append([])
-                    cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
-                sumrangevals = [0]
-                if self.usesumrange:
-                    sumrangevals = self.sumrange_get(rangeval)
+                    cmds.append(["# %s = %d" % (self.rangevars["range"],
+                                                outerval)])
+                innervals = None,
+                if self.userange["inner"]:
+                    innervals = self.ranges[self.userange["inner"]]
                 offset = 0
                 for rep in range(self.nrep + 1):
-                    if self.usesumrange:
+                    if self.userange["inner"]:
                         cmds.append(["# repetition %d" % rep])
-                    for sumrangeval in sumrangevals:
+                    for innerval in innervals:
                         cmds.append([
                             cmdprefix + "offset", name, offset,
-                            "%s_%d_%d_%d" % (name, rangeval, rep, sumrangeval)
+                            varname(name, outerval, rep, innerval)
                         ])
-                        offset += self.range_eval(data["comp"], rangeval,
-                                                  sumrangeval)
+                        offset += next(self.range_eval(
+                            expr, outerval, innerval
+                        ))
         if len(self.data):
             cmds.append([])
             cmds.append([])
@@ -740,31 +703,29 @@ class GUI(object):
         cmds.append(["########################################"])
         cmds.append(["# calls                                #"])
         cmds.append(["########################################"])
-        for rangeval in rangevals:
-            if self.userange:
+        for outerval in outervals:
+            if self.userange["outer"] == "range":
                 cmds.append([])
-                cmds.append(["# %s = %d" % (self.rangevar, rangeval)])
-            sumrangevals = [0]
-            if self.usesumrange:
-                sumrangevals = self.sumrange_get(rangeval)
+                cmds.append(["# %s = %d" % (self.rangevar["range"], outerval)])
+            innervals = None,
+            if self.userange["inner"]:
+                innervals = list(self.ranges[self.userange["inner"]])
             for rep in range(self.nrep + 1):
-                if self.usesumrange:
+                if self.userange["inner"]:
                     cmds.append([])
                     cmds.append(["# repetition %d" % rep])
-                for sumrangeval in sumrangevals:
+                for innerval in innervals:
                     for call in self.calls:
                         if isinstance(call, signature.Call):
                             call = call.sig(*[
-                                self.range_eval(value, rangeval, sumrangeval)
-                                for value in call[1:]
+                                next(self.range_eval(val, outerval, innerval))
+                                for val in call[1:]
                             ])
                             cmd = call.format_sampler()
                             for argid in call.sig.dataargs():
-                                name = call[argid]
-                                if name in self.vary:
-                                    cmd[argid] = "%s_%d_%d_%d" % (
-                                        name, rangeval, rep, sumrangeval
-                                    )
+                                cmd[argid] = varname(
+                                    cmd[argid], outerval, rep, innerval
+                                )
                         else:
                             # call without proper signature
                             cmd = call[:]
@@ -775,18 +736,18 @@ class GUI(object):
                                     continue
                                 if isinstance(value, str):
                                     if value[0] == "[" and value[-1] == "]":
-                                        parsed = self.range_parse(value[1:-1])
-                                        if parsed is not None:
-                                            value = self.range_eval(
-                                                parsed, rangeval, sumrangeval
-                                            )
+                                        expr = self.range_parse(value[1:-1])
+                                        if expr is not None:
+                                            value = next(self.range_eval(
+                                                expr, outerval, innerval
+                                            ))
                                         call[argid] = "[" + str(value) + "]"
                                 else:
-                                    parsed = self.range_parse(value)
-                                    if parsed is not None:
-                                        value = self.range_eval(
-                                            parsed, rangeval, sumrangeval
-                                        )
+                                    expr = self.range_parse(value)
+                                    if expr is not None:
+                                        value = next(self.range_eval(
+                                            expr, outerval, innerval
+                                        ))
                                         call[argid] = str(value)
                         cmds.append(cmd)
             cmds.append(["go"])
@@ -835,24 +796,24 @@ class GUI(object):
         # timing
         script += "date +%%s >> %s\n" % smplfile
 
-        ntrangevals = [self.nt]
-        if self.usentrange:
-            ntrangevals = self.range_get()
-        for ntrangeval in ntrangevals:
-            if self.usentrange:
-                callfile = filebase + ".%d.calls" % ntrangeval
+        ntvals = self.nt,
+        if self.userange["outer"] == "threads":
+            ntvals = self.ranges["threads"]
+        for ntval in ntvals:
+            if self.userange["outer"] == "threads":
+                callfile = filebase + ".%d.calls" % ntval
             else:
                 callfile = filebase + ".calls"
 
             # generate commands file
-            cmds = self.generate_cmds(ntrangeval)
+            cmds = self.generate_cmds(ntval)
             with open(callfile, "w") as fout:
                 for cmd in cmds:
                     print(*cmd, file=fout)
 
             # add script part
             if prefix:
-                script += prefix.format(nt=ntrangeval) + " "
+                script += prefix.format(nt=ntval) + " "
             script += "%(x)s < %(i)s >> %(o)s 2>> %(e)s" % {
                 "x": self.sampler["sampler"],  # executable
                 "i": callfile,  # input
@@ -860,7 +821,7 @@ class GUI(object):
                 "e": errfile  # error
             }
             if suffix:
-                script += " " + suffix.format(nt=ntrangeval)
+                script += " " + suffix.format(nt=ntval)
             script += "\n"
 
             # delete call file
@@ -935,24 +896,14 @@ class GUI(object):
         self.UI_usepapi_set()
         self.UI_showargs_set()
         self.UI_usevary_set()
-        self.UI_userange_setenabled()
-        self.UI_usentrange_set()
-        self.UI_userange_set()
-        self.UI_usesumrange_set()
         self.UI_counters_setvisible()
         self.UI_counters_setoptions()
         self.UI_counters_set()
         self.UI_useheader_set()
         self.UI_header_setvisible()
         self.UI_header_set()
-        self.UI_usentrange_apply()
-        self.UI_ntrange_set()
-        self.UI_userange_apply()
-        self.UI_rangevar_set()
-        self.UI_range_set()
-        self.UI_usesumrange_apply()
-        self.UI_sumrangevar_set()
-        self.UI_sumrange_set()
+        self.UI_useranges_set()
+        self.UI_ranges_set()
         self.UI_calls_init()
         self.UI_submit_setenabled()
 
@@ -1031,85 +982,61 @@ class GUI(object):
     def UI_header_change(self, header):
         self.header = header
 
-    def UI_usentrange_change(self, state):
-        if state:
-            self.ntrange = symbolic.Range((1, 1, self.nt))
-            self.UI_ntrange_set()
-        else:
-            self.UI_nt_set()
+    def UI_userange_change(self, rangetype, rangename):
+        if self.userange[rangetype]:
+            oldname = self.userange[rangetype]
+            subst = {self.rangevars[oldname]: self.ranges[oldname].max()}
+            # get rid of old range in variables
             for call in self.calls:
                 for argid, arg in enumerate(call):
-                    call[argid] = self.range_eval(
-                        arg, self.nt, dosumrange=False,
-                    )
+                    if isinstance(arg, symbolic.Expression):
+                        call[argid] = arg(**subst)
+            # get rid of old range in inner range
+            if rangetype == "outer":
+                for innername in self.rangetypes["inner"]:
+                    self.ranges[innername] = self.ranges[innername](**subst)
             self.data_update()
             self.UI_calls_set()
-        self.usentrange = state
-        self.UI_userange_setenabled()
-        self.UI_usentrange_apply()
+        self.userange[rangetype] = rangename
+        if rangename == "threads":
+            self.ranges["threads"] = symbolic.Range((1, 1, self.nt))
+        self.userange[rangetype] = rangename
+        self.UI_useranges_set()
 
-    def UI_ntrange_change(self, value):
+    def UI_rangevar_change(self, rangename, value):
+        if not value:
+            # TODO: notify user
+            return
+        subst = {self.rangevars[rangename]: symbolic.Symbol(value)}
+        for call in self.calls:
+            for argid, arg in enumerate(call):
+                if isinstance(arg, symbolic.Expression):
+                    call[argid] = arg.substitute(**subst)
+        if rangename in self.rangetypes["outer"]:
+            for innername in self.rangetypes["inner"]:
+                self.ranges[innername] = self.ranges[innername](**subst)
+        self.rangevars[rangename] = value
+        self.data_update()
+        self.UI_calls_set()
+
+    def UI_range_change(self, rangename, value):
+        symdict = {}
+        if rangename in self.rangetypes["inner"]:
+            symdict = self.range_symdict(inner=False)
         try:
-            self.ntrange = symbolic.Range(value)
-            self.nt = self.ntrange.max()
-            self.data_update()
-            self.UI_data_viz()
+            self.ranges[rangename] = symbolic.Range(value, **symdict)
         except:
-            # TODO: error alert?
-            pass
-
-    def UI_userange_change(self, state):
-        if not state:
-            for call in self.calls:
-                for argid, arg in enumerate(call):
-                    call[argid] = self.range_eval(
-                        arg, self.range.max(), dosumrange=False
-                    )
-            self.data_update()
-            self.UI_calls_set()
-        self.userange = state
-        self.UI_userange_setenabled()
-        self.UI_userange_apply()
-
-    def UI_rangevar_change(self, varname):
-        self.rangevar_set(varname)
-
-    def UI_range_change(self, value):
-        try:
-            self.range = symbolic.Range(value)
-            self.data_update()
-            self.UI_data_viz()
-        except:
-            # TODO: error alert?
-            pass
-
-    def UI_usesumrange_change(self, state):
-        if not state:
-            for call in self.calls:
-                for argid, arg in enumerate(call):
-                    call[argid] = self.range_eval(
-                        arg, sumrangeval=self.sumrange.max(), dorange=False
-                    )
-            self.data_update()
-            self.UI_calls_set()
-        self.usesumrange = state
-        self.UI_usesumrange_apply()
-
-    def UI_sumrangevar_change(self, varname):
-        self.sumrangevar_set(varname)
-
-    def UI_sumrange_change(self, value):
-        try:
-            symdict = self.range_symdict(dosumrange=False)
-            self.sumrange = symbolic.Range(value, **symdict)
-            self.data_update()
-            self.UI_data_viz()
-        except:
-            # TODO: error alert?
-            pass
+            # TODO: notifiy user
+            return
+        if rangename == "threads":
+            self.nt = self.ranges[rangename].max()
+        self.data_update()
+        self.UI_data_viz()
 
     def UI_nrep_change(self, nrep):
-        self.nrep = nrep
+        if nrep:
+            self.nrep = int(nrep)
+        # TODO: else notify user
 
     def UI_call_add_click(self):
         self.calls.append([""])
