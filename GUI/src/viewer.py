@@ -194,13 +194,13 @@ class Viewer(object):
         report["data"] = reportdata
         for rangeval in rangevals:
             innervals = None,
-            if rangename_inner:
-                innerrange = report["ranges"][rangename_inner]
+            if rangename_inner == "sum":
+                sumrange = report["ranges"]["sum"]
                 if rangename_outer:
-                    innerrange = innerrange(**{
-                        report["rangevars"][rangename_outer]: rangeval
+                    sumrange = sumrange(**{
+                        report["rangevars"]["sum"]: rangeval
                     })
-                innervals = list(innerrange)
+                innervals = list(sumrange)
             rangevaldata = []
             reportdata[rangeval] = rangevaldata
             for rep in range(report["nrep"] + 1):
@@ -256,11 +256,18 @@ class Viewer(object):
                 "<tr><td>For each:</td><td>%s = %s</td></tr>"
                 % (report["rangevars"]["range"], report["ranges"]["range"])
             )
-        if report["userange"]["inner"]:
+        if report["userange"]["inner"] == "sum":
             result += (
                 "<tr><td>Sum over:</td><td>%s = %s</td></tr>"
                 % (report["rangevars"]["sum"], report["ranges"]["sum"])
             )
+        elif report["userange"]["inner"] == "omp":
+            result += (
+                "<tr><td>parallel calls:</td><td>%s = %s</td></tr>"
+                % (report["rangevars"]["omp"], report["ranges"]["sum"])
+            )
+        elif report["options"]["omp"]:
+            result += "<tr><td></td><td>Calls in parallel</td></tr>"
 
         def format_call(call):
             return call[0] + "(" + ", ".join(map(str, call[1:])) + ")"
