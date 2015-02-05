@@ -101,27 +101,24 @@ class GUI_Qt(GUI):
             rangesM.addAction(userange_create("range", "for each range"))
             rangesM.addSeparator()
             rangesM.addAction(userange_create("sum", "sum over range"))
+            rangesM.addAction(userange_create("omp", "parallel range"))
 
             # options
             optionsM = menu.addMenu("Options")
+            self.Qt_options = {}
 
-            # options > usepapi
-            self.Qt_usepapi = QtGui.QAction("use papi", window)
-            optionsM.addAction(self.Qt_usepapi)
-            self.Qt_usepapi.setCheckable(True)
-            self.Qt_usepapi.toggled.connect(self.Qt_usepapi_toggle)
+            def create_option(name, desc):
+                option = QtGui.QAction(desc, window)
+                optionsM.addAction(option)
+                self.Qt_options[name] = option
+                option.setCheckable(True)
+                option.optionname = name
+                option.toggled.connect(self.Qt_option_toggle)
 
-            # options > header
-            self.Qt_useheader = QtGui.QAction("script header", window)
-            optionsM.addAction(self.Qt_useheader)
-            self.Qt_useheader.setCheckable(True)
-            self.Qt_useheader.toggled.connect(self.Qt_useheader_toggle)
-
-            # options > usevary
-            self.Qt_usevary = QtGui.QAction("vary matrices", window)
-            optionsM.addAction(self.Qt_usevary)
-            self.Qt_usevary.setCheckable(True)
-            self.Qt_usevary.toggled.connect(self.Qt_usevary_toggle)
+            create_option("papi", "use papi")
+            create_option("header", "script header")
+            create_option("vary", "vary matrices")
+            create_option("omp", "calls in parallel")
 
             # view
             viewM = menu.addMenu("View")
@@ -261,6 +258,9 @@ class GUI_Qt(GUI):
             ))
             rangesL.addWidget(create_range(
                 "sum", 32, "sum over"
+            ))
+            rangesL.addWidget(create_range(
+                "omp", 32, "in parallel"
             ))
 
         def create_sampler_about():
@@ -485,17 +485,17 @@ class GUI_Qt(GUI):
                 self.Qt_ranges[rangename].setVisible(active)
         self.Qt_ntT.setVisible(self.userange["outer"] != "threads")
 
-    def UI_usepapi_setenabled(self):
-        self.Qt_usepapi.setEnabled(self.sampler["papi_counters_max"] > 0)
-
-    def UI_usepapi_set(self):
+    def UI_options_set(self):
         self.Qt_setting = True
-        self.Qt_usepapi.setChecked(self.usepapi)
-        self.Qt_setting = False
-
-    def UI_usevary_set(self):
-        self.Qt_setting = True
-        self.Qt_usevary.setChecked(self.usevary)
+        self.Qt_options["papi"].setEnabled(
+            self.sampler["papi_counters_max"] > 0
+        )
+        for optionname, val in self.options.iteritems():
+            self.Qt_options[optionname].setChecked(val)
+        self.Qt_countersD.setVisible(self.options["papi"])
+        self.Qt_headerD.setVisible(self.options["header"])
+        for callid in range(self.Qt_calls.count()):
+            self.Qt_calls.item(callid).usevary_apply()
         self.Qt_setting = False
 
     def UI_showargs_set(self, name=None):
@@ -507,24 +507,9 @@ class GUI_Qt(GUI):
         self.Qt_showargs[name].setChecked(self.showargs[name])
         self.Qt_setting = False
 
-    def UI_counters_setvisible(self):
-        self.Qt_setting = True
-        self.Qt_countersD.setVisible(self.usepapi)
-        self.Qt_setting = False
-
-    def UI_useheader_set(self):
-        self.Qt_setting = True
-        self.Qt_useheader.setChecked(self.useheader)
-        self.Qt_setting = False
-
     def UI_header_set(self):
         self.Qt_setting = True
         self.Qt_header.setPlainText(self.header)
-        self.Qt_setting = False
-
-    def UI_header_setvisible(self):
-        self.Qt_setting = True
-        self.Qt_headerD.setVisible(self.useheader)
         self.Qt_setting = False
 
     def UI_counters_setoptions(self):
@@ -609,10 +594,6 @@ class GUI_Qt(GUI):
     def UI_showargs_apply(self):
         for callid in range(self.Qt_calls.count()):
             self.Qt_calls.item(callid).showargs_apply()
-
-    def UI_usevary_apply(self):
-        for callid in range(self.Qt_calls.count()):
-            self.Qt_calls.item(callid).usevary_apply()
 
     def UI_arg_setfocus(self, callid, argid):
         self.Qt_calls.item(callid).Qt_args[argid].setFocus()
@@ -739,20 +720,12 @@ class GUI_Qt(GUI):
         else:
             self.UI_userange_change("inner", value)
 
-    def Qt_usepapi_toggle(self, checked):
+    def Qt_option_toggle(self, checked):
         if self.Qt_setting:
             return
-        self.UI_usepapi_change(checked)
-
-    def Qt_useheader_toggle(self, checked):
-        if self.Qt_setting:
-            return
-        self.UI_useheader_change(checked)
-
-    def Qt_usevary_toggle(self, checked):
-        if self.Qt_setting:
-            return
-        self.UI_usevary_change(checked)
+        sender = self.Qt_app.sender()
+        optionname = sender.optionname
+        self.UI_option_change(optionname, checked)
 
     def Qt_showarg_toggle(self, checked):
         if self.Qt_setting:
@@ -763,8 +736,7 @@ class GUI_Qt(GUI):
     def Qt_counters_close(self, event):
         if self.Qt_setting:
             return
-        self.UI_usepapi_change(False)
-        self.UI_usepapi_set()
+        self.UI_option_change("papi", False)
 
     def Qt_counter_change(self):
         if self.Qt_setting:
@@ -792,8 +764,7 @@ class GUI_Qt(GUI):
     def Qt_header_close(self, event):
         if self.Qt_setting:
             return
-        self.UI_useheader_change(False)
-        self.UI_useheader_set()
+        self.UI_option_change("header", False)
 
     def Qt_rangevar_change(self):
         if self.Qt_setting:

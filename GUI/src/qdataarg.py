@@ -117,7 +117,7 @@ class QDataArg(QtGui.QWidget):
         namewidth += self.Qt_name.fontMetrics().width(self.Qt_name.text())
         namewidth = max(namewidth, nameheight)
         varywidth = varyheight = 0
-        if self.Qt_gui.usevary:
+        if self.Qt_gui.options["vary"]:
             varyheight = self.Qt_vary.minimumSizeHint().height()
             varywidth = self.Qt_vary.minimumSizeHint().width()
         contentheight = nameheight + varyheight
@@ -343,7 +343,7 @@ class QDataArg(QtGui.QWidget):
         ]
 
     def usevary_apply(self):
-        self.Qt_vary.setVisible(self.Qt_gui.usevary)
+        self.Qt_vary.setVisible(self.Qt_gui.options["vary"])
 
     # event handlers
     def change(self):

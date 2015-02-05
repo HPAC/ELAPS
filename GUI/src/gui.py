@@ -122,7 +122,7 @@ class GUI(object):
     def ranges_init(self):
         self.rangetypes = {
             "outer": ("threads", "range"),
-            "inner": ("sum",)
+            "inner": ("sum", "omp")
         }
 
     def docs_init(self):
@@ -178,23 +178,28 @@ class GUI(object):
             "stateversion": self.requiredstateversion,
             "samplername": sampler["name"],
             "nt": 1,
-            "ranges": {
-                "threads": ((1, 0, 1),),
-                "range": ((8, 32, 1000),),
-                "sum": ((1, 1, 10),)
-            },
-            "rangevars": {
-                "threads": "nt",
-                "range": "n",
-                "sum": "m"
-            },
             "userange": {
                 "outer": "range",
                 "inner": None,
             },
-            "usepapi": False,
-            "useheader": False,
-            "usevary": False,
+            "ranges": {
+                "threads": ((1, 0, 1),),
+                "range": ((8, 32, 1000),),
+                "sum": ((1, 1, 10),),
+                "omp": ((1, 1, 4),)
+            },
+            "rangevars": {
+                "threads": "nt",
+                "range": "n",
+                "sum": "m",
+                "omp": "t"
+            },
+            "options": {
+                "papi": False,
+                "header": False,
+                "vary": False,
+                "omp": False
+            },
             "showargs": {
                 "flags": True,
                 "scalars": True,
@@ -438,7 +443,7 @@ class GUI(object):
 
         # update countes (kill unavailable, adjust length)
         papi_counters_max = self.sampler["papi_counters_max"]
-        self.usepapi &= papi_counters_max > 0
+        self.options["papi"] &= papi_counters_max > 0
         counters = []
         for counter in self.counters:
             if counter in self.sampler["papi_counters_avail"]:
@@ -455,8 +460,7 @@ class GUI(object):
         # update UI
         self.UI_nt_setmax()
         self.UI_nt_set()
-        self.UI_usepapi_setenabled()
-        self.UI_usepapi_set()
+        self.UI_options_set()
         self.UI_counters_setoptions()
         self.UI_counters_set()
         self.UI_sampler_about_set()
@@ -623,6 +627,8 @@ class GUI(object):
         cmds = []
 
         def varname(name, outerval, rep, innerval):
+            if not self.options["vary"]:
+                return name
             if name not in self.vary:
                 return name
             parts = [name]
@@ -639,7 +645,7 @@ class GUI(object):
         elif self.userange["outer"]:
             outervals = self.ranges[self.userange["outer"]]
 
-        if len(self.counters):
+        if self.options["papi"] and len(self.counters):
             cmds.append(["########################################"])
             cmds.append(["# counters                             #"])
             cmds.append(["########################################"])
@@ -665,7 +671,7 @@ class GUI(object):
             cmds.append(["# %s" % name])
             cmdprefix = cmdprefixes[data["type"]]
             expr = data["comp"]
-            if name not in self.vary:
+            if not self.options["vary"] or name not in self.vary:
                 size = max(self.range_eval(expr, ntrangeval))
                 cmds.append([cmdprefix + "malloc", name, size])
                 continue
@@ -724,7 +730,11 @@ class GUI(object):
                 if self.userange["inner"]:
                     cmds.append([])
                     cmds.append(["# repetition %d" % rep])
+                if self.userange["inner"] == "omp":
+                    cmds.append(["{omp"])
                 for innerval in innervals:
+                    if self.userange["inner"] != "omp" and self.options["omp"]:
+                        cmds.append(["{omp"])
                     for call in self.calls:
                         if isinstance(call, signature.Call):
                             call = call.sig(*[
@@ -760,6 +770,10 @@ class GUI(object):
                                         ))
                                         call[argid] = str(value)
                         cmds.append(cmd)
+                    if self.userange["inner"] != "omp" and self.options["omp"]:
+                        cmds.append(["}"])
+                if self.userange["inner"] == "omp":
+                    cmds.append(["}"])
             cmds.append(["go"])
 
         return cmds
@@ -788,7 +802,7 @@ class GUI(object):
         if header:
             script += header.format(nt=self.nt) + "\n"
 
-        if self.useheader:
+        if self.options["header"]:
             script += self.header + "\n"
 
         # report header
@@ -823,9 +837,15 @@ class GUI(object):
                 for cmd in cmds:
                     print(*cmd, file=fout)
 
+            # compute omp thread count
+            ompthreads = 1
+            if self.userange["inner"] == "omp":
+                ompthreads = len(self.calls) * len(self.ranges["omp"])
+
             # add script part
             if prefix:
                 script += prefix.format(nt=ntval) + " "
+            script += "OMP_NUM_THREADS=%d " % ompthreads
             script += "%(x)s < %(i)s >> %(o)s 2>> %(e)s" % {
                 "x": self.sampler["sampler"],  # executable
                 "i": callfile,  # input
@@ -904,15 +924,10 @@ class GUI(object):
         self.UI_nt_setmax()
         self.UI_nt_set()
         self.UI_nrep_set()
-        self.UI_usepapi_setenabled()
-        self.UI_usepapi_set()
+        self.UI_options_set()
         self.UI_showargs_set()
-        self.UI_usevary_set()
-        self.UI_counters_setvisible()
         self.UI_counters_setoptions()
         self.UI_counters_set()
-        self.UI_useheader_set()
-        self.UI_header_setvisible()
         self.UI_header_set()
         self.UI_useranges_set()
         self.UI_ranges_set()
@@ -961,21 +976,13 @@ class GUI(object):
     def UI_nt_change(self, nt):
         self.nt = nt
 
-    def UI_usepapi_change(self, state):
-        self.usepapi = state
-        self.UI_counters_setvisible()
-
-    def UI_useheader_change(self, state):
-        self.useheader = state
-        self.UI_header_setvisible()
+    def UI_option_change(self, optionname, state):
+        self.options[optionname] = state
+        self.UI_options_set()
 
     def UI_showargs_change(self, name, state):
         self.showargs[name] = state
         self.UI_showargs_apply()
-
-    def UI_usevary_change(self, state):
-        self.usevary = state
-        self.UI_usevary_apply()
 
     def UI_counters_change(self, counters):
         self.counters = counters
