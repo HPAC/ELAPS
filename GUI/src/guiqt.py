@@ -193,8 +193,7 @@ class GUI_Qt(GUI):
             rangesW = QtGui.QWidget()
             rangesD.setWidget(rangesW)
             rangesW.setSizePolicy(
-                QtGui.QSizePolicy.Fixed,
-                QtGui.QSizePolicy.Fixed
+                QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed
             )
             rangesL = QtGui.QVBoxLayout()
             rangesW.setLayout(rangesL)

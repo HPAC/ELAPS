@@ -267,9 +267,9 @@ class GUI(object):
             symbols[rangevar] = symbolic.Symbol(rangevar)
         return symbols
 
-    def range_parse(self, text, dorange=True, dosumrange=True):
+    def range_parse(self, text, outer=True, inner=True):
         try:
-            return eval(text, {}, self.range_symdict())
+            return eval(text, {}, self.range_symdict(outer, inner))
         except:
             return None
 
@@ -921,26 +921,15 @@ class GUI(object):
 
     # event handlers
     def UI_submit(self, filename):
-        msg = None
         if not any(isinstance(arg, symbolic.Expression)
                    for call in self.calls for arg in call):
-            if self.userange:
-                if self.usesumrange:
-                    msg = ("Range and sum over are enabled"
-                           "but %r and %r are not used in any call")
-                    msg %= (self.rangevars["range"], self.rangevars["sum"])
-                else:
-                    msg = "Range is enabled but %r is not used in any call"
-                    msg %= self.rangevar
-            elif self.usesumrange:
-                msg = "Sum over is enabled but %r is not used in any call"
-                msg %= self.rangevars["sum"]
-        if msg:
-            self.UI_dialog(
-                "warning", "range not used", msg, {
-                    "Ok": (self.submit, (filename,)),
-                    "Cancel": None
-                })
+            if self.userange["inner"] or self.userange["outer"]:
+                self.UI_dialog(
+                    "warning", "range not used",
+                    "ranges are enabled but unused in the calls", {
+                        "Ok": (self.submit, (filename,)),
+                        "Cancel": None
+                    })
         else:
             self.submit(filename)
 
