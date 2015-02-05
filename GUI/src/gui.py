@@ -13,7 +13,7 @@ from __builtin__ import intern  # fix for pyflake error
 
 
 class GUI(object):
-    requiredbuildversion = 1422278229
+    requiredbuildversion = 1423087329
     requiredstateversion = 1423087329
     state = {}
 
@@ -812,9 +812,17 @@ class GUI(object):
         reportinfo.update({
             "sampler": sampler,
             "submittime": time.time(),
+            "filename": smplfile,
             "ncalls": (len(list(self.range_eval(0))) *
                        (self.nrep + 1) * len(self.calls))
         })
+        reportinfo["nlines"] = reportinfo["ncalls"]
+        if self.userange["inner"] == "omp":
+            reportinfo["nlines"] = (len(list(self.range_eval(0, inner=False)))
+                                    * (self.nrep + 1))
+        elif self.options["omp"]:
+            reportinfo["nlines"] /= len(self.calls)
+
         script += "cat > %s <<REPORTINFO\n%s\nREPORTINFO\n" % (
             smplfile, repr(reportinfo)
         )
@@ -832,7 +840,10 @@ class GUI(object):
                 callfile = filebase + ".calls"
 
             # generate commands file
-            cmds = self.generate_cmds(ntval)
+            if self.userange["outer"] == "threads":
+                cmds = self.generate_cmds(ntval)
+            else:
+                cmds = self.generate_cmds()
             with open(callfile, "w") as fout:
                 for cmd in cmds:
                     print(*cmd, file=fout)
@@ -841,6 +852,8 @@ class GUI(object):
             ompthreads = 1
             if self.userange["inner"] == "omp":
                 ompthreads = len(self.calls) * len(self.ranges["omp"])
+            elif self.options["omp"]:
+                ompthreads = len(self.calls)
 
             # add script part
             if prefix:
@@ -856,17 +869,20 @@ class GUI(object):
                 script += " " + suffix.format(nt=ntval)
             script += "\n"
 
+            # exit upon error
+            script += "[ -s %s ] && exit\n" % errfile
+
             # delete call file
             script += "rm %s\n" % callfile
 
         # timing
         script += "date +%%s >> %s\n" % smplfile
 
-        # if empty, delete errfile
-        script += "[ -s %(e)s ] || rm %(e)s" % {"e": errfile}
-
         # delete script file
-        script += "\nrm " + scriptfile
+        script += "rm " + scriptfile + "\n"
+
+        # delete errfile (it's empty if we got so far)
+        script += "rm %s" % errfile
 
         if footer:
             script += "\n" + footer.format(nt=self.nt)
@@ -880,27 +896,29 @@ class GUI(object):
         jobid = backend.submit(script, nt=self.nt, jobname=jobname)
 
         # track progress
-        self.jobprogress_add(jobid, smplfile)
+        self.jobprogress_add(jobid, reportinfo)
         self.UI_jobprogress_show()
         self.log("submitted %r to %r" % (jobname, self.sampler["backend"]))
 
     # jobprogress
-    def jobprogress_add(self, jobid, filename):
-        nlines = (len(list(self.range_eval(0))) *
-                  (self.nrep + 1) * len(self.calls))
+    def jobprogress_add(self, jobid, reportinfo):
         self.jobprogress.append({
             "backend": self.sampler["backend"],
             "id": jobid,
-            "filename": filename,
+            "filebase": reportinfo["filename"][:-5],
             "progress": -1,
-            "progressend": nlines
+            "progressend": reportinfo["nlines"],
+            "error": False,
         })
 
     def jobprogress_update(self):
         for job in self.jobprogress:
-            if job:
-                with open(job["filename"]) as fin:
+            if job and not job["error"]:
+                with open(job["filebase"] + ".smpl") as fin:
                     job["progress"] = len(fin.readlines()) - 2
+                if os.path.isfile(job["filebase"] + ".err"):
+                    if os.path.getsize(job["filebase"] + ".err"):
+                        job["error"] = True
 
     # kernel documentation
     def docs_get(self, routine):
@@ -1085,4 +1103,4 @@ class GUI(object):
 
     def UI_jobview(self, jobid):
         job = self.jobprogress[jobid]
-        self.UI_viewer_load(job["filename"])
+        self.UI_viewer_load(job["filebase"] + ".smpl")

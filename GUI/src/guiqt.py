@@ -622,7 +622,7 @@ class GUI_Qt(GUI):
                 continue
             layout = self.Qt_jobprogress.layout()
             if i >= len(self.Qt_jobprogress_items):
-                name = os.path.basename(job["filename"])[:-5]
+                name = os.path.basename(job["filebase"])
                 Qname = QtGui.QLabel(name)
                 layout.addWidget(Qname, i, 0)
                 Qbar = QtGui.QProgressBar()
@@ -639,7 +639,9 @@ class GUI_Qt(GUI):
             else:
                 Qname, Qbar, Qlabel, Qbutton = self.Qt_jobprogress_items[i]
             Qbar.setValue(min(max(0, job["progress"]), job["progressend"]))
-            if job["progress"] < 0:
+            if job["error"]:
+                Qlabel.setText("error")
+            elif job["progress"] < 0:
                 Qlabel.setText("pending")
             elif job["progress"] <= job["progressend"]:
                 Qlabel.setText("%d / %d calls"

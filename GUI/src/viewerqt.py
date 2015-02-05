@@ -298,7 +298,10 @@ class Viewer_Qt(Viewer):
         Qreport.callid = None
 
         Qreport.items = {None: Qreport}
-        for callid, call in enumerate(report["calls"]):
+        for callid in report["plotcolors"]:
+            if callid is None:
+                continue
+            call = report["calls"][callid]
             Qitem = QtGui.QTreeWidgetItem((call[0],))
             Qreport.addChild(Qitem)
             Qreport.items[callid] = Qitem

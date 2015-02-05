@@ -174,7 +174,7 @@ class QCall(QtGui.QListWidgetItem):
         # set widgets
         if call[0] not in self.Qt_gui.sampler["kernels"]:
             self.args_clear()
-            self.Qt_gui.Qt_setting = False
+            self.Qt_gui.Qt_setting -= 1
             return
         if isinstance(call, signature.Call):
             if call.sig != self.sig:

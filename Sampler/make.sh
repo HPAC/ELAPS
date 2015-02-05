@@ -19,7 +19,7 @@
 : ${LINK_FLAGS:=""}
 : ${INCLUDE_FLAGS:=""}
 : ${KERNEL_HEADERS:="headers/blas.h headers/lapack.h"}
-: ${OPENMP:=0}
+: ${OPENMP:=1}
 : ${PAPI_COUNTERS_MAX:=0}
 : ${PAPI_COUNTERS_AVAIL:=""}
 : ${BACKEND:="local"}

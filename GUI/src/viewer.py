@@ -176,7 +176,6 @@ class Viewer(object):
             report = eval(fin.readline(), evaldir)
             report["counters"] = filter(None, report["counters"])
             report["starttime"] = int(fin.readline())
-            report["filename"] = filename
         except:
             raise IOError(filename, "doesn't contain a valid report")
         report["filename"] = os.path.relpath(filename)
@@ -186,6 +185,9 @@ class Viewer(object):
 
         rangename_outer = report["userange"]["outer"]
         rangename_inner = report["userange"]["inner"]
+        samplesperinnerval = len(report["calls"])
+        if rangename_inner == "omp" or report["options"]["omp"]:
+            samplesperinnerval = 1
 
         rangevals = None,
         if rangename_outer:
@@ -210,11 +212,10 @@ class Viewer(object):
                 for innerval in innervals:
                     innervaldata = []
                     repdata[innerval] = innervaldata
-                    for call in report["calls"]:
-                        try:
-                            line = fin.readline()
-                        except:
-                            self.alert(filename, "is truncated")
+                    for sample in range(samplesperinnerval):
+                        line = fin.readline()
+                        if not line:
+                            self.alert(filename, "was truncated")
                             return report
                         innervaldata.append(tuple(map(int, line.split())))
         reportdata = {key: tuple(map(tuple, val))
@@ -222,7 +223,7 @@ class Viewer(object):
         try:
             report["endtime"] = int(fin.readline())
         except:
-            self.alert(name, "was truncated")
+            self.alert(name, "was truncated (missing 1 line)")
             return report
         extralines = fin.readlines()
         if len(extralines):
@@ -266,8 +267,6 @@ class Viewer(object):
                 "<tr><td>parallel calls:</td><td>%s = %s</td></tr>"
                 % (report["rangevars"]["omp"], report["ranges"]["sum"])
             )
-        elif report["options"]["omp"]:
-            result += "<tr><td></td><td>Calls in parallel</td></tr>"
 
         def format_call(call):
             return call[0] + "(" + ", ".join(map(str, call[1:])) + ")"
@@ -276,7 +275,11 @@ class Viewer(object):
             calls = report["calls"]
         else:
             calls = [report["calls"][self.callid_selected]]
-        result += "<tr><td>Call%s:</td><td>" % "s"[:len(calls) - 1]
+        plural = "s"
+        if report["userange"]["inner"] == "omp" or report["options"]["omp"]:
+            plural = "s (parallel)"
+        result += "<tr><td>Call%s:</td><td>" % (plural if len(calls) > 1
+                                                else "")
         result += "<br>".join(map(format_call, calls))
         result += "</td></tr>"
         result += "</table>"
@@ -309,11 +312,14 @@ class Viewer(object):
         rangevaldata = report["data"][rangeval]
         calls = report["calls"]
         metric = self.metrics[metricname]
+        usepapi = report["options"]["papi"]
 
         # if callid not given: all calls
-        callids = (callid,)
+        callids = callid,
         if callid is None:
             callids = range(len(calls))
+        if rangename_inner == "omp" or report["options"]["omp"]:
+            callids = 0,
         data = defaultdict(lambda: None)
 
         symdict = {}
@@ -348,13 +354,13 @@ class Viewer(object):
         for repdata in rangevaldata:
             # set up data
             data["rdtsc"] = 0
-            if report["usepapi"]:
+            if usepapi:
                 for counter in report["counters"]:
                     data[counter] = 0
             for innervaldata in repdata.itervalues():
                 data["rdtsc"] += sum(innervaldata[callid][0]
                                      for callid in callids)
-                if report["usepapi"]:
+                if usepapi:
                     for counterid, counter in enumerate(report["counters"]):
                         data[counter] += sum(
                             innervaldata[callid][counterid + 1]
@@ -416,7 +422,6 @@ class Viewer(object):
         if any(report["filename"] == filename for report in self.reports):
             self.UI_alert(filename, "already loaded")
             return
-        report = self.report_load(filename)
         try:
             report = self.report_load(filename)
         except:
@@ -425,12 +430,14 @@ class Viewer(object):
         reportid = len(self.reports)
         self.reports.append(report)
         report["plotcolors"] = {None: self.nextcolor()}
-        for callid in range(len(report["calls"])):
-            if len(report["calls"]) == 1:
-                report["plotcolors"][0] = report["plotcolors"][None]
-            else:
-                report["plotcolors"][callid] = self.nextcolor()
-        if report["usepapi"]:
+        if (not report["options"]["omp"] and
+                report["userange"]["inner"] != "omp"):
+            for callid in range(len(report["calls"])):
+                if len(report["calls"]) == 1:
+                    report["plotcolors"][0] = report["plotcolors"][None]
+                else:
+                    report["plotcolors"][callid] = self.nextcolor()
+        if report["options"]["papi"]:
             for counter in report["counters"]:
                 if counter not in self.metrics:
                     self.metrics_adddefaultmetric(counter)
