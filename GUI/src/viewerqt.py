@@ -18,20 +18,20 @@ class Viewer_Qt(Viewer):
             self.Qt_app.gui = None
         self.Qt_app.viewer = self
         self.plotfactory = plotfactory
-        self.Qt_setting = False
+        self.Qt_setting = 0
         Viewer.__init__(self, loadstate)
 
     def state_init(self, load=True):
         if load:
             settings = QtCore.QSettings("HPAC", "Viewer")
-            self.Qt_setting = True
+            self.Qt_setting += 1
             self.Qt_window.restoreGeometry(
                 settings.value("geometry").toByteArray()
             )
             self.Qt_window.restoreState(
                 settings.value("windowState").toByteArray()
             )
-            self.Qt_setting = False
+            self.Qt_setting -= 1
             try:
                 self.state = eval(str(settings.value("appState").toString()))
             except:
@@ -232,7 +232,7 @@ class Viewer_Qt(Viewer):
 
     # setters
     def UI_metrics_update(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         self.Qt_metric.clear()
         for i, name in enumerate(sorted(self.metrics)):
             self.Qt_metric.addItem(self.metricnames[name],
@@ -240,7 +240,7 @@ class Viewer_Qt(Viewer):
             self.Qt_metric.setItemData(
                 i, self.metrics[name].__doc__.strip(), QtCore.Qt.ToolTipRole
             )
-        self.Qt_setting = False
+        self.Qt_setting -= 1
         self.Qt_metric.setCurrentIndex(
             self.Qt_metric.findData(QtCore.QVariant(self.metric_selected))
         )

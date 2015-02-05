@@ -169,7 +169,7 @@ class QCall(QtGui.QListWidgetItem):
                 Qarg.usevary_apply()
 
     def args_set(self, fromargid=None):
-        self.Qt_gui.Qt_setting = True
+        self.Qt_gui.Qt_setting += 1
         call = self.Qt_gui.calls[self.callid]
         # set widgets
         if call[0] not in self.Qt_gui.sampler["kernels"]:
@@ -203,7 +203,7 @@ class QCall(QtGui.QListWidgetItem):
             elif isinstance(Qarg, QDataArg):
                 Qarg.set()
         self.update_size()
-        self.Qt_gui.Qt_setting = False
+        self.Qt_gui.Qt_setting -= 1
 
     def data_viz(self):
         if not self.sig:

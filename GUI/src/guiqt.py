@@ -19,7 +19,7 @@ class GUI_Qt(GUI):
             self.Qt_app = QtGui.QApplication(sys.argv)
             self.Qt_app.viewer = None
         self.Qt_app.gui = self
-        self.Qt_setting = False
+        self.Qt_setting = 0
         self.Qt_initialized = False
         GUI.__init__(self, loadstate)
 
@@ -28,14 +28,14 @@ class GUI_Qt(GUI):
         if not load:
             return
         settings = QtCore.QSettings("HPAC", "Sampler")
-        self.Qt_setting = True
+        self.Qt_setting += 1
         self.Qt_window.restoreGeometry(
             settings.value("geometry").toByteArray()
         )
         self.Qt_window.restoreState(
             settings.value("windowState").toByteArray()
         )
-        self.Qt_setting = False
+        self.Qt_setting -= 1
         try:
             self.state_fromstring(str(
                 settings.value("appState").toString()
@@ -45,7 +45,7 @@ class GUI_Qt(GUI):
             pass
 
     def UI_init(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         # window
         self.Qt_window = QtGui.QMainWindow()
         window = self.Qt_window
@@ -404,7 +404,7 @@ class GUI_Qt(GUI):
         create_style()
         window.show()
 
-        self.Qt_setting = False
+        self.Qt_setting -= 1
         self.Qt_initialized = True
 
     def UI_start(self):
@@ -455,28 +455,28 @@ class GUI_Qt(GUI):
 
     # setters
     def UI_sampler_set(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         self.Qt_sampler.setCurrentIndex(
             self.Qt_sampler.findText(self.samplername)
         )
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_sampler_about_set(self):
         self.Qt_sampler_about.setText(self.sampler_about_str())
 
     def UI_nt_setmax(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         self.Qt_nt.clear()
         self.Qt_nt.addItems(map(str, range(1, self.sampler["nt_max"] + 1)))
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_nt_set(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         self.Qt_nt.setCurrentIndex(self.nt - 1)
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_useranges_set(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         for rangetype, rangenames in self.rangetypes.iteritems():
             selected = self.userange[rangetype] is not None
             for rangename in rangenames:
@@ -488,10 +488,10 @@ class GUI_Qt(GUI):
         self.Qt_options["omp"].setEnabled(self.userange["inner"] != "omp")
         self.Qt_options["omp"].setChecked(self.userange["inner"] == "omp" or
                                           self.options["omp"])
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_options_set(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         self.Qt_options["papi"].setEnabled(
             self.sampler["papi_counters_max"] > 0
         )
@@ -501,21 +501,21 @@ class GUI_Qt(GUI):
         self.Qt_headerD.setVisible(self.options["header"])
         for callid in range(self.Qt_calls.count()):
             self.Qt_calls.item(callid).usevary_apply()
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_showargs_set(self, name=None):
         if name is None:
             for name in self.Qt_showargs:
                 self.UI_showargs_set(name)
             return
-        self.Qt_setting = True
+        self.Qt_setting += 1
         self.Qt_showargs[name].setChecked(self.showargs[name])
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_header_set(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         self.Qt_header.setPlainText(self.header)
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_counters_setoptions(self):
         # delete old
@@ -536,7 +536,7 @@ class GUI_Qt(GUI):
             Qcounter.currentIndexChanged.connect(self.Qt_counter_change)
 
     def UI_counters_set(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         for Qcounter, countername in zip(self.Qt_Qcounters, self.counters):
             index = Qcounter.findData(QtCore.QVariant(countername))
             Qcounter.setCurrentIndex(index)
@@ -544,30 +544,30 @@ class GUI_Qt(GUI):
             if countername:
                 tip = countername + "\n" + papi.events[countername]["long"]
             Qcounter.setToolTip(tip)
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_ranges_set(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         for rangename in self.ranges:
             Qrange = self.Qt_ranges[rangename]
             Qrange.rangevar.setText(self.rangevars[rangename])
             Qrange.range.setText(str(self.ranges[rangename]))
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_nrep_set(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         text = str(self.nrep) if self.nrep else ""
         self.Qt_ranges["reps"].range.setText(text)
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_calls_init(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         # delete old
         self.Qt_calls.clear()
         # add new
         for callid in range(len(self.calls)):
             self.UI_call_add(callid)
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_call_add(self, callid=None):
         if callid is None:
@@ -578,23 +578,23 @@ class GUI_Qt(GUI):
         Qcall.args_set()
 
     def UI_call_set(self, callid, fromargid=None):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         self.Qt_calls.item(callid).args_set(fromargid)
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_calls_set(self, fromcallid=None, fromargid=None):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         for callid in range(self.Qt_calls.count()):
             self.Qt_calls.item(callid).args_set(
                 fromargid if fromcallid == callid else None
             )
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_data_viz(self):
-        self.Qt_setting = True
+        self.Qt_setting += 1
         for callid in range(self.Qt_calls.count()):
             self.Qt_calls.item(callid).data_viz()
-        self.Qt_setting = False
+        self.Qt_setting -= 1
 
     def UI_showargs_apply(self):
         for callid in range(self.Qt_calls.count()):
