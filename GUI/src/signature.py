@@ -264,6 +264,22 @@ class Trans(Flag):
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
 
+class cTrans(Flag):
+    def __init__(self, name="trans", attr=None):
+        Flag.__init__(self, name, ["N", "C"], attr)
+
+    def __repr__(self):
+        args = []
+        if self.name != "trans":
+            args.append(self.name)
+        if self.propertiesstr:
+            if self.name == "trans":
+                args.append(None)
+            args.append(self.propertiesstr)
+        args = map(repr, args)
+        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+
+
 class Diag(Flag):
     def __init__(self, name="diag", attr=None):
         Flag.__init__(self, name, ["N", "U"], attr)
