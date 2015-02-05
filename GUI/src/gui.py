@@ -441,7 +441,7 @@ class GUI(object):
         self.samplername = samplername
         self.nt = max(self.nt, self.sampler["nt_max"])
 
-        # update countes (kill unavailable, adjust length)
+        # update counters (kill unavailable, adjust length)
         papi_counters_max = self.sampler["papi_counters_max"]
         self.options["papi"] &= papi_counters_max > 0
         counters = []
@@ -452,6 +452,12 @@ class GUI(object):
         counters += (papi_counters_max - len(counters)) * [None]
         self.counters = counters
 
+        # disable omp if not available
+        if not self.sampler["omp_enabled"]:
+            self.options["omp"] = False
+            if self.userange["inner"] == "omp":
+                self.UI_userange_change("outer", None)
+
         # remove unavailable calls
         self.calls = [call for call in self.calls
                       if call[0] in self.sampler["kernels"]]
@@ -460,6 +466,7 @@ class GUI(object):
         # update UI
         self.UI_nt_setmax()
         self.UI_nt_set()
+        self.UI_useranges_set()
         self.UI_options_set()
         self.UI_counters_setoptions()
         self.UI_counters_set()
@@ -942,12 +949,12 @@ class GUI(object):
         self.UI_nt_setmax()
         self.UI_nt_set()
         self.UI_nrep_set()
-        self.UI_options_set()
         self.UI_showargs_set()
         self.UI_counters_setoptions()
         self.UI_counters_set()
         self.UI_header_set()
         self.UI_useranges_set()
+        self.UI_options_set()
         self.UI_ranges_set()
         self.UI_calls_init()
         self.UI_submit_setenabled()
@@ -1028,6 +1035,7 @@ class GUI(object):
             self.ranges["threads"] = symbolic.Range((1, 1, self.nt))
         self.userange[rangetype] = rangename
         self.UI_useranges_set()
+        self.UI_options_set()
 
     def UI_rangevar_change(self, rangename, value):
         if not value:

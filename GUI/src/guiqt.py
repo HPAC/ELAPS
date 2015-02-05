@@ -485,9 +485,6 @@ class GUI_Qt(GUI):
                 self.Qt_useranges[rangename].setChecked(active)
                 self.Qt_ranges[rangename].setVisible(active)
         self.Qt_ntT.setVisible(self.userange["outer"] != "threads")
-        self.Qt_options["omp"].setEnabled(self.userange["inner"] != "omp")
-        self.Qt_options["omp"].setChecked(self.userange["inner"] == "omp" or
-                                          self.options["omp"])
         self.Qt_setting -= 1
 
     def UI_options_set(self):
@@ -495,8 +492,13 @@ class GUI_Qt(GUI):
         self.Qt_options["papi"].setEnabled(
             self.sampler["papi_counters_max"] > 0
         )
+        self.Qt_options["omp"].setEnabled(self.userange["inner"] != "omp" and
+                                          self.sampler["omp_enabled"])
         for optionname, val in self.options.iteritems():
             self.Qt_options[optionname].setChecked(val)
+        if self.userange["inner"] == "omp":
+            self.Qt_options["omp"].setChecked(True)
+        # other option effects
         self.Qt_countersD.setVisible(self.options["papi"])
         self.Qt_headerD.setVisible(self.options["header"])
         for callid in range(self.Qt_calls.count()):

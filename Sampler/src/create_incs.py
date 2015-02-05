@@ -111,6 +111,8 @@ def main():
                    int(os.environ["THREADS_PER_CORE"])),
         "kernels": tuple(sorted(kernelsigs)),
         "papi_counters_max": papi_counters_max,
+        "papi_enabled": papi_counters_max > 0,
+        "omp_enabled": os.environ["OPENMP"] == "1",
         "cpu_model": os.environ["CPU_MODEL"],
         "frequency": float(os.environ["FREQUENCY_HZ"]),
     }
