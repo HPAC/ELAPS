@@ -476,6 +476,7 @@ class GUI_Qt(GUI):
         self.Qt_setting = False
 
     def UI_useranges_set(self):
+        self.Qt_setting = True
         for rangetype, rangenames in self.rangetypes.iteritems():
             selected = self.userange[rangetype] is not None
             for rangename in rangenames:
@@ -484,6 +485,10 @@ class GUI_Qt(GUI):
                 self.Qt_useranges[rangename].setChecked(active)
                 self.Qt_ranges[rangename].setVisible(active)
         self.Qt_ntT.setVisible(self.userange["outer"] != "threads")
+        self.Qt_options["omp"].setEnabled(self.userange["inner"] != "omp")
+        self.Qt_options["omp"].setChecked(self.userange["inner"] == "omp" or
+                                          self.options["omp"])
+        self.Qt_setting = False
 
     def UI_options_set(self):
         self.Qt_setting = True
