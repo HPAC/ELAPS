@@ -1,12 +1,10 @@
 Sampler:
-- Carry OPENP_ENABLED in info.py
 - README
 
 
 GUI:
 - complex vary
 - work variables
-- omp option and range enabled depending on sampler
 - README
 
 - (dynamically load signatures => flatten signature folder)
