@@ -483,6 +483,7 @@ class GUI_Qt(GUI):
                 self.Qt_useranges[rangename].setEnabled(active or not selected)
                 self.Qt_useranges[rangename].setChecked(active)
                 self.Qt_ranges[rangename].setVisible(active)
+        self.Qt_ntT.setVisible(self.userange["outer"] != "threads")
 
     def UI_usepapi_setenabled(self):
         self.Qt_usepapi.setEnabled(self.sampler["papi_counters_max"] > 0)

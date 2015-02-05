@@ -274,9 +274,6 @@ class GUI(object):
             return None
 
     def range_eval(self, expr, outerval=None, innerval=None):
-        if not isinstance(expr, symbolic.Expression):
-            yield expr
-            return
         outervals = outerval,
         if outerval is None and self.userange["outer"]:
             outervals = iter(self.ranges[self.userange["outer"]])
@@ -290,7 +287,10 @@ class GUI(object):
             for innerval2 in innervals:
                 if innerval2 is not None:
                     symdict[self.rangevars[self.userange["inner"]]] = innerval2
-                yield expr(**symdict)
+                if isinstance(expr, symbolic.Expression):
+                    yield expr(**symdict)
+                else:
+                    yield expr
 
     # simple data operations
     def data_maxdim(self):

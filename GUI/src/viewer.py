@@ -241,7 +241,7 @@ class Viewer(object):
         if report["userange"]["outer"] == "threads":
             result += (
                 "<tr><td>#threads:</td><td>%s</td></tr>"
-                % report["range"]["threads"]
+                % report["ranges"]["threads"]
             )
         else:
             result += "<tr><td>#threads:</td><td>%d</td></tr>" % report["nt"]
