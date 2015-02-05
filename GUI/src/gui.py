@@ -921,15 +921,15 @@ class GUI(object):
 
     # event handlers
     def UI_submit(self, filename):
-        if not any(isinstance(arg, symbolic.Expression)
-                   for call in self.calls for arg in call):
-            if self.userange["inner"] or self.userange["outer"]:
-                self.UI_dialog(
-                    "warning", "range not used",
-                    "ranges are enabled but unused in the calls", {
-                        "Ok": (self.submit, (filename,)),
-                        "Cancel": None
-                    })
+        if (self.userange["inner"] or self.userange["outer"]) and \
+                (not any(isinstance(arg, symbolic.Expression)
+                         for call in self.calls for arg in call)):
+            self.UI_dialog(
+                "warning", "range not used",
+                "ranges are enabled but unused in the calls", {
+                    "Ok": (self.submit, (filename,)),
+                    "Cancel": None
+                })
         else:
             self.submit(filename)
 
