@@ -4,7 +4,8 @@ Sampler:
 
 GUI:
 - complex vary
-- work variables
+- work variable hiding
+- work variable dimension deduction
 - README
 
 - (dynamically load signatures => flatten signature folder)
