@@ -52,7 +52,10 @@ class QCall(QtGui.QListWidgetItem):
 
     def update_size(self):
         def update():
-            self.setSizeHint(self.widget.sizeHint())
+            try:
+                self.setSizeHint(self.widget.sizeHint())
+            except:
+                pass
         QtCore.QTimer.singleShot(0, update)
 
     def args_init(self):
@@ -114,7 +117,6 @@ class QCall(QtGui.QListWidgetItem):
             if tooltip:
                 Qarg.setToolTip(tooltip)
             Qarg.argid = argid
-            Qarg.setProperty("invalid", True)
             self.Qt_args.append(Qarg)
             self.arg_set(argid)
             self.widget.layout().addWidget(Qarg, 1, argid,
@@ -150,7 +152,7 @@ class QCall(QtGui.QListWidgetItem):
                     self.Qt_arglabels[argid].setVisible(showing)
                     self.Qt_args[argid].setVisible(showing)
 
-    def arg_set(self, argid):
+    def arg_setvalid(self, argid):
         self.Qt_gui.Qt_setting += 1
         val = self.Qt_gui.calls[self.callid][argid]
         Qarg = self.Qt_args[argid]
@@ -158,6 +160,13 @@ class QCall(QtGui.QListWidgetItem):
         Qarg.style().unpolish(Qarg)
         Qarg.style().polish(Qarg)
         Qarg.update()
+        self.Qt_gui.Qt_setting -= 1
+
+    def arg_set(self, argid):
+        self.arg_setvalid(argid)
+        self.Qt_gui.Qt_setting += 1
+        val = self.Qt_gui.calls[self.callid][argid]
+        Qarg = self.Qt_args[argid]
         val = "" if val is None else str(val)
         if isinstance(Qarg, QDataArg):
             Qarg.set()
@@ -193,7 +202,10 @@ class QCall(QtGui.QListWidgetItem):
                 return
         # otherwise: set values
         for argid in range(len(call)):
-            self.arg_set(argid)
+            if argid == fromargid:
+                self.arg_setvalid(argid)
+            else:
+                self.arg_set(argid)
         self.update_size()
         self.Qt_gui.Qt_setting -= 1
 
