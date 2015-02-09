@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Qt implementaiton of the Sampler GUI."""
 from __future__ import division, print_function
 
 from gui import GUI
@@ -12,7 +13,11 @@ from PyQt4 import QtCore, QtGui
 
 
 class GUI_Qt(GUI):
+
+    """GUI implementation in Qt."""
+
     def __init__(self, app=None, loadstate=True):
+        """Initialize the GUI."""
         if app:
             self.Qt_app = app
         else:
@@ -24,6 +29,7 @@ class GUI_Qt(GUI):
         GUI.__init__(self, loadstate)
 
     def state_init(self, load=True):
+        """Try to load the state and geometry."""
         self.state_reset()
         if not load:
             return
@@ -45,6 +51,7 @@ class GUI_Qt(GUI):
             pass
 
     def UI_init(self):
+        """Initialize all GUI elements."""
         self.Qt_setting += 1
         # window
         self.Qt_window = QtGui.QMainWindow()
@@ -54,6 +61,7 @@ class GUI_Qt(GUI):
         window.closeEvent = self.Qt_window_close
 
         def create_menus():
+            """Create all menus."""
             menu = window.menuBar()
 
             # file
@@ -90,6 +98,7 @@ class GUI_Qt(GUI):
             self.Qt_useranges = {}
 
             def userange_create(rangename, desc):
+                """Create a userange option."""
                 userange = QtGui.QAction(desc, window)
                 self.Qt_useranges[rangename] = userange
                 userange.setCheckable(True)
@@ -108,6 +117,7 @@ class GUI_Qt(GUI):
             self.Qt_options = {}
 
             def create_option(name, desc):
+                """Create an option."""
                 option = QtGui.QAction(desc, window)
                 optionsM.addAction(option)
                 self.Qt_options[name] = option
@@ -146,6 +156,7 @@ class GUI_Qt(GUI):
             showinfo.triggered.connect(self.Qt_sampler_about_show)
 
         def create_sampler():
+            """Create the sampler Toolbar."""
             samplerT = window.addToolBar("Sampler")
             samplerT.setMovable(False)
             samplerT.setObjectName("Sampler")
@@ -156,6 +167,7 @@ class GUI_Qt(GUI):
             self.Qt_sampler.currentIndexChanged.connect(self.Qt_sampler_change)
 
         def create_nt():
+            """Create the #threads toolbar."""
             self.Qt_ntT = window.addToolBar("#threads")
             self.Qt_ntT.setMovable(False)
             self.Qt_ntT.setObjectName("Sampler")
@@ -165,6 +177,7 @@ class GUI_Qt(GUI):
             self.Qt_nt.currentIndexChanged.connect(self.Qt_nt_change)
 
         def create_submit():
+            """Create the submit toolbar."""
             samplerT = window.addToolBar("Submit")
             samplerT.setMovable(False)
             samplerT.setObjectName("Submit")
@@ -183,6 +196,7 @@ class GUI_Qt(GUI):
             self.Qt_submit.triggered.connect(self.Qt_submit_click)
 
         def create_ranges():
+            """Create the ranges dock widget."""
             rangesD = QtGui.QDockWidget("Ranges")
             window.addDockWidget(QtCore.Qt.TopDockWidgetArea, rangesD)
             rangesD.setObjectName("Ranges")
@@ -203,6 +217,7 @@ class GUI_Qt(GUI):
 
             def create_range(rangename, indent, prefix, showrangevar=True,
                              suffix=""):
+                """Create a range."""
                 rangeW = QtGui.QWidget()
                 self.Qt_ranges[rangename] = rangeW
                 layout = QtGui.QHBoxLayout()
@@ -219,8 +234,8 @@ class GUI_Qt(GUI):
                     layout.addWidget(rangevar)
                 rangevar.setFixedWidth(32)
                 rangevar.setValidator(QtGui.QRegExpValidator(
-                    QtCore.QRegExp("[a-zA-Z]+"), self.Qt_app)
-                )
+                    QtCore.QRegExp("[a-zA-Z]+"), self.Qt_app
+                ))
                 rangevar.rangename = rangename
                 rangevar.textChanged.connect(self.Qt_rangevar_change)
 
@@ -239,8 +254,8 @@ class GUI_Qt(GUI):
                 if rangename == "reps":
                     Qrange.setFixedWidth(32)
                     Qrange.setValidator(QtGui.QRegExpValidator(
-                        QtCore.QRegExp("[1-9][0-9]*"), self.Qt_app)
-                    )
+                        QtCore.QRegExp("[1-9][0-9]*"), self.Qt_app
+                    ))
 
                 # stretch
                 layout.addStretch(1)
@@ -264,6 +279,7 @@ class GUI_Qt(GUI):
             ))
 
         def create_sampler_about():
+            """Create the sampler info dock widget."""
             # about
             self.Qt_sampler_aboutD = QtGui.QDockWidget("Sampler")
             self.Qt_sampler_aboutD.setObjectName("About Sampler")
@@ -282,6 +298,7 @@ class GUI_Qt(GUI):
             self.Qt_sampler_about.setContentsMargins(4, 4, 4, 4)
 
         def create_header():
+            """Create the script header dock widget."""
             self.Qt_headerD = QtGui.QDockWidget("Header")
             window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
                                  self.Qt_headerD)
@@ -298,6 +315,7 @@ class GUI_Qt(GUI):
             self.Qt_header.textChanged.connect(self.Qt_header_change)
 
         def create_counters():
+            """Create the counters dock widget."""
             self.Qt_countersD = QtGui.QDockWidget("PAPI Counters")
             window.addDockWidget(QtCore.Qt.RightDockWidgetArea,
                                  self.Qt_countersD)
@@ -313,6 +331,7 @@ class GUI_Qt(GUI):
             self.Qt_Qcounters = []
 
         def create_calls():
+            """Create the calls list and add button (central widget)."""
             centralW = QtGui.QWidget()
             window.setCentralWidget(centralW)
             centralL = QtGui.QVBoxLayout()
@@ -330,6 +349,7 @@ class GUI_Qt(GUI):
             add.setShortcut(QtGui.QKeySequence.New)
 
         def create_jobprogress():
+            """Create the job pgoress dock widget."""
             self.Qt_jobprogressD = QtGui.QDockWidget("Job Progress")
             window.addDockWidget(QtCore.Qt.BottomDockWidgetArea,
                                  self.Qt_jobprogressD)
@@ -349,9 +369,11 @@ class GUI_Qt(GUI):
             )
 
         def create_statusbar():
+            """Create the staus bar."""
             self.Qt_statusbar = window.statusBar()
 
         def create_style():
+            """Set style options."""
             # stylesheet
             self.Qt_app.setStyleSheet("""
                 QLineEdit[invalid="true"],
@@ -408,30 +430,38 @@ class GUI_Qt(GUI):
         self.Qt_initialized = True
 
     def UI_start(self):
+        """Start the GUI (main loop)."""
         import signal
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         sys.exit(self.Qt_app.exec_())
 
     # utility
     def log(self, *args):
+        """Also log messages to status for 2 sec."""
         self.UI_setstatus(" ".join(map(str, args)), 2000)
-        GUI.log(self, *args)
+        GUI.log(*args)
 
     def alert(self, *args):
+        """Also log alert messages to status."""
         self.UI_setstatus(" ".join(map(str, args)))
-        GUI.alert(self, *args)
+        GUI.alert(*args)
 
     # dialogs
     def UI_alert(self, *args, **kwargs):
+        """Show an alert message to the user."""
         msg = " ".join(map(str, args))
         title = kwargs.get("title", "")
         self.UI_dialog("information", title, msg)
 
     def UI_setstatus(self, msg, timeout=0):
+        """Set the status message."""
         if self.Qt_initialized:
             self.Qt_statusbar.showMessage(msg, timeout)
 
-    def UI_dialog(self, msgtype, title, text, callbacks={"Ok": None}):
+    def UI_dialog(self, msgtype, title, text, callbacks=None):
+        """Show a simple user dialog with multiple options."""
+        if callbacks is None:
+            callbacks = {"Ok": None}
         msgtypes = {
             "information": QtGui.QMessageBox.information,
             "warning": QtGui.QMessageBox.warning,
@@ -455,6 +485,7 @@ class GUI_Qt(GUI):
 
     # setters
     def UI_sampler_set(self):
+        """Set the sampler."""
         self.Qt_setting += 1
         self.Qt_sampler.setCurrentIndex(
             self.Qt_sampler.findText(self.samplername)
@@ -462,20 +493,24 @@ class GUI_Qt(GUI):
         self.Qt_setting -= 1
 
     def UI_sampler_about_set(self):
+        """Set the sampler info string."""
         self.Qt_sampler_about.setText(self.sampler_about_str())
 
     def UI_nt_setmax(self):
+        """Set the maximum #threads."""
         self.Qt_setting += 1
         self.Qt_nt.clear()
         self.Qt_nt.addItems(map(str, range(1, self.sampler["nt_max"] + 1)))
         self.Qt_setting -= 1
 
     def UI_nt_set(self):
+        """Set the #threads."""
         self.Qt_setting += 1
         self.Qt_nt.setCurrentIndex(self.nt - 1)
         self.Qt_setting -= 1
 
     def UI_useranges_set(self):
+        """Set which ranges are used."""
         self.Qt_setting += 1
         for rangetype, rangenames in self.rangetypes.iteritems():
             selected = self.userange[rangetype] is not None
@@ -488,6 +523,7 @@ class GUI_Qt(GUI):
         self.Qt_setting -= 1
 
     def UI_options_set(self):
+        """Set which options are used."""
         self.Qt_setting += 1
         self.Qt_options["papi"].setEnabled(
             self.sampler["papi_counters_max"] > 0
@@ -500,10 +536,12 @@ class GUI_Qt(GUI):
             self.Qt_options["omp"].setChecked(True)
         # other option effects
         self.Qt_countersD.setVisible(self.options["papi"])
+        self.Qt_varyD.setVisible(self.options["vary"])
         self.Qt_headerD.setVisible(self.options["header"])
         self.Qt_setting -= 1
 
     def UI_showargs_set(self, name=None):
+        """Set which arguments are shown."""
         if name is None:
             for name in self.Qt_showargs:
                 self.UI_showargs_set(name)
@@ -513,11 +551,13 @@ class GUI_Qt(GUI):
         self.Qt_setting -= 1
 
     def UI_header_set(self):
+        """Set if the script header is used."""
         self.Qt_setting += 1
         self.Qt_header.setPlainText(self.header)
         self.Qt_setting -= 1
 
     def UI_counters_setoptions(self):
+        """Set the available counter elements."""
         # delete old
         for Qcounter in self.Qt_Qcounters:
             Qcounter.deleteLater()
@@ -536,6 +576,7 @@ class GUI_Qt(GUI):
             Qcounter.currentIndexChanged.connect(self.Qt_counter_change)
 
     def UI_counters_set(self):
+        """Set the selected counters."""
         self.Qt_setting += 1
         for Qcounter, countername in zip(self.Qt_Qcounters, self.counters):
             index = Qcounter.findData(QtCore.QVariant(countername))
@@ -547,6 +588,7 @@ class GUI_Qt(GUI):
         self.Qt_setting -= 1
 
     def UI_ranges_set(self):
+        """Set all ranges and their variables."""
         self.Qt_setting += 1
         for rangename in self.ranges:
             Qrange = self.Qt_ranges[rangename]
@@ -555,12 +597,14 @@ class GUI_Qt(GUI):
         self.Qt_setting -= 1
 
     def UI_nrep_set(self):
+        """Set the #repetitions."""
         self.Qt_setting += 1
         text = str(self.nrep) if self.nrep else ""
         self.Qt_ranges["reps"].range.setText(text)
         self.Qt_setting -= 1
 
     def UI_calls_init(self):
+        """Initialize all calls."""
         self.Qt_setting += 1
         # delete old
         self.Qt_calls.clear()
@@ -570,6 +614,7 @@ class GUI_Qt(GUI):
         self.Qt_setting -= 1
 
     def UI_call_add(self, callid=None):
+        """Add a call."""
         if callid is None:
             callid = len(self.calls) - 1
         Qcall = QCall(self, callid)
@@ -578,11 +623,13 @@ class GUI_Qt(GUI):
         self.Qt_calls.setItemWidget(Qcall, Qcall.widget)
 
     def UI_call_set(self, callid, fromargid=None):
+        """Set a call."""
         self.Qt_setting += 1
         self.Qt_calls.item(callid).args_set(fromargid)
         self.Qt_setting -= 1
 
     def UI_calls_set(self, fromcallid=None, fromargid=None):
+        """Set all calls' arguments."""
         self.Qt_setting += 1
         for callid in range(self.Qt_calls.count()):
             self.Qt_calls.item(callid).args_set(
@@ -591,24 +638,24 @@ class GUI_Qt(GUI):
         self.Qt_setting -= 1
 
     def UI_data_viz(self):
+        """Update operand visualization."""
         self.Qt_setting += 1
         for callid in range(self.Qt_calls.count()):
             self.Qt_calls.item(callid).data_viz()
         self.Qt_setting -= 1
 
-    def UI_showargs_apply(self):
-        for callid in range(self.Qt_calls.count()):
-            self.Qt_calls.item(callid).showargs_apply()
-
     def UI_arg_setfocus(self, callid, argid):
+        """Set the focus to an argument."""
         self.Qt_calls.item(callid).Qt_args[argid].setFocus()
 
     def UI_submit_setenabled(self):
+        """Enabled or disable the submit buttons."""
         enabled = self.calls_checksanity()
         self.Qt_submit.setEnabled(enabled)
         self.Qt_submitA.setEnabled(enabled)
 
     def UI_jobprogress_update(self):
+        """Update the jobprogress widget."""
         if not self.Qt_jobprogress.isVisible():
             self.Qt_jobprogress_timer.stop()
             return
@@ -651,26 +698,31 @@ class GUI_Qt(GUI):
                 Qbutton.setText("view")
 
     def UI_jobprogress_show(self):
+        """Show the jobpgoress and start its automatic updates."""
         self.Qt_jobprogressD.hide()
         self.Qt_jobprogressD.show()
         self.UI_jobprogress_update()
         self.Qt_jobprogress_timer.start()
 
     def UI_viewer_start(self):
+        """Start the viewer."""
         from viewerqtmpl import Viewer_Qt_MPL
         self.Qt_viewer = Viewer_Qt_MPL(self.Qt_app)
 
     def UI_viewer_load(self, filename):
+        """Load a report in the viewer."""
         if self.Qt_app.viewer is None:
             self.UI_viewer_start()
         self.Qt_app.viewer.UI_report_load(filename)
         self.UI_viewer_show()
 
     def UI_viewer_show(self):
+        """Show the viewer (pull to front)."""
         self.Qt_app.viewer.Qt_window.show()
 
     # event handlers
     def Qt_window_close(self, event):
+        """Event: Main window closed."""
         settings = QtCore.QSettings("HPAC", "Sampler")
         settings.setValue("geometry", self.Qt_window.saveGeometry())
         settings.setValue("windowState", self.Qt_window.saveState())
@@ -678,9 +730,11 @@ class GUI_Qt(GUI):
                           QtCore.QVariant(repr(self.state_toflat())))
 
     def Qt_viewer_start_click(self):
+        """Event: Start viewer."""
         self.UI_viewer_start()
 
     def Qt_submit_click(self):
+        """Event: Submit."""
         filename = QtGui.QFileDialog.getSaveFileName(
             self.Qt_window,
             "Generate Report",
@@ -691,9 +745,11 @@ class GUI_Qt(GUI):
             self.UI_submit(str(filename))
 
     def Qt_state_reset_click(self):
+        """Event: Reset state."""
         self.UI_state_reset()
 
     def Qt_state_load_click(self):
+        """Event: Load state."""
         filename = QtGui.QFileDialog.getOpenFileName(
             self.Qt_window,
             "Import Setup from Report",
@@ -704,19 +760,23 @@ class GUI_Qt(GUI):
             self.UI_state_import(str(filename))
 
     def Qt_sampler_change(self):
+        """Event: Set the sampler."""
         if self.Qt_setting:
             return
         self.UI_sampler_change(str(self.Qt_sampler.currentText()))
 
     def Qt_sampler_about_show(self):
+        """Event: Show the sampler info."""
         self.Qt_sampler_aboutD.show()
 
     def Qt_nt_change(self):
+        """Event: Set the #threads."""
         if self.Qt_setting:
             return
         self.UI_nt_change(int(self.Qt_nt.currentText()))
 
     def Qt_userange_toggle(self, checked):
+        """Event: Change the used ranges."""
         if self.Qt_setting:
             return
         sender = self.Qt_app.sender()
@@ -728,6 +788,7 @@ class GUI_Qt(GUI):
             self.UI_userange_change("inner", value)
 
     def Qt_option_toggle(self, checked):
+        """Event: Toggle an option."""
         if self.Qt_setting:
             return
         sender = self.Qt_app.sender()
@@ -735,17 +796,20 @@ class GUI_Qt(GUI):
         self.UI_option_change(optionname, checked)
 
     def Qt_showarg_toggle(self, checked):
+        """Event: Change what arguments to show."""
         if self.Qt_setting:
             return
         argtype = self.Qt_app.sender().argtype
         self.UI_showargs_change(argtype, checked)
 
     def Qt_counters_close(self, event):
+        """Event: Closed the counters window."""
         if self.Qt_setting:
             return
         self.UI_option_change("papi", False)
 
     def Qt_counter_change(self):
+        """Event: Changed a counter."""
         if self.Qt_setting:
             return
         counternames = []
@@ -761,6 +825,7 @@ class GUI_Qt(GUI):
         self.UI_counters_change(counternames)
 
     def Qt_header_change(self):
+        """Event: Changed the script header."""
         text = str(self.Qt_header.toPlainText())
         height = self.Qt_header.fontMetrics().lineSpacing()
         self.Qt_header.setFixedHeight(height * (text.count("\n") + 2))
@@ -769,11 +834,13 @@ class GUI_Qt(GUI):
         self.UI_header_change(text)
 
     def Qt_header_close(self, event):
+        """Event: Closed the script header."""
         if self.Qt_setting:
             return
         self.UI_option_change("header", False)
 
     def Qt_rangevar_change(self):
+        """Event: Changed a range variable."""
         if self.Qt_setting:
             return
         sender = self.Qt_app.sender()
@@ -782,6 +849,7 @@ class GUI_Qt(GUI):
         self.UI_rangevar_change(rangename, value)
 
     def Qt_range_change(self):
+        """Event: Changed a range."""
         if self.Qt_setting:
             return
         sender = self.Qt_app.sender()
@@ -793,9 +861,11 @@ class GUI_Qt(GUI):
             self.UI_range_change(rangename, value)
 
     def Qt_call_add_click(self):
+        """Event: Add a call."""
         self.UI_call_add_click()
 
     def Qt_calls_reorder(self):
+        """Event: Reordered calls."""
         order = []
         for i in range(self.Qt_calls.count()):
             Qcall = self.Qt_calls.item(i)
@@ -804,10 +874,12 @@ class GUI_Qt(GUI):
         self.UI_calls_reorder(order)
 
     def Qt_calls_focusout(self, event):
+        """Event: Move the focues away from a call item."""
         for callid in range(self.Qt_calls.count()):
             self.Qt_calls.setItemSelected(self.Qt_calls.item(callid), False)
 
     def Qt_jobprogress_click(self):
+        """Event: Clicked the button next to a job progress."""
         sender = self.Qt_app.sender()
         jobid = sender.jobid
         job = self.jobprogress[jobid]
@@ -818,6 +890,7 @@ class GUI_Qt(GUI):
 
 
 def main():
+    """Main routine to start a Qt based Sampler."""
     loadstate = "--reset" not in sys.argv[1:]
     GUI_Qt(loadstate=loadstate).start()
 

@@ -9,21 +9,27 @@ import os
 import imp
 import time
 from collections import defaultdict
-from __builtin__ import intern  # fix for pyflake error
+# from __builtin__ import intern  # fix for pyflake error
 
 
 class GUI(object):
+
+    """Base class for GUIs."""
+
     requiredbuildversion = 1423087329
     requiredstateversion = 1423087329
     state = {}
 
     def __init__(self, loadstate=True):
+        """Initialize the GUI."""
+        # set some absolute paths
         thispath = os.path.dirname(__file__)
         if thispath not in sys.path:
             sys.path.append(thispath)
         self.rootpath = os.path.abspath(os.path.join(thispath, "..", ".."))
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
 
+        # initialize components
         self.backends_init()
         self.samplers_init()
         self.signatures_init()
@@ -35,6 +41,7 @@ class GUI(object):
 
     # state access attributes
     def __getattr__(self, name):
+        """Catch attribute accesses to state variables and sampler."""
         if name in self.__dict__["state"]:
             return self.__dict__["state"][name]
         if name == "sampler":
@@ -43,23 +50,30 @@ class GUI(object):
                              (self.__class__, name))
 
     def __setattr__(self, name, value):
+        """Catch attribute accesses to state variables."""
         if name in self.state:
             self.state[name] = value
         else:
             super(GUI, self).__setattr__(name, value)
 
     def start(self):
+        """Start the GUI (enter the main loop)."""
         self.UI_start()
 
     # utility
-    def log(self, *args):
+    @staticmethod
+    def log(*args):
+        """Log a message to stdout."""
         print(*args)
 
-    def alert(self, *args):
+    @staticmethod
+    def alert(*args):
+        """Log a message to stderr."""
         print(*args, file=sys.stderr)
 
     # initializers
     def backends_init(self):
+        """Initialize the backends."""
         self.backends = {}
         backendpath = os.path.join(self.rootpath, "GUI", "src", "backends")
         for filename in os.listdir(backendpath):
@@ -75,9 +89,10 @@ class GUI(object):
             raise Exception("No backends found")
 
     def samplers_init(self):
+        """Load the available sampler infos."""
         self.samplers = {}
         samplerpath = os.path.join(self.rootpath, "Sampler", "build")
-        for path, dirs, files in os.walk(samplerpath, followlinks=True):
+        for path, _, files in os.walk(samplerpath, followlinks=True):
             if "info.py" in files and "sampler.x" in files:
                 with open(os.path.join(path, "info.py")) as fin:
                     sampler = eval(fin.read())
@@ -100,9 +115,10 @@ class GUI(object):
             raise Exception("No samplers found")
 
     def signatures_init(self):
+        """Load all available signatures."""
         self.signatures = {}
         signaturepath = os.path.join(self.rootpath, "GUI", "signatures")
-        for path, dirs, files in os.walk(signaturepath, followlinks=True):
+        for path, _, files in os.walk(signaturepath, followlinks=True):
             for filename in files:
                 if filename[0] == "." or filename[-6:] != ".pysig":
                     continue
@@ -117,23 +133,28 @@ class GUI(object):
         self.nosigwarning_shown = False
 
     def state_init(self, load=True):
+        """Initialize the GUI state."""
         self.state_reset()
 
     def ranges_init(self):
+        """Initialize some static range info."""
         self.rangetypes = {
             "outer": ("threads", "range"),
             "inner": ("sum", "omp")
         }
 
     def docs_init(self):
+        """Set up the documentation loader."""
         self.docspath = os.path.join(self.rootpath, "GUI", "kerneldocs")
         self.docs = {}
 
     def jobprogress_init(self):
+        """Initialize the jobprogress overview."""
         self.jobprogress = []
 
     # state routines
     def state_toflat(self):
+        """Removing signatures and turning list to tuples."""
         state = self.state.copy()
         state["calls"] = tuple(map(tuple, self.calls))
         state["counters"] = tuple(self.counters)
@@ -142,6 +163,7 @@ class GUI(object):
         return state
 
     def state_fromflat(self, state):
+        """Set the state from a possibly flattened representation."""
         state = state.copy()
         calls = list(map(list, state["calls"]))
         # apply signatures
@@ -169,6 +191,7 @@ class GUI(object):
         self.sampler_set(samplername, True)
 
     def state_reset(self):
+        """Reset the state to an initial configuration."""
         sampler = self.samplers[min(self.samplers)]
         state = {
             "statetime": time.time(),
@@ -219,6 +242,7 @@ class GUI(object):
         self.state_fromflat(state)
 
     def state_fromstring(self, string):
+        """Load the state from a string."""
         env = symbolic.__dict__.copy()
         env.update(signature.__dict__)
         state = eval(string, env)
@@ -231,6 +255,7 @@ class GUI(object):
         self.state_fromflat(state)
 
     def state_load(self, filename):
+        """Try to laod the state from a file."""
         try:
             with open(filename) as fin:
                 self.state_fromstring(fin.read())
@@ -242,6 +267,7 @@ class GUI(object):
 
     # info string
     def sampler_about_str(self):
+        """Generate an info string about the current sampler."""
         sampler = self.sampler
         info = "System:\t%s\n" % sampler["system_name"]
         info += "BLAS:\t%s\n" % sampler["blas_name"]
@@ -260,6 +286,7 @@ class GUI(object):
 
     # range routines
     def range_symdict(self, outer=True, inner=True):
+        """create a symbolic dictionay fro the range variables."""
         symbols = {}
         if outer and self.userange["outer"]:
             rangevar = self.rangevars[self.userange["outer"]]
@@ -269,13 +296,15 @@ class GUI(object):
             symbols[rangevar] = symbolic.Symbol(rangevar)
         return symbols
 
-    def range_parse(self, text, outer=True, inner=True):
+    def range_parse(self, expr, outer=True, inner=True):
+        """Parse an expression respecing the range variables."""
         try:
-            return eval(text, {}, self.range_symdict(outer, inner))
+            return eval(expr, {}, self.range_symdict(outer, inner))
         except:
             return None
 
     def range_eval(self, expr, outerval=None, innerval=None):
+        """evaluate an symbolic expression for the ranges."""
         outervals = outerval,
         if outerval is None and self.userange["outer"]:
             outervals = iter(self.ranges[self.userange["outer"]])
@@ -296,6 +325,7 @@ class GUI(object):
 
     # simple data operations
     def data_maxdim(self):
+        """Compute the maximum dimension across all data."""
         result = 0
         for data in self.data.itervalues():
             sym = data["sym"]
@@ -308,6 +338,7 @@ class GUI(object):
 
     # inference system
     def infer_lds(self, callid=None):
+        """Update all leading dimensions."""
         if callid is None:
             for callid in range(len(self.calls)):
                 self.infer_lds(callid)
@@ -329,6 +360,7 @@ class GUI(object):
                     call[argid] = call2[argid]
 
     def data_update(self, callid=None):
+        """update the data objects from the calls."""
         if callid is None:
             self.data = {}
             for callid in range(len(self.calls)):
@@ -375,6 +407,7 @@ class GUI(object):
                 )
 
     def connections_update(self):
+        """Update the argument connections based on data reuse."""
         # compute symbolic sizes for all calls
         sizes = defaultdict(list)
         for callid, call in enumerate(self.calls):
@@ -424,6 +457,7 @@ class GUI(object):
         self.connections = connections
 
     def connections_apply(self, callid, argid=None):
+        """Apply the data connections, using the specified value loation."""
         if argid is None:
             argids = range(len(self.calls[callid]))
         else:
@@ -435,6 +469,7 @@ class GUI(object):
 
     # treat changes for the calls
     def sampler_set(self, samplername, setall=False):
+        """Set the sampler and apply corresponding restrictions."""
         self.samplername = samplername
         self.nt = max(self.nt, self.sampler["nt_max"])
 
@@ -465,6 +500,7 @@ class GUI(object):
             self.UI_setall()
 
     def routine_set(self, callid, value):
+        """Set the routine and initialize its arguments."""
         oldvalue = self.calls[callid][0]
         if value in self.sampler["kernels"]:
             minsig = self.sampler["kernels"][value]
@@ -509,11 +545,12 @@ class GUI(object):
         self.connections_update()
         self.data_update()
         if (value in self.sampler["kernels"] or
-            oldvalue in self.sampler["kernels"]):
+                oldvalue in self.sampler["kernels"]):
             self.UI_submit_setenabled()
             self.UI_call_set(callid, 0)
 
     def arg_set(self, callid, argid, value):
+        """Set an argument and apply corresponding updates."""
         call = self.calls[callid]
         if isinstance(call, signature.Call):
             arg = call.sig[argid]
@@ -571,6 +608,7 @@ class GUI(object):
 
     # catch and handle data conflicts
     def data_override(self, callid, argid, value):
+        """(propose to) resolve conflicting data dimensions."""
         thistype = self.calls[callid].sig[argid].__class__
         othertype = self.data[value]["type"]
         if thistype != othertype:
@@ -602,6 +640,7 @@ class GUI(object):
                 return
 
     def data_override_ok(self, callid, argid, value):
+        """Automatically resolve data conflicts."""
         self.calls[callid][argid] = value
         self.connections_update()
         for callid2 in range(len(self.calls)):
@@ -613,9 +652,11 @@ class GUI(object):
         self.UI_calls_set()
 
     def data_override_cancel(self, callid, argid, value):
+        """Undo the variable change leading to conflicts."""
         self.UI_call_set(callid)
 
     def calls_checksanity(self):
+        """Check if all calls are valid."""
         for call in self.calls:
             if call[0] not in self.sampler["kernels"]:
                 return False
@@ -625,9 +666,11 @@ class GUI(object):
 
     # submit
     def generate_cmds(self, ntrangeval=None):
+        """Generate commands for the sampler."""
         cmds = []
 
         def varname(name, outerval, rep, innerval):
+            """Construct a variable name."""
             if not self.options["vary"]:
                 return name
             if name not in self.vary:
@@ -780,6 +823,7 @@ class GUI(object):
         return cmds
 
     def submit(self, filename):
+        """Submit the current job."""
         filebase = filename
         if filename[-5:] == ".smpl":
             filebase = filebase[:-5]
@@ -819,7 +863,7 @@ class GUI(object):
         })
         reportinfo["nlines"] = reportinfo["ncalls"]
         if self.userange["inner"] == "omp":
-            reportinfo["nlines"] = (len(list(self.range_eval(0, inner=False)))
+            reportinfo["nlines"] = (len(list(self.range_eval(0, innerval=0)))
                                     * (self.nrep + 1))
         elif self.options["omp"]:
             reportinfo["nlines"] /= len(self.calls)
@@ -903,6 +947,7 @@ class GUI(object):
 
     # jobprogress
     def jobprogress_add(self, jobid, reportinfo):
+        """Add an entry to the jobprogress tracker."""
         self.jobprogress.append({
             "backend": self.sampler["backend"],
             "id": jobid,
@@ -913,6 +958,7 @@ class GUI(object):
         })
 
     def jobprogress_update(self):
+        """Update all jobprogress states."""
         for job in self.jobprogress:
             if job and not job["error"]:
                 with open(job["filebase"] + ".smpl") as fin:
@@ -923,6 +969,7 @@ class GUI(object):
 
     # kernel documentation
     def docs_get(self, routine):
+        """Try to fetch the documentation for a routine."""
         if routine not in self.docs:
             try:
                 filename = os.path.join(self.docspath, routine + ".pydoc")
@@ -933,11 +980,8 @@ class GUI(object):
                 self.docs[routine] = None
         return self.docs[routine]
 
-    # user interface
-    def UI_init(self):
-        raise Exception("GUI needs to be subclassed")
-
     def UI_setall(self):
+        """Set all GUI elements."""
         self.UI_sampler_set()
         self.UI_sampler_about_set()
         self.UI_nt_setmax()
@@ -955,6 +999,7 @@ class GUI(object):
 
     # event handlers
     def UI_submit(self, filename):
+        """Event: Submit a job."""
         if (self.userange["inner"] or self.userange["outer"]) and \
                 (not any(isinstance(arg, symbolic.Expression)
                          for call in self.calls for arg in call)):
@@ -968,14 +1013,17 @@ class GUI(object):
             self.submit(filename)
 
     def UI_state_reset(self):
+        """Event: Reset the state."""
         self.state_reset()
         self.UI_setall()
 
     def UI_state_import(self, filename):
+        """Event: Import the state."""
         self.state_load(filename)
         self.UI_setall()
 
     def UI_sampler_change(self, samplername):
+        """Event: Change the sampler."""
         newsampler = self.samplers[samplername]
         missing = set(call[0] for call in self.calls
                       if call[0] in self.sampler["kernels"]
@@ -993,23 +1041,29 @@ class GUI(object):
             self.sampler_set(samplername, True)
 
     def UI_nt_change(self, nt):
+        """Event: Changed the #threads."""
         self.nt = nt
 
     def UI_option_change(self, optionname, state):
+        """Event: Change in the option."""
         self.options[optionname] = state
         self.UI_options_set()
 
     def UI_showargs_change(self, name, state):
+        """Event: Change in the argument showing options."""
         self.showargs[name] = state
         self.UI_showargs_apply()
 
     def UI_counters_change(self, counters):
+        """Event: Change in counters."""
         self.counters = counters
 
     def UI_header_change(self, header):
+        """Event: Change in the script header."""
         self.header = header
 
     def UI_userange_change(self, rangetype, rangename):
+        """Event: Change in used ranges."""
         if self.userange[rangetype]:
             oldname = self.userange[rangetype]
             subst = {self.rangevars[oldname]: self.ranges[oldname].max()}
@@ -1032,6 +1086,7 @@ class GUI(object):
         self.UI_options_set()
 
     def UI_rangevar_change(self, rangename, value):
+        """Event: Range variable changed."""
         if not value:
             # TODO: notify user
             return
@@ -1048,6 +1103,7 @@ class GUI(object):
         self.UI_calls_set()
 
     def UI_range_change(self, rangename, value):
+        """Event: Range changed."""
         symdict = {}
         if rangename in self.rangetypes["inner"]:
             symdict = self.range_symdict(inner=False)
@@ -1062,33 +1118,39 @@ class GUI(object):
         self.UI_data_viz()
 
     def UI_nrep_change(self, nrep):
+        """Event: number of repetitions changed."""
         if nrep:
             self.nrep = int(nrep)
         # TODO: else notify user
 
     def UI_call_add_click(self):
+        """Event: Add a call."""
         self.calls.append([""])
         self.UI_call_add()
         self.UI_submit_setenabled()
         self.UI_arg_setfocus(len(self.calls) - 1, 0)
 
     def UI_call_remove(self, callid):
+        """Event: remove a call."""
         del self.calls[callid]
         self.connections_update()
         self.UI_calls_init()
         self.UI_submit_setenabled()
 
     def UI_calls_reorder(self, order):
+        """Event: Calls reordered."""
         self.calls = [self.calls[i] for i in order]
         self.connections_update()
 
     def UI_arg_change(self, callid, argid, value):
+        """Event: Changed an arguments."""
         if argid == 0:
             self.routine_set(callid, value)
         else:
             self.arg_set(callid, argid, value)
 
     def UI_vary_change(self, callid, argid, state):
+        """Event: Changed how operands vary."""
         name = self.calls[callid][argid]
         if name is None:
             return
@@ -1099,10 +1161,12 @@ class GUI(object):
         self.UI_data_viz()
 
     def UI_jobkill(self, jobid):
+        """Event: Kill a job."""
         job = self.jobprogress[jobid]
         self.backends[job["backend"]].kill(job["id"])
         self.jobprogress[jobid] = None
 
     def UI_jobview(self, jobid):
+        """Event: View a job's report."""
         job = self.jobprogress[jobid]
         self.UI_viewer_load(job["filebase"] + ".smpl")

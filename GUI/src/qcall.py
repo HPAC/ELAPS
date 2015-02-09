@@ -8,7 +8,11 @@ from PyQt4 import QtCore, QtGui
 
 
 class QCall(QtGui.QListWidgetItem):
+
+    """Representation of a call in the Qt GUI."""
+
     def __init__(self, gui, callid):
+        """Initialize the call representation."""
         QtGui.QListWidgetItem.__init__(self)
         self.Qt_gui = gui
         self.callid = callid
@@ -17,6 +21,7 @@ class QCall(QtGui.QListWidgetItem):
         self.UI_init()
 
     def UI_init(self):
+        """Initialize the GUI elements."""
         routines = list(self.Qt_gui.sampler["kernels"])
 
         # layout
@@ -51,7 +56,9 @@ class QCall(QtGui.QListWidgetItem):
         self.sig = None
 
     def update_size(self):
+        """Update the size of the call item from its widget."""
         def update():
+            """Update the size (asynchronous callback)."""
             try:
                 self.setSizeHint(self.widget.sizeHint())
             except:
@@ -59,6 +66,7 @@ class QCall(QtGui.QListWidgetItem):
         QtCore.QTimer.singleShot(0, update)
 
     def args_init(self):
+        """Initialize the arguments."""
         call = self.Qt_gui.calls[self.callid]
         self.Qt_args[0].setProperty("invalid", False)
         if isinstance(call, signature.Call):
@@ -126,6 +134,7 @@ class QCall(QtGui.QListWidgetItem):
         self.update_size()
 
     def args_clear(self):
+        """Clear the arguments."""
         self.Qt_args[0].setProperty("invalid", True)
         for Qarg in self.Qt_args[1:]:
             Qarg.deleteLater()
@@ -138,6 +147,7 @@ class QCall(QtGui.QListWidgetItem):
         self.sig = None
 
     def showargs_apply(self):
+        """Apply which argument types are shown."""
         if not self.sig:
             return
         for argid, arg in enumerate(self.sig):
@@ -153,6 +163,7 @@ class QCall(QtGui.QListWidgetItem):
                     self.Qt_args[argid].setVisible(showing)
 
     def arg_setvalid(self, argid):
+        """Set the valid proparty for the argument."""
         self.Qt_gui.Qt_setting += 1
         val = self.Qt_gui.calls[self.callid][argid]
         Qarg = self.Qt_args[argid]
@@ -163,6 +174,7 @@ class QCall(QtGui.QListWidgetItem):
         self.Qt_gui.Qt_setting -= 1
 
     def arg_set(self, argid):
+        """Set an argument's value."""
         self.arg_setvalid(argid)
         self.Qt_gui.Qt_setting += 1
         val = self.Qt_gui.calls[self.callid][argid]
@@ -177,6 +189,7 @@ class QCall(QtGui.QListWidgetItem):
         self.Qt_gui.Qt_setting -= 1
 
     def args_set(self, fromargid=None):
+        """set all arguments and their values."""
         self.Qt_gui.Qt_setting += 1
         call = self.Qt_gui.calls[self.callid]
         # set routine
@@ -210,6 +223,7 @@ class QCall(QtGui.QListWidgetItem):
         self.Qt_gui.Qt_setting -= 1
 
     def data_viz(self):
+        """Visualize all operands."""
         if not self.sig:
             return
         for argid in self.Qt_gui.calls[self.callid].sig.dataargs():
@@ -218,9 +232,11 @@ class QCall(QtGui.QListWidgetItem):
 
     # event handlers
     def remove_click(self):
+        """Event: Remove call."""
         self.Qt_gui.UI_call_remove(self.callid)
 
     def arg_change(self):
+        """Event: Changed an argument."""
         sender = self.Qt_gui.Qt_app.sender()
         if isinstance(sender, QtGui.QLineEdit):
             # adjust widt no matter where the change came from

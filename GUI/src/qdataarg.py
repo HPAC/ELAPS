@@ -7,7 +7,11 @@ from PyQt4 import QtCore, QtGui
 
 
 class QDataArg(QtGui.QLineEdit):
+
+    """Operand argument representation."""
+
     def __init__(self, call):
+        """Initialize the operand representation."""
         QtGui.QLineEdit.__init__(self)
         self.Qt_call = call
         self.Qt_gui = call.Qt_gui
@@ -21,6 +25,7 @@ class QDataArg(QtGui.QLineEdit):
         self.UI_init()
 
     def UI_init(self):
+        """Initialize the GUI element."""
         self.setAlignment(QtCore.Qt.AlignHCenter)
         self.textChanged.connect(self.change)
         self.setValidator(QtGui.QRegExpValidator(QtCore.QRegExp("[a-zA-Z]+"),
@@ -40,6 +45,7 @@ class QDataArg(QtGui.QLineEdit):
         """)
 
     def paintEvent(self, event):
+        """Paint the representation."""
         if not self.linesminfront:
             # nothing to draw
             return QtGui.QLineEdit.paintEvent(self, event)
@@ -72,6 +78,7 @@ class QDataArg(QtGui.QLineEdit):
 
     # setters
     def set(self):
+        """Set the value and update visualization."""
         value = self.Qt_gui.calls[self.Qt_call.callid][self.argid]
         if value is None:
             value = ""
@@ -79,6 +86,7 @@ class QDataArg(QtGui.QLineEdit):
         self.viz()
 
     def setsize(self, height, width):
+        """Set the size of the widget."""
         minsize = QtGui.QLineEdit().minimumSizeHint()
         fontmetrics = self.fontMetrics()
         minwidth = minsize.width() + fontmetrics.width(self.text())
@@ -92,6 +100,7 @@ class QDataArg(QtGui.QLineEdit):
         return hoff, woff
 
     def viz(self):
+        """Visualization update."""
         value = self.Qt_gui.calls[self.Qt_call.callid][self.argid]
         if value is None:
             self.viz_none()
@@ -105,14 +114,12 @@ class QDataArg(QtGui.QLineEdit):
             dim = data["sym"][1:]
         else:
             # try simplifying
+            sym = data["sym"]
             if isinstance(data["sym"], symbolic.Expression):
                 sym = data["sym"].simplify()
-            else:
-                sym = data["sym"]
+            dim = [sym]
             if isinstance(sym, symbolic.Prod):
                 dim = sym[1:]
-            else:
-                dim = [sym]
         # compute min and max from range
         dimmin = []
         dimmax = []
@@ -134,6 +141,7 @@ class QDataArg(QtGui.QLineEdit):
             self.viz_tensor(dimmin, dimmax)
 
     def viz_none(self):
+        """Empty visualization."""
         self.setsize(0, 0)
         self.polygonmax = None
         self.linesmaxfront = None
@@ -143,9 +151,11 @@ class QDataArg(QtGui.QLineEdit):
         self.linesminback = None
 
     def viz_vector(self, dimmin, dimmax):
+        """Vizualize a vector."""
         self.viz_matrix(dimmin + [1], dimmax + [1])
 
     def viz_matrix(self, dimmin, dimmax):
+        """Visualize a matrix."""
         scale = self.Qt_gui.datascale / max(1, self.Qt_gui.data_maxdim())
         dimmin = [int(round(scale * dim)) for dim in dimmin]
         dimmax = [int(round(scale * dim)) for dim in dimmax]
@@ -158,6 +168,7 @@ class QDataArg(QtGui.QLineEdit):
         self.viz_tensor(dimmin + [1], dimmax + [1])
 
     def viz_triangular(self, dimmin, dimmax, properties):
+        """Visualize a triangular matrix."""
         # compute total size and offsets
         h, w = dimmax
         hoff, woff = self.setsize(h + 1, w + 1)
@@ -237,6 +248,7 @@ class QDataArg(QtGui.QLineEdit):
             ]
 
     def viz_tensor(self, dimmin, dimmax):
+        """Visualize a Tensor."""
         # compute total size and offsets
         h, w, d = dimmax
         hoff, woff = self.setsize(h + d // 2 + 1, w + d // 2 + 1)
@@ -305,6 +317,7 @@ class QDataArg(QtGui.QLineEdit):
 
     # event handlers
     def change(self):
+        """Event: Value changed."""
         if self.Qt_gui.Qt_setting:
             return
         value = str(self.text())
