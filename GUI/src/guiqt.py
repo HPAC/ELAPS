@@ -373,7 +373,7 @@ class GUI_Qt(GUI):
             palette = self.Qt_app.palette()
             dark = palette.text().color()
             darka = palette.text().color()
-            darka.setAlpha(127)
+            darka.setAlpha(63)
             # pens and brushes (for dataargs)
             self.Qt_pens = {
                 None: QtGui.QColor(0, 0, 255, 0),
@@ -384,7 +384,7 @@ class GUI_Qt(GUI):
             }
             window = palette.window().color()
             windowa = palette.window().color()
-            windowa.setAlpha(127)
+            windowa.setAlpha(63)
             self.Qt_brushes = {
                 "max": windowa,
                 "min": window
