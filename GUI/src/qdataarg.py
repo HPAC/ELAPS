@@ -124,15 +124,12 @@ class QDataArg(QtGui.QLineEdit):
         dimmin = []
         dimmax = []
         for expr in dim:
-            values = list(self.Qt_gui.range_eval(expr))
-            if not values:
+            rangemin, rangemax = self.Qt_gui.range_eval_minmax(expr)
+            if rangemin is None or rangemax is None:
                 self.viz_none()
                 return
-            if any(value is None for value in values):
-                self.viz_none()
-                return
-            dimmin.append(min(values))
-            dimmax.append(max(values))
+            dimmin.append(rangemin)
+            dimmax.append(rangemax)
         if len(dim) == 1:
             self.viz_vector(dimmin, dimmax)
         elif len(dim) == 2:

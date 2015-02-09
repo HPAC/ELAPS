@@ -308,13 +308,15 @@ class GUI(object):
         outervals = outerval,
         if outerval is None and self.userange["outer"]:
             outervals = iter(self.ranges[self.userange["outer"]])
+        if innerval is None and self.userange["inner"]:
+            innerrange = self.ranges[self.userange["inner"]]
         symdict = {}
         for outerval2 in outervals:
             if outerval2 is not None:
                 symdict[self.rangevars[self.userange["outer"]]] = outerval2
             innervals = innerval,
             if innerval is None and self.userange["inner"]:
-                innervals = iter(self.ranges[self.userange["inner"]])
+                innervals = iter(innerrange(**symdict))
             for innerval2 in innervals:
                 if innerval2 is not None:
                     symdict[self.rangevars[self.userange["inner"]]] = innerval2
@@ -322,6 +324,32 @@ class GUI(object):
                     yield expr(**symdict)
                 else:
                     yield expr
+
+    def range_eval_minmax(self, expr, outerval=None, innerval=None):
+        """Evaluate an expression at the ranges' min and max."""
+        # min
+        outervalmin = outerval
+        innervalmin = innerval
+        symdict = {}
+        if outervalmin is None and self.userange["outer"]:
+            outervalmin = self.ranges[self.userange["outer"]].min()
+        symdict[self.rangevars[self.userange["outer"]]] = outervalmin
+        if innervalmin is None and self.userange["inner"]:
+            innervalmin = self.ranges[self.userange["inner"]](**symdict).min()
+        minimum = next(self.range_eval(expr, outervalmin, innervalmin))
+
+        # max
+        outervalmax = outerval
+        innervalmax = innerval
+        symdict = {}
+        if outervalmax is None and self.userange["outer"]:
+            outervalmax = self.ranges[self.userange["outer"]].max()
+        symdict[self.rangevars[self.userange["outer"]]] = outervalmax
+        if innervalmax is None and self.userange["inner"]:
+            innervalmax = self.ranges[self.userange["inner"]](**symdict).max()
+        maximum = next(self.range_eval(expr, outervalmax, innervalmax))
+
+        return minimum, maximum
 
     # simple data operations
     def data_maxdim(self):
