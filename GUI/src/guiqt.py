@@ -501,8 +501,6 @@ class GUI_Qt(GUI):
         # other option effects
         self.Qt_countersD.setVisible(self.options["papi"])
         self.Qt_headerD.setVisible(self.options["header"])
-        for callid in range(self.Qt_calls.count()):
-            self.Qt_calls.item(callid).usevary_apply()
         self.Qt_setting -= 1
 
     def UI_showargs_set(self, name=None):
@@ -576,8 +574,8 @@ class GUI_Qt(GUI):
             callid = len(self.calls) - 1
         Qcall = QCall(self, callid)
         self.Qt_calls.addItem(Qcall)
-        self.Qt_calls.setItemWidget(Qcall, Qcall.widget)
         Qcall.args_set()
+        self.Qt_calls.setItemWidget(Qcall, Qcall.widget)
 
     def UI_call_set(self, callid, fromargid=None):
         self.Qt_setting += 1

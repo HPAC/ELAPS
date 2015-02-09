@@ -9,7 +9,7 @@ from PyQt4 import QtCore, QtGui
 
 class QCall(QtGui.QListWidgetItem):
     def __init__(self, gui, callid):
-        QtGui.QGroupBox.__init__(self)
+        QtGui.QListWidgetItem.__init__(self)
         self.Qt_gui = gui
         self.callid = callid
         self.sig = None
@@ -23,7 +23,6 @@ class QCall(QtGui.QListWidgetItem):
         self.widget = QtGui.QWidget()
         layout = QtGui.QGridLayout()
         self.widget.setLayout(layout)
-        layout.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
 
         # routine
         routine = QtGui.QLineEdit()
@@ -52,20 +51,9 @@ class QCall(QtGui.QListWidgetItem):
         self.sig = None
 
     def update_size(self):
-        size = self.widget.sizeHint()
-        if self.sig:
-            argheight = 0
-            layout = self.widget.layout()
-            for i, Qarg in enumerate(self.Qt_args):
-                argheight = max(argheight, Qarg.sizeHint().height())
-            lineheight = self.widget.fontMetrics().lineSpacing()
-            margins = layout.contentsMargins()
-            top = margins.top()
-            bottom = margins.bottom()
-            spacing = layout.spacing()
-            height = top + lineheight + spacing + argheight + bottom + 4
-            size.setHeight(height)
-        self.setSizeHint(size)
+        def update():
+            self.setSizeHint(self.widget.sizeHint())
+        QtCore.QTimer.singleShot(0, update)
 
     def args_init(self):
         call = self.Qt_gui.calls[self.callid]
@@ -127,12 +115,13 @@ class QCall(QtGui.QListWidgetItem):
                 Qarg.setToolTip(tooltip)
             Qarg.argid = argid
             Qarg.setProperty("invalid", True)
+            self.Qt_args.append(Qarg)
+            self.arg_set(argid)
             self.widget.layout().addWidget(Qarg, 1, argid,
                                            QtCore.Qt.AlignCenter)
-            self.Qt_args.append(Qarg)
         if self.sig:
             self.showargs_apply()
-            self.usevary_apply()
+        self.update_size()
 
     def args_clear(self):
         self.Qt_args[0].setProperty("invalid", True)
@@ -161,16 +150,28 @@ class QCall(QtGui.QListWidgetItem):
                     self.Qt_arglabels[argid].setVisible(showing)
                     self.Qt_args[argid].setVisible(showing)
 
-    def usevary_apply(self):
-        if not self.sig:
-            return
-        for Qarg in self.Qt_args:
-            if isinstance(Qarg, QDataArg):
-                Qarg.usevary_apply()
+    def arg_set(self, argid):
+        self.Qt_gui.Qt_setting += 1
+        val = self.Qt_gui.calls[self.callid][argid]
+        Qarg = self.Qt_args[argid]
+        Qarg.setProperty("invalid", val is None)
+        Qarg.style().unpolish(Qarg)
+        Qarg.style().polish(Qarg)
+        Qarg.update()
+        val = "" if val is None else str(val)
+        if isinstance(Qarg, QDataArg):
+            Qarg.set()
+        elif isinstance(Qarg, QtGui.QLineEdit):
+            Qarg.setText(val)
+        elif isinstance(Qarg, QtGui.QComboBox):
+            Qarg.setCurrentIndex(Qarg.findText(val))
+        self.Qt_gui.Qt_setting -= 1
 
     def args_set(self, fromargid=None):
         self.Qt_gui.Qt_setting += 1
         call = self.Qt_gui.calls[self.callid]
+        # set routine
+        self.Qt_args[0].setText(call[0])
         # set widgets
         if call[0] not in self.Qt_gui.sampler["kernels"]:
             self.args_clear()
@@ -181,27 +182,18 @@ class QCall(QtGui.QListWidgetItem):
                 if len(self.Qt_args) > 1:
                     self.args_clear()
                 self.args_init()
+                self.Qt_gui.Qt_setting -= 1
+                return
         else:
             if len(self.Qt_args) != len(call):
                 if len(self.Qt_args) > 1:
                     self.args_clear()
                 self.args_init()
-        # set values
-        for argid, val in enumerate(call):
-            Qarg = self.Qt_args[argid]
-            Qarg.setProperty("invalid", val is None)
-            Qarg.style().unpolish(Qarg)
-            Qarg.style().polish(Qarg)
-            Qarg.update()
-            if Qarg.argid == fromargid:
-                continue
-            val = "" if val is None else str(val)
-            if isinstance(Qarg, QtGui.QLineEdit):
-                Qarg.setText(val)
-            elif isinstance(Qarg, QtGui.QComboBox):
-                Qarg.setCurrentIndex(Qarg.findText(val))
-            elif isinstance(Qarg, QDataArg):
-                Qarg.set()
+                self.Qt_gui.Qt_setting -= 1
+                return
+        # otherwise: set values
+        for argid in range(len(call)):
+            self.arg_set(argid)
         self.update_size()
         self.Qt_gui.Qt_setting -= 1
 
@@ -221,11 +213,14 @@ class QCall(QtGui.QListWidgetItem):
         if isinstance(sender, QtGui.QLineEdit):
             # adjust widt no matter where the change came from
             val = str(sender.text())
-            if sender.argid != 0:
+            if not isinstance(sender, QDataArg):
                 width = sender.fontMetrics().width(val)
                 width += sender.minimumSizeHint().width()
                 height = sender.sizeHint().height()
-                sender.setFixedSize(max(height, width), height)
+                if sender.argid == 0:
+                    sender.setMinimumSize(max(height, width), height)
+                else:
+                    sender.setFixedSize(max(height, width), height)
         if self.Qt_gui.Qt_setting:
             return
         if isinstance(sender, QtGui.QComboBox):

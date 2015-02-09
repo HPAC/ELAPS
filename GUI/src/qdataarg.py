@@ -6,9 +6,9 @@ import symbolic
 from PyQt4 import QtCore, QtGui
 
 
-class QDataArg(QtGui.QWidget):
+class QDataArg(QtGui.QLineEdit):
     def __init__(self, call):
-        QtGui.QWidget.__init__(self)
+        QtGui.QLineEdit.__init__(self)
         self.Qt_call = call
         self.Qt_gui = call.Qt_gui
         self.polygonmin = None
@@ -21,52 +21,28 @@ class QDataArg(QtGui.QWidget):
         self.UI_init()
 
     def UI_init(self):
-        self.setContentsMargins(0, 0, 0, 0)
-        layout = QtGui.QVBoxLayout()
-        self.setLayout(layout)
-        layout.setSpacing(0)
-        layout.setMargin(0)
-        layout.setContentsMargins(0, 0, 0, 0)
+        self.setAlignment(QtCore.Qt.AlignHCenter)
+        self.textChanged.connect(self.change)
+        self.setValidator(QtGui.QRegExpValidator(QtCore.QRegExp("[a-zA-Z]+"),
+                                                 self.Qt_gui.Qt_app))
 
-        self.setSizePolicy(
-            QtGui.QSizePolicy.Fixed,
-            QtGui.QSizePolicy.Fixed
-        )
-
-        # name
-        self.Qt_name = QtGui.QLineEdit()
-        layout.addWidget(self.Qt_name, 1, QtCore.Qt.AlignHCenter |
-                         QtCore.Qt.AlignVCenter)
-        self.Qt_name.setAlignment(QtCore.Qt.AlignHCenter)
-        self.Qt_name.textChanged.connect(self.change)
-        regexp = QtCore.QRegExp("[a-zA-Z]+")
-        validator = QtGui.QRegExpValidator(regexp, self.Qt_gui.Qt_app)
-        self.Qt_name.setValidator(validator)
-
-        # vary
-        self.Qt_vary = QtGui.QCheckBox("vary")
-        layout.addWidget(self.Qt_vary, 0, QtCore.Qt.AlignHCenter |
-                         QtCore.Qt.AlignBottom)
-        self.Qt_vary.setSizePolicy(QtGui.QSizePolicy(
-            QtGui.QSizePolicy.Fixed,
-            QtGui.QSizePolicy.Fixed
-        ))
-        self.Qt_vary.stateChanged.connect(self.vary_change)
+        # self.setsize(0, 0)
 
         # style
         self.setStyleSheet("""
-            [invalid="true"] QLineEdit {
+            [invalid="true"] {
                 background: #FFDDDD;
             }
-            [invalid="false"] > QLineEdit:!focus:!hover {
+            [invalid="false"]:!focus:!hover {
                 background: transparent;
                 border: none;
             }
         """)
 
     def paintEvent(self, event):
-        if not self.polygonmax:
-            return QtGui.QWidget.paintEvent(self, event)
+        if not self.linesminfront:
+            # nothing to draw
+            return QtGui.QLineEdit.paintEvent(self, event)
 
         brushes = self.Qt_gui.Qt_brushes
         pens = self.Qt_gui.Qt_pens
@@ -90,43 +66,29 @@ class QDataArg(QtGui.QWidget):
         painter.setPen(pens["minfront"])
         painter.drawLines(self.linesminfront)
 
-    # getter
-    def text(self):
-        return self.Qt_name.text()
-
-    def sizeHint(self):
-        return self.size()
-
-    def minimumSizeHint(self):
-        return self.size()
+        # draw input on top
+        painter.end()
+        return QtGui.QLineEdit.paintEvent(self, event)
 
     # setters
     def set(self):
         value = self.Qt_gui.calls[self.Qt_call.callid][self.argid]
         if value is None:
-            self.Qt_name.setText("")
-            self.Qt_vary.setChecked(False)
-        else:
-            self.Qt_name.setText(value)
-            self.Qt_vary.setChecked(value in self.Qt_gui.vary)
+            value = ""
+        self.setText(value)
         self.viz()
 
     def setsize(self, height, width):
-        nameheight = self.Qt_name.minimumSizeHint().height()
-        namewidth = self.Qt_name.minimumSizeHint().width()
-        namewidth += self.Qt_name.fontMetrics().width(self.Qt_name.text())
-        namewidth = max(namewidth, nameheight)
-        varywidth = varyheight = 0
-        if self.Qt_gui.options["vary"]:
-            varyheight = self.Qt_vary.minimumSizeHint().height()
-            varywidth = self.Qt_vary.minimumSizeHint().width()
-        contentheight = nameheight + varyheight
-        contentwidth = max(namewidth, varywidth)
-        fixedwidth = max(width, contentwidth)
-        fixedheight = max(height, contentheight)
+        minsize = QtGui.QLineEdit().minimumSizeHint()
+        fontmetrics = self.fontMetrics()
+        minwidth = minsize.width() + fontmetrics.width(self.text())
+        minheight = minsize.height()
+        minwidth = max(minwidth, minheight)
+        fixedwidth = max(width, minwidth)
+        fixedheight = max(height, minheight)
         self.setFixedSize(fixedwidth, fixedheight)
-        hoff = max(0, (contentheight - height) // 2)
-        woff = max(0, (contentwidth - width) // 2)
+        hoff = max(0, (minheight - height) // 2)
+        woff = max(0, (minwidth - width) // 2)
         return hoff, woff
 
     def viz(self):
@@ -134,7 +96,6 @@ class QDataArg(QtGui.QWidget):
         if value is None:
             self.viz_none()
             return
-        self.Qt_vary.setChecked(value in self.Qt_gui.vary)
         data = self.Qt_gui.data[value]
         if data["sym"] is None:
             self.viz_none()
@@ -342,23 +303,9 @@ class QDataArg(QtGui.QWidget):
             QtCore.QLine(points[0][0][1], points[1][0][1]),  # |
         ]
 
-    def usevary_apply(self):
-        self.Qt_vary.setVisible(self.Qt_gui.options["vary"])
-
     # event handlers
     def change(self):
-        value = str(self.Qt_name.text())
-        width = self.Qt_name.fontMetrics().width(value)
-        width += self.Qt_name.minimumSizeHint().width()
-        height = self.Qt_name.sizeHint().height()
-        self.Qt_name.setFixedSize(max(height, width), height)
         if self.Qt_gui.Qt_setting:
             return
-        value = str(self.Qt_name.text())
+        value = str(self.text())
         self.Qt_gui.UI_arg_change(self.Qt_call.callid, self.argid, value)
-
-    def vary_change(self):
-        if self.Qt_gui.Qt_setting:
-            return
-        self.Qt_gui.UI_vary_change(self.Qt_call.callid, self.argid,
-                                   self.Qt_vary.isChecked())

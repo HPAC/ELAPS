@@ -166,10 +166,7 @@ class GUI(object):
             self.alert("sampler %r is not available, using %r instead"
                        % (state["samplername"], samplername))
         self.state = state
-        self.sampler_set(samplername)
-        self.connections_update()
-        self.data_update()
-        self.UI_setall()
+        self.sampler_set(samplername, True)
 
     def state_reset(self):
         sampler = self.samplers[min(self.samplers)]
@@ -437,7 +434,7 @@ class GUI(object):
                 self.calls[callid2][argid2] = value
 
     # treat changes for the calls
-    def sampler_set(self, samplername):
+    def sampler_set(self, samplername, setall=False):
         self.samplername = samplername
         self.nt = max(self.nt, self.sampler["nt_max"])
 
@@ -462,18 +459,13 @@ class GUI(object):
         self.calls = [call for call in self.calls
                       if call[0] in self.sampler["kernels"]]
 
+        self.connections_update()
         self.data_update()
-        # update UI
-        self.UI_nt_setmax()
-        self.UI_nt_set()
-        self.UI_useranges_set()
-        self.UI_options_set()
-        self.UI_counters_setoptions()
-        self.UI_counters_set()
-        self.UI_sampler_about_set()
-        self.UI_calls_init()
+        if setall:
+            self.UI_setall()
 
     def routine_set(self, callid, value):
+        oldvalue = self.calls[callid][0]
         if value in self.sampler["kernels"]:
             minsig = self.sampler["kernels"][value]
             call = [value] + (len(minsig) - 1) * [None]
@@ -516,8 +508,10 @@ class GUI(object):
         self.calls[callid] = call
         self.connections_update()
         self.data_update()
-        self.UI_submit_setenabled()
-        self.UI_call_set(callid, 0)
+        if (value in self.sampler["kernels"] or
+            oldvalue in self.sampler["kernels"]):
+            self.UI_submit_setenabled()
+            self.UI_call_set(callid, 0)
 
     def arg_set(self, callid, argid, value):
         call = self.calls[callid]
@@ -991,12 +985,12 @@ class GUI(object):
                 "warning", "unsupported kernels",
                 "%r does not support %s\nCorresponding calls will be removed"
                 % (samplername, ", ".join(map(repr, missing))), {
-                    "Ok": (self.sampler_set, (samplername,)),
+                    "Ok": (self.sampler_set, (samplername, True)),
                     "Cancel": None
                 }
             )
         else:
-            self.sampler_set(samplername)
+            self.sampler_set(samplername, True)
 
     def UI_nt_change(self, nt):
         self.nt = nt
