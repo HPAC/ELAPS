@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Simple symbolic expression engine."""
 from __future__ import division, print_function
 
 import numbers
@@ -6,37 +7,51 @@ import __builtin__
 
 
 class Expression(object):
+
+    """Base class for all expressions."""
+
     def __neg__(self):
+        """-Expression ."""
         return Minus(self)
 
     def __add__(self, other):
+        """Expression + Other ."""
         return Plus(self, other)
 
     def __radd__(self, other):
+        """Other + Expression ."""
         return Plus(other, self)
 
     def __sub__(self, other):
+        """Expression - Other ."""
         return Plus(self, Minus(other))
 
     def __rsub__(self, other):
+        """Other - Expression ."""
         return Plus(other, Minus(self))
 
     def __mul__(self, other):
+        """Expression * Other ."""
         return Prod(self, other)
 
     def __rmul__(self, other):
+        """Other * Expression ."""
         return Prod(other, self)
 
     def __pow__(self, other):
+        """Expression ** Other ."""
         return Power(self, other)
 
     def subistitute(self, **kwargs):
+        """Variable substitution."""
         return self
 
     def simplify(self):
+        """Simplification."""
         return self
 
     def __call__(self, **kwargs):
+        """Substitution and simplification."""
         expr = self.substitute(**kwargs)
         if isinstance(expr, Expression):
             return expr.simplify()
@@ -44,16 +59,23 @@ class Expression(object):
 
 
 class Symbol(Expression):
+
+    """Symbolic variable."""
+
     def __init__(self, name):
+        """Initialize: remember the name."""
         self.name = name
 
     def __str__(self):
+        """Format as human readable."""
         return str(self.name)
 
     def __repr__(self):
+        """Format as python parsable string."""
         return self.__class__.__name__ + "(" + repr(self.name) + ")"
 
     def __eq__(self, other):
+        """Compare for equality."""
         if isinstance(other, str):
             return self.name == other
         if isinstance(other, Symbol):
@@ -61,9 +83,11 @@ class Symbol(Expression):
         return False
 
     def __hash__(self):
+        """Hash: hash name."""
         return hash(self.name)
 
     def substitute(self, **kwargs):
+        """Substitute: return value if matching."""
         if self.name in kwargs:
             return kwargs[self.name]
         else:
@@ -71,23 +95,31 @@ class Symbol(Expression):
 
 
 class Operation(Expression, list):
+
+    """Base class for symbolic operations."""
+
     def __new__(cls, *args):
+        """If any argument is None, the operation is None."""
         if any(arg is None for arg in args):
             return None
         else:
             return list.__new__(cls)
 
     def __init__(self, *args):
+        """Initialize as a list with the operation as first element."""
         list.__init__(self, (self.__class__,) + args)
 
     def __repr__(self):
+        """Python parsable representation."""
         return (self.__class__.__name__ + "(" +
                 ", ".join(map(repr, self[1:])) + ")")
 
     def __hash__(self):
+        """Hash the expression."""
         return hash(tuple(map(hash, self)))
 
     def substitute(self, **kwargs):
+        """Substitute all in all arguments."""
         args = []
         for arg in self[1:]:
             if arg in kwargs:
@@ -100,13 +132,19 @@ class Operation(Expression, list):
 
 
 class Minus(Operation):
+
+    """-Expression (unary)."""
+
     def __init__(self, expression):
+        """Initialize: Only one argument."""
         Operation.__init__(self, expression)
 
     def __str__(self):
+        """Format as human readable."""
         return "-" + str(self[1])
 
     def simplify(self):
+        """Simplify: catch douple negation."""
         arg = self[1]
         if isinstance(arg, Operation):
             arg = arg.simplify()
@@ -118,13 +156,19 @@ class Minus(Operation):
 
 
 class Abs(Operation):
+
+    """abs(Expression) (unary)."""
+
     def __init__(self, expression):
+        """Initialize: Only one argument."""
         Operation.__init__(self, expression)
 
     def __str__(self):
+        """Format as human readable."""
         return "abs(" + str(self[1]) + ")"
 
     def simplify(self):
+        """Simblify: Catch recursive abs."""
         arg = self[1]
         if isinstance(arg, Operation):
             arg = arg.simplify()
@@ -136,10 +180,11 @@ class Abs(Operation):
 
 
 class Prod(Operation):
-    def __init__(self, *args):
-        Operation.__init__(self, *args)
+
+    """Product of multiple operands (at least 1 Expression)."""
 
     def __str__(self):
+        """Format as human readable."""
         strs = map(str, self[1:])
         for i, arg in enumerate(self[1:]):
             if isinstance(arg, Plus):
@@ -147,6 +192,7 @@ class Prod(Operation):
         return " * ".join(strs)
 
     def simplify(self):
+        """Simplify: flatten recursive products."""
         num = 1
         args = []
         for arg in self[1:]:
@@ -172,13 +218,15 @@ class Prod(Operation):
 
 
 class Plus(Operation):
-    def __init__(self, *args):
-        Operation.__init__(self, *args)
+
+    """Sum of multiple operands (at least 1 Expression)."""
 
     def __str__(self):
+        """Format as human readable."""
         return " + ".join(map(str, self[1:]))
 
     def simplify(self):
+        """Simplify: flatten recursive sums."""
         num = 0
         args = []
         for arg in self[1:]:
@@ -204,10 +252,15 @@ class Plus(Operation):
 
 
 class Power(Operation):
+
+    """Power with an experssion as the base."""
+
     def __init__(self, base, exponent):
+        """Init: Two exactly arguments."""
         Operation.__init__(self, base, exponent)
 
     def __str__(self):
+        """Format as human readable."""
         strs = map(str, self[1:])
         for i, arg in enumerate(self[1:]):
             if not isinstance(arg, (Symbol, numbers.Number)):
@@ -215,6 +268,7 @@ class Power(Operation):
         return strs[0] + " ** " + strs[1]
 
     def simplify(self):
+        """Simplify (no special cases)."""
         base = self[1]
         if isinstance(base, Operation):
             base = base.simplify()
@@ -230,13 +284,15 @@ class Power(Operation):
 
 
 class Min(Operation):
-    def __init__(self, *args):
-        Operation.__init__(self, *args)
+
+    """Minimum of multiple operands (at least 1 Expression)."""
 
     def __str__(self):
+        """Format as human readable."""
         return "min(" + ", ".join(map(str, self[1:])) + ")"
 
     def simplify(self):
+        """Simplify (no special case)."""
         num = float("inf")
         args = []
         for arg in self[1:]:
@@ -262,13 +318,15 @@ class Min(Operation):
 
 
 class Max(Operation):
-    def __init__(self, *args):
-        Operation.__init__(self, *args)
+
+    """Maximum of multiple operands (at least 1 Expression)."""
 
     def __str__(self):
+        """Format as human readable."""
         return "max(" + ", ".join(map(str, self[1:])) + ")"
 
     def simplify(self):
+        """Simplify (no special case)."""
         num = float("-inf")
         args = []
         for arg in self[1:]:
@@ -294,7 +352,11 @@ class Max(Operation):
 
 
 class Range(object):
+
+    """Complex range object (possibly containing Expressions)."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize from tuples or string."""
         self.subranges = []
         if len(args) == 1 and isinstance(args[0], str):
             rangeparts = args[0].split(",")
@@ -324,6 +386,7 @@ class Range(object):
                 self.subranges.append(arg)
 
     def min(self):
+        """compute the minimum."""
         result = float("inf")
         for subrange in self.subranges:
             if not all(isinstance(val, numbers.Number) for val in subrange):
@@ -331,17 +394,18 @@ class Range(object):
             start, step, stop = subrange
             if step > 0:
                 if start <= stop:
-                    result = min(result, start)
+                    result = min_sym(result, start)
             elif step == 0:
                 if start == stop:
-                    result = min(result, start)
+                    result = min_sym(result, start)
             else:
                 if start >= stop:
-                    result = min(result,
-                                 start + ((stop - start) // step) * step)
+                    result = min_sym(result,
+                                     start + ((stop - start) // step) * step)
         return result
 
     def max(self):
+        """Compute the maximum."""
         result = -float("inf")
         for subrange in self.subranges:
             if not all(isinstance(val, numbers.Number) for val in subrange):
@@ -349,17 +413,18 @@ class Range(object):
             start, step, stop = subrange
             if step > 0:
                 if start <= stop:
-                    result = max(result,
-                                 start + ((stop - start) // step) * step)
+                    result = max_sym(result,
+                                     start + ((stop - start) // step) * step)
             elif step == 0:
                 if start == stop:
-                    result = max(result, start)
+                    result = max_sym(result, start)
             else:
                 if start >= stop:
-                    result = max(result, start)
+                    result = max_sym(result, start)
         return result
 
     def substitute(self, **kwargs):
+        """Substitute Symbols."""
         subranges = []
         for subrange in self.subranges:
             newsubrange = []
@@ -372,6 +437,7 @@ class Range(object):
         return Range(*subranges)
 
     def simplify(self):
+        """Simplify expressions."""
         subranges = []
         for subrange in self.subranges:
             newsubrange = []
@@ -384,9 +450,11 @@ class Range(object):
         return Range(*subranges)
 
     def __call__(self, **kwargs):
+        """Substitute and simplify."""
         return self.substitute(**kwargs).simplify()
 
     def __iter__(self):
+        """Iterate over values in the complex range."""
         for subrange in self.subranges:
             if not all(isinstance(val, numbers.Number) for val in subrange):
                 raise Exception("Not numeric: %r" % subrange)
@@ -404,6 +472,7 @@ class Range(object):
                     val += step
 
     def __len__(self):
+        """Length of the range."""
         result = 0
         for subrange in self.subranges:
             if not all(isinstance(val, numbers.Number) for val in subrange):
@@ -417,6 +486,7 @@ class Range(object):
         return result
 
     def __str__(self):
+        """Format as (parsable) human readable string."""
         parts = []
         for start, step, stop in self.subranges:
             if start == stop:
@@ -428,10 +498,12 @@ class Range(object):
         return ",".join(parts)
 
     def __repr__(self):
+        """Format as python parsable string."""
         return "Range(" + ", ".join(map(repr, self.subranges)) + ")"
 
 
 def min_sym(*args, **kwargs):
+    """Symbolic minimum."""
     if len(args) == 1:
         if any(isinstance(arg, Expression) for arg in args[0]):
             return Min(*args[0])
@@ -443,6 +515,7 @@ def min_sym(*args, **kwargs):
 
 
 def max_sym(*args, **kwargs):
+    """Symbolic maximum."""
     if len(args) == 1:
         if any(isinstance(arg, Expression) for arg in args[0]):
             return Max(*args[0])
