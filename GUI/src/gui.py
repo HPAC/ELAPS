@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""API independent base for GUIs."""
 from __future__ import division, print_function
 
 import signature
@@ -9,7 +10,6 @@ import os
 import imp
 import time
 from collections import defaultdict
-# from __builtin__ import intern  # fix for pyflake error
 
 
 class GUI(object):

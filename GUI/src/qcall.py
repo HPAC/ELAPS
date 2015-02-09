@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Representation of calls in the Qt GUI."""
 from __future__ import division, print_function
 
 import signature
