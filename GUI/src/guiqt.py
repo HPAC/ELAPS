@@ -330,6 +330,21 @@ class GUI_Qt(GUI):
             )
             self.Qt_Qcounters = []
 
+        def create_vary():
+            """Create the vary dock widget."""
+            self.Qt_varyD = QtGui.QDockWidget("Vary Matrices")
+            window.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.Qt_varyD)
+            self.Qt_varyD.setObjectName("Vary Matrices")
+            self.Qt_varyD.closeEvent = self.Qt_vary_close
+            self.Qt_vary = QtGui.QWidget()
+            self.Qt_varyD.setWidget(self.Qt_vary)
+            self.Qt_vary.setLayout(QtGui.QVBoxLayout())
+            self.Qt_vary.setSizePolicy(
+                QtGui.QSizePolicy.Minimum,
+                QtGui.QSizePolicy.Fixed
+            )
+            self.Qt_Qvary = []
+
         def create_calls():
             """Create the calls list and add button (central widget)."""
             centralW = QtGui.QWidget()
@@ -420,6 +435,7 @@ class GUI_Qt(GUI):
         create_sampler_about()
         create_header()
         create_counters()
+        create_vary()
         create_calls()
         create_jobprogress()
         create_statusbar()
@@ -823,6 +839,12 @@ class GUI_Qt(GUI):
                 tip = countername + "\n" + papi.events[countername]["long"]
             Qcounter.setToolTip(tip)
         self.UI_counters_change(counternames)
+
+    def Qt_vary_close(self, event):
+        """Event: Closed the vary window."""
+        if self.Qt_setting:
+            return
+        self.UI_option_change("vary", False)
 
     def Qt_header_change(self):
         """Event: Changed the script header."""
