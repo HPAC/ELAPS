@@ -8,7 +8,7 @@ Signature::Signature(const char *name, void *fptr, const ArgType *args)
     arguments.push_back(NAME);
 
     // add arguments until NONE = \0 (end of input)
-    for (int i = 0; args[i] != NONE; i++)
+    for (size_t i = 0; args[i] != NONE; i++)
         arguments.push_back(args[i]);
 }
 
