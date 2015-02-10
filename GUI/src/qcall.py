@@ -43,13 +43,13 @@ class QCall(QtGui.QListWidgetItem):
         # spaces
         layout.setColumnStretch(100, 1)
 
-        self.Qt_remove = QtGui.QToolButton()
-        layout.addWidget(self.Qt_remove, 1, 101)
-        icon = self.widget.style().standardIcon(
-            QtGui.QStyle.SP_DialogCloseButton
-        )
-        self.Qt_remove.setIcon(icon)
-        self.Qt_remove.clicked.connect(self.remove_click)
+        remove = QtGui.QToolButton()
+        layout.addWidget(remove, 1, 101)
+        remove.setIcon(self.widget.style().standardIcon(
+            QtGui.QStyle.SP_TitleBarCloseButton
+        ))
+        remove.setStyleSheet("border: 0px;")
+        remove.clicked.connect(self.remove_click)
 
         # attributes
         self.Qt_args = [routine]

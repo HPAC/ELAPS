@@ -4,6 +4,7 @@ from __future__ import division, print_function
 
 from gui import GUI
 from qcall import QCall
+from qvary import QVary
 import papi
 
 import os
@@ -59,6 +60,8 @@ class GUI_Qt(GUI):
         window.setWindowTitle("Sampler")
         window.setUnifiedTitleAndToolBarOnMac(True)
         window.closeEvent = self.Qt_window_close
+        window.setCorner(QtCore.Qt.TopRightCorner,
+                         QtCore.Qt.RightDockWidgetArea)
 
         def create_menus():
             """Create all menus."""
@@ -260,6 +263,17 @@ class GUI_Qt(GUI):
                 # stretch
                 layout.addStretch(1)
 
+                # close
+                if rangename != "reps":
+                    close = QtGui.QToolButton()
+                    layout.addWidget(close)
+                    close.setIcon(close.style().standardIcon(
+                        QtGui.QStyle.SP_TitleBarCloseButton
+                    ))
+                    close.rangename = rangename
+                    close.clicked.connect(self.Qt_range_close)
+                    close.setStyleSheet("border: 0px;")
+
                 return rangeW
 
             rangesL.addWidget(create_range(
@@ -335,15 +349,17 @@ class GUI_Qt(GUI):
             self.Qt_varyD = QtGui.QDockWidget("Vary Matrices")
             window.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.Qt_varyD)
             self.Qt_varyD.setObjectName("Vary Matrices")
+            self.Qt_varyD.dockLocationChanged.connect(self.Qt_vary_move)
             self.Qt_varyD.closeEvent = self.Qt_vary_close
+            varySA = QtGui.QScrollArea()
+            self.Qt_varyD.setWidget(varySA)
             self.Qt_vary = QtGui.QWidget()
-            self.Qt_varyD.setWidget(self.Qt_vary)
-            self.Qt_vary.setLayout(QtGui.QVBoxLayout())
-            self.Qt_vary.setSizePolicy(
-                QtGui.QSizePolicy.Minimum,
-                QtGui.QSizePolicy.Fixed
-            )
-            self.Qt_Qvary = []
+            varySA.setWidget(self.Qt_vary)
+            varySA.setWidgetResizable(True)
+            varyL = QtGui.QBoxLayout(QtGui.QBoxLayout.TopToBottom)
+            self.Qt_vary.setLayout(varyL)
+            varyL.insertStretch(100, 1)
+            self.Qt_Qvarys = {}
 
         def create_calls():
             """Create the calls list and add button (central widget)."""
@@ -394,16 +410,6 @@ class GUI_Qt(GUI):
                 QLineEdit[invalid="true"],
                 *[invalid="true"] QLineEdit {
                     background: #FFDDDD;
-                }
-                QScrollArea {
-                    border: 0px;
-                    background: palette(dark);
-                }
-                QScrollArea > * > QWidget {
-                    background: palette(dark);
-                }
-                QScrollArea QCall {
-                    background: palette(window);
                 }
             """)
 
@@ -619,6 +625,45 @@ class GUI_Qt(GUI):
         self.Qt_ranges["reps"].range.setText(text)
         self.Qt_setting -= 1
 
+    def UI_vary_init(self):
+        """Set the vary options for all operands."""
+        # delete old
+        for Qvary in self.Qt_Qvarys.values():
+            Qvary.deleteLater()
+        # add new
+        self.Qt_Qvarys.clear()
+        layout = self.Qt_vary.layout()
+        for i, name in enumerate(sorted(self.data)):
+            Qvary = QVary(self, name)
+            layout.insertWidget(i, Qvary)
+            self.Qt_Qvarys[name] = Qvary
+        self.UI_vary_set()
+
+    def UI_vary_set(self, name=None, resize=True):
+        """Set the vary options for all operands."""
+        if name is None:
+            for name in self.Qt_Qvarys:
+                self.UI_vary_set(name, False)
+        else:
+            self.Qt_Qvarys[name].set()
+        if not resize:
+            return
+        # TODO: delay this
+        width = height = 0
+        for Qvary in self.Qt_Qvarys.values():
+            size = Qvary.minimumSizeHint()
+            width = max(width, size.width())
+            height = max(height, size.height())
+        margins = map(sum, zip(
+            self.Qt_varyD.getContentsMargins(),
+            self.Qt_varyD.widget().getContentsMargins(),
+            self.Qt_varyD.widget().widget().getContentsMargins(),
+            self.Qt_varyD.widget().widget().layout().getContentsMargins()
+        ))
+        width += margins[0] + margins[2]
+        height += margins[1] + margins[3]
+        self.Qt_varyD.setMinimumSize(width, height)
+
     def UI_calls_init(self):
         """Initialize all calls."""
         self.Qt_setting += 1
@@ -803,6 +848,15 @@ class GUI_Qt(GUI):
         else:
             self.UI_userange_change("inner", value)
 
+    def Qt_range_close(self):
+        sender = self.Qt_app.sender()
+        rangename = sender.rangename
+        if rangename in self.rangetypes["outer"]:
+            self.UI_userange_change("outer", None)
+        else:
+            self.UI_userange_change("inner", None)
+
+
     def Qt_option_toggle(self, checked):
         """Event: Toggle an option."""
         if self.Qt_setting:
@@ -839,6 +893,15 @@ class GUI_Qt(GUI):
                 tip = countername + "\n" + papi.events[countername]["long"]
             Qcounter.setToolTip(tip)
         self.UI_counters_change(counternames)
+
+    def Qt_vary_move(self, area):
+        """The vary dock moved to a different area."""
+        if area in (QtCore.Qt.TopDockWidgetArea,
+                    QtCore.Qt.BottomDockWidgetArea):
+            direction = QtGui.QBoxLayout.LeftToRight
+        else:
+            direction = QtGui.QBoxLayout.TopToBottom
+        self.Qt_vary.layout().setDirection(direction)
 
     def Qt_vary_close(self, event):
         """Event: Closed the vary window."""

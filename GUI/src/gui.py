@@ -217,7 +217,7 @@ class GUI(object):
             "options": {
                 "papi": False,
                 "header": False,
-                "vary": False,
+                "vary": True, # TODO: debug value
                 "omp": False
             },
             "showargs": {
@@ -230,7 +230,7 @@ class GUI(object):
             "header": "# script header\n",
             "nrep": 10,
             "calls": [[""]],
-            "vary": set(),
+            "vary": {},
             "datascale": 100,
             "defaultdim": 1000
         }
@@ -333,7 +333,8 @@ class GUI(object):
         symdict = {}
         if outervalmin is None and self.userange["outer"]:
             outervalmin = self.ranges[self.userange["outer"]].min()
-        symdict[self.rangevars[self.userange["outer"]]] = outervalmin
+        if outervalmin is not None:
+            symdict[self.rangevars[self.userange["outer"]]] = outervalmin
         if innervalmin is None and self.userange["inner"]:
             innervalmin = self.ranges[self.userange["inner"]](**symdict).min()
         minimum = next(self.range_eval(expr, outervalmin, innervalmin))
@@ -344,7 +345,8 @@ class GUI(object):
         symdict = {}
         if outervalmax is None and self.userange["outer"]:
             outervalmax = self.ranges[self.userange["outer"]].max()
-        symdict[self.rangevars[self.userange["outer"]]] = outervalmax
+        if outervalmax is not None:
+            symdict[self.rangevars[self.userange["outer"]]] = outervalmax
         if innervalmax is None and self.userange["inner"]:
             innervalmax = self.ranges[self.userange["inner"]](**symdict).max()
         maximum = next(self.range_eval(expr, outervalmax, innervalmax))
@@ -393,7 +395,8 @@ class GUI(object):
             self.data = {}
             for callid in range(len(self.calls)):
                 self.data_update(callid)
-            self.vary = {name for name in self.vary if name in self.data}
+                self.vary = {name: vary for name, vary in self.vary.iteritems()
+                             if name in self.data}
             return
         call = self.calls[callid]
         if not isinstance(call, signature.Call):
@@ -576,6 +579,7 @@ class GUI(object):
                 oldvalue in self.sampler["kernels"]):
             self.UI_submit_setenabled()
             self.UI_call_set(callid, 0)
+            self.UI_vary_init()
 
     def arg_set(self, callid, argid, value):
         """Set an argument and apply corresponding updates."""
@@ -590,6 +594,7 @@ class GUI(object):
             self.connections_apply(callid)
             self.data_update()
             self.UI_calls_set(callid, argid)
+            self.UI_vary_set()
             self.UI_data_viz()
         elif isinstance(arg, signature.Scalar):
             call[argid] = self.range_parse(value)
@@ -612,6 +617,7 @@ class GUI(object):
                 call[argid] = value
                 self.connections_update()
                 self.data_update()
+                self.UI_vary_init()
                 self.UI_call_set(callid, argid)
         elif isinstance(arg, (signature.Ld, signature.Inc)):
             call[argid] = self.range_parse(value)
@@ -677,6 +683,7 @@ class GUI(object):
         self.connections_apply(callid)
         self.infer_lds()
         self.data_update()
+        self.UI_vary_init()
         self.UI_calls_set()
 
     def data_override_cancel(self, callid, argid, value):
@@ -1022,6 +1029,7 @@ class GUI(object):
         self.UI_useranges_set()
         self.UI_options_set()
         self.UI_ranges_set()
+        self.UI_vary_init()
         self.UI_calls_init()
         self.UI_submit_setenabled()
 
@@ -1104,6 +1112,16 @@ class GUI(object):
             if rangetype == "outer":
                 for innername in self.rangetypes["inner"]:
                     self.ranges[innername] = self.ranges[innername](**subst)
+            # get rid of range in varys
+            for name in self.data:
+                if name not in self.vary:
+                    continue
+                vary = self.vary[name]
+                if rangetype == "inner":
+                    vary["across"].discard(self.userange["inner"])
+                    if not vary["across"]:
+                        del self.vary[name]
+                # TODO remove rangevar from vary offset
             self.data_update()
             self.UI_calls_set()
         self.userange[rangetype] = rangename
@@ -1112,6 +1130,7 @@ class GUI(object):
         self.userange[rangetype] = rangename
         self.UI_useranges_set()
         self.UI_options_set()
+        self.UI_vary_set()
 
     def UI_rangevar_change(self, rangename, value):
         """Event: Range variable changed."""
@@ -1119,15 +1138,19 @@ class GUI(object):
             # TODO: notify user
             return
         subst = {self.rangevars[rangename]: symbolic.Symbol(value)}
+        # change variable name in calls
         for call in self.calls:
             for argid, arg in enumerate(call):
                 if isinstance(arg, symbolic.Expression):
                     call[argid] = arg.substitute(**subst)
+        # change variable name in inner range
         if rangename in self.rangetypes["outer"]:
             for innername in self.rangetypes["inner"]:
                 self.ranges[innername] = self.ranges[innername](**subst)
+        # TODO: change variable name vary offsets
         self.rangevars[rangename] = value
         self.data_update()
+        self.UI_vary_set()
         self.UI_calls_set()
 
     def UI_range_change(self, rangename, value):
@@ -1177,16 +1200,21 @@ class GUI(object):
         else:
             self.arg_set(callid, argid, value)
 
-    def UI_vary_change(self, callid, argid, state):
+    def UI_vary_change(self, name, vary):
         """Event: Changed how operands vary."""
-        name = self.calls[callid][argid]
-        if name is None:
-            return
-        if state:
-            self.vary.add(name)
+        if vary is False:
+            del self.vary[name]
+        elif vary is True:
+            self.vary[name] = {
+                "across": set(["reps"]),
+                "along": 1,
+                "offset": 0
+            }
         else:
-            self.vary.discard(name)
-        self.UI_data_viz()
+            self.vary[name] = vary
+            if not vary["across"]:
+                del self.vary[name]
+        self.UI_vary_set(name)
 
     def UI_jobkill(self, jobid):
         """Event: Kill a job."""
