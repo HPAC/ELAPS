@@ -17,7 +17,7 @@ class GUI(object):
     """Base class for GUIs."""
 
     requiredbuildversion = 1423087329
-    requiredstateversion = 1423087329
+    requiredstateversion = 1423793808
     state = {}
 
     def __init__(self, loadstate=True):
@@ -190,6 +190,30 @@ class GUI(object):
         self.state = state
         self.sampler_set(samplername, True)
 
+    def state_fromstring(self, string):
+        """Load the state from a string."""
+        env = symbolic.__dict__.copy()
+        env.update(signature.__dict__)
+        state = eval(string, env)
+        if state["stateversion"] < self.requiredstateversion:
+            raise Exception("state outdated")
+        if "sampler" in state:
+            del state["sampler"]
+        if "submittime" in state:
+            del state["submittime"]
+        self.state_fromflat(state)
+
+    def state_load(self, filename):
+        """Try to laod the state from a file."""
+        try:
+            with open(filename) as fin:
+                self.state_fromstring(fin.read())
+            self.log("loaded state from", os.path.relpath(filename))
+            return True
+        except:
+            self.alert("could not load state from", os.path.relpath(filename))
+            return False
+
     def state_reset(self):
         """Reset the state to an initial configuration."""
         sampler = self.samplers[min(self.samplers)]
@@ -217,7 +241,7 @@ class GUI(object):
             "options": {
                 "papi": False,
                 "header": False,
-                "vary": True, # TODO: debug value
+                "vary": True,  # TODO: debug value
                 "omp": False
             },
             "showargs": {
@@ -240,30 +264,6 @@ class GUI(object):
                 ("dgemm_", "N", "N", n, n, n, 1, "A", n, "B", n, 1, "C", n)
             ]
         self.state_fromflat(state)
-
-    def state_fromstring(self, string):
-        """Load the state from a string."""
-        env = symbolic.__dict__.copy()
-        env.update(signature.__dict__)
-        state = eval(string, env)
-        if state["stateversion"] < self.requiredstateversion:
-            raise Exception
-        if "sampler" in state:
-            del state["sampler"]
-        if "submittime" in state:
-            del state["submittime"]
-        self.state_fromflat(state)
-
-    def state_load(self, filename):
-        """Try to laod the state from a file."""
-        try:
-            with open(filename) as fin:
-                self.state_fromstring(fin.read())
-            self.log("loaded state from", os.path.relpath(filename))
-            return True
-        except:
-            self.alert("could not load state from", os.path.relpath(filename))
-            return False
 
     # info string
     def sampler_about_str(self):
@@ -358,17 +358,16 @@ class GUI(object):
         """Compute the maximum dimension across all data."""
         result = 0
         for data in self.data.itervalues():
-            sym = data["sym"]
-            if isinstance(sym, symbolic.Prod):
-                datamax = max(max(self.range_eval(val)) for val in sym[1:])
-            else:
-                datamax = max(self.range_eval(sym))
+            if data["dims"] is None:
+                continue
+            datamax = max(max(self.range_eval(expr)) for expr in data["dims"])
             result = max(result, datamax)
         return result
 
     # inference system
     def infer_lds(self, callid=None):
         """Update all leading dimensions."""
+        # TODO: vary along dim0
         if callid is None:
             for callid in range(len(self.calls)):
                 self.infer_lds(callid)
@@ -383,11 +382,7 @@ class GUI(object):
         call2.complete()
         for argid, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
-                if (self.showargs["lds"] and
-                        not isinstance(call2[argid], symbolic.Expression)):
-                    call[argid] = max(call2[argid], call[argid])
-                else:
-                    call[argid] = call2[argid]
+                call[argid] = call2[argid]
 
     def data_update(self, callid=None):
         """update the data objects from the calls."""
@@ -401,41 +396,48 @@ class GUI(object):
         call = self.calls[callid]
         if not isinstance(call, signature.Call):
             return
-        compcall = call.copy()
-        mincall = call.copy()
-        symcall = call.copy()
+        sizecall = call.copy()  # only Data substituted
+        symcall = call.copy()  # symbolic, no lds
+        symldcall = call.copy()  # symbolic, lds
         for argid, arg in enumerate(call.sig):
             if isinstance(arg, signature.Data):
-                compcall[argid] = None
-                mincall[argid] = None
+                sizecall[argid] = None
                 symcall[argid] = None
+                symldcall[argid] = None
             elif isinstance(arg, (signature.Ld, signature.Inc)):
-                mincall[argid] = None
                 symcall[argid] = None
+                symldcall[argid] = symbolic.Symbol("." + arg.name)
             elif isinstance(arg, signature.Dim):
                 symcall[argid] = symbolic.Symbol("." + arg.name)
-        compcall.complete()
-        mincall.complete()
+                symldcall[argid] = symbolic.Symbol("." + arg.name)
+        sizecall.complete()
         symcall.complete()
+        symldcall.complete()
         argdict = {"." + arg.name: val for arg, val in zip(call.sig, call)}
-        argnamedict = {"." + arg.name: symbolic.Symbol(arg.name)
-                       for arg in call.sig}
         for argid in call.sig.dataargs():
             name = call[argid]
             if name is None:
                 continue
-            self.data[name] = {
-                "comp": compcall[argid],
-                "min": mincall[argid],
-                "sym": None,
-                "symnames": None,
-                "type": call.sig[argid].__class__,
-            }
-            if symcall[argid] is not None:
-                self.data[name]["sym"] = symcall[argid].substitute(**argdict)
-                self.data[name]["symnames"] = symcall[argid].substitute(
-                    **argnamedict
-                )
+            data = {}
+            data["size"] = sizecall[argid]
+            data["type"] = call.sig[argid].__class__
+            # dimensions
+            sym = symcall[argid]
+            if isinstance(sym, symbolic.Prod):
+                data["dims"] = [dim(**argdict) for dim in sym[1:]]
+            elif isinstance(sym, symbolic.Expression):
+                data["dims"] = [sym(**argdict)]
+            else:
+                data["dims"] = sym
+            # leading dimension
+            symld = symldcall[argid]
+            if isinstance(symld, symbolic.Prod):
+                data["lds"] = [dim(**argdict) for dim in symld[1:]]
+            elif isinstance(symld, symbolic.Expression):
+                data["lds"] = [symld(**argdict)]
+            else:
+                data["lds"] = symld
+            self.data[name] = data
 
     def connections_update(self):
         """Update the argument connections based on data reuse."""
@@ -704,25 +706,30 @@ class GUI(object):
         """Generate commands for the sampler."""
         cmds = []
 
+        # common expressions
+        userange_outer = self.userange["outer"]
+        userange_inner = self.userange["inner"]
+        print(userange_inner)
+
         def varname(name, outerval, rep, innerval):
             """Construct a variable name."""
-            if not self.options["vary"]:
+            if not self.options["vary"] or name not in self.vary:
                 return name
-            if name not in self.vary:
-                return name
+            vary = self.vary[name]
             parts = [name]
-            if outerval is not None:
+            if userange_outer:
                 parts.append(outerval)
-            parts.append(rep)
-            if innerval is not None:
+            if "reps" in vary["across"]:
+                parts.append(rep)
+            if userange_inner in vary["across"]:
                 parts.append(innerval)
             return "_".join(map(str, parts))
 
         outervals = None,
-        if self.userange["outer"] == "threads":
+        if userange_outer == "threads":
             outervals = ntrangeval,
-        elif self.userange["outer"]:
-            outervals = self.ranges[self.userange["outer"]]
+        elif userange_outer:
+            outervals = self.ranges[userange_outer]
 
         if self.options["papi"] and len(self.counters):
             cmds.append(["########################################"])
@@ -733,86 +740,120 @@ class GUI(object):
             cmds.append([])
             cmds.append([])
 
-        if len(self.data):
-            cmds.append(["########################################"])
-            cmds.append(["# data                                 #"])
-            cmds.append(["########################################"])
-        cmdprefixes = {
-            signature.Data: "",
-            signature.iData: "i",
-            signature.sData: "s",
-            signature.dData: "d",
-            signature.cData: "s",
-            signature.zData: "z",
-        }
-        for name, data in self.data.iteritems():
-            cmds.append([])
-            cmds.append(["# %s" % name])
-            cmdprefix = cmdprefixes[data["type"]]
-            expr = data["comp"]
-            if not self.options["vary"] or name not in self.vary:
-                size = max(self.range_eval(expr, ntrangeval))
-                cmds.append([cmdprefix + "malloc", name, size])
-                continue
-            # argument varies
-            size = max(sum(self.range_eval_sum(expr, outerval))
-                       for outerval in outervals) * (self.nrep + 1)
-            cmds.append([cmdprefix + "malloc", name, size])
-            for outerval in outervals:
-                if self.userange["outer"] == "range":
-                    if self.userange["inner"]:
-                        cmds.append([])
-                    cmds.append(["# %s = %d" % (self.rangevars["range"],
-                                                outerval)])
-                innervals = None,
-                if self.userange["inner"]:
-                    innerrange = self.ranges[self.userange["inner"]]
-                    if self.userange["outer"]:
-                        innerrange = innerrange(**{
-                            self.rangevar[self.userange["outer"]]: outerval
-                        })
-                    innervals = list(innerrange)
-                offset = 0
-                for rep in range(self.nrep + 1):
-                    if self.userange["inner"]:
-                        cmds.append(["# repetition %d" % rep])
-                    for innerval in innervals:
-                        cmds.append([
-                            cmdprefix + "offset", name, offset,
-                            varname(name, outerval, rep, innerval)
-                        ])
-                        offset += next(self.range_eval(
-                            expr, outerval, innerval
-                        ))
-        if len(self.data):
-            cmds.append([])
-            cmds.append([])
+        def generate_data_cmds():
+            cmds = []
+            mallocs = []
+            cmdprefixes = {
+                signature.Data: "",
+                signature.iData: "i",
+                signature.sData: "s",
+                signature.dData: "d",
+                signature.cData: "s",
+                signature.zData: "z",
+            }
+            for name, data in self.data.iteritems():
+                cmds.append([])
+                cmds.append(["# %s" % name])
+                cmdprefix = cmdprefixes[data["type"]]
+                if not self.options["vary"] or name not in self.vary:
+                    size = max(self.range_eval(data["size"], ntrangeval))
+                    mallocs.append([cmdprefix + "malloc", name, size])
+                    continue
+                # argument varies
+                vary = self.vary[name]
+                repvals = None,
+                if "reps" in self.vary["across"]:
+                    repvals = range(self.nrep + 1)
+                size_max = 0
+                offset_max = 0
+                for outerval in outervals:
+                    innervals = None,
+                    if userange_outer:
+                        cmds.append(["#", self.rangevars[userange_outer], "=",
+                                     outerval])
+                    if userange_inner:
+                        innerrange = self.ranges[userange_inner]
+                        if userange_outer:
+                            innerrange = innerrange(**{
+                                self.rangevar[userange_outer]: outerval
+                            })
+                        innervals = list(innerrange)
+                    offset_rep = 0
+                    for rep in repvals:
+                        if "reps" in vary["across"]:
+                            offset_rep = offset_max
+                        else:
+                            offset_rep = 0
+                        if userange_inner not in vary["across"]:
+                            # not varying in inner loop
+                            cmds.append([
+                                cmdprefix + "offset", name, offset_rep,
+                                varname(name, outerval, rep, None)
+                            ])
+                        else:
+                            cmds.append(["# repetition", rep])
+                        offset = offset_rep
+                        for innerval in innervals:
+                            if userange_inner in vary["across"]:
+                                cmds.append([
+                                    cmdprefix + "offset", name, offset,
+                                    varname(name, outerval, rep, innerval)
+                                ])
+                            else:
+                                offset = offset_rep
+                            # compute next offset
+                            dim = 1
+                            for idx in range(vary["along"]):
+                                dim *= self.range_eval(data["lds"][idx],
+                                                       outerval, innerval)
+                            dim *= self.range_eval(data["dims"][vary["along"]],
+                                                   outerval, innerval)
+                            offset += dim + self.range_eval(data["offset"],
+                                                            outerval, innerva)
+                            # update max size and offset
+                            offset_max = max(offset_max, offset)
+                            size = next(self.range_eval(data["size"], outerval,
+                                                        innerval))
+                            size_max = max(size_max, offset + size)
+                mallocs.append([cmdprefix + "malloc", name,  sizemax])
+            for cmd in reversed(mallocs):
+                cmds.insert(0, cmd)
+            if len(self.data):
+                cmds.insert(0, ["########################################"])
+                cmds.insert(0, ["# data                                 #"])
+                cmds.insert(0, ["########################################"])
+                cmds.append([])
+                cmds.append([])
+
+            return cmds
+
+        cmds += generate_data_cmds()
 
         # calls
         cmds.append(["########################################"])
         cmds.append(["# calls                                #"])
         cmds.append(["########################################"])
         for outerval in outervals:
-            if self.userange["outer"] == "range":
+            if userange_outer == "range":
                 cmds.append([])
                 cmds.append(["# %s = %d" % (self.rangevars["range"],
                                             outerval)])
             innervals = None,
-            if self.userange["inner"]:
-                innerrange = self.ranges[self.userange["inner"]]
-                if self.userange["outer"]:
+            if userange_inner:
+                innerrange = self.ranges[userange_inner]
+                if userange_outer:
                     innerrange = innerrange(**{
-                        self.rangevar[self.userange["outer"]]: outerval
+                        self.rangevars[userange_outer]: outerval
                     })
                 innervals = list(innerrange)
             for rep in range(self.nrep + 1):
-                if self.userange["inner"]:
+                if userange_inner:
                     cmds.append([])
                     cmds.append(["# repetition %d" % rep])
-                if self.userange["inner"] == "omp":
+                if userange_inner == "omp":
                     cmds.append(["{omp"])
                 for innerval in innervals:
-                    if self.userange["inner"] != "omp" and self.options["omp"]:
+                    if userange_inner != "omp" and self.options["omp"]:
                         cmds.append(["{omp"])
                     for call in self.calls:
                         if isinstance(call, signature.Call):
@@ -849,9 +890,9 @@ class GUI(object):
                                         ))
                                         call[argid] = str(value)
                         cmds.append(cmd)
-                    if self.userange["inner"] != "omp" and self.options["omp"]:
+                    if userange_inner != "omp" and self.options["omp"]:
                         cmds.append(["}"])
-                if self.userange["inner"] == "omp":
+                if userange_inner == "omp":
                     cmds.append(["}"])
             cmds.append(["go"])
 

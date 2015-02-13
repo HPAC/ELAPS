@@ -107,35 +107,25 @@ class QDataArg(QtGui.QLineEdit):
             self.viz_none()
             return
         data = self.Qt_gui.data[value]
-        if data["sym"] is None:
+        if data["dims"] is None:
             self.viz_none()
             return
-        if isinstance(data["sym"], symbolic.Prod):
-            # we're good
-            dim = data["sym"][1:]
-        else:
-            # try simplifying
-            sym = data["sym"]
-            if isinstance(data["sym"], symbolic.Expression):
-                sym = data["sym"].simplify()
-            dim = [sym]
-            if isinstance(sym, symbolic.Prod):
-                dim = sym[1:]
+        dims = data["dims"]
         # compute min and max from range
         dimmin = []
         dimmax = []
-        for expr in dim:
+        for expr in dims:
             rangemin, rangemax = self.Qt_gui.range_eval_minmax(expr)
             if rangemin is None or rangemax is None:
                 self.viz_none()
                 return
             dimmin.append(rangemin)
             dimmax.append(rangemax)
-        if len(dim) == 1:
+        if len(dims) == 1:
             self.viz_vector(dimmin, dimmax)
-        elif len(dim) == 2:
+        elif len(dims) == 2:
             self.viz_matrix(dimmin, dimmax)
-        elif len(dim) == 3:
+        elif len(dims) == 3:
             self.viz_tensor(dimmin, dimmax)
 
     def viz_none(self):
