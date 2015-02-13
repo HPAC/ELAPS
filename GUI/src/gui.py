@@ -730,10 +730,13 @@ class GUI(object):
         # common expressions
         userange_outer = self.userange["outer"]
         userange_inner = self.userange["inner"]
-        print(userange_inner)
+        rangevar_outer = self.rangevars[userange_outer]
 
         def varname(name, outerval, rep, innerval):
-            """Construct a variable name."""
+            """Construct a variable name.
+
+            Format: <name>[_<outerval>][_<rep>][_<innerval>]
+            """
             if not self.options["vary"] or name not in self.vary:
                 return name
             vary = self.vary[name]
@@ -753,182 +756,237 @@ class GUI(object):
             outervals = self.ranges[userange_outer]
 
         if self.options["papi"] and len(self.counters):
-            cmds.append(["########################################"])
-            cmds.append(["# counters                             #"])
-            cmds.append(["########################################"])
-            cmds.append([])
-            cmds.append(["set_counters"] + list(filter(None, self.counters)))
-            cmds.append([])
-            cmds.append([])
+            cmds += [
+                ["########################################"],
+                ["# counters                             #"],
+                ["########################################"],
+                [],
+                ["set_counters"] + list(filter(None, self.counters)),
+                [], []
+            ]
 
-        def generate_data_cmds():
-            cmds = []
-            mallocs = []
-            cmdprefixes = {
-                signature.Data: "",
-                signature.iData: "i",
-                signature.sData: "s",
-                signature.dData: "d",
-                signature.cData: "s",
-                signature.zData: "z",
-            }
-            for name, data in self.data.iteritems():
-                cmds.append([])
-                cmds.append(["# %s" % name])
-                cmdprefix = cmdprefixes[data["type"]]
-                if not self.options["vary"] or name not in self.vary:
-                    size = max(self.range_eval(data["size"], ntrangeval))
-                    mallocs.append([cmdprefix + "malloc", name, size])
-                    continue
-                # argument varies
-                vary = self.vary[name]
-                repvals = None,
-                if "reps" in self.vary["across"]:
-                    repvals = range(self.nrep + 1)
-                size_max = 0
-                offset_max = 0
-                for outerval in outervals:
-                    innervals = None,
+        if len(self.data):
+            cmds += [
+                ["########################################"],
+                ["# data                                 #"],
+                ["########################################"]
+            ]
+
+        # datatype prefixes for malloc and offset commands
+        cmdprefixes = {
+            signature.Data: "",
+            signature.iData: "i",
+            signature.sData: "s",
+            signature.dData: "d",
+            signature.cData: "s",
+            signature.zData: "z",
+        }
+
+        # go over all operands
+        for name, data in self.data.iteritems():
+            cmdprefix = cmdprefixes[data["type"]]
+
+            # comment
+            cmds += [[], ["# %s" % name]]
+
+            if not self.options["vary"] or name not in self.vary:
+                # argumnet doesn't vary
+                size = max(self.range_eval(data["size"], ntrangeval))
+                cmds.append([cmdprefix + "malloc", name, size])
+                continue
+            # operand varies
+
+            # set up some reused variables
+            across = self.vary[name]["across"]
+            along = self.vary[name]["along"]
+            repvals = None,
+            if "reps" in across:
+                repvals = range(self.nrep + 1)
+
+            # init result variables
+            offsetcmds = []
+            size_max = 0
+            offset_max = 0
+            # go over outer range
+            for outerval in outervals:
+                innervals = None,
+                if uouterval is not None:
+                    # comment
+                    offsetcmds.append(["#", rangevar_outer, "=", outerval])
+                if userange_inner:
+                    # prepare inner range
+                    innerrange = self.ranges[userange_inner]
                     if userange_outer:
-                        cmds.append(["#", self.rangevars[userange_outer], "=",
-                                     outerval])
-                    if userange_inner:
-                        innerrange = self.ranges[userange_inner]
-                        if userange_outer:
-                            innerrange = innerrange(**{
-                                self.rangevar[userange_outer]: outerval
-                            })
-                        innervals = list(innerrange)
+                        innerrange = innerrange(**{rangevars_outer: outerval})
+                    innervals = list(innerrange)
+
+                # go over repetitions
+                for rep in repvals:
+                    # offset for repetitions
                     offset_rep = 0
-                    for rep in repvals:
-                        if "reps" in vary["across"]:
-                            offset_rep = offset_max
-                        else:
-                            offset_rep = 0
-                        if userange_inner not in vary["across"]:
-                            # not varying in inner loop
-                            cmds.append([
-                                cmdprefix + "offset", name, offset_rep,
-                                varname(name, outerval, rep, None)
+                    if "reps" in across:
+                        # operand varies across repetitions
+                        offset_rep = offset_max
+
+                    if userange_inner not in across:
+                        # operand doesn't vary in inner range (1 offset)
+                        offsetcmds.append([
+                            cmdprefix + "offset", name, offset_rep,
+                            varname(name, outerval, rep, None)
+                        ])
+                    else:
+                        # comment (multiple offsets)
+                        offsetcmds.append(["# repetition", rep])
+
+                    # offset for inner rnage
+                    offset = offset_rep
+                    # go over inner range
+                    for innerval in innervals:
+                        if userange_inner in across:
+                            # operand varies in inner range (offset)
+                            offsetcmds.append([
+                                cmdprefix + "offset", name, offset,
+                                varname(name, outerval, rep, innerval)
                             ])
                         else:
-                            cmds.append(["# repetition", rep])
-                        offset = offset_rep
-                        for innerval in innervals:
-                            if userange_inner in vary["across"]:
-                                cmds.append([
-                                    cmdprefix + "offset", name, offset,
-                                    varname(name, outerval, rep, innerval)
-                                ])
-                            else:
-                                offset = offset_rep
-                            # compute next offset
-                            dim = 1
-                            for idx in range(vary["along"]):
-                                dim *= self.range_eval(data["lds"][idx],
-                                                       outerval, innerval)
-                            dim *= self.range_eval(data["dims"][vary["along"]],
-                                                   outerval, innerval)
-                            offset += dim + self.range_eval(data["offset"],
-                                                            outerval, innerva)
-                            # update max size and offset
-                            offset_max = max(offset_max, offset)
-                            size = next(self.range_eval(data["size"], outerval,
-                                                        innerval))
-                            size_max = max(size_max, offset + size)
-                mallocs.append([cmdprefix + "malloc", name,  sizemax])
-            for cmd in reversed(mallocs):
-                cmds.insert(0, cmd)
-            if len(self.data):
-                cmds.insert(0, ["########################################"])
-                cmds.insert(0, ["# data                                 #"])
-                cmds.insert(0, ["########################################"])
-                cmds.append([])
-                cmds.append([])
+                            # offset is the same every iteration
+                            offset = offset_rep
+                        # compute next offset
+                        dim = 1
+                        for idx in range(along):
+                            # multiply leading dimensions for skipped dims
+                            dim *= self.range_eval(data["lds"][idx], outerval,
+                                                   innerval)
+                        # dimension for traversed dim
+                        dim *= self.range_eval(data["dims"][along], outerval,
+                                               innerval)
+                        # add custom offset
+                        offset += dim + self.range_eval(data["offset"],
+                                                        outerval, innerva)
+                        # update max size and offset
+                        offset_max = max(offset_max, offset)
+                        size = next(self.range_eval(data["size"], outerval,
+                                                    innerval))
+                        size_max = max(size_max, offset + size)
 
-            return cmds
+            # malloc with needed size before offsetting
+            cmds.append([cmdprefix + "malloc", name,  size_max])
+            cmds += offsetcmds
 
-        cmds += generate_data_cmds()
+        if len(self.data):
+            cmds += [[], []]
 
-        # calls
-        cmds.append(["########################################"])
-        cmds.append(["# calls                                #"])
-        cmds.append(["########################################"])
+        cmds += [
+            ["########################################"],
+            ["# calls                                #"],
+            ["########################################"]
+        ]
+
+        # go over outer range
         for outerval in outervals:
             if userange_outer == "range":
-                cmds.append([])
-                cmds.append(["# %s = %d" % (self.rangevars["range"],
-                                            outerval)])
+                # comment
+                cmds += [[], ["# %s = %d" % (rangevar_outer, outerval)]]
+
+            # set up inner range values
             innervals = None,
             if userange_inner:
                 innerrange = self.ranges[userange_inner]
                 if userange_outer:
-                    innerrange = innerrange(**{
-                        self.rangevars[userange_outer]: outerval
-                    })
+                    innerrange = innerrange(**{rangevar_outer: outerval})
                 innervals = list(innerrange)
+
+            # go over repetitions
             for rep in range(self.nrep + 1):
                 if userange_inner:
-                    cmds.append([])
-                    cmds.append(["# repetition %d" % rep])
+                    # commentsj
+                    cmds += [[], ["# repetition %d" % rep]]
                 if userange_inner == "omp":
+                    # begin omp range
                     cmds.append(["{omp"])
+
+                # go over inner range
                 for innerval in innervals:
                     if userange_inner != "omp" and self.options["omp"]:
+                        # begin parallel calls
                         cmds.append(["{omp"])
+
+                    # go over calls
                     for call in self.calls:
                         if isinstance(call, signature.Call):
+                            # call with signature
+
+                            # evaluate symbolic arguments
                             call = call.sig(*[
                                 next(self.range_eval(val, outerval, innerval))
                                 for val in call[1:]
                             ])
+                            # format for the sampler
                             cmd = call.format_sampler()
+                            # place operand variables
                             for argid in call.sig.dataargs():
                                 cmd[argid] = varname(
                                     cmd[argid], outerval, rep, innerval
                                 )
                         else:
-                            # call without proper signature
+                            # call without signature
                             cmd = call[:]
                             minsig = self.sampler["kernels"][call[0]]
+
+                            # go over arguments
                             for argid, value in enumerate(call):
                                 if argid == 0 or minsig[argid] == "char":
                                     # chars don't need further processing
                                     continue
                                 if isinstance(value, str):
                                     if value[0] == "[" and value[-1] == "]":
+                                        # parse string as array argument [ ]
                                         expr = self.range_parse(value[1:-1])
                                         if expr is not None:
                                             value = next(self.range_eval(
                                                 expr, outerval, innerval
                                             ))
-                                        call[argid] = "[" + str(value) + "]"
+                                            call[argid] = "[%s]" % str(value)
+                                        # TODO: parse list argument
                                 else:
+                                    # parse scalar arguments
                                     expr = self.range_parse(value)
                                     if expr is not None:
                                         value = next(self.range_eval(
                                             expr, outerval, innerval
                                         ))
                                         call[argid] = str(value)
+
+                        # add created call
                         cmds.append(cmd)
+
                     if userange_inner != "omp" and self.options["omp"]:
+                        # end parallel calls
                         cmds.append(["}"])
+
                 if userange_inner == "omp":
+                    # end omp range
                     cmds.append(["}"])
+
+            # execute outer range iteration
             cmds.append(["go"])
 
         return cmds
 
     def submit(self, filename):
         """Submit the current job."""
+        # prepare the filenames
         filebase = filename
         if filename[-5:] == ".smpl":
             filebase = filebase[:-5]
         scriptfile = filebase + ".script"
         smplfile = filebase + ".smpl"
         errfile = filebase + ".err"
+
+        # get the jobname
         jobname = os.path.basename(filebase)
 
+        # some shorthands
         header = self.sampler["backend_header"]
         prefix = self.sampler["backend_prefix"]
         suffix = self.sampler["backend_suffix"]
@@ -940,10 +998,11 @@ class GUI(object):
 
         script = ""
 
-        # header
+        # backend header
         if header:
             script += header.format(nt=self.nt) + "\n"
 
+        # script header (from GUI)
         if self.options["header"]:
             script += self.header + "\n"
 
@@ -964,7 +1023,6 @@ class GUI(object):
                                     * (self.nrep + 1))
         elif self.options["omp"]:
             reportinfo["nlines"] /= len(self.calls)
-
         script += "cat > %s <<REPORTINFO\n%s\nREPORTINFO\n" % (
             smplfile, repr(reportinfo)
         )
@@ -972,10 +1030,14 @@ class GUI(object):
         # timing
         script += "date +%%s >> %s\n" % smplfile
 
+        # set up #threads range
         ntvals = self.nt,
         if self.userange["outer"] == "threads":
             ntvals = self.ranges["threads"]
+
+        # go over #threads range
         for ntval in ntvals:
+            # filename for commands
             if self.userange["outer"] == "threads":
                 callfile = filebase + ".%d.calls" % ntval
             else:
@@ -993,14 +1055,17 @@ class GUI(object):
             # compute omp thread count
             ompthreads = 1
             if self.userange["inner"] == "omp":
+                # omp range
                 ompthreads = len(self.calls) * len(self.ranges["omp"])
             elif self.options["omp"]:
+                # parallel calls
                 ompthreads = len(self.calls)
 
-            # add script part
+            # sampler invocation
             if prefix:
                 script += prefix.format(nt=ntval) + " "
-            script += "OMP_NUM_THREADS=%d " % ompthreads
+            if ompthreads != 1:
+                script += "OMP_NUM_THREADS=%d " % ompthreads
             script += "%(x)s < %(i)s >> %(o)s 2>> %(e)s" % {
                 "x": self.sampler["sampler"],  # executable
                 "i": callfile,  # input

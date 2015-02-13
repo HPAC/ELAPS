@@ -867,13 +867,13 @@ class GUI_Qt(GUI):
             self.UI_userange_change("inner", value)
 
     def Qt_range_close(self):
+        """Event: Closed a range."""
         sender = self.Qt_app.sender()
         rangename = sender.rangename
         if rangename in self.rangetypes["outer"]:
             self.UI_userange_change("outer", None)
         else:
             self.UI_userange_change("inner", None)
-
 
     def Qt_option_toggle(self, checked):
         """Event: Toggle an option."""
