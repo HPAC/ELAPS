@@ -1,12 +1,12 @@
-FLAPS
+ELAPS
 ==========
 
-Framework for Linear Algebra Performance Studies
+Experimental Linear Algebra Performance Studies
 
-What is FLAPS?
+What is ELAPS?
 ---------
 
-FLAPS provides an intuitive interface to common performance related questions
+ELAPS provides an intuitive interface to common performance related questions
 regarding dense linear algebra kernels and algorithms, such as
 * How fast is my BLAS implementation on this system?
 * How well does my BLAS implementation use my system's resources?
@@ -85,3 +85,14 @@ common package managers.
 * AptGet (Debian, Ubuntu)
 
     sudo apt-get install python-qt4 python-matplotlib
+
+
+Bugs
+----
+
+This project is in a early stage, so bugs are to be expected (especially in the
+GUI).  If you found one, please file an issue detailing how you reached the
+problem and the error message or stack trace if any is printed in the console.
+Thank you!
+
+* [There are currently no known bugs]
