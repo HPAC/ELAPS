@@ -116,20 +116,8 @@ class GUI(object):
 
     def signatures_init(self):
         """Load all available signatures."""
+        self.signaturepath = os.path.join(self.rootpath, "GUI", "signatures")
         self.signatures = {}
-        signaturepath = os.path.join(self.rootpath, "GUI", "signatures")
-        for path, _, files in os.walk(signaturepath, followlinks=True):
-            for filename in files:
-                if filename[0] == "." or filename[-6:] != ".pysig":
-                    continue
-                try:
-                    sig = signature.Signature(file=os.path.join(path,
-                                                                filename))
-                    self.signatures[str(sig[0])] = sig
-                except:
-                    self.alert("couldn't load", os.path.relpath(filename))
-        self.log("loaded", len(self.signatures), "signatures:",
-                 *sorted(self.signatures))
         self.nosigwarning_shown = False
 
     def state_init(self, load=True):
@@ -168,8 +156,8 @@ class GUI(object):
         calls = list(map(list, state["calls"]))
         # apply signatures
         for callid, call in enumerate(calls):
-            if call[0] in self.signatures:
-                sig = self.signatures[call[0]]
+            sig = self.signature_get(call[0])
+            if sig:
                 try:
                     calls[callid] = sig(*call[1:])
                 except:
@@ -283,6 +271,18 @@ class GUI(object):
                 sampler["nt_max"] / 1e9
             )
         return info
+
+    # signatures
+    def signature_get(self, routine):
+        """Try to fetch the documentation for a routine."""
+        if routine not in self.signatures:
+            try:
+                filename = os.path.join(self.signaturepath, routine + ".pysig")
+                self.signatures[routine] = signature.Signature(file=filename)
+                self.log("loaded signature for %r" % routine)
+            except:
+                self.signatures[routine] = None
+        return self.signatures[routine]
 
     # range routines
     def range_symdict(self, outer=True, inner=True):
@@ -547,15 +547,15 @@ class GUI(object):
         if setall:
             self.UI_setall()
 
-    def routine_set(self, callid, value):
+    def routine_set(self, callid, routine):
         """Set the routine and initialize its arguments."""
-        oldvalue = self.calls[callid][0]
-        if value in self.sampler["kernels"]:
-            minsig = self.sampler["kernels"][value]
-            call = [value] + (len(minsig) - 1) * [None]
+        oldroutine = self.calls[callid][0]
+        if routine in self.sampler["kernels"]:
+            minsig = self.sampler["kernels"][routine]
+            call = [routine] + (len(minsig) - 1) * [None]
             self.calls[callid] = call
-            if value in self.signatures:
-                sig = self.signatures[value]
+            sig = self.signature_get(routine)
+            if sig:
                 if len(sig) == len(minsig):
                     # TODO: better sanity check ?
                     try:
@@ -587,13 +587,13 @@ class GUI(object):
                            len(sig) - 1)
                     )
         else:
-            call = [value]
-            self.calls[callid] = [value]
+            call = [routine]
+            self.calls[callid] = [routine]
         self.calls[callid] = call
         self.connections_update()
         self.data_update()
-        if (value in self.sampler["kernels"] or
-                oldvalue in self.sampler["kernels"]):
+        if (routine in self.sampler["kernels"] or
+                oldroutine in self.sampler["kernels"]):
             self.UI_submit_setenabled()
             self.UI_call_set(callid, 0)
             self.UI_vary_init()
