@@ -93,6 +93,10 @@ class Symbol(Expression):
         else:
             return self
 
+    def findsymbols(self):
+        """Find all contained symbols: self is a symbol."""
+        return set([self.name])
+
 
 class Operation(Expression, list):
 
@@ -129,6 +133,11 @@ class Operation(Expression, list):
             else:
                 args.append(arg)
         return self.__class__(*args)
+
+    def findsymbols(self):
+        """Find all contained symbols."""
+        return set(arg.findsymbols() for arg in self[1:]
+                   if isinstance(arg, Expression))
 
 
 class Minus(Operation):

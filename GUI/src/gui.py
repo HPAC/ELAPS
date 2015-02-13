@@ -353,6 +353,21 @@ class GUI(object):
 
         return minimum, maximum
 
+    def ranges_checkuseage(self):
+        symbols = set()
+        for call in self.calls:
+            for arg in call:
+                if isinstance(arg, symbolic.Expression):
+                    symbols |= arg.findsymbols()
+        result = {}
+        inner = self.userange["inner"]
+        if inner:
+            result[inner] = self.rangevars[inner] in symbols
+        outer= self.userange["outer"]
+        if outer:
+            result[outer] = self.rangevars[outer] in symbols
+        return result
+
     # simple data operations
     def data_maxdim(self):
         """Compute the maximum dimension across all data."""
@@ -601,6 +616,7 @@ class GUI(object):
         elif isinstance(arg, signature.Scalar):
             call[argid] = self.range_parse(value)
             self.UI_call_set(callid, argid)
+            self.UI_range_unusedalerts_set()
         elif isinstance(arg, signature.Dim):
             # evaluate value
             call[argid] = self.range_parse(value)
@@ -609,6 +625,7 @@ class GUI(object):
             self.data_update()
             self.UI_calls_set(callid, argid)
             self.UI_data_viz()
+            self.UI_range_unusedalerts_set()
         elif isinstance(arg, signature.Data):
             if not value:
                 value = None
@@ -625,6 +642,7 @@ class GUI(object):
             call[argid] = self.range_parse(value)
             self.data_update()
             self.UI_calls_set(callid, argid)
+            self.UI_range_unusedalerts_set()
         # calls without proper signatures
         else:
             if value is None:
@@ -637,8 +655,11 @@ class GUI(object):
                 call[argid] = None
                 if parsed is not None:
                     call[argid] = "[" + str(parsed) + "]"
+                # TODO: the check won't work for strings containing rangevars
+                self.UI_range_unusedalerts_set()
             else:
                 call[argid] = self.range_parse(value)
+                self.UI_range_unusedalerts_set()
             self.UI_call_set(callid, argid)
         self.UI_submit_setenabled()
 
@@ -1070,6 +1091,7 @@ class GUI(object):
         self.UI_useranges_set()
         self.UI_options_set()
         self.UI_ranges_set()
+        self.UI_range_unusedalerts_set()
         self.UI_vary_init()
         self.UI_calls_init()
         self.UI_submit_setenabled()
@@ -1077,17 +1099,7 @@ class GUI(object):
     # event handlers
     def UI_submit(self, filename):
         """Event: Submit a job."""
-        if (self.userange["inner"] or self.userange["outer"]) and \
-                (not any(isinstance(arg, symbolic.Expression)
-                         for call in self.calls for arg in call)):
-            self.UI_dialog(
-                "warning", "range not used",
-                "ranges are enabled but unused in the calls", {
-                    "Ok": (self.submit, (filename,)),
-                    "Cancel": None
-                })
-        else:
-            self.submit(filename)
+        self.submit(filename)
 
     def UI_state_reset(self):
         """Event: Reset the state."""

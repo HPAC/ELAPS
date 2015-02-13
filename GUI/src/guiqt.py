@@ -263,6 +263,15 @@ class GUI_Qt(GUI):
                 # stretch
                 layout.addStretch(1)
 
+                # unused warning
+                if rangename != "reps":
+                    unused = QtGui.QLabel()
+                    layout.addWidget(unused)
+                    unused.setPixmap(unused.style().standardPixmap(
+                        QtGui.QStyle.SP_MessageBoxWarning
+                    ).scaledToHeight(Qrange.sizeHint().height()))
+                    rangeW.unused = unused
+
                 # close
                 if rangename != "reps":
                     close = QtGui.QToolButton()
@@ -617,6 +626,15 @@ class GUI_Qt(GUI):
             Qrange.rangevar.setText(self.rangevars[rangename])
             Qrange.range.setText(str(self.ranges[rangename]))
         self.Qt_setting -= 1
+
+    def UI_range_unusedalerts_set(self):
+        """Set the unused alerts for all ranges appropriately."""
+        for rangename, usage in self.ranges_checkuseage().iteritems():
+            Qrange = self.Qt_ranges[rangename]
+            Qrange.unused.setVisible(not usage)
+            if not usage:
+                Qrange.setToolTip("Warning: %r is not used in any call!" %
+                                  self.rangevars[rangename])
 
     def UI_nrep_set(self):
         """Set the #repetitions."""
