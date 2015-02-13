@@ -245,6 +245,7 @@ class QCall(QtGui.QListWidgetItem):
             if not isinstance(sender, QDataArg):
                 width = sender.fontMetrics().width(val)
                 width += sender.minimumSizeHint().width()
+                width = min(width, sender.sizeHint().width())
                 height = sender.sizeHint().height()
                 if sender.argid == 0:
                     sender.setMinimumSize(max(height, width), height)

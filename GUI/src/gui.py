@@ -42,8 +42,10 @@ class GUI(object):
     # state access attributes
     def __getattr__(self, name):
         """Catch attribute accesses to state variables and sampler."""
+        # get state items
         if name in self.__dict__["state"]:
             return self.__dict__["state"][name]
+        # get sampler
         if name == "sampler":
             return self.samplers[self.samplername]
         raise AttributeError("%r object has no attribute %r" %
@@ -51,6 +53,7 @@ class GUI(object):
 
     def __setattr__(self, name, value):
         """Catch attribute accesses to state variables."""
+        # set state items
         if name in self.state:
             self.state[name] = value
         else:
@@ -163,7 +166,7 @@ class GUI(object):
                 except:
                     self.UI_alert(
                         ("Could not applying the signature '%s' to '%s(%s)'.\n"
-                         "Signature Ignored.") % (str(sig), call[0], call[1:])
+                         "Signature Ignored.") % (sig, call[0], call[1:])
                     )
         state["calls"] = calls
         # set ranges
@@ -180,15 +183,17 @@ class GUI(object):
 
     def state_fromstring(self, string):
         """Load the state from a string."""
+        # parse string in symbolic and signature aware environment
         env = symbolic.__dict__.copy()
         env.update(signature.__dict__)
         state = eval(string, env)
         if state["stateversion"] < self.requiredstateversion:
+            # state is too old
             raise Exception("state outdated")
-        if "sampler" in state:
-            del state["sampler"]
-        if "submittime" in state:
-            del state["submittime"]
+        # delete job attributes
+        for attr in ("sampler", "submittime", "filename", "ncalls"):
+            if attr in state:
+                del state[attr]
         self.state_fromflat(state)
 
     def state_load(self, filename):
@@ -241,7 +246,7 @@ class GUI(object):
             "counters": sampler["papi_counters_max"] * [None],
             "header": "# script header\n",
             "nrep": 10,
-            "calls": [[""]],
+            "calls": [],
             "vary": {},
             "datascale": 100,
             "defaultdim": 1000
@@ -305,21 +310,31 @@ class GUI(object):
 
     def range_eval(self, expr, outerval=None, innerval=None):
         """evaluate an symbolic expression for the ranges."""
+        # outer range values
         outervals = outerval,
         if outerval is None and self.userange["outer"]:
             outervals = iter(self.ranges[self.userange["outer"]])
+        # inner range
         if innerval is None and self.userange["inner"]:
             innerrange = self.ranges[self.userange["inner"]]
+
         symdict = {}
+        # go over outer range
         for outerval2 in outervals:
             if outerval2 is not None:
                 symdict[self.rangevars[self.userange["outer"]]] = outerval2
+
+            # inner range values
             innervals = innerval,
             if innerval is None and self.userange["inner"]:
                 innervals = iter(innerrange(**symdict))
+
+            # go over inner range
             for innerval2 in innervals:
                 if innerval2 is not None:
                     symdict[self.rangevars[self.userange["inner"]]] = innerval2
+
+                # evaluate expression
                 if isinstance(expr, symbolic.Expression):
                     yield expr(**symdict)
                 else:
@@ -354,47 +369,58 @@ class GUI(object):
         return minimum, maximum
 
     def ranges_checkuseage(self):
+        """Determine which active ranges are used in the calls."""
+        # collect all symbols used in calls
         symbols = set()
         for call in self.calls:
             for arg in call:
                 if isinstance(arg, symbolic.Expression):
                     symbols |= arg.findsymbols()
+
+        # check if inner range is used
         result = {}
         inner = self.userange["inner"]
         if inner:
             result[inner] = self.rangevars[inner] in symbols
-        outer= self.userange["outer"]
+
+        # check if outer range is used
+        outer = self.userange["outer"]
         if outer:
             result[outer] = self.rangevars[outer] in symbols
+
         return result
 
     # simple data operations
     def data_maxdim(self):
         """Compute the maximum dimension across all data."""
-        result = 0
-        for data in self.data.itervalues():
-            if data["dims"] is None:
-                continue
-            datamax = max(max(self.range_eval(expr)) for expr in data["dims"])
-            result = max(result, datamax)
-        return result
+        return max(self.range_eval_minmax(dim)[1]
+                   for data in self.data.itervalues() if data["dims"]
+                   for dim in data["dims"])
 
     # inference system
     def infer_lds(self, callid=None):
         """Update all leading dimensions."""
-        # TODO: vary along dim0
         if callid is None:
+            # infer lds for all calls
             for callid in range(len(self.calls)):
                 self.infer_lds(callid)
             return
+
         call = self.calls[callid]
         if not isinstance(call, signature.Call):
+            # only work on calls with signatures
             return
+
+        # TODO: vary along dims
+
+        # complete leading dimension arguments
         call2 = call.copy()
         for i, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
                 call2[i] = None
         call2.complete()
+
+        # set ld arguments
         for argid, arg in enumerate(call2.sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
                 call[argid] = call2[argid]
@@ -575,15 +601,15 @@ class GUI(object):
                         self.infer_lds(callid)
                     except:
                         self.UI_alert(
-                            ("Could not use the signature '%s'\n"
-                             "Signature Ignored") % str(sig)
+                            ("Could not use the signature %r\n"
+                             "Signature Ignored") % sig
                         )
                 else:
                     self.UI_alert(
                         ("Kernel %r of sampler %r has %d arguments,\n"
                          "however the signature '%s' requires %d.\n"
                          "Signature ignored.")
-                        % (value, self.samplername, len(minsig) - 1, str(sig),
+                        % (routine, self.samplername, len(minsig) - 1, sig,
                            len(sig) - 1)
                     )
         else:
@@ -750,7 +776,7 @@ class GUI(object):
             return "_".join(map(str, parts))
 
         outervals = None,
-        if userange_outer == "threads":
+        if ntrangeval is not None:
             outervals = ntrangeval,
         elif userange_outer:
             outervals = self.ranges[userange_outer]
@@ -809,12 +835,13 @@ class GUI(object):
             offset_max = 0
             # go over outer range
             for outerval in outervals:
-                innervals = None,
                 if uouterval is not None:
                     # comment
                     offsetcmds.append(["#", rangevar_outer, "=", outerval])
+
+                # prepare inner range
+                innervals = None,
                 if userange_inner:
-                    # prepare inner range
                     innerrange = self.ranges[userange_inner]
                     if userange_outer:
                         innerrange = innerrange(**{rangevars_outer: outerval})

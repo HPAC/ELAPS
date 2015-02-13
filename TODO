@@ -3,12 +3,12 @@ Sampler:
 
 
 GUI:
+- leading dimensions when vary is on
 - work variable hiding
 - work variable dimension deduction
 - README
 - Example GUI states
 
-- (dynamically load signatures => flatten signature folder)
 - ("file" backend)
 - (status tips)
 - (multiple BLAS at once)
