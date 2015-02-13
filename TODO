@@ -3,10 +3,10 @@ Sampler:
 
 
 GUI:
-- complex vary
 - work variable hiding
 - work variable dimension deduction
 - README
+- Example GUI states
 
 - (dynamically load signatures => flatten signature folder)
 - ("file" backend)
