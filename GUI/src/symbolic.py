@@ -48,7 +48,7 @@ class Expression(object):
         return self
 
     def simplify(self):
-        """Simplification."""
+        """Simplify the expression."""
         return self
 
     def __call__(self, **kwargs):
@@ -212,7 +212,7 @@ class Prod(Operation):
         return " * ".join(strs)
 
     def simplify(self):
-        """Simplify: flatten recursive products."""
+        """Simplify the operation."""
         num = 1
         args = []
         for arg in self[1:]:
@@ -251,7 +251,7 @@ class Plus(Operation):
         return " + ".join(map(str, self[1:]))
 
     def simplify(self):
-        """Simplify: flatten recursive sums."""
+        """Simplify the operation."""
         num = 0
         args = []
         for arg in self[1:]:
@@ -299,14 +299,9 @@ class Power(Operation):
         return strs[0] + " ** " + strs[1]
 
     def simplify(self):
-        """Simplify (no special cases)."""
-        base, exponent = self[1:]
-        if isinstance(base, Operation):
-            # simplify base
-            base = base.simplify()
-        if isinstance(exponent, Operation):
-            # simplify exponent
-            exponent = exponent.simplify()
+        """Simplify the operation."""
+        # simplify base and exponent
+        base, exponent = map(simplify, self[1:])
         if isinstance(exponent, int):
             # expand for integer exponent
             return Prod(*(exponent * [base]))()
@@ -326,7 +321,7 @@ class Min(Operation):
         return "min(" + ", ".join(map(str, self[1:])) + ")"
 
     def simplify(self):
-        """Simplify (no special case)."""
+        """Simplify the operation."""
         num = float("inf")
         args = []
         for arg in self[1:]:
@@ -365,7 +360,7 @@ class Max(Operation):
         return "max(" + ", ".join(map(str, self[1:])) + ")"
 
     def simplify(self):
-        """Simplify (no special case)."""
+        """Simplify the operation."""
         num = float("-inf")
         args = []
         for arg in self[1:]:
@@ -513,7 +508,7 @@ class Range(object):
         return Range(*subranges)
 
     def simplify(self):
-        """Simplify expressions."""
+        """Simplify the range."""
         subranges = []
         for subrange in self.subranges:
             newsubrange = []
@@ -690,7 +685,7 @@ class Sum(Operation):
         return self.__class__(arg, **{self.rangevar: range_})
 
     def simplify(self):
-        """Simplify: try to evaluate range."""
+        """Simplify the operation."""
         # simplify arg
         arg = simplify(self[1])
         # simplify range
