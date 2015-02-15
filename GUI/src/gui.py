@@ -1331,6 +1331,7 @@ class GUI(object):
             self.ranges["threads"] = symbolic.Range((1, 1, self.nt))
         self.userange[rangetype] = rangename
         self.UI_useranges_set()
+        self.UI_range_unusedalerts_set()
         self.UI_options_set()
         self.UI_vary_set()
 

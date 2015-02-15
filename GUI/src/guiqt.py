@@ -633,13 +633,13 @@ class GUI_Qt(GUI):
             Qrange = self.Qt_ranges[rangename]
             Qrange.unused.setVisible(not usage)
             if not usage:
-                Qrange.setToolTip("Warning: %r is not used in any call!" %
+                Qrange.setToolTip("Warning: %r is not used." %
                                   self.rangevars[rangename])
 
     def UI_nrep_set(self):
         """Set the #repetitions."""
         self.Qt_setting += 1
-        text = str(self.nrep) if self.nrep else ""
+        text = str(self.nrep) if self.nrep is not None else ""
         self.Qt_ranges["reps"].range.setText(text)
         self.Qt_setting -= 1
 
