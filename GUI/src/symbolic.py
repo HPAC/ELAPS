@@ -4,6 +4,7 @@ from __future__ import division, print_function
 
 import numbers
 import __builtin__
+from copy import deepcopy
 
 
 class Expression(object):
@@ -423,6 +424,9 @@ class Range(object):
                     # too many ":"s
                     raise Exception("Inavlid subrange: %r" % rangepart)
                 self.subranges.append(subrange)
+        elif len(args) == 1 and isinstance(args[0], Range):
+            # initialize from other range
+            self.subranges = deepcopy(args[0].subranges)
         else:
             # initialize from list of tuples
             for arg in args:
@@ -534,8 +538,8 @@ class Range(object):
         symbols = set()
         for subrange in self.subranges:
             for val in subrange:
-                 if isinstance(val, Expression):
-                     symbols |= val.findsymbols()
+                if isinstance(val, Expression):
+                    symbols |= val.findsymbols()
         return symbols
 
     def __call__(self, **kwargs):
@@ -624,6 +628,95 @@ class Range(object):
         return "Range(" + ", ".join(map(repr, self.subranges)) + ")"
 
 
+class Sum(Operation):
+
+    """Sum of an Expression over a Range."""
+
+    def __new__(cls, *args, **kwargs):
+        """Default to Plus if no kwargs are given."""
+        if not kwargs:
+            return Plus(*args)
+        else:
+            return Operation.__new__(cls)
+
+    def __init__(self, *args, **kwargs):
+        """Initialize from argument and range."""
+        if len(args) == 0:
+            # no arguments: 0
+            arg = 0
+        elif len(args) == 1:
+            # signge argument
+            arg = args[0]
+        else:
+            # multiple (or no) arguments: Plus
+            arg = Plus(*args)
+        Operation.__init__(self, arg)
+
+        if len(kwargs) != 1:
+            # more than one keyword argument
+            raise Exception("Sum can handle only 1 range")
+
+        # set range attributes
+        self.rangevar, self.range_ = next(kwargs.iteritems())
+
+        if not isinstance(self.range_, Range):
+            # TODO: support general iterables?
+            raise Exception("Sum requires a symbolic Range")
+
+    def __str__(self):
+        """Format as human readable (not parsable) string."""
+        return "sum(%s, %s=%s)" % (self[1], self.rangevar, self.range_)
+
+    def __repr__(self):
+        """Format s python parsable string."""
+        return "%s(%r, %s=%r)" % (self.__class__.__name__, self[1],
+                                  self.rangevar, self.range_)
+
+    def substitute(self, **kwargs):
+        """Substitute in arg but not rangevar."""
+        if self.rangevar in kwargs:
+            # don't substitute own rangevar
+            kwargs = kwargs.copy()
+            del kwargs[self.rangevar]
+
+        arg = self[1]
+        if isinstance(arg, Exprssion):
+            # substitute in arg
+            arg = arg.substitute(**kwargs)
+
+        # substitute in range
+        range_ = self.range.substitute(**kwargs)
+
+        return self.__class__(arg, **{self.rangevar: range_})
+
+    def simplify(self):
+        """Simplify: try to evaluate range."""
+        # simplify arg
+        arg = simplify(self[1])
+        # simplify range
+        range_ = self.range_()
+
+        if range_.findsymbols():
+            # range is symbolic
+            return self.__class__(arg, **{self.rangevar: self.range_})
+
+        # range is not symbolic
+        if (not isinstance(arg, Expression)
+                or self.rangevar not in arg.findsymbols()):
+            # argument doesn't depend on range
+            return len(range_) * arg
+
+        # argument depends on range
+        return Plus(arg(**{self.rangevar: val}) for val in range_)()
+
+
+def simplify(expr):
+    """Simplify if expression."""
+    if isinstance(expr, Expression):
+        return expr.simplify()
+    return expr
+
+
 def min_sym(*args, **kwargs):
     """Symbolic minimum."""
     if len(args) == 1:
@@ -650,11 +743,6 @@ def max_sym(*args, **kwargs):
         if any(isinstance(arg, Expression) for arg in args):
             return Max(*args)
         return __builtin__.max(*args, **kwargs)
-
-def simplify(expr):
-    if isinstance(expr, Expression):
-        return expr.simplify()
-    return expr
 
 env = {
     "min": min_sym,

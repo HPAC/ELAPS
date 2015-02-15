@@ -422,6 +422,43 @@ class GUI(object):
             if isinstance(arg, (signature.Ld, signature.Inc)):
                 call[argid] = call2[argid]
 
+        # 2: infer from data
+
+        # get a symbolic representaiton of the data arguments
+        symcall = call.copy()
+        for argid, arg in enumerate(sig):
+            if isinstance(arg, signature.Data):
+                symcall[argid] = None
+            elif isinstance(arg, (signature.Dim, signature.Ld, signature.Inc)):
+                symcall[argid] = symbolic.Symbol("." + arg.name)
+        symcall.complete()
+
+        # find leading dimensions in data arguments
+        for dataargid in sig.dataargs():
+            if not call[dataargid] in self.data:
+                # not a valid data argument
+                continue
+            data = self.data[call[dataargid]]
+
+            # get dimensions in terms of call arguments
+            sym = symcall[dataargid]
+            if isinstance(sym, symbolic.Prod):
+                symdims = [
+                    dim() if isinstance(dim, symbolic.Expression) else dim
+                    for dim in sym[1:]
+                ]
+            else:
+                symdims = [
+                    sym() if isinstance(sym, symbolic.Expression) else sym
+                ]
+
+            # check if lds are in dimension
+            for argid, arg in enumerate(sig):
+                if not isinstance(arg, signature.Ld):
+                    continue
+                if "." + arg.name in symdims:
+                    call[argid] = data["lds"][symdims.index("." + arg.name)]
+
     def data_update(self, callid=None):
         """update the data objects from the calls."""
         if callid is None:
@@ -476,13 +513,28 @@ class GUI(object):
                 ]
 
             # leading dimension
-            symld = symldcall[argid]
-            if isinstance(symld, symbolic.Prod):
-                data["lds"] = [dim(**argdict) for dim in symld[1:]]
-            elif isinstance(symld, symbolic.Expression):
-                data["lds"] = [symld(**argdict)]
-            else:
-                data["lds"] = symld
+            data["lds"] = data["dims"][:]
+            if name in self.vary:
+                # extract some variables
+                vary = self.vary[name]
+                along = vary["along"]
+                across = vary["across"]
+                userange_inner = self.userange["inner"]
+
+                if data["lds"][along] is None:
+                    # no valid dimension
+                    continue
+
+                if userange_inner in across:
+                    # varying across range: sum over range
+                    data["lds"][along] = symbolic.Sum(data["lds"][along], **{
+                        self.rangevars[userange_inner]:
+                        self.ranges[userange_inner]
+                    })
+                if "reps" in across:
+                    # varying across repetitions: multiply by count
+                    data["lds"][along] = 10 * data["lds"][along]
+
             self.data[name] = data
 
         # also update lds
