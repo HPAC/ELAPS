@@ -723,6 +723,11 @@ class GUI_Qt(GUI):
             self.Qt_calls.item(callid).data_viz()
         self.Qt_setting -= 1
 
+    def UI_showargs_apply(self):
+        """Apply which argument types are shown."""
+        for callid in range(self.Qt_calls.count()):
+            self.Qt_calls.item(callid).showargs_apply()
+
     def UI_arg_setfocus(self, callid, argid):
         """Set the focus to an argument."""
         self.Qt_calls.item(callid).Qt_args[argid].setFocus()
@@ -931,7 +936,8 @@ class GUI_Qt(GUI):
         """Event: Changed the script header."""
         text = str(self.Qt_header.toPlainText())
         height = self.Qt_header.fontMetrics().lineSpacing()
-        self.Qt_header.setFixedHeight(height * (text.count("\n") + 2))
+        nlines = max(text.count("\n") + 1, 4)
+        self.Qt_header.setFixedHeight(height * (nlines + 1))
         if self.Qt_setting:
             return
         self.UI_header_change(text)

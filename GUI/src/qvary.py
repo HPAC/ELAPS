@@ -48,7 +48,7 @@ class QVary(QtGui.QGroupBox):
         alongL = QtGui.QHBoxLayout()
         layout.addLayout(alongL)
         self.Qt_alonglabel = QtGui.QLabel("along: ")
-        alongL.addWidget(self.Qt_alonglabel, 0 , QtCore.Qt.AlignBottom)
+        alongL.addWidget(self.Qt_alonglabel, 0, QtCore.Qt.AlignBottom)
         self.Qt_Qalong = []
         for i, label in enumerate((
             QtGui.QStyle.SP_ToolBarVerticalExtensionButton,
@@ -102,8 +102,8 @@ class QVary(QtGui.QGroupBox):
         self.Qt_alonglabel.show()
         self.Qt_Qalong[0].show()
         self.Qt_Qalong[1].show()
-        if isinstance(data["sym"], symbolic.Prod):
-            self.Qt_Qalong[2].setVisible(len(data["sym"]) > 3)
+        if isinstance(data["dims"], symbolic.Prod):
+            self.Qt_Qalong[2].setVisible(len(data["dims"]) > 3)
         else:
             self.Qt_Qalong[2].hide()
         for i, Qalong in enumerate(self.Qt_Qalong):

@@ -112,7 +112,7 @@ class GUI(object):
                                       for kernel in sampler["kernels"]}
                 self.samplers[sampler["name"]] = sampler
         self.log("loaded", len(self.samplers), "samplers:",
-                 *sorted("%s (%d)" % (name, len(sampler["kernels"]))
+                 *sorted("%s (%d kernels)" % (name, len(sampler["kernels"]))
                          for name, sampler in self.samplers.iteritems()))
         if len(self.samplers) == 0:
             raise Exception("No samplers found")
@@ -209,11 +209,11 @@ class GUI(object):
 
     def state_reset(self):
         """Reset the state to an initial configuration."""
-        sampler = self.samplers[min(self.samplers)]
-        state = {
+        n = symbolic.Symbol("n")
+        self.state_fromflat({
             "statetime": time.time(),
             "stateversion": self.requiredstateversion,
-            "samplername": sampler["name"],
+            "samplername": min(self.samplers),
             "nt": 1,
             "userange": {
                 "outer": "range",
@@ -240,23 +240,19 @@ class GUI(object):
             "showargs": {
                 "flags": True,
                 "scalars": True,
-                "lds": False,
+                "lds": True,  # TODO: debug value
                 "infos": False
             },
-            "counters": sampler["papi_counters_max"] * [None],
+            "counters": [],
             "header": "# script header\n",
             "nrep": 10,
-            "calls": [],
+            "calls": [
+                ("dgemm_", "N", "N", n, n, n, 1, "A", n, "B", n, 1, "C", n)
+            ],
             "vary": {},
             "datascale": 100,
             "defaultdim": 1000
-        }
-        if "dgemm_" in sampler["kernels"]:
-            n = symbolic.Symbol("n")
-            state["calls"] = [
-                ("dgemm_", "N", "N", n, n, n, 1, "A", n, "B", n, 1, "C", n)
-            ]
-        self.state_fromflat(state)
+        })
 
     # info string
     def sampler_about_str(self):
@@ -410,33 +406,39 @@ class GUI(object):
         if not isinstance(call, signature.Call):
             # only work on calls with signatures
             return
+        sig = call.sig
 
-        # TODO: vary along dims
+        # 1: infer from call
 
         # complete leading dimension arguments
         call2 = call.copy()
-        for i, arg in enumerate(call2.sig):
+        for argid, arg in enumerate(sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
-                call2[i] = None
+                call2[argid] = None
         call2.complete()
 
         # set ld arguments
-        for argid, arg in enumerate(call2.sig):
+        for argid, arg in enumerate(sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
                 call[argid] = call2[argid]
 
     def data_update(self, callid=None):
         """update the data objects from the calls."""
         if callid is None:
+            # process all calls
             self.data = {}
             for callid in range(len(self.calls)):
                 self.data_update(callid)
                 self.vary = {name: vary for name, vary in self.vary.iteritems()
                              if name in self.data}
             return
+
         call = self.calls[callid]
         if not isinstance(call, signature.Call):
+            # only for calls with signatures
             return
+
+        # set up and complete calls
         sizecall = call.copy()  # only Data substituted
         symcall = call.copy()  # symbolic, no lds
         symldcall = call.copy()  # symbolic, lds
@@ -444,16 +446,13 @@ class GUI(object):
             if isinstance(arg, signature.Data):
                 sizecall[argid] = None
                 symcall[argid] = None
-                symldcall[argid] = None
             elif isinstance(arg, (signature.Ld, signature.Inc)):
                 symcall[argid] = None
-                symldcall[argid] = symbolic.Symbol("." + arg.name)
             elif isinstance(arg, signature.Dim):
                 symcall[argid] = symbolic.Symbol("." + arg.name)
-                symldcall[argid] = symbolic.Symbol("." + arg.name)
         sizecall.complete()
         symcall.complete()
-        symldcall.complete()
+
         argdict = {"." + arg.name: val for arg, val in zip(call.sig, call)}
         for argid in call.sig.dataargs():
             name = call[argid]
@@ -462,14 +461,20 @@ class GUI(object):
             data = {}
             data["size"] = sizecall[argid]
             data["type"] = call.sig[argid].__class__
+
             # dimensions
             sym = symcall[argid]
             if isinstance(sym, symbolic.Prod):
-                data["dims"] = [dim(**argdict) for dim in sym[1:]]
-            elif isinstance(sym, symbolic.Expression):
-                data["dims"] = [sym(**argdict)]
+                data["dims"] = [
+                    dim(**argdict)
+                    if isinstance(dim, symbolic.Expression) else dim
+                    for dim in sym[1:]]
             else:
-                data["dims"] = sym
+                data["dims"] = [
+                    sym(**argdict)
+                    if isinstance(sym, symbolic.Expression) else dim
+                ]
+
             # leading dimension
             symld = symldcall[argid]
             if isinstance(symld, symbolic.Prod):
@@ -479,6 +484,9 @@ class GUI(object):
             else:
                 data["lds"] = symld
             self.data[name] = data
+
+        # also update lds
+        self.infer_lds(callid)
 
     def connections_update(self):
         """Update the argument connections based on data reuse."""
@@ -503,7 +511,7 @@ class GUI(object):
                     datasize = [datasize]
                 elif isinstance(datasize, symbolic.Operation):
                     # try simplifying
-                    datasize = datasize.simplify()
+                    datasize = datasize()
                     if isinstance(datasize, symbolic.Prod):
                         datasize = datasize[1:]
                     elif isinstance(datasize, symbolic.Symbol):
@@ -598,7 +606,6 @@ class GUI(object):
                                         owndata.append(name)
                                         break
                         self.calls[callid] = call
-                        self.infer_lds(callid)
                     except:
                         self.UI_alert(
                             ("Could not use the signature %r\n"
@@ -647,7 +654,6 @@ class GUI(object):
             # evaluate value
             call[argid] = self.range_parse(value)
             self.connections_apply(callid, argid)
-            self.infer_lds()
             self.data_update()
             self.UI_calls_set(callid, argid)
             self.UI_data_viz()
@@ -730,7 +736,6 @@ class GUI(object):
             if callid2 != callid:
                 self.connections_apply(callid2)
         self.connections_apply(callid)
-        self.infer_lds()
         self.data_update()
         self.UI_vary_init()
         self.UI_calls_set()
@@ -1359,7 +1364,10 @@ class GUI(object):
             self.vary[name] = vary
             if not vary["across"]:
                 del self.vary[name]
+        # vary may affect lds
+        self.data_update()
         self.UI_vary_set(name)
+        self.UI_calls_set()
 
     def UI_jobkill(self, jobid):
         """Event: Kill a job."""
