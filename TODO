@@ -3,7 +3,6 @@ Sampler:
 
 
 GUI:
-- leading dimensions when vary is on
 - work variable hiding
 - work variable dimension deduction
 - README
