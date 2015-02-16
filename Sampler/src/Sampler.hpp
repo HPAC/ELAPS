@@ -32,6 +32,7 @@ class Sampler {
         void add_call(const std::vector<std::string> &tokens);
         void go(const std::vector<std::string> &tokens);
 
+        void info(const std::vector<std::string> &tokens);
         void print(const std::vector<std::string> &tokens);
         void date(const std::vector<std::string> &tokens);
 

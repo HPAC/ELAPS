@@ -297,6 +297,7 @@ void Sampler::start() {
     commands["coffset"] = &Sampler::named_offset<complex<float> >;
     commands["zoffset"] = &Sampler::named_offset<complex<double> >;
     commands["free"] = &Sampler::named_free;
+    commands["info"] = &Sampler::info;
     commands["print"] = &Sampler::print;
     commands["date"] = &Sampler::date;
 
