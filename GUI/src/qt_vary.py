@@ -14,7 +14,7 @@ class QVary(QtGui.QGroupBox):
     def __init__(self, gui, name):
         """Initialize the options."""
         QtGui.QGroupBox.__init__(self, "vary " + name)
-        self.Qt_gui = gui
+        self.Qt_mat = gui
         self.name = name
 
         self.UI_init()
@@ -79,20 +79,20 @@ class QVary(QtGui.QGroupBox):
 
     def set(self):
         """Set all options."""
-        self.Qt_gui.Qt_setting += 1
-        if self.name not in self.Qt_gui.vary:
+        self.Qt_mat.Qt_setting += 1
+        if self.name not in self.Qt_mat.vary:
             self.setChecked(False)
             for widget in ([self.Qt_across, self.Qt_alonglabel,
                             self.Qt_offsetlabel, self.Qt_offset] +
                            self.Qt_Qalong):
                 widget.hide()
-            self.Qt_gui.Qt_setting -= 1
+            self.Qt_mat.Qt_setting -= 1
             return
-        data = self.Qt_gui.data[self.name]
-        vary = self.Qt_gui.vary[self.name]
+        data = self.Qt_mat.data[self.name]
+        vary = self.Qt_mat.vary[self.name]
 
         # across
-        innerrange = self.Qt_gui.userange["inner"]
+        innerrange = self.Qt_mat.userange["inner"]
         self.Qt_across.setVisible(innerrange is not None)
         for across, Qacross in self.Qt_Qacross.iteritems():
             Qacross.setVisible(across == "reps" or across == innerrange)
@@ -108,7 +108,7 @@ class QVary(QtGui.QGroupBox):
             self.Qt_Qalong[2].hide()
         for i, Qalong in enumerate(self.Qt_Qalong):
             Qalong.setChecked(i == vary["along"])
-        self.Qt_gui.Qt_setting -= 1
+        self.Qt_mat.Qt_setting -= 1
 
         # offset
         self.Qt_offsetlabel.show()
@@ -120,33 +120,33 @@ class QVary(QtGui.QGroupBox):
     # event handlers
     def Qt_toggled(self, on):
         """En/disabled the vary."""
-        if self.Qt_gui.Qt_setting:
+        if self.Qt_mat.Qt_setting:
             return
-        self.Qt_gui.UI_vary_change(self.name, on)
+        self.Qt_mat.UI_vary_change(self.name, on)
 
     def Qt_across_change(self):
         """Changed across wich loops to vary."""
-        if self.Qt_gui.Qt_setting:
+        if self.Qt_mat.Qt_setting:
             return
-        sender = self.Qt_gui.Qt_app.sender()
-        vary = self.Qt_gui.vary[self.name].copy()
+        sender = self.Qt_mat.Qt_app.sender()
+        vary = self.Qt_mat.vary[self.name].copy()
         vary["across"] = vary["across"].copy()
         if sender.isChecked():
             vary["across"].add(sender.across)
         else:
             vary["across"].discard(sender.across)
-        self.Qt_gui.UI_vary_change(self.name, vary)
+        self.Qt_mat.UI_vary_change(self.name, vary)
 
     def Qt_along_toggle(self):
         """Changed across wich dimensions to vary."""
-        if self.Qt_gui.Qt_setting:
+        if self.Qt_mat.Qt_setting:
             return
-        sender = self.Qt_gui.Qt_app.sender()
+        sender = self.Qt_mat.Qt_app.sender()
         if not sender.isChecked():
             return
-        vary = self.Qt_gui.vary[self.name].copy()
+        vary = self.Qt_mat.vary[self.name].copy()
         vary["along"] = sender.dim
-        self.Qt_gui.UI_vary_change(self.name, vary)
+        self.Qt_mat.UI_vary_change(self.name, vary)
 
     def Qt_offset_change(self):
         """Changed the manual offset."""
@@ -155,12 +155,12 @@ class QVary(QtGui.QGroupBox):
         width += self.Qt_offset.minimumSizeHint().width()
         height = self.Qt_offset.sizeHint().height()
         self.Qt_offset.setFixedSize(max(height, width), height)
-        if self.Qt_gui.Qt_setting:
+        if self.Qt_mat.Qt_setting:
             return
-        vary = self.Qt_gui.vary[self.name].copy()
+        vary = self.Qt_mat.vary[self.name].copy()
         try:
             vary["offset"] = int(value)
-            self.Qt_gui.UI_vary_change(self.name, vary)
+            self.Qt_mat.UI_vary_change(self.name, vary)
         except:
             # TODO: alert
             pass

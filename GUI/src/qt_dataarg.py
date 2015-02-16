@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Representation of data arguments in calls in the Qt GUI."""
+"""Representation of data arguments in calls in the Qt Mat."""
 from __future__ import division, print_function
 
 import symbolic

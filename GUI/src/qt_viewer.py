@@ -9,7 +9,7 @@ from copy import deepcopy
 from PyQt4 import QtCore, QtGui
 
 
-class Viewer_Qt(Viewer):
+class QViewer(Viewer):
     def __init__(self, plotfactory, app=None, loadstate=True):
         if app:
             self.Qt_app = app

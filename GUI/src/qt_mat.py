@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-"""Qt implementaiton of the Sampler GUI."""
+"""Qt implementaiton of ELAPS:Mat."""
 from __future__ import division, print_function
 
-from gui import GUI
-from qcall import QCall
-from qvary import QVary
+from mat import Mat
+from qt_call import QCall
+from qt_vary import QVary
 import papi
 
 import os
@@ -13,12 +13,12 @@ import sys
 from PyQt4 import QtCore, QtGui
 
 
-class GUI_Qt(GUI):
+class QMat(Mat):
 
-    """GUI implementation in Qt."""
+    """ELAPS:Mat implementation in Qt."""
 
     def __init__(self, app=None, loadstate=True):
-        """Initialize the GUI."""
+        """Initialize the ELAPS:Mat."""
         if app:
             self.Qt_app = app
         else:
@@ -27,7 +27,7 @@ class GUI_Qt(GUI):
         self.Qt_app.gui = self
         self.Qt_setting = 0
         self.Qt_initialized = False
-        GUI.__init__(self, loadstate)
+        Mat.__init__(self, loadstate)
 
     def state_init(self, load=True):
         """Try to load the state and geometry."""
@@ -461,7 +461,7 @@ class GUI_Qt(GUI):
         self.Qt_initialized = True
 
     def UI_start(self):
-        """Start the GUI (main loop)."""
+        """Start the Mat (main loop)."""
         import signal
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         sys.exit(self.Qt_app.exec_())
@@ -470,12 +470,12 @@ class GUI_Qt(GUI):
     def log(self, *args):
         """Also log messages to status for 2 sec."""
         self.UI_setstatus(" ".join(map(str, args)), 2000)
-        GUI.log(*args)
+        Mat.log(*args)
 
     def alert(self, *args):
         """Also log alert messages to status."""
         self.UI_setstatus(" ".join(map(str, args)))
-        GUI.alert(*args)
+        Mat.alert(*args)
 
     # dialogs
     def UI_alert(self, *args, **kwargs):
@@ -790,8 +790,8 @@ class GUI_Qt(GUI):
 
     def UI_viewer_start(self):
         """Start the viewer."""
-        from viewerqtmpl import Viewer_Qt_MPL
-        self.Qt_viewer = Viewer_Qt_MPL(self.Qt_app)
+        from qt_matplot_viewer import QMPLViewer
+        self.Qt_viewer = QMPLViewer(self.Qt_app)
 
     def UI_viewer_load(self, filename):
         """Load a report in the viewer."""
@@ -1001,7 +1001,7 @@ class GUI_Qt(GUI):
 def main():
     """Main routine to start a Qt based Sampler."""
     loadstate = "--reset" not in sys.argv[1:]
-    GUI_Qt(loadstate=loadstate).start()
+    QMat(loadstate=loadstate).start()
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-"""Representation of calls in the Qt GUI."""
+"""Representation of calls in the Qt Mat."""
 from __future__ import division, print_function
 
 import signature
-from qdataarg import QDataArg
+from qt_dataarg import QDataArg
 
 from PyQt4 import QtCore, QtGui
 

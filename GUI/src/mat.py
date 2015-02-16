@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""API independent base for GUIs."""
+"""API independent base for ELAPS:MAts."""
 from __future__ import division, print_function
 
 import signature
@@ -12,16 +12,16 @@ import time
 from collections import defaultdict
 
 
-class GUI(object):
+class Mat(object):
 
-    """Base class for GUIs."""
+    """Base class for ELAPS:Mats."""
 
     requiredbuildversion = 1423087329
     requiredstateversion = 1423793808
     state = {}
 
     def __init__(self, loadstate=True):
-        """Initialize the GUI."""
+        """Initialize the Mat."""
         # set some absolute paths
         thispath = os.path.dirname(__file__)
         if thispath not in sys.path:
@@ -57,10 +57,10 @@ class GUI(object):
         if name in self.state:
             self.state[name] = value
         else:
-            super(GUI, self).__setattr__(name, value)
+            super(Mat, self).__setattr__(name, value)
 
     def start(self):
-        """Start the GUI (enter the main loop)."""
+        """Start the Mat (enter the main loop)."""
         self.UI_start()
 
     # utility
@@ -124,7 +124,7 @@ class GUI(object):
         self.nosigwarning_shown = False
 
     def state_init(self, load=True):
-        """Initialize the GUI state."""
+        """Initialize the Mat state."""
         self.state_reset()
 
     def ranges_init(self):

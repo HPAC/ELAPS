@@ -1,4 +1,4 @@
 #!/usr/bin/env python
-from guiqt import GUI_Qt
+from qt_mat import QMat
 
-__all__ = ["GUi_Qt"]
+__all__ = ["QMat"]
