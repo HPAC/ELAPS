@@ -103,7 +103,7 @@ class QDataArg(QtGui.QLineEdit):
     def viz(self):
         """Visualization update."""
         value = self.Qt_gui.calls[self.Qt_call.callid][self.argid]
-        if value is None:
+        if value not in self.Qt_gui.data:
             self.viz_none()
             return
         data = self.Qt_gui.data[value]

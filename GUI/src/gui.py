@@ -495,9 +495,10 @@ class GUI(object):
             name = call[argid]
             if name is None:
                 continue
-            data = {}
-            data["size"] = sizecall[argid]
-            data["type"] = call.sig[argid].__class__
+            data = {
+                "size": sizecall[argid],
+                "type": call.sig[argid].__class__,
+            }
 
             # dimensions
             sym = symcall[argid]
@@ -505,7 +506,8 @@ class GUI(object):
                 data["dims"] = [
                     dim(**argdict)
                     if isinstance(dim, symbolic.Expression) else dim
-                    for dim in sym[1:]]
+                    for dim in sym[1:]
+                ]
             else:
                 data["dims"] = [
                     sym(**argdict)
@@ -521,19 +523,18 @@ class GUI(object):
                 across = vary["across"]
                 userange_inner = self.userange["inner"]
 
-                if data["lds"][along] is None:
-                    # no valid dimension
-                    continue
-
-                if userange_inner in across:
-                    # varying across range: sum over range
-                    data["lds"][along] = symbolic.Sum(data["lds"][along], **{
-                        self.rangevars[userange_inner]:
-                        self.ranges[userange_inner]
-                    })
-                if "reps" in across:
-                    # varying across repetitions: multiply by count
-                    data["lds"][along] = 10 * data["lds"][along]
+                if data["lds"][along] is not None:
+                    if userange_inner in across:
+                        # varying across range: sum over range
+                        data["lds"][along] = symbolic.Sum(
+                            data["lds"][along], **{
+                                self.rangevars[userange_inner]:
+                                self.ranges[userange_inner]
+                            }
+                        ).simplify()
+                    if "reps" in across:
+                        # varying across repetitions: multiply by count
+                        data["lds"][along] = 10 * data["lds"][along]
 
             self.data[name] = data
 

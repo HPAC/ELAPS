@@ -159,7 +159,7 @@ class QVary(QtGui.QGroupBox):
             return
         vary = self.Qt_gui.vary[self.name].copy()
         try:
-            vary["offset"] = int(vary)
+            vary["offset"] = int(value)
             self.Qt_gui.UI_vary_change(self.name, vary)
         except:
             # TODO: alert
