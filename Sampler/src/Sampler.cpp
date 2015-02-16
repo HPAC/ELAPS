@@ -16,6 +16,10 @@
 
 using namespace std;
 
+////////////////////////////////////////////////////////////////////////////////
+// Command: set PAPI counters                                                 //
+////////////////////////////////////////////////////////////////////////////////
+
 void Sampler::set_counters(const vector<string> &tokens) {
 #ifdef PAPI_ENABLED
     // ignore excess counters
@@ -52,6 +56,10 @@ void Sampler::set_counters(const vector<string> &tokens) {
 #endif
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Commands: OpenMP regions                                                   //
+////////////////////////////////////////////////////////////////////////////////
+
 void Sampler::omp_start(const vector<string>&tokens) {
 #ifdef OPENMP_ENABLED
     if (tokens.size() > 1)
@@ -81,6 +89,10 @@ void Sampler::omp_end(const vector<string>&tokens) {
     cerr << "OpenMP support not enabled (command ignored)" << endl;
 #endif
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Commands: Handling named variables                                         //
+////////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
 void Sampler::named_malloc(const vector<string> &tokens) {
@@ -180,6 +192,10 @@ void Sampler::named_free(const vector<string> &tokens) {
     mem.named_free(name);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Command: Add a call                                                        //
+////////////////////////////////////////////////////////////////////////////////
+
 void Sampler::add_call(const vector<string> &tokens) {
     const string &routine = tokens[0];
 
@@ -202,6 +218,10 @@ void Sampler::add_call(const vector<string> &tokens) {
         // (failure already reported)
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Command: Process the current calls                                         //
+////////////////////////////////////////////////////////////////////////////////
 
 void Sampler::go(const vector<string> &tokens) {
     // end parallel region if active
@@ -246,9 +266,17 @@ void Sampler::go(const vector<string> &tokens) {
     mem.static_reset();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Add signatures to the sampler                                              //
+////////////////////////////////////////////////////////////////////////////////
+
 void Sampler::add_signature(const Signature &signature) {
     signatures[signature.name] = signature;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Sampler main loop                                                          //
+////////////////////////////////////////////////////////////////////////////////
 
 void Sampler::start() {
     map<string, void (Sampler:: *)(const vector<string> &)> commands;
