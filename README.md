@@ -1,10 +1,10 @@
 ELAPS
-==========
+=====
 
 Experimental Linear Algebra Performance Studies
 
 What is ELAPS?
----------
+--------------
 
 ELAPS provides an intuitive interface to common performance related questions
 regarding dense linear algebra kernels and algorithms, such as
@@ -26,7 +26,7 @@ Requirements
 
 
 Overview
-------------
+--------
 
 The Framework consists for three parts:
 
@@ -34,17 +34,17 @@ The Framework consists for three parts:
 2. The GUI, and
 3. The viewer
 
-### Samplers
-The Samplers, located in `Sampler/`, form the low level base of the Framework.
-Each Sampler is configured and liked a fixed set of kernel routines (usually
-BLAS and LAPACK), a fixed computer system  and fixed kernel implementations.
-They accurately measure the performance of individual kernel invocations in
-terms of execution time and, if PAPI is available, performance counters (such
-as cache misses).
+### ELAPS:Sampler
+The Samplers, located in `Sampler/`, form the low level base of ELAPS.  Each
+Sampler is configured and liked a fixed set of kernel routines (usually BLAS
+and LAPACK), a fixed computer system  and fixed kernel implementations.  They
+accurately measure the performance of individual kernel invocations in terms of
+execution time and, if PAPI is available, performance counters (such as cache
+misses).
 
 For further details on Samplers, see `Sampler/README.md`
 
-### The GUI
+### ELAPS:Mat
 The GUI, located in `GUI/Gui.py`, creates and runs/submits performance
 experiments using previously compiled Samplers.  Central to the GUI is the
 visual representation of kernels and their operands that now only facilitates
@@ -56,7 +56,7 @@ common performance experiments.
 
 For further details on the GUI, see `GUI.md`.
 
-### The Viewer
+### ELAPS:Viewer
 Each performance experiment submitted in the GUI results in a portable
 experiment report.  The Viewer, located in `GUI/Viewer.py`, loads these reports
 and helps the user analyze them by plotting their performance in terms of
