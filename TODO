@@ -4,10 +4,11 @@ Sampler:
 
 
 GUI:
+- max for numeric lds
+- Load states
+- Example GUI states
 - work variable hiding
 - work variable dimension deduction
-- max for numeric lds
-- Example GUI states
 
 - (load state from report on startup)
 - ("file" backend)
@@ -16,5 +17,6 @@ GUI:
 
 
 Viewer:
+- set avg if std is set
 - (memory metrics)
 - (status tips)
