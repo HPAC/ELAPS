@@ -1395,6 +1395,7 @@ class Mat(object):
         """Event: remove a call."""
         del self.calls[callid]
         self.connections_update()
+        self.data_update()
         self.UI_calls_init()
         self.UI_submit_setenabled()
 
