@@ -18,7 +18,7 @@ issued.
 It expects no arguments.
 
 
-Kernel call syntax
+Kernel Call Syntax
 ------------------
 If the first token identifies a kernel, a corresponding call is added to the
 list of pending calls.  The remaining tokens in that line are parsed as its
@@ -108,7 +108,7 @@ is parsed as a PAPI counter name.
 calls is initiated, the most recently set counters are used for `all` calls.
 
 
-Parallel regions
+Parallel Regions
 ----------------
 Calls can be executed in parallel as OpenMP tasks by enclosing them in `{omp`
 and `}`; each on its own line.

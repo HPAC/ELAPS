@@ -1,20 +1,20 @@
 Sampler:
-- README
+- (help command)
+- (about command)
 
 
 GUI:
 - work variable hiding
 - work variable dimension deduction
-- README
+- max for numeric lds
 - Example GUI states
 
+- (load state from report on startup)
 - ("file" backend)
 - (status tips)
 - (multiple BLAS at once)
 
 
 Viewer:
-- README
-
 - (memory metrics)
 - (status tips)
