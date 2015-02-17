@@ -814,7 +814,8 @@ class Mat(object):
         # common expressions
         userange_outer = self.userange["outer"]
         userange_inner = self.userange["inner"]
-        rangevar_outer = self.rangevars[userange_outer]
+        if userange_outer:
+            rangevar_outer = self.rangevars[userange_outer]
 
         def varname(name, outerval, rep, innerval):
             """Construct a variable name.
@@ -881,8 +882,9 @@ class Mat(object):
             # operand varies
 
             # set up some reused variables
-            across = self.vary[name]["across"]
-            along = self.vary[name]["along"]
+            vary = self.vary[name]
+            across = vary["across"]
+            along = vary["along"]
             repvals = None,
             if "reps" in across:
                 repvals = range(self.nrep + 1)
@@ -893,7 +895,7 @@ class Mat(object):
             offset_max = 0
             # go over outer range
             for outerval in outervals:
-                if uouterval is not None:
+                if outerval is not None:
                     # comment
                     offsetcmds.append(["#", rangevar_outer, "=", outerval])
 
@@ -940,14 +942,15 @@ class Mat(object):
                         dim = 1
                         for idx in range(along):
                             # multiply leading dimensions for skipped dims
-                            dim *= self.range_eval(data["lds"][idx], outerval,
-                                                   innerval)
+                            dim *= next(self.range_eval(data["lds"][idx],
+                                                        outerval, innerval))
                         # dimension for traversed dim
-                        dim *= self.range_eval(data["dims"][along], outerval,
-                                               innerval)
+                        dim *= next(self.range_eval(data["dims"][along],
+                                                    outerval, innerval))
                         # add custom offset
-                        offset += dim + self.range_eval(data["offset"],
-                                                        outerval, innerva)
+                        offset += dim + next(self.range_eval(vary["offset"],
+                                                             outerval,
+                                                             innerval))
                         # update max size and offset
                         offset_max = max(offset_max, offset)
                         size = next(self.range_eval(data["size"], outerval,
@@ -1071,6 +1074,9 @@ class Mat(object):
         # get the jobname
         jobname = os.path.basename(filebase)
 
+        # make sure the lds are reflected in sizes
+        self.data_update()
+
         # some shorthands
         header = self.sampler["backend_header"]
         prefix = self.sampler["backend_prefix"]
@@ -1151,7 +1157,7 @@ class Mat(object):
                 script += prefix.format(nt=ntval) + " "
             if ompthreads != 1:
                 script += "OMP_NUM_THREADS=%d " % ompthreads
-            script += "%(x)s < %(i)s >> %(o)s 2>> %(e)s" % {
+            script += "%(x)s < %(i)s >> %(o)s 2>> %(e)s || exit" % {
                 "x": self.sampler["sampler"],  # executable
                 "i": callfile,  # input
                 "o": smplfile,  # output
