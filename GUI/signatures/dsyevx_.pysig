@@ -1,0 +1,24 @@
+# double precision symmetirc eigensolver (expert version)
+Signature(
+    "dsyevx_",
+    Flag("jobz", ["V", "N"]),
+    Flag("range", ["A", "V", "I"]),
+    Uplo(),
+    dim("n"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "n"),
+    dScalar("vl"),
+    dScalar("vu"),
+    iScalar("il"),
+    iScalar("iu"),
+    dScalar("abstol"),
+    iScalar("m"),
+    dData("W", "n"),
+    dData("Z", "ldZ * n"),  # actually: ldZ * m
+    Ld("ldZ", "n if jobz == 'V' else 1"),
+    dData("Work", "lWork"),
+    dim("lWork", "8 * n"),
+    iData("iWork", "5 * n"),
+    iData("iFail", "n"),
+    Info()
+)

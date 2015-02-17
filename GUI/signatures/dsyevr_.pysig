@@ -1,0 +1,24 @@
+# double precision symmetirc eigensolver using MRRR
+Signature(
+    "dsyevr_",
+    Flag("jobz", ["V", "N"]),
+    Uplo(),
+    dim("n"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "n"),
+    dScalar("vl"),
+    dScalar("vu"),
+    iScalar("il"),
+    iScalar("iu"),
+    iScalar("abstol"),
+    iScalar("m"),
+    dData("W", "n"),
+    dData("Z", "ldZ * n"),  # actually: ldZ * m
+    Ld("ldZ", "n if jobz == 'V' else 1"),
+    iData("isuppZ", "2 * n"),  # actually: 2 * m
+    dData("Work", "lWork"),
+    dim("lWork", "26 * n"),
+    iData("iWork", "liWork"),
+    dim("liWork", "10 * n"),
+    Info()
+)

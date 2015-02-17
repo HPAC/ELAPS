@@ -1,0 +1,15 @@
+# double precision symmetirc eigensolver using DC
+Signature(
+    "dsyevd_",
+    Flag("jobz", ["V", "N"]),
+    Uplo(),
+    dim("n"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "n"),
+    dData("W", "n"),
+    dData("Work", "lWork"),
+    dim("lWork", "2 * n + 1 if jobz == 'N' else 1 + 6 * n + 2 * n * n"),
+    iData("iWork", "liWork"),
+    dim("liWork", "1 if jobz == 'N' else 3 + 5 * n"),
+    Info()
+)

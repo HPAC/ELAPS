@@ -1,13 +1,13 @@
-# double precision symmetric eigensolver
+# double precision symmetirc eigensolver
 Signature(
     "dsyev_",
-    Flag("jobz", ["N", "V"]),
+    Flag("jobz", ["V", "N"]),
     Uplo(),
-    Dim("n"),
+    dim("n"),
     dData("A", "ldA * n"),
     Ld("ldA", "n"),
     dData("W", "n"),
     dData("Work", "lWork"),
-    Dim("lWork", "3 * n - 1"),
+    dim("lWork", "3 * n - 1"),
     Info()
 )
