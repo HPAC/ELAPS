@@ -790,7 +790,7 @@ class QMat(Mat):
 
     def UI_viewer_start(self):
         """Start the viewer."""
-        from qt_matplot_viewer import QMPLViewer
+        from qt_mpl_viewer import QMPLViewer
         self.Qt_viewer = QMPLViewer(self.Qt_app)
 
     def UI_viewer_load(self, filename):
