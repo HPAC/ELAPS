@@ -4,9 +4,8 @@ Sampler:
 
 
 GUI:
-- max for numeric lds
-- Load states
 - Example GUI states
+- save state on ctrl-C
 - work variable hiding
 - work variable dimension deduction
 

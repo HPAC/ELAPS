@@ -389,7 +389,11 @@ class Mat(object):
         # set ld arguments
         for argid, arg in enumerate(sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
-                call[argid] = call2[argid]
+                if isinstance(call[argid], int) and isinstance(call2[argid],
+                                                               int):
+                    call[argid] = max(call[argid], call2[argid])
+                else:
+                    call[argid] = call2[argid]
 
         # 2: infer from data
 
@@ -426,6 +430,11 @@ class Mat(object):
                 if not isinstance(arg, signature.Ld):
                     continue
                 if "." + arg.name in symdims:
+                    newld = data["lds"][symdims.index("." + arg.name)]
+                    if isinstance(call[argid], int) and isinstance(newld, int):
+                        call[argid] = max(call[argid], newld)
+                    else:
+                        call[argid] = newld
                     call[argid] = data["lds"][symdims.index("." + arg.name)]
 
     def data_update(self, callid=None):
