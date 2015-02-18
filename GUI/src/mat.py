@@ -594,7 +594,7 @@ class Mat(object):
     def sampler_set(self, samplername, setall=False):
         """Set the sampler and apply corresponding restrictions."""
         self.samplername = samplername
-        self.nt = max(self.nt, self.sampler["nt_max"])
+        self.nt = min(self.nt, self.sampler["nt_max"])
 
         # update counters (kill unavailable, adjust length)
         papi_counters_max = self.sampler["papi_counters_max"]
