@@ -38,7 +38,7 @@ class Viewer(object):
 
         # load reports from command line
         for arg in sys.argv[1:]:
-            if arg[-5:] == ".emr" and os.path.isfile(arg):
+            if arg[-4:] == ".emr" and os.path.isfile(arg):
                 self.UI_report_load(arg)
 
     # state access attributes
@@ -151,7 +151,7 @@ class Viewer(object):
 
     # report handling
     def report_load(self, filename):
-        name = os.path.basename(filename)[:-5]
+        name = os.path.basename(filename)[:-4]
         errfile = filename + ".err"
 
         # check for errors

@@ -75,7 +75,8 @@ class Mat(object):
     @staticmethod
     def alert(*args):
         """Log a message to stderr."""
-        print("\033[31m" + " ".join(map(str, args)) + "\033[0m", file=sys.stderr)
+        print("\033[31m" + " ".join(map(str, args)) + "\033[0m",
+              file=sys.stderr)
 
     # initializers
     def backends_init(self):
@@ -1043,8 +1044,8 @@ class Mat(object):
         """Submit the current job."""
         # prepare the filenames
         filebase = filename
-        if filename[-5:] == ".emr":
-            filebase = filebase[:-5]
+        if filename[-4:] == ".emr":
+            filebase = filebase[:-4]
         scriptfile = filebase + ".script"
         reportfile = filebase + ".emr"
         errfile = filebase + ".err"
@@ -1182,7 +1183,7 @@ class Mat(object):
         self.jobprogress.append({
             "backend": self.sampler["backend"],
             "id": jobid,
-            "filebase": reportinfo["filename"][:-5],
+            "filebase": reportinfo["filename"][:-4],
             "progress": -1,
             "progressend": reportinfo["nlines"],
             "error": False,
