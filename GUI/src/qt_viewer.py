@@ -23,7 +23,7 @@ class QViewer(Viewer):
 
     def state_init(self, load=True):
         if load:
-            settings = QtCore.QSettings("HPAC", "Viewer")
+            settings = QtCore.QSettings("HPAC", "ELAPS:Viewer")
             self.Qt_setting += 1
             self.Qt_window.restoreGeometry(
                 settings.value("geometry").toByteArray()

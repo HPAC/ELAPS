@@ -807,7 +807,7 @@ class QMat(Mat):
     # event handlers
     def Qt_window_close(self, event):
         """Event: Main window closed."""
-        settings = QtCore.QSettings("HPAC", "Sampler")
+        settings = QtCore.QSettings("HPAC", "ELAPS:Mat")
         settings.setValue("geometry", self.Qt_window.saveGeometry())
         settings.setValue("windowState", self.Qt_window.saveState())
         settings.setValue("appState",
