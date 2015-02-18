@@ -38,7 +38,7 @@ class Viewer(object):
 
         # load reports from command line
         for arg in sys.argv[1:]:
-            if arg[-5:] == ".smpl" and os.path.isfile(arg):
+            if arg[-5:] == ".emr" and os.path.isfile(arg):
                 self.UI_report_load(arg)
 
     # state access attributes

@@ -3,3 +3,6 @@
 .viewerstate.py
 reports/*
 !reports/.gitignore
+setups/*
+!reports/default.ems
+!reports/examples/

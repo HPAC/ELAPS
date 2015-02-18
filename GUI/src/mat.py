@@ -18,6 +18,8 @@ class Mat(object):
 
     requiredbuildversion = 1423087329
     requiredstateversion = 1424262159
+    datascale = 100
+    defaultdim = 1000
     state = {}
 
     def __init__(self, loadstate=True):
@@ -28,6 +30,7 @@ class Mat(object):
             sys.path.append(thispath)
         self.rootpath = os.path.abspath(os.path.join(thispath, "..", ".."))
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
+        self.setuppath = os.path.join(self.rootpath, "GUI", "setups")
 
         # initialize components
         self.backends_init()
@@ -147,14 +150,13 @@ class Mat(object):
     def state_toflat(self):
         """Removing signatures and turning list to tuples."""
         state = self.state.copy()
-        state["calls"] = tuple(map(tuple, self.calls))
-        state["counters"] = tuple(self.counters)
+        state["calls"] = map(tuple, self.calls)
         return state
 
     def state_fromflat(self, state):
         """Set the state from a possibly flattened representation."""
         state = state.copy()
-        calls = list(map(list, state["calls"]))
+        calls = state["calls"]
         # apply signatures
         for callid, call in enumerate(calls):
             sig = self.signature_get(call[0])
@@ -199,59 +201,27 @@ class Mat(object):
         """Try to laod the state from a file."""
         try:
             with open(filename) as fin:
-                self.state_fromstring(fin.readline())
-            self.log("loaded state from", os.path.relpath(filename))
+                if filename[-4:] == ".ems":
+                    statestr = fin.read()
+                else:
+                    statestr = fin.readline()
+            self.state_fromstring(statestr)
+            self.log("Loaded setup %r." % os.path.relpath(filename))
             return True
         except:
-            self.alert("could not load state from", os.path.relpath(filename))
+            self.alert("ERROR: Can't load setup from %r." %
+                       os.path.relpath(filename))
             return False
+
+    def state_write(self, filename):
+        """Write the state to a file."""
+        with open(filename, "w") as fout:
+            fout.write(repr(self.state_toflat()))
+        self.log("Setup writtin to %r." % os.path.relpath(filename))
 
     def state_reset(self):
         """Reset the state to an initial configuration."""
-        n = symbolic.Symbol("n")
-        self.state_fromflat({
-            "statetime": time.time(),
-            "stateversion": self.requiredstateversion,
-            "samplername": min(self.samplers),
-            "nt": 1,
-            "userange": {
-                "outer": "range",
-                "inner": None,
-            },
-            "ranges": {
-                "threads": symbolic.Range((1, 0, 1)),
-                "range": symbolic.Range((8, 32, 1000)),
-                "sum": symbolic.Range((1, 1, 10)),
-                "omp": symbolic.Range((1, 1, 4))
-            },
-            "rangevars": {
-                "threads": "nt",
-                "range": "n",
-                "sum": "m",
-                "omp": "t"
-            },
-            "options": {
-                "papi": False,
-                "header": False,
-                "vary": True,  # TODO: debug value
-                "omp": False
-            },
-            "showargs": {
-                "flags": True,
-                "scalars": True,
-                "lds": True,  # TODO: debug value
-                "infos": False
-            },
-            "counters": [],
-            "header": "# script header\n",
-            "nrep": 10,
-            "calls": [
-                ("dgemm_", "N", "N", n, n, n, 1, "A", n, "B", n, 1, "C", n)
-            ],
-            "vary": {},
-            "datascale": 100,
-            "defaultdim": 1000
-        })
+        self.state_load(os.path.join(self.setuppath, "default.ems"))
 
     # info string
     def sampler_about_str(self):
@@ -1064,10 +1034,10 @@ class Mat(object):
         """Submit the current job."""
         # prepare the filenames
         filebase = filename
-        if filename[-5:] == ".smpl":
+        if filename[-5:] == ".emr":
             filebase = filebase[:-5]
         scriptfile = filebase + ".script"
-        smplfile = filebase + ".smpl"
+        reportfile = filebase + ".emr"
         errfile = filebase + ".err"
 
         # get the jobname
@@ -1083,7 +1053,7 @@ class Mat(object):
         footer = self.sampler["backend_footer"]
 
         # emptly output files
-        open(smplfile, "w").close()
+        open(reportfile, "w").close()
         open(errfile, "w").close()
 
         script = ""
@@ -1103,7 +1073,7 @@ class Mat(object):
         reportinfo.update({
             "sampler": sampler,
             "submittime": time.time(),
-            "filename": smplfile,
+            "filename": reportfile,
             "ncalls": (len(list(self.range_eval(0))) *
                        (self.nrep + 1) * len(self.calls))
         })
@@ -1114,11 +1084,11 @@ class Mat(object):
         elif self.options["omp"]:
             reportinfo["nlines"] /= len(self.calls)
         script += "cat > %s <<REPORTINFO\n%s\nREPORTINFO\n" % (
-            smplfile, repr(reportinfo)
+            reportfile, repr(reportinfo)
         )
 
         # timing
-        script += "date +%%s >> %s\n" % smplfile
+        script += "date +%%s >> %s\n" % reportfile
 
         # set up #threads range
         ntvals = self.nt,
@@ -1159,7 +1129,7 @@ class Mat(object):
             script += "%(x)s < %(i)s >> %(o)s 2>> %(e)s || exit" % {
                 "x": self.sampler["sampler"],  # executable
                 "i": callfile,  # input
-                "o": smplfile,  # output
+                "o": reportfile,  # output
                 "e": errfile  # error
             }
             if suffix:
@@ -1173,7 +1143,7 @@ class Mat(object):
             script += "rm %s\n" % callfile
 
         # timing
-        script += "date +%%s >> %s\n" % smplfile
+        script += "date +%%s >> %s\n" % reportfile
 
         # delete script file
         script += "rm " + scriptfile + "\n"
@@ -1195,7 +1165,7 @@ class Mat(object):
         # track progress
         self.jobprogress_add(jobid, reportinfo)
         self.UI_jobprogress_show()
-        self.log("submitted %r to %r" % (jobname, self.sampler["backend"]))
+        self.log("Submitted %r to %r." % (jobname, self.sampler["backend"]))
 
     # jobprogress
     def jobprogress_add(self, jobid, reportinfo):
@@ -1213,7 +1183,7 @@ class Mat(object):
         """Update all jobprogress states."""
         for job in self.jobprogress:
             if job and not job["error"]:
-                with open(job["filebase"] + ".smpl") as fin:
+                with open(job["filebase"] + ".emr") as fin:
                     job["progress"] = len(fin.readlines()) - 2
                 if os.path.isfile(job["filebase"] + ".err"):
                     if os.path.getsize(job["filebase"] + ".err"):
@@ -1265,6 +1235,10 @@ class Mat(object):
         """Event: Import the state."""
         self.state_load(filename)
         self.UI_setall()
+
+    def UI_state_export(self, filename):
+        """Event: Export the state."""
+        self.state_write(filename)
 
     def UI_sampler_change(self, samplername):
         """Event: Change the sampler."""
@@ -1438,4 +1412,4 @@ class Mat(object):
     def UI_jobview(self, jobid):
         """Event: View a job's report."""
         job = self.jobprogress[jobid]
-        self.UI_viewer_load(job["filebase"] + ".smpl")
+        self.UI_viewer_load(job["filebase"] + ".emr")

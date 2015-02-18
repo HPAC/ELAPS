@@ -31,8 +31,8 @@ class QMat(Mat):
 
     def state_init(self, load=True):
         """Try to load the state and geometry."""
-        self.state_reset()
         if not load:
+            Mat.state_reset(self)
             return
         settings = QtCore.QSettings("HPAC", "Sampler")
         self.Qt_setting += 1
@@ -49,6 +49,7 @@ class QMat(Mat):
             ))
             self.log("loaded previous state")
         except:
+            Mat.state_reset(self)
             pass
 
     def UI_init(self):
@@ -85,9 +86,14 @@ class QMat(Mat):
             reset.triggered.connect(self.Qt_state_reset_click)
 
             # file > load
-            load = QtGui.QAction("Import Setup ...", window)
+            load = QtGui.QAction("Load Setup ...", window)
             fileM.addAction(load)
             load.triggered.connect(self.Qt_state_load_click)
+
+            # fie > save
+            save = QtGui.QAction("Save Setup ...", window)
+            fileM.addAction(save)
+            save.triggered.connect(self.Qt_state_save_click)
 
             # file
             fileM.addSeparator()
@@ -836,12 +842,23 @@ class QMat(Mat):
         """Event: Load state."""
         filename = QtGui.QFileDialog.getOpenFileName(
             self.Qt_window,
-            "Import Setup from Report",
-            self.reportpath,
-            "*.smpl"
+            "Load Setup",
+            self.setuppath,
+            "*.emr, *.ems"
         )
         if filename:
             self.UI_state_import(str(filename))
+
+    def Qt_state_save_click(self):
+        """Event: Save state."""
+        filename = QtGui.QFileDialog.getSaveFileName(
+            self.Qt_window,
+            "Save Setup",
+            self.setuppath,
+            "*.ems"
+        )
+        if filename:
+            self.UI_state_export(str(filename))
 
     def Qt_sampler_change(self):
         """Event: Set the sampler."""
