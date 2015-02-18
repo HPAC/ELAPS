@@ -72,7 +72,7 @@ class Mat(object):
     @staticmethod
     def alert(*args):
         """Log a message to stderr."""
-        print(*args, file=sys.stderr)
+        print("\033[31m" + " ".join(map(str, args)) + "\033[0m", file=sys.stderr)
 
     # initializers
     def backends_init(self):
@@ -86,7 +86,7 @@ class Mat(object):
             module = imp.load_source(name, os.path.join(backendpath, filename))
             if hasattr(module, name):
                 self.backends[name] = getattr(module, name)()
-        self.log("loaded", len(self.backends), "backends:",
+        self.log("Loaded", len(self.backends), "backends:",
                  *sorted(self.backends))
         if len(self.backends) == 0:
             raise Exception("No backends found")
@@ -100,18 +100,18 @@ class Mat(object):
                 with open(os.path.join(path, "info.py")) as fin:
                     sampler = eval(fin.read())
                 if sampler["buildtime"] < self.requiredbuildversion:
-                    self.alert("backend", sampler["name"],
-                               "is outdated.  Please rebuild!")
+                    self.alert("ERROR: Backend %r is outdated. Please rebuild!"
+                               % sampler["name"])
                     continue
                 if sampler["backend"] not in self.backends:
-                    self.alert("missing backend %r for sampler %r"
+                    self.alert("ERROR: Missing backend %r for sampler %r."
                                % (sampler["backend"], sampler["name"]))
                     continue
                 sampler["sampler"] = os.path.join(path, "sampler.x")
                 sampler["kernels"] = {kernel[0]: tuple(map(intern, kernel))
                                       for kernel in sampler["kernels"]}
                 self.samplers[sampler["name"]] = sampler
-        self.log("loaded", len(self.samplers), "samplers:",
+        self.log("Loaded", len(self.samplers), "Samplers:",
                  *sorted("%s (%d kernels)" % (name, len(sampler["kernels"]))
                          for name, sampler in self.samplers.iteritems()))
         if len(self.samplers) == 0:
@@ -162,17 +162,21 @@ class Mat(object):
                 try:
                     calls[callid] = sig(*call[1:])
                 except:
+                    calls[callid] = list(call)
                     self.UI_alert(
-                        ("Could not applying the signature '%s' to '%s(%s)'.\n"
-                         "Signature Ignored.") % (sig, call[0], call[1:])
+                        ("Can't apply signature '%s' to '%s(%s)'.\n"
+                         "Signature ignored.") % (sig, call[0], call[1:])
                     )
         state["calls"] = calls
         # check if sampler is available
         samplername = state["samplername"]
         if samplername not in self.samplers:
-            samplername = min(self.sampler)
-            self.alert("sampler %r is not available, using %r instead"
-                       % (state["samplername"], samplername))
+            if samplername is not None:
+                self.alert(
+                    "ERROR: Sampler %r is not available, using %r instead."
+                    % (state["samplername"], samplername)
+                )
+            samplername = min(self.samplers)
         self.state = state
         self.sampler_set(samplername, True)
 
@@ -275,7 +279,7 @@ class Mat(object):
             try:
                 filename = os.path.join(self.signaturepath, routine + ".pysig")
                 self.signatures[routine] = signature.Signature(file=filename)
-                self.log("loaded signature for %r" % routine)
+                self.log("Loaded signature for %r." % routine)
             except:
                 self.signatures[routine] = None
         return self.signatures[routine]
@@ -656,7 +660,7 @@ class Mat(object):
                         self.calls[callid] = call
                     except:
                         self.UI_alert(
-                            ("Could not use the signature %r\n"
+                            ("Can't use the signature %r\n"
                              "Signature Ignored") % sig
                         )
                 else:
@@ -749,7 +753,7 @@ class Mat(object):
         thistype = self.calls[callid].sig[argid].__class__
         othertype = self.data[value]["type"]
         if thistype != othertype:
-            self.UI_alert("Incompatible data types for %r: %r and %r" %
+            self.UI_alert("Incompatible data types for %r: %r and %r." %
                           (value, thistype.typename, othertype.typename))
             self.UI_call_set(callid)
             return
@@ -1223,7 +1227,7 @@ class Mat(object):
                 filename = os.path.join(self.docspath, routine + ".pydoc")
                 with open(filename) as fin:
                     self.docs[routine] = eval(fin.read(), {}, {})
-                self.log("loaded documentation for %r" % routine)
+                self.log("Loaded documentation for %r." % routine)
             except:
                 self.docs[routine] = None
         return self.docs[routine]
@@ -1270,8 +1274,8 @@ class Mat(object):
                       and call[0] not in newsampler["kernels"])
         if missing:
             self.UI_dialog(
-                "warning", "unsupported kernels",
-                "%r does not support %s\nCorresponding calls will be removed"
+                "warning", "Unsupported kernels",
+                "%r doesn't support %s\nCorresponding calls will be removed"
                 % (samplername, ", ".join(map(repr, missing))), {
                     "Ok": (self.sampler_set, (samplername, True)),
                     "Cancel": None
