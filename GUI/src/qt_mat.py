@@ -32,7 +32,7 @@ class QMat(Mat):
     def state_init(self, load=True):
         """Try to load the state and geometry."""
         if not load:
-            Mat.state_reset(self)
+            Mat.state_init(self)
             return
         settings = QtCore.QSettings("HPAC", "Sampler")
         self.Qt_setting += 1
@@ -49,7 +49,7 @@ class QMat(Mat):
             ))
             self.log("loaded previous state")
         except:
-            Mat.state_reset(self)
+            Mat.state_init(self)
             pass
 
     def UI_init(self):

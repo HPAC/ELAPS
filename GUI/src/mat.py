@@ -9,6 +9,7 @@ import sys
 import os
 import imp
 import time
+import pprint
 from collections import defaultdict
 
 
@@ -40,7 +41,14 @@ class Mat(object):
         self.docs_init()
         self.UI_init()
         self.jobprogress_init()
-        self.state_init(loadstate)
+
+        if len(sys.argv) > 1:
+            if sys.argv[1][-4:] in (".ems", ".emr"):
+                self.state_load(sys.argv[1])
+            else:
+                self.state_init()
+        else:
+            self.state_init()
 
     # state access attributes
     def __getattr__(self, name):
@@ -127,7 +135,7 @@ class Mat(object):
         self.signatures = {}
         self.nosigwarning_shown = False
 
-    def state_init(self, load=True):
+    def state_init(self):
         """Initialize the Mat state."""
         self.state_reset()
 
@@ -203,11 +211,12 @@ class Mat(object):
         try:
             with open(filename) as fin:
                 if filename[-4:] == ".ems":
-                    statestr = fin.read()
+                    self.state_fromstring(fin.read())
+                    self.log("Loaded setup %r." % os.path.relpath(filename))
                 else:
-                    statestr = fin.readline()
-            self.state_fromstring(statestr)
-            self.log("Loaded setup %r." % os.path.relpath(filename))
+                    self.state_fromstring(fin.readline())
+                    self.log("Loaded setup from %r." %
+                             os.path.relpath(filename))
             return True
         except:
             self.alert("ERROR: Can't load setup from %r." %
@@ -217,8 +226,8 @@ class Mat(object):
     def state_write(self, filename):
         """Write the state to a file."""
         with open(filename, "w") as fout:
-            fout.write(repr(self.state_toflat()))
-        self.log("Setup writtin to %r." % os.path.relpath(filename))
+            pprint.pprint(self.state_toflat(), fout)
+        self.log("Written setup to %r." % os.path.relpath(filename))
 
     def state_reset(self):
         """Reset the state to an initial configuration."""
