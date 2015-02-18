@@ -1,0 +1,18 @@
+# single precision matrix-matrix product
+Signature(
+    "cgemm_",
+    Trans("transA"),
+    Trans("transB"),
+    Dim("m"),
+    Dim("n"),
+    Dim("k"),
+    cScalar(),
+    cData("A", "ldA * (k if transA == 'N' else m)"),
+    Ld("ldA", "m if transA == 'N' else k"),
+    cData("B", "ldB * (n if transB == 'N' else k)"),
+    Ld("ldB", "k if transB == 'N' else n"),
+    cScalar("beta"),
+    cData("C", "ldC * n"),
+    Ld("ldC", "m"),
+    complexity = "4 * 2 * m * n * k"
+)
