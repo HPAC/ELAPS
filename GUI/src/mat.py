@@ -17,7 +17,7 @@ class Mat(object):
     """Base class for ELAPS:Mats."""
 
     requiredbuildversion = 1423087329
-    requiredstateversion = 1423793808
+    requiredstateversion = 1424262159
     state = {}
 
     def __init__(self, loadstate=True):
@@ -149,8 +149,6 @@ class Mat(object):
         state = self.state.copy()
         state["calls"] = tuple(map(tuple, self.calls))
         state["counters"] = tuple(self.counters)
-        state["ranges"] = {rangename: range.subranges
-                           for rangename, range in self.ranges.iteritems()}
         return state
 
     def state_fromflat(self, state):
@@ -169,9 +167,6 @@ class Mat(object):
                          "Signature Ignored.") % (sig, call[0], call[1:])
                     )
         state["calls"] = calls
-        # set ranges
-        state["ranges"] = {key: symbolic.Range(*val)
-                           for key, val in state["ranges"].iteritems()}
         # check if sampler is available
         samplername = state["samplername"]
         if samplername not in self.samplers:
@@ -200,7 +195,7 @@ class Mat(object):
         """Try to laod the state from a file."""
         try:
             with open(filename) as fin:
-                self.state_fromstring(fin.read())
+                self.state_fromstring(fin.readline())
             self.log("loaded state from", os.path.relpath(filename))
             return True
         except:
@@ -220,10 +215,10 @@ class Mat(object):
                 "inner": None,
             },
             "ranges": {
-                "threads": ((1, 0, 1),),
-                "range": ((8, 32, 1000),),
-                "sum": ((1, 1, 10),),
-                "omp": ((1, 1, 4),)
+                "threads": symbolic.Range((1, 0, 1)),
+                "range": symbolic.Range((8, 32, 1000)),
+                "sum": symbolic.Range((1, 1, 10)),
+                "omp": symbolic.Range((1, 1, 4))
             },
             "rangevars": {
                 "threads": "nt",
