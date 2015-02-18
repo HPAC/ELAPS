@@ -401,7 +401,7 @@ class Range(object):
             # initialize from string
 
             # for each subrange
-            rangepart = args[0].split(",")
+            rangeparts = args[0].split(",")
             for rangepart in rangeparts:
                 # format: min[[:step]:max]
                 parts = rangepart.strip().split(":")

@@ -829,7 +829,7 @@ class QMat(Mat):
             self.Qt_window,
             "Generate Report",
             self.reportpath,
-            "*.smpl"
+            "*.emr"
         )
         if filename:
             self.UI_submit(str(filename))

@@ -4,5 +4,5 @@
 reports/*
 !reports/.gitignore
 setups/*
-!reports/default.ems
-!reports/examples/
+!setups/default.ems
+!setups/examples/

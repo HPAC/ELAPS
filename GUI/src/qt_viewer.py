@@ -388,7 +388,7 @@ class QViewer(Viewer):
             self.Qt_window,
             "Open Report(s)",
             self.reportpath,
-            "*.smpl"
+            "*.emr"
         )
         for filename in filenames:
             filename = str(filename)
