@@ -481,6 +481,11 @@ class Viewer(object):
             self.stats_showing.add(statname)
         else:
             self.stats_showing.discard(statname)
+        if statname == "avg" and not state:
+            self.stats_showing.discard("std")
+        elif statname == "std" and state:
+            self.stats_showing.add("avg")
+        self.UI_stats_set()
         self.plotdata_update()
         self.UI_plot_update()
 
