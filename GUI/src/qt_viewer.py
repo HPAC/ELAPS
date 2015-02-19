@@ -136,22 +136,6 @@ class QViewer(Viewer):
 
             return reportsD
 
-        def create_center():
-            tabs = QtGui.QTabWidget()
-            window.setCentralWidget(tabs)
-
-            # window > right > tabs > plot
-            self.Qt_plot = self.plotfactory()
-            tabs.addTab(self.Qt_plot, "Plot")
-
-            # window > right > tabs > table
-            self.Qt_data = QtGui.QTableWidget()
-            tabs.addTab(self.Qt_data, "data")
-            self.Qt_data.setColumnCount(5)
-            self.Qt_data.setHorizontalHeaderLabels(
-                ["med", "min", "avg", "max", "std"]
-            )
-
         def create_plot():
             plotD = QtGui.QDockWidget("Plot")
             plotD.setObjectName("Plot")
