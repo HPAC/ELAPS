@@ -33,7 +33,7 @@ def metric(data, report, callid):
     else:
         return None
 
-    nt = sampler["ncores"]
+    nt = min(sampler["ncores"], report["nt"])
     return nops / (rdtsc * ipc * nt)
 
 name = "efficiency"
