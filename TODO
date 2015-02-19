@@ -9,12 +9,12 @@ GUI:
 - work variable hiding
 - work variable dimension deduction
 
-- (load state from report on startup)
 - ("file" backend)
 - (status tips)
 - (multiple BLAS at once)
 
 
 Viewer:
+- (hide unavailable metrics)
 - (memory metrics)
 - (status tips)
