@@ -88,11 +88,13 @@ class QMat(Mat):
             # file > load
             load = QtGui.QAction("Load Setup ...", window)
             fileM.addAction(load)
+            load.setShortcut(QtGui.QKeySequence("Ctrl+O"))
             load.triggered.connect(self.Qt_state_load_click)
 
             # fie > save
             save = QtGui.QAction("Save Setup ...", window)
             fileM.addAction(save)
+            save.setShortcut(QtGui.QKeySequence("Ctrl+S"))
             save.triggered.connect(self.Qt_state_save_click)
 
             # file
