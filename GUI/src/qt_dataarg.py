@@ -121,6 +121,9 @@ class QDataArg(QtGui.QLineEdit):
                 return
             dimmin.append(rangemin)
             dimmax.append(rangemax)
+        if float("inf") in dimmin or -float("inf") in dimmax:
+            self.viz_none()
+            return
         if len(dims) == 1:
             self.viz_vector(dimmin, dimmax)
         elif len(dims) == 2:
