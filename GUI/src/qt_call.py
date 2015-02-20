@@ -69,7 +69,11 @@ class QCall(QtGui.QListWidgetItem):
     def args_init(self):
         """Initialize the arguments."""
         call = self.Qt_gui.calls[self.callid]
-        self.Qt_args[0].setProperty("invalid", False)
+        Qroutine = self.Qt_args[0]
+        Qroutine.setProperty("invalid", False)
+        Qroutine.style().unpolish(Qroutine)
+        Qroutine.style().polish(Qroutine)
+        Qroutine.update()
         if isinstance(call, signature.Call):
             self.sig = call.sig
         else:
@@ -81,7 +85,7 @@ class QCall(QtGui.QListWidgetItem):
                 self.Qt_gui.nosigwarning_shown = True
         doc = self.Qt_gui.docs_get(call[0])
         if doc:
-            self.Qt_args[0].setToolTip(doc[0][1])
+            Qroutine.setToolTip(doc[0][1])
         for argid in range(len(call))[1:]:
             tooltip = ""
             if self.sig:
@@ -136,14 +140,18 @@ class QCall(QtGui.QListWidgetItem):
 
     def args_clear(self):
         """Clear the arguments."""
-        self.Qt_args[0].setProperty("invalid", True)
+        Qroutine = self.Qt_args[0]
+        Qroutine.setProperty("invalid", True)
+        Qroutine.style().unpolish(Qroutine)
+        Qroutine.style().polish(Qroutine)
+        Qroutine.update()
         for Qarg in self.Qt_args[1:]:
             Qarg.deleteLater()
         self.Qt_args = self.Qt_args[:1]
         for Qarglabel in self.Qt_arglabels[1:]:
             Qarglabel.deleteLater()
         self.Qt_arglabels = self.Qt_arglabels[:1]
-        self.Qt_args[0].setToolTip("")
+        Qroutine.setToolTip("")
         self.update_size()
         self.sig = None
 
