@@ -142,8 +142,8 @@ class Viewer(object):
 
     # default colors
     def nextcolor(self, colors=[
-        "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff",
-        "#880000", "#008800", "#000088", "#888800", "#008888", "#880088",
+        "#004280", "#e6a500", "#bf0000", "#009999", "#5b59b2", "#969900",
+        "#bf0073", "#bf9239", "#004ee6", "#ff7a00"
     ]):
         if colors:
             return colors.pop(0)

@@ -21,7 +21,7 @@ class MPLPlot(object):
             "legend": {},
             "med": {"linestyle": "-"},
             "min": {"linestyle": "--"},
-            "max": {"linestyle": ":"},
+            "max": {"linestyle": ":", "linewidth": 2},
             "avg": {"linestyle": "-."},
             "min-max": {"hatch": "...", "facecolor": (0, 0, 0, 0)},
             "std": {"alpha": .25},
