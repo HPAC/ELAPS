@@ -3,7 +3,7 @@ Signature(
     "sswap_",
     Dim("n"),
     sData("X", "1 + (n - 1) * abs(incX)"),
-    Inc("IncX"),
+    Inc("incX"),
     sData("Y", "1 + (n - 1) * abs(incY)"),
     Inc("IncY"),
     complexity = "0"  # only memops

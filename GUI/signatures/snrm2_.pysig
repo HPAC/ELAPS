@@ -3,6 +3,6 @@ Signature(
     "snrm2_",
     Dim("n"),
     sData("X", "1 + (n - 1) * abs(incX)"),
-    Inc("IncX"),
+    Inc("incX"),
     complexity = "2 * n"
 )

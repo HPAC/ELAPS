@@ -5,7 +5,7 @@ Signature(
     Dim("n"),
     sScalar(),
     sData("X", "1 + (n - 1) * abs(incX)"),
-    Inc("IncX"),
+    Inc("incX"),
     sData("Y", "1 + (n - 1) * abs(incX)"),
     Inc("IncY"),
     sData("A", "ldA * n", "lower if uplo == 'L' else upper"),

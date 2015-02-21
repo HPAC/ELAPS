@@ -3,7 +3,7 @@ Signature(
     "ddot_",
     Dim("n"),
     dData("X", "1 + (n - 1) * abs(incX)"),
-    Inc("IncX"),
+    Inc("incX"),
     dData("Y", "1 + (n - 1) * abs(incY)"),
     Inc("IncY"),
     complexity = "2 * n"  # checked

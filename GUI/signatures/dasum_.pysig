@@ -3,6 +3,6 @@ Signature(
     "dasum_",
     Dim("n"),
     dData("X", "1 + (n - 1) * abs(incX)"),
-    Inc("IncX"),
+    Inc("incX"),
     complexity = "n"
 )
