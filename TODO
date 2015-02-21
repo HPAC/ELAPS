@@ -6,6 +6,7 @@ Sampler:
 GUI:
 - Example GUI states
 - save state on ctrl-C
+- Hide job report lines
 - work variable hiding
 - work variable dimension deduction
 
