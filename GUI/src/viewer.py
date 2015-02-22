@@ -113,7 +113,7 @@ class Viewer(object):
         }
 
     def reports_init(self):
-        self.reports = []
+        self.reports = {}
         self.showplots = defaultdict(lambda: defaultdict(lambda: False))
         self.reportid_selected = None
         self.callid_selected = None
@@ -420,24 +420,28 @@ class Viewer(object):
 
     # event handlers
     def UI_report_load(self, filename):
-        if any(report["filename"] == filename for report in self.reports):
-            self.UI_alert(filename, "already loaded")
-            return
+        filename = os.path.abspath(filename)
+        new = filename not in self.reports
         try:
             report = self.report_load(filename)
         except:
-            self.alert("could not load", os.path.relpath(filename))
+            self.UI_alert("Couldn't load %r." % os.path.relpath(filename))
             return
-        reportid = len(self.reports)
-        self.reports.append(report)
-        report["plotcolors"] = {None: self.nextcolor()}
-        if (not report["options"]["omp"] and
-                report["userange"]["inner"] != "omp"):
-            for callid in range(len(report["calls"])):
-                if len(report["calls"]) == 1:
-                    report["plotcolors"][0] = report["plotcolors"][None]
-                else:
-                    report["plotcolors"][callid] = self.nextcolor()
+        if new:
+            self.alert("Loaded %r." % os.path.relpath(filename))
+        else:
+            self.alert("Reloaded %r." % os.path.relpath(filename))
+        reportid = filename
+        self.reports[filename] = report
+        if new:
+            report["plotcolors"] = {None: self.nextcolor()}
+            if (not report["options"]["omp"] and
+                    report["userange"]["inner"] != "omp"):
+                for callid in range(len(report["calls"])):
+                    if len(report["calls"]) == 1:
+                        report["plotcolors"][0] = report["plotcolors"][None]
+                    else:
+                        report["plotcolors"][callid] = self.nextcolor()
         if report["options"]["papi"]:
             for counter in report["counters"]:
                 if counter not in self.metrics:
@@ -445,13 +449,28 @@ class Viewer(object):
             self.UI_metriclist_update()
         self.plots_showing.add((reportid, None))
         self.plotdata_update()
-        self.UI_report_add()
+        self.UI_report_add(reportid)
         self.UI_plot_update()
+
+    def UI_report_reload(self, reportid):
+        self.UI_report_load(reportid)
+
+    def UI_report_close(self, reportid):
+        report = self.reports[reportid]
+        for callid in report["plotcolors"]:
+            self.plots_showing.discard((reportid, callid))
+        del self.reports[reportid]
+        self.plotdata_update()
+        self.UI_plot_update()
+        self.UI_report_remove(reportid)
 
     def UI_report_select(self, reportid, callid):
         self.reportid_selected = reportid
         self.callid_selected = callid
-        self.UI_reportinfo_update()
+        if reportid:
+            self.UI_reportinfo_update()
+        else:
+            self.UI_reportinfo_clear()
 
     def UI_reportcheck_change(self, reportid, callid, state):
         if state:

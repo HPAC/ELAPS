@@ -136,6 +136,27 @@ class QViewer(Viewer):
             self.Qt_reports.currentItemChanged.connect(self.Qt_report_select)
             self.Qt_reports.itemExpanded.connect(self.Qt_report_expanded)
 
+            # context menu
+            self.Qt_reports.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+            self.Qt_reports.customContextMenuRequested.connect(
+                self.Qt_report_contextmenu_show
+            )
+            self.Qt_report_contextmenu = QtGui.QMenu()
+
+            # context menu > reload
+            reload_ = QtGui.QAction("Reload", window)
+            self.Qt_report_contextmenu.addAction(reload_)
+            reload_.triggered.connect(self.Qt_report_reload)
+
+            # context menu > close
+            close = QtGui.QAction("Close", window)
+            self.Qt_report_contextmenu.addAction(close)
+            close.triggered.connect(self.Qt_report_close)
+
+            self.Qt_report_contextmenu.reportid = None
+
+            self.Qt_Qreports = {}
+
             return reportsD
 
         def create_plot():
@@ -259,9 +280,14 @@ class QViewer(Viewer):
         for stat, Qstat in self.Qt_Qstats.iteritems():
             Qstat.setChecked(stat in self.stats_showing)
 
-    def UI_report_add(self, reportid=None):
-        if reportid is None:
-            reportid = len(self.reports) - 1
+    def UI_report_add(self, reportid):
+        if reportid in self.Qt_Qreports:
+            # report was reloaded
+            self.UI_report_update(reportid)
+            self.Qt_columns_resize()
+            self.Qt_reports.setCurrentItem(self.Qt_Qreports[reportid])
+            return
+
         report = self.reports[reportid]
         sampler = report["sampler"]
 
@@ -332,10 +358,16 @@ class QViewer(Viewer):
             Qitem.reportid = reportid
             Qitem.callid = callid
 
-        self.Qt_Qreports.append(Qreport)
+        self.Qt_Qreports[reportid] = Qreport
         self.UI_report_update(reportid)
         self.Qt_columns_resize()
         self.Qt_reports.setCurrentItem(Qreport)
+
+    def UI_report_remove(self, reportid):
+        self.Qt_reports.takeTopLevelItem(
+            self.Qt_reports.indexOfTopLevelItem(self.Qt_Qreports[reportid])
+        )
+        del self.Qt_Qreports[reportid]
 
     def UI_report_update(self, reportid):
         report = self.reports[reportid]
@@ -365,6 +397,12 @@ class QViewer(Viewer):
             else:
                 for j in range(5):
                     self.Qt_data.setItem(i, j, QtGui.QTableWidgetItem("NA"))
+
+    def UI_reportinfo_clear(self):
+        self.Qt_reportinfo.setText("")
+        for i in range(len(self.metrics)):
+            for j in range(5):
+                self.Qt_data.setItem(i, j, QtGui.QTableWidgetItem(""))
 
     def UI_plot_update(self):
         self.Qt_plot.plot(
@@ -404,7 +442,24 @@ class QViewer(Viewer):
     def Qt_report_select(self, item):
         if self.Qt_setting:
             return
-        self.UI_report_select(item.reportid, item.callid)
+        if item:
+            self.UI_report_select(item.reportid, item.callid)
+        else:
+            self.UI_report_select(None, None)
+
+    def Qt_report_contextmenu_show(self, pos):
+        item = self.Qt_reports.itemAt(pos)
+        if not item:
+            return
+        pos = self.Qt_reports.viewport().mapToGlobal(pos)
+        self.Qt_report_contextmenu.reportid = item.reportid
+        self.Qt_report_contextmenu.exec_(pos)
+
+    def Qt_report_reload(self):
+        self.UI_report_reload(self.Qt_report_contextmenu.reportid)
+
+    def Qt_report_close(self):
+        self.UI_report_close(self.Qt_report_contextmenu.reportid)
 
     def Qt_reportcheck_change(self):
         if self.Qt_setting:
