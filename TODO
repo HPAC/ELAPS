@@ -15,7 +15,6 @@ GUI:
 
 
 Viewer:
-- close reports
 - legend placement
 
 - (hide unavailable metrics)
