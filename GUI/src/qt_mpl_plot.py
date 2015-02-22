@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Qt implementation of the matplotlib-based plot for ELAPS:Viewer."""
 from __future__ import division, print_function
 
 from mpl_plot import MPLPlot
@@ -8,7 +9,11 @@ import matplotlib.backends.backend_qt4agg as QtMPL
 
 
 class QMPLPlot(MPLPlot, QtGui.QWidget):
+
+    """Matplitlib-based ELAPS:Viewer implementation in Qt."""
+
     def __init__(self, *args):
+        """Initialize the plot."""
         QtGui.QWidget.__init__(self)
         MPLPlot.__init__(self)
         self.UI_init()
@@ -16,6 +21,7 @@ class QMPLPlot(MPLPlot, QtGui.QWidget):
             self.plot(*args)
 
     def UI_init(self):
+        """Initialize all GUI elements."""
         # layout
         layout = QtGui.QVBoxLayout()
         self.setLayout(layout)
@@ -33,5 +39,6 @@ class QMPLPlot(MPLPlot, QtGui.QWidget):
         toolbarL.addWidget(self.Qtoolbar)
 
     def UI_update(self):
+        """Update all GUI elements."""
         self.setWindowTitle(self.title)
         self.Qcanvas.draw()

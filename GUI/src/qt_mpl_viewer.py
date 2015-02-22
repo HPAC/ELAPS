@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Qt and matplotlib implementaiton of ELAPS:Viewer."""
 from __future__ import division, print_function
 
 from qt_viewer import QViewer
@@ -8,13 +9,16 @@ import sys
 
 
 class QMPLViewer(QViewer):
+
+    """ELAPS:Viwer implementation in Qt and matplotlib."""
+
     def __init__(self, app=None, loadstate=True):
+        """Initialize the ELAPS:Viewer."""
         QViewer.__init__(self, QMPLPlot, app, loadstate)
 
 
 def main():
-    import signal
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    """Main routine to start a Qt and matplotlib based Viewer."""
     loadstate = "--reset" not in sys.argv[1:]
     QMPLViewer(loadstate=loadstate).start()
 
