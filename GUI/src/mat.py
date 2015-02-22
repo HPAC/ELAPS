@@ -894,7 +894,7 @@ class Mat(object):
                 if userange_inner:
                     innerrange = self.ranges[userange_inner]
                     if userange_outer:
-                        innerrange = innerrange(**{rangevars_outer: outerval})
+                        innerrange = innerrange(**{rangevar_outer: outerval})
                     innervals = list(innerrange)
 
                 # go over repetitions
