@@ -408,8 +408,9 @@ class QMat(Mat):
             layout = QtGui.QGridLayout()
             self.Qt_jobprogress.setLayout(layout)
 
+            self.Qt_jobprogress_items = {}
+
             # timer
-            self.Qt_jobprogress_items = []
             self.Qt_jobprogress_timer = QtCore.QTimer()
             self.Qt_jobprogress_timer.setInterval(1000)
             self.Qt_jobprogress_timer.timeout.connect(
@@ -752,31 +753,43 @@ class QMat(Mat):
             self.Qt_jobprogress_timer.stop()
             return
         self.jobprogress_update()
-        for i, job in enumerate(self.jobprogress):
-            if not job and i < len(self.Qt_jobprogress_items):
-                if self.Qt_jobprogress_items[i]:
-                    for item in self.Qt_jobprogress_items[i]:
-                        item.deleteLater()
-                    self.Qt_jobprogress_items[i] = None
-                continue
-            layout = self.Qt_jobprogress.layout()
-            if i >= len(self.Qt_jobprogress_items):
-                name = os.path.basename(job["filebase"])
-                Qname = QtGui.QLabel(name)
-                layout.addWidget(Qname, i, 0)
+        # delete missing
+        for jobid in self.Qt_jobprogress_items:
+            if jobid not in self.jobprogress:
+                for Qwidget in self.Qt_jobprogress_items[jobid]:
+                    Qwidget.deleteLater()
+        self.Qt_jobprogress_items = {
+            jobid: Qitems for jobid, Qitems in self.Qt_jobprogress.iteritems()
+            if jobid in self.jobprogress
+        }
+        for jobid in self.jobprogress:
+            job = self.jobprogress[jobid]
+            if jobid not in self.Qt_jobprogress_items:
+                layout = self.Qt_jobprogress.layout()
+                row = layout.rowCount()
+                Qname = QtGui.QLabel(os.path.basename(job["filebase"]))
+                layout.addWidget(Qname, row, 0)
                 Qbar = QtGui.QProgressBar()
-                layout.addWidget(Qbar, i, 1)
+                layout.addWidget(Qbar, row, 1)
                 Qbar.setRange(0, job["progressend"])
                 Qlabel = QtGui.QLabel()
-                layout.addWidget(Qlabel, i, 2)
+                layout.addWidget(Qlabel, row, 2)
                 Qbutton = QtGui.QPushButton("kill")
-                layout.addWidget(Qbutton, i, 3)
+                layout.addWidget(Qbutton, row, 3)
                 Qbutton.clicked.connect(self.Qt_jobprogress_click)
-                Qbutton.jobid = i
-                self.Qt_jobprogress_items.append((Qname, Qbar, Qlabel,
-                                                  Qbutton))
+                Qbutton.jobid = jobid
+                Qhide = QtGui.QToolButton()
+                layout.addWidget(Qhide, row, 4)
+                Qhide.setIcon(Qhide.style().standardIcon(
+                    QtGui.QStyle.SP_TitleBarCloseButton
+                ))
+                Qhide.jobid = jobid
+                Qhide.clicked.connect(self.Qt_jobprogress_hide)
+                Qhide.setStyleSheet("border: 0px;")
+                self.Qt_jobprogress_items[jobid] = (Qname, Qbar, Qlabel,
+                                                    Qbutton, Qhide)
             else:
-                Qname, Qbar, Qlabel, Qbutton = self.Qt_jobprogress_items[i]
+                _, Qbar, Qlabel, Qbutton, _ = self.Qt_jobprogress_items[jobid]
             Qbar.setValue(min(max(0, job["progress"]), job["progressend"]))
             if job["error"]:
                 Qlabel.setText("error")
@@ -1015,6 +1028,12 @@ class QMat(Mat):
             self.UI_jobkill(jobid)
         else:
             self.UI_jobview(jobid)
+
+    def Qt_jobprogress_hide(self):
+        """Event: Hide job progress"""
+        sender = self.Qt_app.sender()
+        jobid = sender.jobid
+        self.UI_jobprogress_hide(jobid)
 
 
 def main():

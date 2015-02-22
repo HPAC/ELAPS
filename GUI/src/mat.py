@@ -153,7 +153,7 @@ class Mat(object):
 
     def jobprogress_init(self):
         """Initialize the jobprogress overview."""
-        self.jobprogress = []
+        self.jobprogress = {}
 
     # state routines
     def state_toflat(self):
@@ -1192,24 +1192,26 @@ class Mat(object):
     # jobprogress
     def jobprogress_add(self, jobid, reportinfo):
         """Add an entry to the jobprogress tracker."""
-        self.jobprogress.append({
-            "backend": self.sampler["backend"],
+        backend = self.sampler["backend"]
+        self.jobprogress[(backend, jobid)] = {
+            "backend": backend,
             "id": jobid,
             "filebase": reportinfo["filename"][:-4],
             "progress": -1,
             "progressend": reportinfo["nlines"],
             "error": False,
-        })
+        }
 
     def jobprogress_update(self):
         """Update all jobprogress states."""
-        for job in self.jobprogress:
-            if job and not job["error"]:
-                with open(job["filebase"] + ".emr") as fin:
-                    job["progress"] = len(fin.readlines()) - 2
-                if os.path.isfile(job["filebase"] + ".err"):
-                    if os.path.getsize(job["filebase"] + ".err"):
-                        job["error"] = True
+        for job in self.jobprogress.itervalues():
+            if job["error"] or job["progress"] == job["progressend"]:
+                continue
+            with open(job["filebase"] + ".emr") as fin:
+                job["progress"] = len(fin.readlines()) - 2
+            if os.path.isfile(job["filebase"] + ".err"):
+                if os.path.getsize(job["filebase"] + ".err"):
+                    job["error"] = True
 
     # kernel documentation
     def docs_get(self, routine):
@@ -1427,11 +1429,16 @@ class Mat(object):
 
     def UI_jobkill(self, jobid):
         """Event: Kill a job."""
-        job = self.jobprogress[jobid]
-        self.backends[job["backend"]].kill(job["id"])
-        self.jobprogress[jobid] = None
+        backend, bjobid = jobid
+        self.backends[backend].kill(bjobid)
+        del self.jobprogress[jobid]
+        self.UI_jobprogress_show()
 
     def UI_jobview(self, jobid):
         """Event: View a job's report."""
         job = self.jobprogress[jobid]
         self.UI_viewer_load(job["filebase"] + ".emr")
+
+    def UI_jobprogress_hide(self, jobid):
+        del self.jobprogress[jobid]
+        self.UI_jobprogress_show()
