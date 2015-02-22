@@ -6,7 +6,6 @@ Sampler:
 GUI:
 - Example GUI states
 - save state on ctrl-C
-- Hide job report lines
 - work variable hiding
 - work variable dimension deduction
 
@@ -22,3 +21,6 @@ Viewer:
 - (hide unavailable metrics)
 - (memory metrics)
 - (status tips)
+
+Other:
+- github
