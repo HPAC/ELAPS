@@ -491,19 +491,20 @@ class Mat(object):
             # dimensions
             sym = symcall[argid]
             if isinstance(sym, symbolic.Prod):
-                data["dims"] = [
+                dims = [
                     dim(**argdict)
                     if isinstance(dim, symbolic.Expression) else dim
                     for dim in sym[1:]
                 ]
             else:
-                data["dims"] = [
+                dims = [
                     sym(**argdict)
                     if isinstance(sym, symbolic.Expression) else dim
                 ]
+            data["dims"] = dims
 
             # leading dimension
-            data["lds"] = data["dims"][:]
+            lds = dims[:]
             if name in self.vary:
                 # extract some variables
                 vary = self.vary[name]
@@ -511,18 +512,19 @@ class Mat(object):
                 across = vary["across"]
                 userange_inner = self.userange["inner"]
 
-                if data["lds"][along] is not None:
+                if along < len(lds) and lds[along] is not None:
                     if userange_inner in across:
                         # varying across range: sum over range
-                        data["lds"][along] = symbolic.Sum(
-                            data["lds"][along], **{
+                        lds[along] = symbolic.Sum(
+                            lds[along], **{
                                 self.rangevars[userange_inner]:
                                 self.ranges[userange_inner]
                             }
                         ).simplify()
                     if "reps" in across:
                         # varying across repetitions: multiply by count
-                        data["lds"][along] = 10 * data["lds"][along]
+                        lds[along] = self.nrep * lds[along]
+            data["lds"] = lds
 
             self.data[name] = data
 
@@ -933,8 +935,9 @@ class Mat(object):
                             dim *= next(self.range_eval(data["lds"][idx],
                                                         outerval, innerval))
                         # dimension for traversed dim
-                        dim *= next(self.range_eval(data["dims"][along],
-                                                    outerval, innerval))
+                        if along < len(data["dims"]):
+                            dim *= next(self.range_eval(data["dims"][along],
+                                                        outerval, innerval))
                         # add custom offset
                         offset += dim + next(self.range_eval(vary["offset"],
                                                              outerval,
