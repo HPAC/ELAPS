@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Flops (complexity) metric."""
 from __future__ import division, print_function
 
 

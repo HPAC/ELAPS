@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""PAPI event name to description dict."""
 from __future__ import division, print_function
 
 events = {
