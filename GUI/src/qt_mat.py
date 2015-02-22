@@ -47,18 +47,18 @@ class QMat(Mat):
             self.state_fromstring(str(
                 settings.value("appState").toString()
             ))
-            self.log("loaded previous state")
+            self.log("Loaded previous setup.")
         except:
             Mat.state_init(self)
-            pass
 
     def UI_init(self):
         """Initialize all GUI elements."""
         self.Qt_setting += 1
+
         # window
         self.Qt_window = QtGui.QMainWindow()
         window = self.Qt_window
-        window.setWindowTitle("Sampler")
+        window.setWindowTitle("ELAPS:Mat")
         window.setUnifiedTitleAndToolBarOnMac(True)
         window.closeEvent = self.Qt_window_close
         window.setCorner(QtCore.Qt.TopRightCorner,

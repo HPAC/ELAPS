@@ -19,32 +19,34 @@ class QViewer(Viewer):
         self.Qt_app.viewer = self
         self.plotfactory = plotfactory
         self.Qt_setting = 0
+        self.Qt_initialized = False
         Viewer.__init__(self, loadstate)
 
     def state_init(self, load=True):
-        if load:
-            settings = QtCore.QSettings("HPAC", "ELAPS:Viewer")
-            self.Qt_setting += 1
-            self.Qt_window.restoreGeometry(
-                settings.value("geometry").toByteArray()
-            )
-            self.Qt_window.restoreState(
-                settings.value("windowState").toByteArray()
-            )
-            self.Qt_setting -= 1
-            try:
-                self.state = eval(str(settings.value("appState").toString()))
-            except:
-                self.state_reset()
-        else:
-            self.state_reset()
+        if not load:
+            Viewer.state_init(self)
+        settings = QtCore.QSettings("HPAC", "ELAPS:Viewer")
+        self.Qt_setting += 1
+        self.Qt_window.restoreGeometry(
+            settings.value("geometry").toByteArray()
+        )
+        self.Qt_window.restoreState(
+            settings.value("windowState").toByteArray()
+        )
+        self.Qt_setting -= 1
+        try:
+            self.state = eval(str(settings.value("appState").toString()))
+            self.log("Loaded previous state")
+        except:
+            Viewer.state_init(self)
 
     def UI_init(self):
-        self.UI_hasHTML = True
+        self.Qt_setting += 1
+
         # window
         self.Qt_window = QtGui.QMainWindow()
         window = self.Qt_window
-        window.setWindowTitle("Viewer")
+        window.setWindowTitle("ELAPS:Viewer")
         window.setUnifiedTitleAndToolBarOnMac(True)
         window.closeEvent = self.Qt_window_close
         window.setDockNestingEnabled(True)
@@ -181,6 +183,10 @@ class QViewer(Viewer):
 
             return infoD
 
+        def create_statusbar():
+            """Create the staus bar."""
+            self.Qt_statusbar = window.statusBar()
+
         create_menus()
         create_toolbars()
         reportsD = create_reports()
@@ -193,23 +199,38 @@ class QViewer(Viewer):
         window.addDockWidget(QtCore.Qt.LeftDockWidgetArea, tableD)
         window.tabifyDockWidget(plotD, tableD)
         plotD.raise_()
+        create_statusbar()
 
-        # window > left > metrics > info
-        self.Qt_metricinfo = QtGui.QLabel()
+        window.show()
 
-        self.Qt_window.show()
-
-        # Qt objects
-        self.Qt_Qreports = []
+        self.Qt_setting -= 1
+        self.Qt_initialized = True
 
     def UI_start(self):
         sys.exit(self.Qt_app.exec_())
+
+    # utility
+    def log(self, *args):
+        """Also log messages to status for 2 sec."""
+        self.UI_setstatus(" ".join(map(str, args)), 2000)
+        Viewer.log(*args)
+
+    def alert(self, *args):
+        """Also log alert messages to status."""
+        self.UI_setstatus(" ".join(map(str, args)))
+        Viewer.alert(*args)
 
     def UI_alert(self, *args, **kwargs):
         msg = " ".join(map(str, args))
         title = kwargs.get("title", "")
         self.UI_dialog("information", title, msg)
 
+    def UI_setstatus(self, msg, timeout=0):
+        """Set the status message."""
+        if self.Qt_initialized:
+            self.Qt_statusbar.showMessage(msg, timeout)
+
+    # resize
     def Qt_columns_resize(self):
         for colid in range(self.Qt_reports.columnCount()):
             self.Qt_reports.resizeColumnToContents(colid)
@@ -324,9 +345,6 @@ class QViewer(Viewer):
             color = report["plotcolors"][callid]
             Qitem.color.setStyleSheet("background-color: %s;" % color)
             Qitem.color.setToolTip(color)
-
-    def UI_metricinfo_set(self, infostr):
-        self.Qt_metricinfo.setText(infostr)
 
     def UI_reportinfo_update(self):
         infostr = self.report_infostr_HTML()

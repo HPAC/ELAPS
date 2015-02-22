@@ -26,7 +26,6 @@ class Viewer(object):
             sys.path.append(thispath)
         self.rootpath = os.path.abspath(os.path.join(thispath, "..", ".."))
         self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
-        self.statefile = os.path.join(self.rootpath, "GUI", ".viewerstate.py")
 
         self.metrics_init()
         self.stats_init()
@@ -58,10 +57,12 @@ class Viewer(object):
         self.UI_start()
 
     # utility
-    def log(self, *args):
+    @staticmethod
+    def log(*args):
         print(*args)
 
-    def alert(self, *args):
+    @staticmethod
+    def alert(*args):
         print(*args, file=sys.stderr)
 
     # initializers
@@ -133,7 +134,7 @@ class Viewer(object):
         }
 
     # papi metrics
-    def metrics_adddefaultmetric(self, name):
+    def metrics_addcountermetric(self, name):
         event = papi.events[name]
         metric = lambda data, report, callid: data.get(name)
         metric.__doc__ = event["long"] + "\n\n    " + name
@@ -440,7 +441,7 @@ class Viewer(object):
         if report["options"]["papi"]:
             for counter in report["counters"]:
                 if counter not in self.metrics:
-                    self.metrics_adddefaultmetric(counter)
+                    self.metrics_addcountermetric(counter)
             self.UI_metriclist_update()
         self.plots_showing.add((reportid, None))
         self.plotdata_update()
@@ -468,11 +469,6 @@ class Viewer(object):
 
     def UI_metric_change(self, metric):
         self.metric_selected = metric
-        info = self.metrics[metric].__doc__
-        if isinstance(info, str):
-            self.UI_metricinfo_set(info.strip())
-        else:
-            self.UI_metricinfo_set("[no docstring for %s]" % metric)
         self.plotdata_update()
         self.UI_plot_update()
 
