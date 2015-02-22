@@ -1030,7 +1030,7 @@ class QMat(Mat):
             self.UI_jobview(jobid)
 
     def Qt_jobprogress_hide(self):
-        """Event: Hide job progress"""
+        """Event: Hide job progress."""
         sender = self.Qt_app.sender()
         jobid = sender.jobid
         self.UI_jobprogress_hide(jobid)
