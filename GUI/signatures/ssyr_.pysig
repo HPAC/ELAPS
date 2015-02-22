@@ -7,6 +7,6 @@ Signature(
     sData("X", "1 + (n - 1) * abs(incX)"),
     Inc("incX"),
     sData("A", "ldA * n", "lower if uplo == 'L' else upper"),
-    Ld("LdA", "n"),
+    Ld("ldA", "n"),
     complexity = "2 * n ** 2"
 )

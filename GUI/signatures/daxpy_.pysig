@@ -6,6 +6,6 @@ Signature(
     dData("X", "1 + (n - 1) * abs(incX)"),
     Inc("incX"),
     dData("Y", "1 + (n - 1) * abs(incY)"),
-    Inc("IncY"),
+    Inc("incY"),
     complexity = "2 * n"
 )
