@@ -128,7 +128,7 @@ class Viewer(object):
     def state_reset(self):
         self.state = {
             "statetime": time.time(),
-            "metric_selected": "time [ms]",
+            "metric_selected": "Gflops/s",
             "stats_showing": set(["med"])
         }
 

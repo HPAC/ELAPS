@@ -846,7 +846,7 @@ class QMat(Mat):
             self.Qt_window,
             "Load Setup",
             self.setuppath,
-            "*.emr, *.ems"
+            "*.emr *.ems"
         )
         if filename:
             self.UI_state_import(str(filename))

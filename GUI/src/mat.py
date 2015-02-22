@@ -182,12 +182,12 @@ class Mat(object):
         # check if sampler is available
         samplername = state["samplername"]
         if samplername not in self.samplers:
+            samplername = min(self.samplers)
             if samplername is not None:
                 self.alert(
                     "ERROR: Sampler %r is not available, using %r instead."
                     % (state["samplername"], samplername)
                 )
-            samplername = min(self.samplers)
         self.state = state
         self.sampler_set(samplername, True)
 
