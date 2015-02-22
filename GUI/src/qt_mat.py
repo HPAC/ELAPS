@@ -759,7 +759,8 @@ class QMat(Mat):
                 for Qwidget in self.Qt_jobprogress_items[jobid]:
                     Qwidget.deleteLater()
         self.Qt_jobprogress_items = {
-            jobid: Qitems for jobid, Qitems in self.Qt_jobprogress.iteritems()
+            jobid: Qitems
+            for jobid, Qitems in self.Qt_jobprogress_items.iteritems()
             if jobid in self.jobprogress
         }
         for jobid in self.jobprogress:
