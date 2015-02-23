@@ -71,8 +71,8 @@ For further details on ELAPS:Viewer, see [`docs/Viewer.md`](docs/Viewer.md).
 Installation
 ------------
 
-Installing FLAPS boils down to configuring and compiling Samplers; both the
-GUI and Viewer should work "out of the box".
+Installing ELAPS boils down to configuring and compiling ELAPS:Samplers; both
+ELAPS:Mat and ELAPS:Viewer should work "out of the box".
 
 ### Notes on installing the prerequisites
 The required packages listed above can be installed in many ways, which depend
@@ -81,11 +81,15 @@ common package managers.
 
 * MacPorts (OS X):
 
-    sudo port install gcc py27-pyqt4 matplotlib
+```
+sudo port install gcc py27-pyqt4 matplotlib
+```
 
 * AptGet (Debian, Ubuntu)
 
-    sudo apt-get install python-qt4 python-matplotlib
+```
+sudo apt-get install python-qt4 python-matplotlib
+```
 
 
 Bugs

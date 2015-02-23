@@ -34,8 +34,8 @@ How the arguments are treated depends on their (pointer) type:
   pointer to its first character.  Strings cannot contain white spaces.
 * Any numeric argument type (`int *`, `float *`, and `double *`) expects any of
   the following formats:
-  * A number in the corresponding format (e.g., 1000 for `int *`, `3.5e-6` for
-    `float *` or `double *`) is passed as a scalar by refernce.
+  * A number in the corresponding format (e.g., `1000` for `int *`, or `3.5e-6`
+    for `float *` or `double *`) is passed as a scalar by refernce.
   * A comma separated list of such numbers (e.g., `2,3` to represent the
     complex number *2 + 3i*) is stored in an array and passed as a pointer to
     its first element.  (No whitespaces around the commas!)
@@ -50,7 +50,7 @@ How the arguments are treated depends on their (pointer) type:
 Using Variables
 ---------------
 Variables identify designated memory regions.  Variable names must be strings
-beginning with a letter (e.g. "`A`", "`a_1234`").  Variables are prepared and
+beginning with a letter (e.g. `"A"`, `"a_1234"`).  Variables are prepared and
 modified through the following commands:
 
 ### `*malloc`
@@ -69,7 +69,7 @@ It expects two arguments:
   * `zmalloc`: `doubles`s x 2 (complex double)
 
 ### `*offset`
-`offset` (of `[isdcz]offset`) computes an offset into a variables memory region
+`offset` (or `[isdcz]offset`) computes an offset into a variables memory region
 resulting in a new variable.
 It expects three arguments:
 
