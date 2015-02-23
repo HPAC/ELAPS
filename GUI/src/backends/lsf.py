@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Backend for running ELAPS:Mat jobs through LSF."""
 from __future__ import division, print_function
 
 from backend import Backend
@@ -8,12 +9,17 @@ import re
 
 
 class lsf(Backend):
+
+    """Backend to run ELAPS:Mat jobs through an LSF scheduler."""
+
     def __init__(self, header="#!/bin/bash -l\n#BSUB -o /dev/null\n"):
+        """Initialize the backend."""
         Backend.__init__(self)
         self.jobs = []
         self.header = header
 
     def submit(self, script, nt=1, jobname="", header="", **options):
+        """Submit a job."""
         p = subprocess.Popen(["bsub"], stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         header = self.header + header
@@ -27,6 +33,7 @@ class lsf(Backend):
         return jobid
 
     def poll(self, jobid):
+        """Poll a job's status."""
         out = subprocess.check_output(["bjobs", "-o", "stat", "-noheader",
                                        str(jobid)])
         if out:
@@ -34,4 +41,5 @@ class lsf(Backend):
         return "UNKNOWN"
 
     def kill(self, jobid):
+        """Kill a job."""
         subprocess.check_output(["bkill", str(jobid)])

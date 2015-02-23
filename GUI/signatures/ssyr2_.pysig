@@ -6,9 +6,9 @@ Signature(
     sScalar(),
     sData("X", "1 + (n - 1) * abs(incX)"),
     Inc("incX"),
-    sData("Y", "1 + (n - 1) * abs(incX)"),
-    Inc("IncY"),
+    sData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("incY"),
     sData("A", "ldA * n", "lower if uplo == 'L' else upper"),
-    Ld("LdA", "n"),
+    Ld("ldA", "n"),
     complexity = "4 * n ** 2"
 )

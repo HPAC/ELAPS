@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Qt implementaiton of ELAPS:Viewer."""
 from __future__ import division, print_function
 
 from viewer import Viewer
@@ -10,7 +11,11 @@ from PyQt4 import QtCore, QtGui
 
 
 class QViewer(Viewer):
+
+    """ELAPS:Viewer implementation in Qt."""
+
     def __init__(self, plotfactory, app=None, loadstate=True):
+        """Initialize the ELAPS:Viewer."""
         if app:
             self.Qt_app = app
         else:
@@ -23,6 +28,7 @@ class QViewer(Viewer):
         Viewer.__init__(self, loadstate)
 
     def state_init(self, load=True):
+        """Try to load the state and geometry."""
         if not load:
             Viewer.state_init(self)
         settings = QtCore.QSettings("HPAC", "ELAPS:Viewer")
@@ -41,6 +47,7 @@ class QViewer(Viewer):
             Viewer.state_init(self)
 
     def UI_init(self):
+        """Initialize all GUI elements."""
         self.Qt_setting += 1
 
         # window
@@ -228,6 +235,9 @@ class QViewer(Viewer):
         self.Qt_initialized = True
 
     def UI_start(self):
+        """Start the Mat (main loop)."""
+        import signal
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
         sys.exit(self.Qt_app.exec_())
 
     # utility
@@ -242,6 +252,7 @@ class QViewer(Viewer):
         Viewer.alert(*args)
 
     def UI_alert(self, *args, **kwargs):
+        """Show an alert message to the user."""
         msg = " ".join(map(str, args))
         title = kwargs.get("title", "")
         self.UI_dialog("information", title, msg)
@@ -253,11 +264,13 @@ class QViewer(Viewer):
 
     # resize
     def Qt_columns_resize(self):
+        """Resize the columns in the reports list."""
         for colid in range(self.Qt_reports.columnCount()):
             self.Qt_reports.resizeColumnToContents(colid)
 
     # setters
     def UI_metrics_update(self):
+        """Update the list of metrics."""
         self.Qt_setting += 1
         self.Qt_metric.clear()
         for i, name in enumerate(sorted(self.metrics)):
@@ -272,15 +285,18 @@ class QViewer(Viewer):
         )
 
     def UI_metric_set(self):
+        """Set which metric is selected."""
         self.Qt_metric.setCurrentIndex(
             self.Qt_metric.findData(QtCore.QVariant(self.metric_selected))
         )
 
     def UI_stats_set(self):
+        """Set which statistics are selected."""
         for stat, Qstat in self.Qt_Qstats.iteritems():
             Qstat.setChecked(stat in self.stats_showing)
 
     def UI_report_add(self, reportid):
+        """Add a report to the list."""
         if reportid in self.Qt_Qreports:
             # report was reloaded
             self.UI_report_update(reportid)
@@ -364,12 +380,14 @@ class QViewer(Viewer):
         self.Qt_reports.setCurrentItem(Qreport)
 
     def UI_report_remove(self, reportid):
+        """Remove a report from the list."""
         self.Qt_reports.takeTopLevelItem(
             self.Qt_reports.indexOfTopLevelItem(self.Qt_Qreports[reportid])
         )
         del self.Qt_Qreports[reportid]
 
     def UI_report_update(self, reportid):
+        """Update a listed report."""
         report = self.reports[reportid]
         Qreport = self.Qt_Qreports[reportid]
         for callid, Qitem in Qreport.items.iteritems():
@@ -379,6 +397,7 @@ class QViewer(Viewer):
             Qitem.color.setToolTip(color)
 
     def UI_reportinfo_update(self):
+        """Upate the report info and table."""
         infostr = self.report_infostr_HTML()
         self.Qt_reportinfo.setText(infostr)
 
@@ -399,12 +418,14 @@ class QViewer(Viewer):
                     self.Qt_data.setItem(i, j, QtGui.QTableWidgetItem("NA"))
 
     def UI_reportinfo_clear(self):
+        """Clear the report info and table."""
         self.Qt_reportinfo.setText("")
         for i in range(len(self.metrics)):
             for j in range(5):
                 self.Qt_data.setItem(i, j, QtGui.QTableWidgetItem(""))
 
     def UI_plot_update(self):
+        """Update the plot."""
         self.Qt_plot.plot(
             xlabel=self.plotrangevar,
             ylabel=self.metricnames[self.metric_selected],
@@ -414,6 +435,7 @@ class QViewer(Viewer):
 
     # event handlers
     def Qt_window_close(self, event):
+        """Event: Main window closed."""
         settings = QtCore.QSettings("HPAC", "Viewer")
         settings.setValue("geometry", self.Qt_window.saveGeometry())
         settings.setValue("windowState", self.Qt_window.saveState())
@@ -421,9 +443,11 @@ class QViewer(Viewer):
                           QtCore.QVariant(repr(self.state)))
 
     def Qt_sampler_start_click(self):
+        """Event: Start ELAPS:Sampler."""
         self.UI_sampler_start()
 
     def Qt_report_load_click(self):
+        """Event: Load a report."""
         filenames = QtGui.QFileDialog.getOpenFileNames(
             self.Qt_window,
             "Open Report(s)",
@@ -437,9 +461,11 @@ class QViewer(Viewer):
                 self.UI_report_load(filename)
 
     def Qt_report_expanded(self, item):
+        """Event: Expand a report."""
         self.Qt_reports.resizeColumnToContents(0)
 
     def Qt_report_select(self, item):
+        """Event: Report (un)selected."""
         if self.Qt_setting:
             return
         if item:
@@ -448,6 +474,7 @@ class QViewer(Viewer):
             self.UI_report_select(None, None)
 
     def Qt_report_contextmenu_show(self, pos):
+        """Event: Report context menu (right click)."""
         item = self.Qt_reports.itemAt(pos)
         if not item:
             return
@@ -456,12 +483,15 @@ class QViewer(Viewer):
         self.Qt_report_contextmenu.exec_(pos)
 
     def Qt_report_reload(self):
+        """Event: Reload a report."""
         self.UI_report_reload(self.Qt_report_contextmenu.reportid)
 
     def Qt_report_close(self):
+        """Event: close a report."""
         self.UI_report_close(self.Qt_report_contextmenu.reportid)
 
     def Qt_reportcheck_change(self):
+        """Event: Selected to show/hide a report (or call) from the plot."""
         if self.Qt_setting:
             return
         sender = self.Qt_app.sender()
@@ -469,6 +499,7 @@ class QViewer(Viewer):
                                    sender.isChecked())
 
     def Qt_color_click(self):
+        """Event: Clicked the color selection panel."""
         sender = self.Qt_app.sender().item
         reportid = sender.reportid
         callid = sender.callid
@@ -478,6 +509,7 @@ class QViewer(Viewer):
             self.UI_reportcolor_change(reportid, callid, str(Qcolor.name()))
 
     def Qt_metric_change(self):
+        """Event: Changed which metric to show."""
         if self.Qt_setting:
             return
         self.UI_metric_change(str(self.Qt_metric.itemData(
@@ -485,12 +517,14 @@ class QViewer(Viewer):
         ).toString()))
 
     def Qt_stat_change(self):
+        """Event: Changed which statistics to show."""
         if self.Qt_setting:
             return
         sender = self.Qt_app.sender()
         self.UI_stat_change(sender.statname, sender.isChecked())
 
     def Qt_plot_export(self):
+        """Event: Export the plot's raw data."""
         filename = QtGui.QFileDialog.getSaveFileName(
             None,
             "Export plot data",
@@ -502,6 +536,7 @@ class QViewer(Viewer):
             self.UI_export(filename)
 
     def Qt_plot_duplicate(self):
+        """Event: Duplicate the plot."""
         # TODO: DockWidget
         plot = self.plotfactory()
         plot.plot(

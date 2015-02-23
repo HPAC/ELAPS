@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""API independent base for ELAPS:Viewer."""
 from __future__ import division, print_function
 
 import signature
@@ -17,10 +18,14 @@ from math import sqrt
 
 
 class Viewer(object):
+
+    """Base class for ELAPS:Mat."""
+
     requiresstatetime = 1423087329
     state = {}
 
     def __init__(self, loadstate=True):
+        """Initialize the Viewer."""
         thispath = os.path.dirname(__file__)
         if thispath not in sys.path:
             sys.path.append(thispath)
@@ -42,31 +47,38 @@ class Viewer(object):
 
     # state access attributes
     def __getattr__(self, name):
+        """Catch attribute accesses to state variables."""
         if name in self.__dict__["state"]:
             return self.__dict__["state"][name]
         raise AttributeError("%r object has no attribute %r" %
                              (self.__class__, name))
 
     def __setattr__(self, name, value):
+        """Catch attribute accesses to state variables."""
         if name in self.state:
             self.state[name] = value
         else:
             super(Viewer, self).__setattr__(name, value)
 
     def start(self):
+        """Start the Viewer (enter the main loop)."""
         self.UI_start()
 
     # utility
     @staticmethod
     def log(*args):
+        """Log a message to stdout."""
         print(*args)
 
     @staticmethod
     def alert(*args):
-        print(*args, file=sys.stderr)
+        """Log a message to stderr."""
+        print("\033[31m" + " ".join(map(str, args)) + "\033[0m",
+              file=sys.stderr)
 
     # initializers
     def metrics_init(self):
+        """Initialize the metrics."""
         self.metrics = {}
         self.metricnames = {}
         metricpath = os.path.join(self.rootpath, "GUI", "src", "metrics")
@@ -90,6 +102,7 @@ class Viewer(object):
             raise Exception("No metrics found")
 
     def stats_init(self):
+        """Initialize the statistics."""
         self.stats_desc = [
             ("med", "median"),
             ("min", "minimum"),
@@ -113,20 +126,24 @@ class Viewer(object):
         }
 
     def reports_init(self):
+        """Initialize the reports list."""
         self.reports = {}
         self.showplots = defaultdict(lambda: defaultdict(lambda: False))
         self.reportid_selected = None
         self.callid_selected = None
 
     def plotdata_init(self):
+        """Initialize the plot data."""
         self.plotdata = []
         self.plots_showing = set()
         self.plotrangevar = ""
 
     def state_init(self, load=True):
+        """Initialize the Viewer state."""
         self.state_reset()
 
     def state_reset(self):
+        """(Re)set the Viewer state to a default state."""
         self.state = {
             "statetime": time.time(),
             "metric_selected": "Gflops/s",
@@ -135,6 +152,7 @@ class Viewer(object):
 
     # papi metrics
     def metrics_addcountermetric(self, name):
+        """Add a default metric for a PAPI counter."""
         event = papi.events[name]
         metric = lambda data, report, callid: data.get(name)
         metric.__doc__ = event["long"] + "\n\n    " + name
@@ -146,12 +164,14 @@ class Viewer(object):
         "#004280", "#e6a500", "#bf0000", "#009999", "#5b59b2", "#969900",
         "#bf0073", "#bf9239", "#004ee6", "#ff7a00"
     ]):
+        """Get a new plot color."""
         if colors:
             return colors.pop(0)
         "#%06x" % random.randint(0, 0xffffff)
 
     # report handling
     def report_load(self, filename):
+        """Load a report from a file."""
         name = os.path.basename(filename)[:-4]
         errfile = filename + ".err"
 
@@ -235,6 +255,7 @@ class Viewer(object):
         return report
 
     def report_infostr_HTML(self):
+        """Get an info string on a report in HTML format."""
         report = self.reports[self.reportid_selected]
         sampler = report["sampler"]
         result = "<table>"
@@ -287,6 +308,7 @@ class Viewer(object):
         return result
 
     def report_infostr(self):
+        """Get an info string on a report in plain text format."""
         result = self.report_infostr_HTML()
         result = result.replace("</td><td>", "\t")
         result = result.replace("</tr>", "\n")
@@ -295,6 +317,7 @@ class Viewer(object):
 
     # data generation
     def get_metricdata(self, reportid, callid, metricname, rangeval=None):
+        """Get metric values for a certain report configuration."""
         report = self.reports[reportid]
         # ifrangeval not given: return all
         rangename_outer = report["userange"]["outer"]
@@ -379,6 +402,7 @@ class Viewer(object):
         return ((None, plotdata),)
 
     def plotdata_update(self):
+        """Update the data for plotting."""
         self.plotdata = []
         self.plotcolors = {}
         rangevars = set()
@@ -410,16 +434,15 @@ class Viewer(object):
         self.plotrangevar = " = ".join(rangevars)
 
     # user interface
-    def UI_init(self):
-        raise Exception("Viewer needs to be subclassed")
-
     def UI_setall(self):
+        """Set all GUI elements."""
         self.UI_metrics_update()
         self.UI_metric_set()
         self.UI_stats_set()
 
     # event handlers
     def UI_report_load(self, filename):
+        """Event: Load a report."""
         filename = os.path.abspath(filename)
         new = filename not in self.reports
         try:
@@ -453,9 +476,11 @@ class Viewer(object):
         self.UI_plot_update()
 
     def UI_report_reload(self, reportid):
+        """Event: Reload a report."""
         self.UI_report_load(reportid)
 
     def UI_report_close(self, reportid):
+        """Event: Close a report."""
         report = self.reports[reportid]
         for callid in report["plotcolors"]:
             self.plots_showing.discard((reportid, callid))
@@ -465,6 +490,7 @@ class Viewer(object):
         self.UI_report_remove(reportid)
 
     def UI_report_select(self, reportid, callid):
+        """Event: Report selected."""
         self.reportid_selected = reportid
         self.callid_selected = callid
         if reportid:
@@ -473,6 +499,7 @@ class Viewer(object):
             self.UI_reportinfo_clear()
 
     def UI_reportcheck_change(self, reportid, callid, state):
+        """Event: Changed plotting selection of a report (or call)."""
         if state:
             self.plots_showing.add((reportid, callid))
         else:
@@ -481,17 +508,20 @@ class Viewer(object):
         self.UI_plot_update()
 
     def UI_reportcolor_change(self, reportid, callid, color):
+        """Event: Changed the plotting color for a report (or call)."""
         self.reports[reportid]["plotcolors"][callid] = color
         self.UI_report_update(reportid)
         self.plotdata_update()
         self.UI_plot_update()
 
     def UI_metric_change(self, metric):
+        """Event: Changed the selected metric."""
         self.metric_selected = metric
         self.plotdata_update()
         self.UI_plot_update()
 
     def UI_stat_change(self, statname, state):
+        """Event: Changed which statistics to plot."""
         if state:
             self.stats_showing.add(statname)
         else:
@@ -505,6 +535,7 @@ class Viewer(object):
         self.UI_plot_update()
 
     def UI_export(self, filename):
+        """Event: Raw plot data export."""
         # data layout
         data = {}
         rows = set()

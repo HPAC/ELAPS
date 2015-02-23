@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Matplotlib implementaiton of plots in ELAPS:Viewer."""
 from __future__ import division, print_function
 
 from copy import deepcopy
@@ -9,14 +10,20 @@ import matplotlib.patches as MPLpatches
 
 
 class MPLPlot(object):
+
+    """Matplotlib plot for the ELAPS:Viewer."""
+
     def __init__(self):
+        """Initialize the plot."""
         self.fig_init()
         self.stat_styles_init()
 
     def fig_init(self):
+        """Initialize the matplotlib figure."""
         self.fig = MPLfig.Figure()
 
     def stat_styles_init(self):
+        """Initialize the plot styles."""
         self.stat_styles = {
             "legend": {},
             "med": {"linestyle": "-"},
@@ -30,6 +37,7 @@ class MPLPlot(object):
         self.stats_order = ["med", "min", "max", "avg", "min-max", "std", "all"]
 
     def set_all(self, xlabel, ylabel, data, colors, title):
+        """Set teh plot data."""
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.data = []
@@ -72,6 +80,7 @@ class MPLPlot(object):
         self.stats = [stat for stat in self.stats_order if stat in stats]
 
     def plot(self, xlabel="", ylabel="", data={}, colors={}, title=None):
+        """Plot given data."""
         self.set_all(xlabel, ylabel, data, colors, title)
 
         axes = self.fig.gca()
@@ -96,6 +105,7 @@ class MPLPlot(object):
         self.UI_update()
 
     def plot_lineplot(self):
+        """Plot as a lineplot."""
         axes = self.fig.gca()
 
         # add plots
@@ -138,6 +148,7 @@ class MPLPlot(object):
             axes.legend(*zip(*legend), loc=0, numpoints=3)
 
     def plot_barplot(self):
+        """Plot as a barplot."""
         axes = self.fig.gca()
 
         width = .8 / len(self.data)
@@ -195,7 +206,3 @@ class MPLPlot(object):
         axes.axis((-.2, len(xlabels), limits[2], limits[3]))
 
         self.UI_update()
-
-    # user interface
-    def UI_init(self):
-        raise Exception("Plot needs to be subclassed")

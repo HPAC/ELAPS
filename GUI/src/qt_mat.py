@@ -836,7 +836,7 @@ class QMat(Mat):
                           QtCore.QVariant(repr(self.state_toflat())))
 
     def Qt_viewer_start_click(self):
-        """Event: Start viewer."""
+        """Event: Start ELAPS:Viewer."""
         self.UI_viewer_start()
 
     def Qt_submit_click(self):

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Gflops/second metric."""
 from __future__ import division, print_function
 
 

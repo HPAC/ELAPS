@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""API independent base for ELAPS:MAts."""
+"""API independent base for ELAPS:Mat."""
 from __future__ import division, print_function
 
 import signature
@@ -15,7 +15,7 @@ from collections import defaultdict
 
 class Mat(object):
 
-    """Base class for ELAPS:Mats."""
+    """Base class for ELAPS:Mat."""
 
     requiredbuildversion = 1423087329
     requiredstateversion = 1424262159
@@ -894,7 +894,7 @@ class Mat(object):
                 if userange_inner:
                     innerrange = self.ranges[userange_inner]
                     if userange_outer:
-                        innerrange = innerrange(**{rangevars_outer: outerval})
+                        innerrange = innerrange(**{rangevar_outer: outerval})
                     innervals = list(innerrange)
 
                 # go over repetitions
@@ -1440,5 +1440,6 @@ class Mat(object):
         self.UI_viewer_load(job["filebase"] + ".emr")
 
     def UI_jobprogress_hide(self, jobid):
+        """Event: Hide a job."""
         del self.jobprogress[jobid]
         self.UI_jobprogress_show()
