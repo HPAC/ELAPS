@@ -90,11 +90,11 @@ class QCall(QtGui.QListWidgetItem):
             tooltip = ""
             if self.sig:
                 argname = self.sig[argid].name
-                if doc:
+                if doc and argid < len(doc):
                     tooltip = doc[argid][1]
             else:
                 argname = minsig[argid].replace("*", " *")
-                if doc:
+                if doc and argid < len(doc):
                     argname += doc[argid][0]
                     tooltip = doc[argid][1]
                 if argname in ("int *", "float *", "double *"):
