@@ -299,10 +299,7 @@ class QViewer(Viewer):
         """Add a report to the list."""
         if reportid in self.Qt_Qreports:
             # report was reloaded
-            self.UI_report_update(reportid)
-            self.Qt_columns_resize()
-            self.Qt_reports.setCurrentItem(self.Qt_Qreports[reportid])
-            return
+            self.UI_report_remove(reportid)
 
         report = self.reports[reportid]
         sampler = report["sampler"]
@@ -456,7 +453,6 @@ class QViewer(Viewer):
         )
         for filename in filenames:
             filename = str(filename)
-            print(filename)
             if filename:
                 self.UI_report_load(filename)
 

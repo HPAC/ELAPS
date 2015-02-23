@@ -450,21 +450,28 @@ class Viewer(object):
         except:
             self.UI_alert("Couldn't load %r." % os.path.relpath(filename))
             return
+        reportid = filename
+        plotcolors = {}
         if new:
             self.log("Loaded %r." % os.path.relpath(filename))
+            plotcolors[None] = self.nextcolor()
         else:
             self.log("Reloaded %r." % os.path.relpath(filename))
-        reportid = filename
+            oldreport = self.reports[reportid]
+            plotcolors[None] = oldreport["plotcolors"][None]
+        if (not report["options"]["omp"] and
+                report["userange"]["inner"] != "omp"):
+            for callid in range(len(report["calls"])):
+                if len(report["calls"]) == 1:
+                    plotcolors[0] = report["plotcolors"][None]
+                elif new:
+                    plotcolors[callid] = self.nextcolor()
+                elif callid in oldreport["plotcolors"]:
+                    plotcolors[callid] = oldreport["plotcolors"][callid]
+                else:
+                    plotcolors[callid] = self.nextcolor()
+        report["plotcolors"] = plotcolors
         self.reports[filename] = report
-        if new:
-            report["plotcolors"] = {None: self.nextcolor()}
-            if (not report["options"]["omp"] and
-                    report["userange"]["inner"] != "omp"):
-                for callid in range(len(report["calls"])):
-                    if len(report["calls"]) == 1:
-                        report["plotcolors"][0] = report["plotcolors"][None]
-                    else:
-                        report["plotcolors"][callid] = self.nextcolor()
         if report["options"]["papi"]:
             for counter in report["counters"]:
                 if counter not in self.metrics:
