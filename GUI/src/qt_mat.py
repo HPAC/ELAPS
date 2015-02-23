@@ -34,7 +34,7 @@ class QMat(Mat):
         if not load:
             Mat.state_init(self)
             return
-        settings = QtCore.QSettings("HPAC", "Sampler")
+        settings = QtCore.QSettings("HPAC", "ELAPS:Mat")
         self.Qt_setting += 1
         self.Qt_window.restoreGeometry(
             settings.value("geometry").toByteArray()
@@ -834,6 +834,7 @@ class QMat(Mat):
         settings.setValue("windowState", self.Qt_window.saveState())
         settings.setValue("appState",
                           QtCore.QVariant(repr(self.state_toflat())))
+        self.log("Setup saved.")
 
     def Qt_viewer_start_click(self):
         """Event: Start ELAPS:Viewer."""

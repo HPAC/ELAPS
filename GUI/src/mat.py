@@ -46,9 +46,9 @@ class Mat(object):
             if sys.argv[1][-4:] in (".ems", ".emr"):
                 self.state_load(sys.argv[1])
             else:
-                self.state_init()
+                self.state_init(loadstate)
         else:
-            self.state_init()
+            self.state_init(loadstate)
 
     # state access attributes
     def __getattr__(self, name):
@@ -160,6 +160,7 @@ class Mat(object):
         """Removing signatures and turning list to tuples."""
         state = self.state.copy()
         state["calls"] = map(tuple, self.calls)
+        state["stateversion"] = self.requiredstateversion
         return state
 
     def state_fromflat(self, state):
