@@ -471,13 +471,20 @@ class Viewer(object):
                 else:
                     plotcolors[callid] = self.nextcolor()
         report["plotcolors"] = plotcolors
-        self.reports[filename] = report
         if report["options"]["papi"]:
             for counter in report["counters"]:
                 if counter not in self.metrics:
                     self.metrics_addcountermetric(counter)
             self.UI_metriclist_update()
         self.plots_showing.add((reportid, None))
+        if not new:
+            for callid in range(len(report["calls"]), len(oldreport["calls"])):
+                self.plots_showing.discard((reportid, callid))
+            if (report["options"]["omp"] or
+                    report["userange"]["inner"] == "omp"):
+                for callid in range(len(report["calls"])):
+                    self.plots_showing.discard((reportid, callid))
+        self.reports[reportid] = report
         self.plotdata_update()
         self.UI_report_add(reportid)
         self.UI_plot_update()
