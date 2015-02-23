@@ -849,7 +849,7 @@ class QMat(Mat):
             "*.emr"
         )
         if filename:
-            self.UI_submit(unicode(filename))
+            self.UI_submit(str(filename))
 
     def Qt_state_reset_click(self):
         """Event: Reset state."""
@@ -864,7 +864,7 @@ class QMat(Mat):
             "*.emr *.ems"
         )
         if filename:
-            self.UI_state_import(unicode(filename))
+            self.UI_state_import(str(filename))
 
     def Qt_state_save_click(self):
         """Event: Save state."""
@@ -875,7 +875,7 @@ class QMat(Mat):
             "*.ems"
         )
         if filename:
-            self.UI_state_export(unicode(filename))
+            self.UI_state_export(str(filename))
 
     def Qt_sampler_change(self):
         """Event: Set the sampler."""

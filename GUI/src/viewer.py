@@ -463,7 +463,7 @@ class Viewer(object):
                 report["userange"]["inner"] != "omp"):
             for callid in range(len(report["calls"])):
                 if len(report["calls"]) == 1:
-                    plotcolors[0] = report["plotcolors"][None]
+                    plotcolors[0] = plotcolors[None]
                 elif new:
                     plotcolors[callid] = self.nextcolor()
                 elif callid in oldreport["plotcolors"]:
