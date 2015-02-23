@@ -472,7 +472,7 @@ class Range(object):
         for subrange in self.subranges:
             if not all(isinstance(val, numbers.Number) for val in subrange):
                 # can only get the max for non-symbolic Range
-                raise Exception("Not numberic: %r" % subrange)
+                raise Exception("Not numberic: %r" % (subrange,))
 
             # max depends on range direction
             start, step, stop = subrange

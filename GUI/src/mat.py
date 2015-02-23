@@ -1309,7 +1309,14 @@ class Mat(object):
         """Event: Change in used ranges."""
         if self.userange[rangetype]:
             oldname = self.userange[rangetype]
-            subst = {self.rangevars[oldname]: self.ranges[oldname].max()}
+            oldrange = self.ranges[oldname]
+            userange_outer = self.userange["outer"]
+            if rangetype == "inner" and userange_outer:
+                oldrange = oldrange(**{
+                    self.rangevars[userange_outer]:
+                    self.ranges[userange_outer].max()
+                })
+            subst = {self.rangevars[oldname]: oldrange.max()}
             # get rid of old range in variables
             for call in self.calls:
                 for argid, arg in enumerate(call):
