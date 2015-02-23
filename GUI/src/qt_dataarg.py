@@ -29,8 +29,9 @@ class QDataArg(QtGui.QLineEdit):
         """Initialize the GUI element."""
         self.setAlignment(QtCore.Qt.AlignHCenter)
         self.textChanged.connect(self.change)
-        self.setValidator(QtGui.QRegExpValidator(QtCore.QRegExp("[a-zA-Z]+"),
-                                                 self.Qt_gui.Qt_app))
+        self.setValidator(QtGui.QRegExpValidator(
+            QtCore.QRegExp("[a-zA-Z][a-zA-Z0-9_]*"), self.Qt_gui.Qt_app
+        ))
 
         # self.setsize(0, 0)
 
@@ -311,5 +312,8 @@ class QDataArg(QtGui.QLineEdit):
         """Event: Value changed."""
         if self.Qt_gui.Qt_setting:
             return
-        value = str(self.text())
+        try:
+            value = str(self.text())
+        except:
+            return
         self.Qt_gui.UI_arg_change(self.Qt_call.callid, self.argid, value)

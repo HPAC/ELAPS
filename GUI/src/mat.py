@@ -446,7 +446,6 @@ class Mat(object):
                         call[argid] = max(call[argid], newld)
                     else:
                         call[argid] = newld
-                    call[argid] = data["lds"][symdims.index("." + arg.name)]
 
     def data_update(self, callid=None):
         """update the data objects from the calls."""
