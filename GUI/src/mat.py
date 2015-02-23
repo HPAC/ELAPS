@@ -455,8 +455,8 @@ class Mat(object):
             self.data = {}
             for callid in range(len(self.calls)):
                 self.data_update(callid)
-                self.vary = {name: vary for name, vary in self.vary.iteritems()
-                             if name in self.data}
+            self.vary = {name: vary for name, vary in self.vary.iteritems()
+                         if name in self.data}
             return
 
         call = self.calls[callid]
@@ -1395,6 +1395,7 @@ class Mat(object):
         self.connections_update()
         self.data_update()
         self.UI_calls_init()
+        self.UI_vary_init()
         self.UI_submit_setenabled()
 
     def UI_calls_reorder(self, order):
