@@ -44,7 +44,7 @@ class QMat(Mat):
         )
         self.Qt_setting -= 1
         try:
-            self.state_fromstring(str(
+            self.state_fromstring(unicode(
                 settings.value("appState").toString()
             ))
             self.log("Loaded previous setup.")
@@ -848,7 +848,7 @@ class QMat(Mat):
             "*.emr"
         )
         if filename:
-            self.UI_submit(str(filename))
+            self.UI_submit(unicode(filename))
 
     def Qt_state_reset_click(self):
         """Event: Reset state."""
@@ -863,7 +863,7 @@ class QMat(Mat):
             "*.emr *.ems"
         )
         if filename:
-            self.UI_state_import(str(filename))
+            self.UI_state_import(unicode(filename))
 
     def Qt_state_save_click(self):
         """Event: Save state."""
@@ -874,13 +874,13 @@ class QMat(Mat):
             "*.ems"
         )
         if filename:
-            self.UI_state_export(str(filename))
+            self.UI_state_export(unicode(filename))
 
     def Qt_sampler_change(self):
         """Event: Set the sampler."""
         if self.Qt_setting:
             return
-        self.UI_sampler_change(str(self.Qt_sampler.currentText()))
+        self.UI_sampler_change(unicode(self.Qt_sampler.currentText()))
 
     def Qt_sampler_about_show(self):
         """Event: Show the sampler info."""
@@ -940,7 +940,7 @@ class QMat(Mat):
             return
         counternames = []
         for Qcounter in self.Qt_Qcounters:
-            countername = str(
+            countername = unicode(
                 Qcounter.itemData(Qcounter.currentIndex()).toString()
             )
             counternames.append(countername if countername else None)
@@ -967,7 +967,7 @@ class QMat(Mat):
 
     def Qt_header_change(self):
         """Event: Changed the script header."""
-        text = str(self.Qt_header.toPlainText())
+        text = unicode(self.Qt_header.toPlainText())
         height = self.Qt_header.fontMetrics().lineSpacing()
         nlines = max(text.count("\n") + 1, 4)
         self.Qt_header.setFixedHeight(height * (nlines + 1))
@@ -987,7 +987,7 @@ class QMat(Mat):
             return
         sender = self.Qt_app.sender()
         rangename = sender.rangename
-        value = str(sender.text())
+        value = unicode(sender.text())
         self.UI_rangevar_change(rangename, value)
 
     def Qt_range_change(self):
@@ -996,7 +996,7 @@ class QMat(Mat):
             return
         sender = self.Qt_app.sender()
         rangename = sender.rangename
-        value = str(sender.text())
+        value = unicode(sender.text())
         if rangename == "reps":
             self.UI_nrep_change(value)
         else:
