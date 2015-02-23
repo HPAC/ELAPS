@@ -81,7 +81,7 @@ PAPI):
 ```
 
 For further details on the call specification syntax and the full list of
-available special commands see `SAMPLER_USAGE.md`.
+available special commands see [`Sampler_usage.md`](Sampler_usage.md).
 
 
 A note on RDTSC and clockrates

@@ -42,7 +42,7 @@ accurately measure the performance of individual kernel invocations in terms of
 execution time and, if PAPI is available, performance counters (such as cache
 misses).
 
-For further details on ELAPS:Sampler, see `docs/Sampler.md`
+For further details on ELAPS:Sampler, see [`docs/Sampler.md`](docs/Sampler.md)
 
 ### ELAPS:Mat
 ELAPS:Mat, located in `Mat.py`, creates and runs/submits performance
@@ -54,7 +54,7 @@ Further features, such as performing experiments for ranges of matrix sizes, or
 number of threads, as well as placing operands in or out of cache, cover many
 common performance experiments.
 
-For further details on ELAPS:Mat, see `docs/Mat.md`.
+For further details on ELAPS:Mat, see [`docs/Mat.md`](docs/Mat.md).
 
 ### ELAPS:Viewer
 Each performance experiment submitted in ELAPS:Mat results in a portable
@@ -65,7 +65,7 @@ cycles to Gflops/s and efficiency.  Export features for these plots and
 underlying data yield presentation and paper quality figures with minimal
 effort.
 
-For further details on ELAPS:Viewer, see `docs/Viewer.md`.
+For further details on ELAPS:Viewer, see [`docs/Viewer.md`](docs/Viewer.md).
 
 
 Installation
