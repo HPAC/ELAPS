@@ -8,7 +8,7 @@
     },
     "ranges": {
         "threads": Range((1, 0, 1)),
-        "range": Range((8, 32, 1000)),
+        "range": Range((100, 100, 2000)),
         "sum": Range((1, 1, 10)),
         "omp": Range((1, 1, 4))
     },
