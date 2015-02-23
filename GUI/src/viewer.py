@@ -451,9 +451,9 @@ class Viewer(object):
             self.UI_alert("Couldn't load %r." % os.path.relpath(filename))
             return
         if new:
-            self.alert("Loaded %r." % os.path.relpath(filename))
+            self.log("Loaded %r." % os.path.relpath(filename))
         else:
-            self.alert("Reloaded %r." % os.path.relpath(filename))
+            self.log("Reloaded %r." % os.path.relpath(filename))
         reportid = filename
         self.reports[filename] = report
         if new:
