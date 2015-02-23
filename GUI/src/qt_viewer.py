@@ -342,7 +342,7 @@ class QViewer(Viewer):
         Qreport.callid = None
 
         Qreport.items = {None: Qreport}
-        for callid in report["plotcolors"]:
+        for callid in sorted(report["plotcolors"]):
             if callid is None:
                 continue
             call = report["calls"][callid]
