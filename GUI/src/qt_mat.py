@@ -44,7 +44,7 @@ class QMat(Mat):
         )
         self.Qt_setting -= 1
         try:
-            self.state_fromstring(unicode(
+            self.state_fromstring(str(
                 settings.value("appState").toString()
             ))
             self.log("Loaded previous setup.")
@@ -881,7 +881,11 @@ class QMat(Mat):
         """Event: Set the sampler."""
         if self.Qt_setting:
             return
-        self.UI_sampler_change(unicode(self.Qt_sampler.currentText()))
+        try:
+            value = str(self.Qt_sampler.currentText())
+        except:
+            return
+        self.UI_sampler_change(value)
 
     def Qt_sampler_about_show(self):
         """Event: Show the sampler info."""
@@ -941,7 +945,7 @@ class QMat(Mat):
             return
         counternames = []
         for Qcounter in self.Qt_Qcounters:
-            countername = unicode(
+            countername = str(
                 Qcounter.itemData(Qcounter.currentIndex()).toString()
             )
             counternames.append(countername if countername else None)
@@ -968,7 +972,10 @@ class QMat(Mat):
 
     def Qt_header_change(self):
         """Event: Changed the script header."""
-        text = unicode(self.Qt_header.toPlainText())
+        try:
+            text = str(self.Qt_header.toPlainText())
+        except:
+            return
         height = self.Qt_header.fontMetrics().lineSpacing()
         nlines = max(text.count("\n") + 1, 4)
         self.Qt_header.setFixedHeight(height * (nlines + 1))
@@ -988,7 +995,10 @@ class QMat(Mat):
             return
         sender = self.Qt_app.sender()
         rangename = sender.rangename
-        value = unicode(sender.text())
+        try:
+            value = str(sender.text())
+        except:
+            return
         self.UI_rangevar_change(rangename, value)
 
     def Qt_range_change(self):
@@ -997,7 +1007,10 @@ class QMat(Mat):
             return
         sender = self.Qt_app.sender()
         rangename = sender.rangename
-        value = unicode(sender.text())
+        try:
+            value = str(sender.text())
+        except:
+            return
         if rangename == "reps":
             self.UI_nrep_change(value)
         else:
