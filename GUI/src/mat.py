@@ -30,8 +30,8 @@ class Mat(object):
         if thispath not in sys.path:
             sys.path.append(thispath)
         self.rootpath = os.path.abspath(os.path.join(thispath, "..", ".."))
-        self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
-        self.setuppath = os.path.join(self.rootpath, "GUI", "setups")
+        self.reportpath = os.path.join(self.rootpath, "reports")
+        self.setuppath = os.path.join(self.rootpath, "setups")
 
         # initialize components
         self.backends_init()

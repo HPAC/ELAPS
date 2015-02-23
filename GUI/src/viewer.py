@@ -19,7 +19,7 @@ from math import sqrt
 
 class Viewer(object):
 
-    """Base class for ELAPS:Mat."""
+    """Base class for ELAPS:Viewer."""
 
     requiresstatetime = 1423087329
     state = {}
@@ -30,7 +30,7 @@ class Viewer(object):
         if thispath not in sys.path:
             sys.path.append(thispath)
         self.rootpath = os.path.abspath(os.path.join(thispath, "..", ".."))
-        self.reportpath = os.path.join(self.rootpath, "GUI", "reports")
+        self.reportpath = os.path.join(self.rootpath, "reports")
 
         self.metrics_init()
         self.stats_init()
