@@ -7,7 +7,6 @@ GUI:
 - Report range (Samplers, #threads)
 - Example GUI states
 - save state on ctrl-C
-- hide "along" for vectors
 - work variable hiding
 - work variable dimension deduction
 

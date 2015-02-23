@@ -99,13 +99,12 @@ class QVary(QtGui.QGroupBox):
             Qacross.setChecked(across in vary["across"])
 
         # along
-        self.Qt_alonglabel.show()
-        self.Qt_Qalong[0].show()
-        self.Qt_Qalong[1].show()
-        if isinstance(data["dims"], symbolic.Prod):
-            self.Qt_Qalong[2].setVisible(len(data["dims"]) > 3)
-        else:
-            self.Qt_Qalong[2].hide()
+        showalong = len(data["dims"]) > 1
+        self.Qt_alonglabel.setVisible(showalong)
+        for along in range(3):
+            self.Qt_Qalong[along].setVisible(
+                showalong and along < len(data["dims"])
+            )
         for i, Qalong in enumerate(self.Qt_Qalong):
             Qalong.setChecked(i == vary["along"])
         self.Qt_mat.Qt_setting -= 1
