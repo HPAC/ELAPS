@@ -11,6 +11,7 @@ GUI:
 - work variable hiding
 - work variable dimension deduction
 
+- (copy button - in addition to +, to add a copy of the last instruction) 
 - ("file" backend)
 - (status tips)
 - (multiple BLAS at once)
