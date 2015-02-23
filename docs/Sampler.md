@@ -1,11 +1,11 @@
 ELAPS:Sampler
 =============
 
-The Samplers form the low level base of ELAPS.  Each Sampler is configured and
-liked a fixed set of kernel routines (usually BLAS and LAPACK), a fixed
-computer system  and fixed kernel implementations.  They accurately measure the
-performance of individual kernel invocations in terms of execution time and, if
-PAPI is available, performance counters (such as cache misses).
+The Samplers (in `Sampler/`) form the low level base of ELAPS.  Each Sampler is
+configured and liked a fixed set of kernel routines (usually BLAS and LAPACK), a
+fixed computer system  and fixed kernel implementations.  They accurately
+measure the performance of individual kernel invocations in terms of execution
+time and, if PAPI is available, performance counters (such as cache misses).
 
 
 Compilation
@@ -81,8 +81,7 @@ PAPI):
 ```
 
 For further details on the call specification syntax and the full list of
-available special commands see `SAMPLER.md` or type enter the `help` command in
-any sampler.
+available special commands see `SAMPLER_USAGE.md`.
 
 
 A note on RDTSC and clockrates

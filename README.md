@@ -30,23 +30,23 @@ Overview
 
 The Framework consists for three parts:
 
-1. A collection of Samplers, 
-2. The GUI, and
-3. The viewer
+1. A collection of ELAPS:Samplers, 
+2. ELAPS:Mat, and
+3. ELAPS:Viewer
 
 ### ELAPS:Sampler
-The Samplers, located in `Sampler/`, form the low level base of ELAPS.  Each
+ELAPS:Samplers, located in `Sampler/`, form the low level base of ELAPS.  Each
 Sampler is configured and liked a fixed set of kernel routines (usually BLAS
 and LAPACK), a fixed computer system  and fixed kernel implementations.  They
 accurately measure the performance of individual kernel invocations in terms of
 execution time and, if PAPI is available, performance counters (such as cache
 misses).
 
-For further details on Samplers, see `Sampler/README.md`
+For further details on ELAPS:Sampler, see `docs/Sampler.md`
 
 ### ELAPS:Mat
-The GUI, located in `GUI/Gui.py`, creates and runs/submits performance
-experiments using previously compiled Samplers.  Central to the GUI is the
+ELAPS:Mat, located in `Mat.py`, creates and runs/submits performance
+experiments using previously compiled Samplers.  Central to the Mat is the
 visual representation of kernels and their operands that now only facilitates
 the user's understanding of how the kernels function but also automatically
 completes common kernel operands such as matrix sizes and leading dimensions.
@@ -54,17 +54,18 @@ Further features, such as performing experiments for ranges of matrix sizes, or
 number of threads, as well as placing operands in or out of cache, cover many
 common performance experiments.
 
-For further details on the GUI, see `GUI.md`.
+For further details on ELAPS:Mat, see `docs/Mat.md`.
 
 ### ELAPS:Viewer
-Each performance experiment submitted in the GUI results in a portable
-experiment report.  The Viewer, located in `GUI/Viewer.py`, loads these reports
-and helps the user analyze them by plotting their performance in terms of
-different metrics ranging from execution time in cycles to Gflops/s and
-efficiency.  Export features for these plots and underlying data yield
-presentation and paper quality figures with minimal effort.
+Each performance experiment submitted in ELAPS:Mat results in a portable
+experiment report (ELAPS Mat Report, `.emr`).  ELAPS:Viewer, located in
+`Viewer.py`, loads these reports and helps the user analyze them by plotting
+their performance in terms of different metrics ranging from execution time in
+cycles to Gflops/s and efficiency.  Export features for these plots and
+underlying data yield presentation and paper quality figures with minimal
+effort.
 
-For further details on the Viewer, see `Viewer.md`.
+For further details on ELAPS:Viewer, see `docs/Viewer.md`.
 
 
 Installation
@@ -91,8 +92,8 @@ Bugs
 ----
 
 This project is in a early stage, so bugs are to be expected (especially in the
-GUI).  If you found one, please file an issue detailing how you reached the
-problem and the error message or stack trace if any is printed in the console.
-Thank you!
+GUI parts).  If you found one, please file an issue detailing how you reached
+the problem and the error message or stack trace if any is printed in the
+console.  Thank you!
 
 * [There are currently no known bugs]
