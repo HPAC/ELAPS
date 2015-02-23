@@ -361,12 +361,16 @@ class Viewer(object):
                         symdict[report["rangevars"][rangename_inner]] = \
                             rangeval
                     complexity = call.complexity()
-                    if isinstance(complexity, symbolic.Expression):
-                        data["complexity"] += complexity(**symdict)
-                    elif isinstance(complexity, Number):
-                        data["complexity"] += complexity
-                    else:
-                        data["complexity"] = None
+                    try:
+                        if isinstance(complexity, symbolic.Expression):
+                            data["complexity"] += complexity(**symdict)
+                        elif isinstance(complexity, Number):
+                            data["complexity"] += complexity
+                        else:
+                            data["complexity"] = None
+                            break
+                    except:
+                        dat["complexity"] = None
                         break
                 if data["complexity"] is None:
                     break
