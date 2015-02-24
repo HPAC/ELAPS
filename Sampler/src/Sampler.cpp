@@ -109,7 +109,7 @@ void Sampler::named_malloc(const vector<string> &tokens) {
 
     // parse arguments
     const string &name = tokens[1];
-    const size_t size = atoi(tokens[2].c_str());
+    const ssize_t size = atoi(tokens[2].c_str());
 
     // variable must not exist yet
     if (mem.named_exists(name)) {
