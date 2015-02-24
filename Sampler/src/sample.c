@@ -49,7 +49,7 @@ void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
 void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 #pragma omp parallel
     {
-#pragma omp single nowait
+#pragma omp single
         {
             unsigned long ticks0, ticks1; 
             char lastparallel = 0;
@@ -162,10 +162,10 @@ void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, int ncou
 }
 
 #ifdef OPENMP_ENABLED
-void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
+void sample_papi_omp(KernelCall *calls, size_t ncalls) {
 #pragma omp parallel
     {
-#pragma omp single nowait
+#pragma omp single
         {
             unsigned long ticks0, ticks1; 
             char lastparallel = 0;
