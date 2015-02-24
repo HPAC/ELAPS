@@ -290,7 +290,7 @@ class Viewer(object):
         elif report["userange"]["inner"] == "omp":
             result += (
                 "<tr><td>parallel calls:</td><td>%s = %s</td></tr>"
-                % (report["rangevars"]["omp"], report["ranges"]["sum"])
+                % (report["rangevars"]["omp"], report["ranges"]["omp"])
             )
 
         def format_call(call):
