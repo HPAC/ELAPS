@@ -13,9 +13,9 @@
 : ${NCORES:=1}
 : ${THREADS_PER_CORE:=1}
 : ${CC:=gcc}
-: ${CFLAGS:=""}
+[ "$CC" == "gcc" ] && : ${CFLAGS:="-fopenmp"} || : {$CFLAGS:=""}
 : ${CXX:=g++}
-: ${CXXFLAGS:=""}
+[ "$CXX" == "g++" ] && : ${CXXFLAGS:="-fopenmp"} || : ${CXXFLAGS:=""}
 : ${LINK_FLAGS:=""}
 : ${INCLUDE_FLAGS:=""}
 : ${KERNEL_HEADERS:="headers/blas.h headers/lapack.h"}
