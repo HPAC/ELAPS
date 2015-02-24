@@ -360,7 +360,15 @@ class Viewer(object):
             complexity = 0
             for callid2 in callids:
                 call = calls[callid2]
-                for innerval in rangevaldata[0]:
+                innervals = None,
+                if userange_inner:
+                    innerrange = report["ranges"][userange_inner]
+                    if userange_outer:
+                        innerrange = innerrange(**{
+                            report["rangevars"][userange_outer]: rangeval
+                        })
+                    innervals = list(innerrange)
+                for innerval in innervals:
                     if userange_inner:
                         symdict[report["rangevars"][userange_inner]] = \
                             innerval
