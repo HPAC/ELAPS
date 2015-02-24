@@ -4,6 +4,13 @@
 #include <papi.h>
 #endif
 
+// make sure omp flags are set
+#ifdef OPENMP_ENABLED
+#ifndef _OPENMP
+#error "Compiler doesn't have OpenMP!"
+#endif
+#endif
+
 // read time stamp counter (CPU register)
 #define rdtsc(var) { \
     unsigned int __a, __d; \
@@ -167,6 +174,10 @@ void sample_papi_omp(KernelCall *calls, size_t ncalls) {
     {
 #pragma omp single
         {
+
+            // make sure to throw a compiler error when omp flags are not set
+            omp_get_num_threads();
+
             unsigned long ticks0, ticks1; 
             char lastparallel = 0;
             // for each call
