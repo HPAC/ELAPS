@@ -204,24 +204,24 @@ class Viewer(object):
         report["endtime"] = None
         report["name"] = name
 
-        rangename_outer = report["userange"]["outer"]
-        rangename_inner = report["userange"]["inner"]
+        userange_outer = report["userange"]["outer"]
+        userange_inner = report["userange"]["inner"]
         samplesperinnerval = len(report["calls"])
-        if rangename_inner == "omp" or report["options"]["omp"]:
+        if userange_inner == "omp" or report["options"]["omp"]:
             samplesperinnerval = 1
 
         rangevals = None,
-        if rangename_outer:
-            rangevals = report["ranges"][rangename_outer]
+        if userange_outer:
+            rangevals = report["ranges"][userange_outer]
         reportdata = {}
         report["data"] = reportdata
         for rangeval in rangevals:
             innervals = None,
-            if rangename_inner == "sum":
+            if userange_inner == "sum":
                 sumrange = report["ranges"]["sum"]
-                if rangename_outer:
+                if userange_outer:
                     sumrange = sumrange(**{
-                        report["rangevars"]["sum"]: rangeval
+                        report["rangevars"][userange_outer]: rangeval
                     })
                 innervals = list(sumrange)
             rangevaldata = []
@@ -248,8 +248,11 @@ class Viewer(object):
             return report
         extralines = fin.readlines()
         if len(extralines):
-            self.alert(name, "contained extra lines")
-            print(*extralines)
+            self.alert("%r contained %s extra lines:" %
+                       (filename, len(extralines)))
+            self.alert("".join(extralines[:10]))
+            if len(extralines) > 10:
+                self.alert("...")
         else:
             report["valid"] = True
         return report
