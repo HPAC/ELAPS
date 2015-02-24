@@ -202,6 +202,7 @@ class QCall(QtGui.QListWidgetItem):
         self.Qt_gui.Qt_setting += 1
         call = self.Qt_gui.calls[self.callid]
         # set routine
+        routine = call[0] if call[0] is not None else ""
         self.Qt_args[0].setText(call[0])
         # set widgets
         if call[0] not in self.Qt_gui.sampler["kernels"]:
