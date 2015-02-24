@@ -1073,6 +1073,7 @@ class Mat(object):
         prefix = self.sampler["backend_prefix"]
         suffix = self.sampler["backend_suffix"]
         footer = self.sampler["backend_footer"]
+        userange_outer = self.userange["outer"]
 
         # emptly output files
         open(reportfile, "w").close()
@@ -1114,19 +1115,19 @@ class Mat(object):
 
         # set up #threads range
         ntvals = self.nt,
-        if self.userange["outer"] == "threads":
+        if userange_outer == "threads":
             ntvals = self.ranges["threads"]
 
         # go over #threads range
         for ntval in ntvals:
             # filename for commands
-            if self.userange["outer"] == "threads":
+            if userange_outer == "threads":
                 callfile = filebase + ".%d.calls" % ntval
             else:
                 callfile = filebase + ".calls"
 
             # generate commands file
-            if self.userange["outer"] == "threads":
+            if userange_outer == "threads":
                 cmds = self.generate_cmds(ntval)
             else:
                 cmds = self.generate_cmds()
@@ -1138,7 +1139,13 @@ class Mat(object):
             ompthreads = 1
             if self.userange["inner"] == "omp":
                 # omp range
-                ompthreads = len(self.calls) * len(self.ranges["omp"])
+                omprange = self.ranges["omp"]
+                if userange_outer == "threads":
+                    omprange = omprange(**{self.rangevars["threads"]: ntval})
+                elif userange_outer:
+                    omprange = omprange(**{self.rangevars[userange_outer]:
+                                           self.ranges[userange_outer].max()})
+                ompthreads = len(self.calls) * len(omprange)
             elif self.options["omp"]:
                 # parallel calls
                 ompthreads = len(self.calls)
