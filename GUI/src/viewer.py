@@ -167,7 +167,7 @@ class Viewer(object):
         """Get a new plot color."""
         if colors:
             return colors.pop(0)
-        "#%06x" % random.randint(0, 0xffffff)
+        return "#%06x" % random.randint(0, 0xffffff)
 
     # report handling
     def report_load(self, filename):
