@@ -39,6 +39,20 @@ class Expression(object):
         """Other * Expression ."""
         return Prod(other, self)
 
+    def __div__(self, other):
+        """Expression / Number ."""
+        if not isinstance(other, numbers.Number):
+            raise TypeError("unsupported operand type(s) for /: %r and %r" %
+                            (self.__class__, other.__class__))
+        return self * (1 / other)
+
+    def __truediv__(self, other):
+        """Expression / Number ."""
+        if not isinstance(other, numbers.Number):
+            raise TypeError("unsupported operand type(s) for /: %r and %r" %
+                            (self.__class__, other.__class__))
+        return self * (1 / other)
+
     def __pow__(self, other):
         """Expression ** Other ."""
         return Power(self, other)
