@@ -91,6 +91,12 @@ class QMat(Mat):
             load.setShortcut(QtGui.QKeySequence("Ctrl+O"))
             load.triggered.connect(self.Qt_state_load_click)
 
+            # load report shortcut
+            loadreport = QtGui.QShortcut(
+                QtGui.QKeySequence("Ctrl+Shift+O"),
+                window, self.Qt_state_reportload_click
+            )
+
             # fie > save
             save = QtGui.QAction("Save Setup ...", window)
             fileM.addAction(save)
@@ -863,16 +869,20 @@ class QMat(Mat):
         """Event: Reset state."""
         self.UI_state_reset()
 
-    def Qt_state_load_click(self):
+    def Qt_state_load_click(self, report=False):
         """Event: Load state."""
         filename = QtGui.QFileDialog.getOpenFileName(
             self.Qt_window,
             "Load Setup",
-            self.setuppath,
+            self.reportpath if report else self.setuppath,
             "*.emr *.ems"
         )
         if filename:
             self.UI_state_import(str(filename))
+
+    def Qt_state_reportload_click(self):
+        """Event: Load state from report folder."""
+        self.Qt_state_load_click(True)
 
     def Qt_state_save_click(self):
         """Event: Save state."""
