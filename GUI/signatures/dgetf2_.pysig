@@ -1,6 +1,6 @@
-# double precision LU factorization with pivoting
+# double precision LU factorization with pivoting (unblocked)
 Signature(
-    "dgetrf_",
+    "dgetf2_",
     Dim("m"),
     Dim("n"),
     dData("A", "ldA * n"),
