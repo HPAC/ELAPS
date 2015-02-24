@@ -97,8 +97,7 @@ class Signature(list):
 
     def datatype(self):
         """Deduce type of perands (single, double, complex, ...)."""
-        return next(arg for arg in reversed(self)
-                    if isinstance(arg, Data)).typename
+        return self[self.dataargs()[0]].typename
 
 
 class Call(list):
