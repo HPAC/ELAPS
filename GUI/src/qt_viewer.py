@@ -430,6 +430,11 @@ class QViewer(Viewer):
             colors=self.plotcolors
         )
 
+    def UI_sampler_start(self):
+        """Start the Mat."""
+        from qt_mat import QMat
+        self.Qt_mat = QMat(self.Qt_app)
+
     # event handlers
     def Qt_window_close(self, event):
         """Event: Main window closed."""

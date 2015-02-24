@@ -825,7 +825,7 @@ class QMat(Mat):
         self.Qt_jobprogress_timer.start()
 
     def UI_viewer_start(self):
-        """Start the viewer."""
+        """Start the Viewer."""
         from qt_mpl_viewer import QMPLViewer
         self.Qt_viewer = QMPLViewer(self.Qt_app)
 
