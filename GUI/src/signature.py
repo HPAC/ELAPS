@@ -577,6 +577,11 @@ class Ld(Arg):
         args = map(repr, args)
         return self.__class__.__name__ + "(" + ", ".join(args) + ")"
 
+    @staticmethod
+    def format_sampler(val):
+        """For Sampler: minimum = 1."""
+        return str(max(1, val))
+
     def default(self):
         """Default: 1."""
         if self.minstr is None:
