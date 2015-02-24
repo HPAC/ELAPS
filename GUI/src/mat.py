@@ -1154,6 +1154,8 @@ class Mat(object):
             elif self.options["omp"]:
                 # parallel calls
                 ompthreads = len(self.calls)
+            # limit threads to #cores * #hyperthreads/core
+            ompthreads = min(ompthreads, sampler["nt_max"])
 
             # sampler invocation
             if prefix:
