@@ -421,6 +421,9 @@ class QMat(Mat):
             self.Qt_jobprogressD.hide()
             self.Qt_jobprogress = QtGui.QWidget()
             self.Qt_jobprogressD.setWidget(self.Qt_jobprogress)
+            self.Qt_jobprogress.setSizePolicy(
+                QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed
+            )
             layout = QtGui.QGridLayout()
             self.Qt_jobprogress.setLayout(layout)
 
