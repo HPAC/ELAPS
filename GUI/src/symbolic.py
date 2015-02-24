@@ -443,7 +443,7 @@ class Range(object):
         for subrange in self.subranges:
             if not all(isinstance(val, numbers.Number) for val in subrange):
                 # can only get the min for non-symbolic ranges
-                raise Exception("Not numberic: %r" % subrange)
+                raise Exception("Not numeric: %r" % (subrange,))
 
             # min depends on range direction
             start, step, stop = subrange
@@ -472,7 +472,7 @@ class Range(object):
         for subrange in self.subranges:
             if not all(isinstance(val, numbers.Number) for val in subrange):
                 # can only get the max for non-symbolic Range
-                raise Exception("Not numberic: %r" % (subrange,))
+                raise Exception("Not numeric: %r" % (subrange,))
 
             # max depends on range direction
             start, step, stop = subrange
@@ -549,7 +549,7 @@ class Range(object):
         for subrange in self.subranges:
             if not all(isinstance(val, numbers.Number) for val in subrange):
                 # can only iteration non-symbolic Range
-                raise Exception("Not numeric: %r" % subrange)
+                raise Exception("Not numeric: %r" % (subrange,))
 
             # iterate
             start, step, stop = subrange
@@ -590,7 +590,7 @@ class Range(object):
         for subrange in self.subranges:
             if not all(isinstance(val, numbers.Number) for val in subrange):
                 # can only get the length of non-symbolic Range
-                raise Exception("Not numberic: %r" % subrange)
+                raise Exception("Not numeric: %r" % (subrange,))
 
             start, step, stop = subrange
             if step == 0:
