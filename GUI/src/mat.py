@@ -672,6 +672,7 @@ class Mat(object):
         self.calls[callid] = call
         self.connections_update()
         self.data_update()
+        self.infer_lds(callid, True)
         if (routine in self.sampler["kernels"] or
                 oldroutine in self.sampler["kernels"]):
             self.UI_submit_setenabled()
