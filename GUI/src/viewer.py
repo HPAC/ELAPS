@@ -434,7 +434,7 @@ class Viewer(object):
             # name
             name = report["name"]
             if callid is not None:
-                name += " (%s)" % report["calls"][callid][0]
+                name += "[%s] (%s)" % (callid, report["calls"][callid][0])
 
             self.plotdata.append((name, linedatas))
             self.plotcolors[name] = report["plotcolors"][callid]
