@@ -42,13 +42,10 @@ class Mat(object):
         self.UI_init()
         self.jobprogress_init()
 
+        self.state_init(loadstate)
         if len(sys.argv) > 1:
             if sys.argv[1][-4:] in (".ems", ".emr"):
                 self.state_load(sys.argv[1])
-            else:
-                self.state_init(loadstate)
-        else:
-            self.state_init(loadstate)
 
     # state access attributes
     def __getattr__(self, name):

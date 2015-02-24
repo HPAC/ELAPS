@@ -47,7 +47,6 @@ class QMat(Mat):
             self.state_fromstring(str(
                 settings.value("appState").toString()
             ))
-            self.log("Loaded previous setup.")
         except:
             Mat.state_init(self)
 
