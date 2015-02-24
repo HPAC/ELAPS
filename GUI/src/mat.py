@@ -1217,7 +1217,7 @@ class Mat(object):
     def jobprogress_update(self):
         """Update all jobprogress states."""
         for job in self.jobprogress.itervalues():
-            if job["error"] or job["progress"] == job["progressend"]:
+            if job["error"] or job["progress"] >= job["progressend"]:
                 continue
             with open(job["filebase"] + ".emr") as fin:
                 job["progress"] = len(fin.readlines()) - 2
