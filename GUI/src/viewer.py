@@ -120,8 +120,9 @@ class Viewer(object):
             "avg": lambda l: sum(l) / len(l),
             "max": max,
             "min-max": lambda l: [min(l), max(l)],
-            "std": lambda l: sqrt(sum(x ** 2 for x in l) / len(l)
-                                  - (sum(l) / len(l)) ** 2),
+            "std": lambda l: sqrt(
+                sum((x - sum(l) / len(l)) ** 2 for x in l) / len(l)
+            ),
             "all": lambda l: l
         }
 
