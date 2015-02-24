@@ -282,6 +282,8 @@ class QMat(Mat):
                         QtCore.QRegExp("[1-9][0-9]*"), self.Qt_app
                     ))
 
+                layout.addWidget(QtGui.QLabel(suffix))
+
                 # stretch
                 layout.addStretch(1)
 
