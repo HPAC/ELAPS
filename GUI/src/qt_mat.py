@@ -181,11 +181,19 @@ class QMat(Mat):
             """Create the #threads toolbar."""
             self.Qt_ntT = window.addToolBar("#threads")
             self.Qt_ntT.setMovable(False)
-            self.Qt_ntT.setObjectName("Sampler")
+            self.Qt_ntT.setObjectName("#threads")
             self.Qt_ntT.addWidget(QtGui.QLabel("#threads:"))
             self.Qt_nt = QtGui.QComboBox()
             self.Qt_ntT.addWidget(self.Qt_nt)
             self.Qt_nt.currentIndexChanged.connect(self.Qt_nt_change)
+
+        def create_infer_lds():
+            self.Qt_infer_ldsT = window.addToolBar("infer lds")
+            self.Qt_infer_ldsT.setMovable(False)
+            self.Qt_infer_ldsT.setObjectName("infer lds")
+            infer = QtGui.QPushButton("infer lds")
+            self.Qt_infer_ldsT.addWidget(infer)
+            infer.clicked.connect(self.Qt_infer_lds_click)
 
         def create_submit():
             """Create the submit toolbar."""
@@ -454,6 +462,7 @@ class QMat(Mat):
         create_menus()
         create_sampler()
         create_nt()
+        create_infer_lds()
         create_submit()
         create_ranges()
         create_sampler_about()
@@ -580,14 +589,12 @@ class QMat(Mat):
         self.Qt_headerD.setVisible(self.options["header"])
         self.Qt_setting -= 1
 
-    def UI_showargs_set(self, name=None):
+    def UI_showargs_set(self):
         """Set which arguments are shown."""
-        if name is None:
-            for name in self.Qt_showargs:
-                self.UI_showargs_set(name)
-            return
         self.Qt_setting += 1
-        self.Qt_showargs[name].setChecked(self.showargs[name])
+        for name in self.Qt_showargs:
+            self.Qt_showargs[name].setChecked(self.showargs[name])
+        self.Qt_infer_ldsT.setVisible(self.showargs["lds"])
         self.Qt_setting -= 1
 
     def UI_header_set(self):
@@ -736,6 +743,7 @@ class QMat(Mat):
         """Apply which argument types are shown."""
         for callid in range(self.Qt_calls.count()):
             self.Qt_calls.item(callid).showargs_apply()
+        self.Qt_infer_ldsT.setVisible(self.showargs["lds"])
 
     def UI_arg_setfocus(self, callid, argid):
         """Set the focus to an argument."""
@@ -896,6 +904,10 @@ class QMat(Mat):
         if self.Qt_setting:
             return
         self.UI_nt_change(int(self.Qt_nt.currentText()))
+
+    def Qt_infer_lds_click(self):
+        """Event: Infer leading dimensions."""
+        self.UI_infer_lds()
 
     def Qt_userange_toggle(self, checked):
         """Event: Change the used ranges."""

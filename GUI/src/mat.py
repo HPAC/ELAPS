@@ -375,12 +375,15 @@ class Mat(object):
                    for dim in data["dims"])
 
     # inference system
-    def infer_lds(self, callid=None):
+    def infer_lds(self, callid=None, force=False):
         """Update all leading dimensions."""
         if callid is None:
             # infer lds for all calls
             for callid in range(len(self.calls)):
-                self.infer_lds(callid)
+                self.infer_lds(callid, force)
+            return
+
+        if self.showargs["lds"] and not force:
             return
 
         call = self.calls[callid]
@@ -1293,6 +1296,12 @@ class Mat(object):
     def UI_nt_change(self, nt):
         """Event: Changed the #threads."""
         self.nt = nt
+
+    def UI_infer_lds(self):
+        """Event: Infer leading dimensions."""
+        print("infering lds")
+        self.infer_lds(force=True)
+        self.UI_calls_set()
 
     def UI_option_change(self, optionname, state):
         """Event: Change in the option."""
