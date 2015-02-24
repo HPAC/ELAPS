@@ -62,4 +62,7 @@ class local(Backend):
 
     def kill(self, jobid):
         """Kill a job."""
-        self.jobs[jobid].terminate()
+        try:
+            self.jobs[jobid].terminate()
+        except:
+            pass
