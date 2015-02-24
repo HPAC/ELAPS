@@ -10,6 +10,6 @@ Signature(
     dData("E", "n - 1"),
     dData("tau", "n - 1"),
     dData("Work", "lWork"),
-    dim("lWork", 1),
+    Dim("lWork", 1),
     Info()
 )

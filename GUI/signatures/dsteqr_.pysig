@@ -2,7 +2,7 @@
 Signature(
     "dsteqr_",
     Flag("compz", ["V", "N"]),
-    dim("n")
+    Dim("n")
     dData("D", "n"),
     dData("E", "n - 1"),
     dData("Z", "ldZ * n if compz == 'V' else 0"),

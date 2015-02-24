@@ -1,0 +1,9 @@
+# double precision cholesky factorization (unblocked)
+Signature(
+    "dpotf2_",
+    Uplo(),
+    Dim("n"),
+    dData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    Info()
+)

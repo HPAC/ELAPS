@@ -262,6 +262,7 @@ class Mat(object):
                 self.signatures[routine] = signature.Signature(file=filename)
                 self.log("Loaded signature for %r." % routine)
             except:
+                self.log("Couldn't load signature for %r." % routine)
                 self.signatures[routine] = None
         return self.signatures[routine]
 

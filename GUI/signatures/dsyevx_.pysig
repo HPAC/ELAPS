@@ -4,7 +4,7 @@ Signature(
     Flag("jobz", ["V", "N"]),
     Flag("range", ["A", "V", "I"]),
     Uplo(),
-    dim("n"),
+    Dim("n"),
     dData("A", "ldA * n"),
     Ld("ldA", "n"),
     dScalar("vl"),
@@ -17,7 +17,7 @@ Signature(
     dData("Z", "ldZ * n"),  # actually: ldZ * m
     Ld("ldZ", "n if jobz == 'V' else 1"),
     dData("Work", "lWork"),
-    dim("lWork", "8 * n"),
+    Dim("lWork", "8 * n"),
     iData("iWork", "5 * n"),
     iData("iFail", "n"),
     Info()

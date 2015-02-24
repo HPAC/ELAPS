@@ -3,7 +3,7 @@ Signature(
     "dstebz_",
     Flag("range", ["A", "V", "I"]),
     Flag("order", ["B", "E"]),
-    dim("n"),
+    Dim("n"),
     dScalar("vl"),
     dScalar("vu"),
     iScalar("il"),

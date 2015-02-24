@@ -3,11 +3,11 @@ Signature(
     "dsyev_",
     Flag("jobz", ["V", "N"]),
     Uplo(),
-    dim("n"),
+    Dim("n"),
     dData("A", "ldA * n"),
     Ld("ldA", "n"),
     dData("W", "n"),
     dData("Work", "lWork"),
-    dim("lWork", "3 * n - 1"),
+    Dim("lWork", "3 * n - 1"),
     Info()
 )

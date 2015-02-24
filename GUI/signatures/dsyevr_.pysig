@@ -3,7 +3,7 @@ Signature(
     "dsyevr_",
     Flag("jobz", ["V", "N"]),
     Uplo(),
-    dim("n"),
+    Dim("n"),
     dData("A", "ldA * n"),
     Ld("ldA", "n"),
     dScalar("vl"),
@@ -17,8 +17,8 @@ Signature(
     Ld("ldZ", "n if jobz == 'V' else 1"),
     iData("isuppZ", "2 * n"),  # actually: 2 * m
     dData("Work", "lWork"),
-    dim("lWork", "26 * n"),
+    Dim("lWork", "26 * n"),
     iData("iWork", "liWork"),
-    dim("liWork", "10 * n"),
+    Dim("liWork", "10 * n"),
     Info()
 )
