@@ -323,9 +323,9 @@ class Viewer(object):
         """Get metric values for a certain report configuration."""
         report = self.reports[reportid]
         # ifrangeval not given: return all
-        rangename_outer = report["userange"]["outer"]
-        rangename_inner = report["userange"]["inner"]
-        if rangename_outer and rangeval is None:
+        userange_outer = report["userange"]["outer"]
+        userange_inner = report["userange"]["inner"]
+        if userange_outer and rangeval is None:
             plotdata = []
             for rangeval in sorted(report["data"]):
                 plotdata.append((rangeval, self.get_metricdata(
@@ -345,40 +345,36 @@ class Viewer(object):
         callids = callid,
         if callid is None:
             callids = range(len(calls))
-        if rangename_inner == "omp" or report["options"]["omp"]:
+        if userange_inner == "omp" or report["options"]["omp"]:
             callids = 0,
         data = defaultdict(lambda: None)
 
         symdict = {}
-        if rangename_outer:
-            symdict[report["rangevars"][rangename_outer]] = rangeval
+        if userange_outer:
+            symdict[report["rangevars"][userange_outer]] = rangeval
 
         # complexity is constant across repetitions
+        data["complexity"] = None
         if all(isinstance(calls[callid2], signature.Call)
                for callid2 in callids):
-            data["complexity"] = 0
+            complexity = 0
             for callid2 in callids:
                 call = calls[callid2]
                 for innerval in rangevaldata[0]:
-                    if rangename_inner:
-                        symdict[report["rangevars"][rangename_inner]] = \
-                            rangeval
-                    complexity = call.complexity()
-                    try:
-                        if isinstance(complexity, symbolic.Expression):
-                            data["complexity"] += complexity(**symdict)
-                        elif isinstance(complexity, Number):
-                            data["complexity"] += complexity
-                        else:
-                            data["complexity"] = None
-                            break
-                    except:
-                        dat["complexity"] = None
+                    if userange_inner:
+                        symdict[report["rangevars"][userange_inner]] = \
+                            innerval
+                    callcomplexity = call.complexity()
+                    if isinstance(callcomplexity, symbolic.Expression):
+                        complexity += callcomplexity(**symdict)
+                    elif isinstance(callcomplexity, Number):
+                        complexity += callcomplexity
+                    else:
+                        complexity = None
                         break
-                if data["complexity"] is None:
+                if complexity is None:
                     break
-        else:
-            data["complexity"] = None
+        data["complexity"] = complexity
 
         # generate plotdata
         plotdata = []
@@ -404,7 +400,7 @@ class Viewer(object):
         if not plotdata:
             return None
         plotdata = tuple(plotdata)
-        if rangename_outer:
+        if userange_outer:
             return plotdata
         return ((None, plotdata),)
 
