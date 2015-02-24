@@ -34,7 +34,14 @@ def metric(data, report, callid):
     else:
         return None
 
-    nt = min(sampler["ncores"], report["nt"])
+    # get #threads
+    nt = report["nt"]
+    if report["options"]["omp"]:
+        nt *= len(report["calls"])
+    nt = min(sampler["ncores"], nt)
+    if report["userange"]["inner"] == "omp":
+        nt = sampler["ncores"]
+
     return nops / (rdtsc * ipc * nt)
 
 name = "efficiency"
