@@ -590,7 +590,7 @@ class Mat(object):
             argids = [argid]
         for argid in argids:
             value = self.calls[callid][argid]
-            for callid2, argid2 in self.connections[(callid, argid)]:
+            for callid2, argid2 in self.connections[callid, argid]:
                 self.calls[callid2][argid2] = value
 
     # treat changes for the calls
@@ -758,7 +758,7 @@ class Mat(object):
         self.connections_update()
         for argid2, value2 in enumerate(call):
             if not all(value2 == self.calls[callid3][argid3] for callid3,
-                       argid3 in self.connections[(callid, argid2)]):
+                       argid3 in self.connections[callid, argid2]):
                 # inconsistency: restore backup and query override
                 call[argid] = oldvalue
                 self.connections_update()
@@ -1206,7 +1206,7 @@ class Mat(object):
     def jobprogress_add(self, jobid, reportinfo):
         """Add an entry to the jobprogress tracker."""
         backend = self.sampler["backend"]
-        self.jobprogress[(backend, jobid)] = {
+        self.jobprogress[backend, jobid] = {
             "backend": backend,
             "id": jobid,
             "filebase": reportinfo["filename"][:-4],

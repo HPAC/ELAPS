@@ -269,7 +269,7 @@ class Side(Flag):
 
     def __init__(self, name="side", attr=None):
         """Possible values: L, R."""
-        Flag.__init__(self, name, ["L", "R"], attr)
+        Flag.__init__(self, name, ("L", "R"), attr)
 
     def __repr__(self):
         """Format as python parsable string."""
@@ -290,7 +290,7 @@ class Uplo(Flag):
 
     def __init__(self, name="uplo", attr=None):
         """Possible values: L, U."""
-        Flag.__init__(self, name, ["L", "U"], attr)
+        Flag.__init__(self, name, ("L", "U"), attr)
 
     def __repr__(self):
         """Format as python parsable string."""
@@ -312,7 +312,7 @@ class Trans(Flag):
 
     def __init__(self, name="trans", attr=None):
         """Possible values: N, T."""
-        Flag.__init__(self, name, ["N", "T"], attr)
+        Flag.__init__(self, name, ("N", "T"), attr)
 
     def __repr__(self):
         """Format as python parsable string."""
@@ -333,7 +333,7 @@ class cTrans(Flag):
 
     def __init__(self, name="trans", attr=None):
         """Possible values: N, C."""
-        Flag.__init__(self, name, ["N", "C"], attr)
+        Flag.__init__(self, name, ("N", "C"), attr)
 
     def __repr__(self):
         """Format as python parsable string."""
@@ -354,7 +354,7 @@ class Diag(Flag):
 
     def __init__(self, name="diag", attr=None):
         """Possible values: N, U."""
-        Flag.__init__(self, name, ["N", "U"], attr)
+        Flag.__init__(self, name, ("N", "U"), attr)
 
     def __repr__(self):
         """Format as python parsable string."""

@@ -34,7 +34,7 @@ class MPLPlot(object):
             "std": {"alpha": .25},
             "all": {"linestyle": "None", "marker": "."},
         }
-        self.stats_order = ["med", "min", "max", "avg", "min-max", "std", "all"]
+        self.stats_order = ("med", "min", "max", "avg", "min-max", "std", "all")
 
     def set_all(self, xlabel, ylabel, data, colors, title):
         """Set teh plot data."""
@@ -113,7 +113,7 @@ class MPLPlot(object):
             color = self.colors[name]
             for statname, linedata in linedatas.iteritems():
                 x, y = zip(*linedata)
-                if statname in ["min-max", "std"]:
+                if statname in ("min-max", "std"):
                     y1, y2 = zip(*y)
                     axes.fill_between(x, y1, y2, color=color,
                                       **self.stat_styles[statname])

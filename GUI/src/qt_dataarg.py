@@ -168,8 +168,8 @@ class QDataArg(QtGui.QLineEdit):
         # maximum
         h, w = dimmax
         points = [[QtCore.QPoint(woff + x, hoff + y)
-                   for x in [0, w]]
-                  for y in [0, h]]
+                   for x in (0, w)]
+                  for y in (0, h)]
         if "lower" in properties:
             self.polygonmax = QtGui.QPolygon([
                 points[0][0],
@@ -205,8 +205,8 @@ class QDataArg(QtGui.QLineEdit):
         # minimum
         h, w = dimmin
         points = [[QtCore.QPoint(woff + x, hoff + y)
-                   for x in [0, w]]
-                  for y in [0, h]]
+                   for x in (0, w)]
+                  for y in (0, h)]
         if "lower" in properties:
             self.polygonmin = QtGui.QPolygon([
                 points[0][0],
@@ -248,9 +248,9 @@ class QDataArg(QtGui.QLineEdit):
         # maximum
         h, w, d = dimmax
         points = [[[QtCore.QPoint(woff + x + z // 2, hoff + y + (d - z) // 2)
-                    for z in [0, d]]
-                   for x in [0, w]]
-                  for y in [0, h]]
+                    for z in (0, d)]
+                   for x in (0, w)]
+                  for y in (0, h)]
         self.polygonmax = QtGui.QPolygon([
             points[0][0][0],
             points[1][0][0],
@@ -280,9 +280,9 @@ class QDataArg(QtGui.QLineEdit):
         # minimum
         h, w, d = dimmin
         points = [[[QtCore.QPoint(woff + x + z // 2, hoff + y + (d - z) // 2)
-                    for z in [0, d]]
-                   for x in [0, w]]
-                  for y in [0, h]]
+                    for z in (0, d)]
+                   for x in (0, w)]
+                  for y in (0, h)]
         self.polygonmin = QtGui.QPolygon([
             points[0][0][0],
             points[1][0][0],
