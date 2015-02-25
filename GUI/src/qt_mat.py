@@ -848,7 +848,7 @@ class QMat(Mat):
             elif job["progress"] < 0:
                 Qlabel.setText("pending")
             elif job["progress"] <= job["progressend"]:
-                Qlabel.setText("%d / %d calls"
+                Qlabel.setText("%d / %d results"
                                % (job["progress"], job["progressend"]))
             else:
                 Qlabel.setText("completed")
