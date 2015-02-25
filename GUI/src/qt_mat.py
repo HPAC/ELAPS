@@ -110,23 +110,37 @@ class QMat(Mat):
             viewer.triggered.connect(self.Qt_viewer_start_click)
 
             # ranges
-            rangesM = menu.addMenu("Ranges")
+            self.Qt_rangesM = menu.addMenu("Ranges")
             self.Qt_useranges = {}
 
-            def userange_create(rangename, desc):
+            def userange_create(rangename, desc, group=None):
                 """Create a userange option."""
                 userange = QtGui.QAction(desc, window)
                 self.Qt_useranges[rangename] = userange
                 userange.setCheckable(True)
+                userange.setActionGroup(group)
                 userange.rangename = rangename
                 userange.toggled.connect(self.Qt_userange_toggle)
                 return userange
 
-            rangesM.addAction(userange_create("threads", "#threads range"))
-            rangesM.addAction(userange_create("range", "for each range"))
-            rangesM.addSeparator()
-            rangesM.addAction(userange_create("sum", "sum over range"))
-            rangesM.addAction(userange_create("omp", "parallel range"))
+            groupouter = QtGui.QActionGroup(window)
+            self.Qt_rangesM.addAction(
+                userange_create("threads", "#threads range", groupouter)
+            )
+            self.Qt_rangesM.addAction(
+                userange_create("range", "for each range", groupouter)
+            )
+            self.Qt_rangesM.addAction(userange_create(None, "none",
+                                                      groupouter))
+            self.Qt_rangesM.addSeparator()
+            groupinner = QtGui.QActionGroup(window)
+            self.Qt_rangesM.addAction(
+                userange_create("sum", "sum over range", groupinner)
+            )
+            self.Qt_rangesM.addAction(
+                userange_create("omp", "parallel range", groupinner))
+            self.Qt_rangesM.addAction(userange_create(None, "none",
+                                                      groupinner))
 
             # options
             optionsM = menu.addMenu("Options")
@@ -237,6 +251,13 @@ class QMat(Mat):
             margins[3] = 8
             rangesL.setContentsMargins(*margins)
             rangesL.setSpacing(0)
+
+            # context menu
+            rangesW.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+            rangesW.customContextMenuRequested.connect(
+                self.Qt_ranges_rightclick
+            )
+
             self.Qt_ranges = {}
 
             def create_range(rangename, indent, prefix, showrangevar=True,
@@ -586,7 +607,6 @@ class QMat(Mat):
             selected = self.userange[rangetype] is not None
             for rangename in rangenames:
                 active = rangename == self.userange[rangetype]
-                self.Qt_useranges[rangename].setEnabled(active or not selected)
                 self.Qt_useranges[rangename].setChecked(active)
                 self.Qt_ranges[rangename].setVisible(active)
         self.Qt_ntT.setVisible(self.userange["outer"] != "threads")
@@ -955,6 +975,12 @@ class QMat(Mat):
             self.UI_userange_change("outer", value)
         else:
             self.UI_userange_change("inner", value)
+
+    def Qt_ranges_rightclick(self, pos):
+        """Event: Richt click on ranges."""
+        sender = self.Qt_app.sender()
+        pos = sender.mapToGlobal(pos)
+        self.Qt_rangesM.exec_(pos)
 
     def Qt_range_close(self):
         """Event: Closed a range."""
