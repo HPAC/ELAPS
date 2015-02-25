@@ -883,7 +883,7 @@ class QMat(Mat):
         print("\r", end="")
         self.Qt_window.close()
         if self.Qt_app.viewer:
-            self.Qt_app.viewer.close()
+            self.Qt_app.viewer.Qt_window.close()
         self.Qt_app.quit()
 
     def Qt_window_close(self, event):

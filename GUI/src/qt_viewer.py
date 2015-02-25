@@ -447,7 +447,7 @@ class QViewer(Viewer):
         print("\r", end="")
         self.Qt_window.close()
         if self.Qt_app.mat:
-            self.Qt_app.mat.close()
+            self.Qt_app.mat.Qt_window.close()
         self.Qt_app.quit()
 
     def Qt_window_close(self, event):
