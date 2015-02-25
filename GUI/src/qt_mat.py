@@ -491,7 +491,13 @@ class QMat(Mat):
     def UI_start(self):
         """Start the Mat (main loop)."""
         import signal
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        signal.signal(signal.SIGINT, self.Qt_console_quit)
+
+        # make sure python handles signals every 500ms
+        timer = QtCore.QTimer()
+        timer.start(500)
+        timer.timeout.connect(lambda: None)
+
         sys.exit(self.Qt_app.exec_())
 
     # utility
@@ -831,7 +837,7 @@ class QMat(Mat):
     def UI_viewer_start(self):
         """Start the Viewer."""
         from qt_mpl_viewer import QMPLViewer
-        self.Qt_viewer = QMPLViewer(self.Qt_app)
+        QMPLViewer(self.Qt_app)
 
     def UI_viewer_load(self, filename):
         """Load a report in the viewer."""
@@ -845,6 +851,14 @@ class QMat(Mat):
         self.Qt_app.viewer.Qt_window.show()
 
     # event handlers
+    def Qt_console_quit(self, a, b):
+        """Event: Ctrl-C from the console."""
+        print("\r", end="")
+        self.Qt_window.close()
+        if self.Qt_app.viewer:
+            self.Qt_app.viewer.close()
+        self.Qt_app.quit()
+
     def Qt_window_close(self, event):
         """Event: Main window closed."""
         settings = QtCore.QSettings("HPAC", "ELAPS:Mat")

@@ -10,7 +10,6 @@ GUI
 * manual ld inference when showing
 * generalize range substitution
 * Example GUI states
-* save state on ctrl-C
 * work variable dimension deduction
 * work variable hiding
 
