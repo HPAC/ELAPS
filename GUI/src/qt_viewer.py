@@ -20,7 +20,7 @@ class QViewer(Viewer):
             self.Qt_app = app
         else:
             self.Qt_app = QtGui.QApplication(sys.argv)
-            self.Qt_app.gui = None
+            self.Qt_app.mat = None
         self.Qt_app.viewer = self
         self.plotfactory = plotfactory
         self.Qt_setting = 0
@@ -235,9 +235,15 @@ class QViewer(Viewer):
         self.Qt_initialized = True
 
     def UI_start(self):
-        """Start the Mat (main loop)."""
+        """Start the Viewer (main loop)."""
         import signal
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        signal.signal(signal.SIGINT, self.Qt_console_quit)
+
+        # make sure python handles signals every 500ms
+        timer = QtCore.QTimer()
+        timer.start(500)
+        timer.timeout.connect(lambda: None)
+
         sys.exit(self.Qt_app.exec_())
 
     # utility
@@ -433,9 +439,17 @@ class QViewer(Viewer):
     def UI_sampler_start(self):
         """Start the Mat."""
         from qt_mat import QMat
-        self.Qt_mat = QMat(self.Qt_app)
+        QMat(self.Qt_app)
 
     # event handlers
+    def Qt_console_quit(self, *args):
+        """Event: Ctrl-C from the console."""
+        print("\r", end="")
+        self.Qt_window.close()
+        if self.Qt_app.mat:
+            self.Qt_app.mat.close()
+        self.Qt_app.quit()
+
     def Qt_window_close(self, event):
         """Event: Main window closed."""
         settings = QtCore.QSettings("HPAC", "Viewer")

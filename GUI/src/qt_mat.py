@@ -24,7 +24,7 @@ class QMat(Mat):
         else:
             self.Qt_app = QtGui.QApplication(sys.argv)
             self.Qt_app.viewer = None
-        self.Qt_app.gui = self
+        self.Qt_app.mat = self
         self.Qt_setting = 0
         self.Qt_initialized = False
         Mat.__init__(self, loadstate)
@@ -878,7 +878,7 @@ class QMat(Mat):
         self.Qt_app.viewer.Qt_window.show()
 
     # event handlers
-    def Qt_console_quit(self, a, b):
+    def Qt_console_quit(self, *args):
         """Event: Ctrl-C from the console."""
         print("\r", end="")
         self.Qt_window.close()
