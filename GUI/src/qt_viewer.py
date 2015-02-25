@@ -143,6 +143,12 @@ class QViewer(Viewer):
             self.Qt_reports.currentItemChanged.connect(self.Qt_report_select)
             self.Qt_reports.itemExpanded.connect(self.Qt_report_expanded)
 
+            # drop files
+            self.Qt_reports.setAcceptDrops(True)
+            self.Qt_reports.dragEnterEvent = self.Qt_reports_dragenter
+            self.Qt_reports.dragMoveEvent = self.Qt_reports_dragmove
+            self.Qt_reports.dropEvent = self.Qt_reports_drop
+
             # context menu
             self.Qt_reports.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
             self.Qt_reports.customContextMenuRequested.connect(
@@ -487,6 +493,24 @@ class QViewer(Viewer):
             self.UI_report_select(item.reportid, item.callid)
         else:
             self.UI_report_select(None, None)
+
+    def Qt_reports_dragenter(self, Qevent):
+        """Event: Dragging into report list."""
+        for url in Qevent.mimeData().urls():
+            if str(url.toLocalFile())[-4:] == ".emr":
+                Qevent.acceptProposedAction()
+                return
+
+    def Qt_reports_dragmove(self, Qevent):
+        """Event: Dragging in report list."""
+        self.Qt_reports_dragenter(Qevent)
+
+    def Qt_reports_drop(self, Qevent):
+        """Event: Files dropped in report list."""
+        for url in Qevent.mimeData().urls():
+            filename = str(url.toLocalFile())
+            if filename[-4:] == ".emr":
+                self.UI_report_load(filename)
 
     def Qt_report_contextmenu_show(self, pos):
         """Event: Report context menu (right click)."""
