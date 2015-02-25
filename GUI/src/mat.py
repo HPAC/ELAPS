@@ -715,6 +715,7 @@ class Mat(object):
                 self.data_update()
                 self.UI_vary_init()
                 self.UI_call_set(callid, argid)
+                self.UI_data_viz()
         elif isinstance(arg, (signature.Ld, signature.Inc)):
             call[argid] = self.range_parse(value)
             self.data_update()
@@ -784,6 +785,7 @@ class Mat(object):
         self.data_update()
         self.UI_vary_init()
         self.UI_calls_set()
+        self.UI_data_viz()
 
     def data_override_cancel(self, callid, argid, value):
         """Undo the variable change leading to conflicts."""

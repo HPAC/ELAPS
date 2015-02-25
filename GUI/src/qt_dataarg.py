@@ -89,10 +89,11 @@ class QDataArg(QtGui.QLineEdit):
 
     def setsize(self, height, width):
         """Set the size of the widget."""
-        minsize = QtGui.QLineEdit().minimumSizeHint()
+        minsizehint = QtGui.QLineEdit().minimumSizeHint()
+        sizehint = QtGui.QLineEdit().minimumSizeHint()
         fontmetrics = self.fontMetrics()
-        minwidth = minsize.width() + fontmetrics.width(self.text())
-        minheight = minsize.height()
+        minwidth = minsizehint.width() + fontmetrics.width(self.text())
+        minheight = minsizehint.height()
         minwidth = max(minwidth, minheight)
         fixedwidth = max(width, minwidth)
         fixedheight = max(height, minheight)
