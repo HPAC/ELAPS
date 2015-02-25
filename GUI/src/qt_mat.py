@@ -323,6 +323,10 @@ class QMat(Mat):
             rangesL.addWidget(create_range(
                 "omp", 32, "in parallel"
             ))
+            ompflag = QtGui.QLabel("in parallel:")
+            rangesL.addWidget(ompflag)
+            self.Qt_ranges["ompflag"] = ompflag
+            ompflag.setContentsMargins(48, 0, 12, 0)
 
         def create_sampler_about():
             """Create the sampler info dock widget."""
@@ -398,6 +402,7 @@ class QMat(Mat):
             centralW = QtGui.QWidget()
             window.setCentralWidget(centralW)
             centralL = QtGui.QVBoxLayout()
+            centralL.setContentsMargins(0, 0, 0, 0)
             centralW.setLayout(centralL)
             self.Qt_calls = QtGui.QListWidget()
             centralL.addWidget(self.Qt_calls)
@@ -603,6 +608,8 @@ class QMat(Mat):
         self.Qt_countersD.setVisible(self.options["papi"])
         self.Qt_varyD.setVisible(self.options["vary"])
         self.Qt_headerD.setVisible(self.options["header"])
+        self.Qt_ranges["ompflag"].setVisible(self.options["omp"] and
+                                             self.userange["inner"] != "omp")
         self.Qt_setting -= 1
 
     def UI_showargs_set(self):
