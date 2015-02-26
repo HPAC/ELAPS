@@ -14,8 +14,8 @@
     },
     "rangevars": {
         "threads": "nt",
-        "range": "n",
-        "sum": "m",
+        "range": "i",
+        "sum": "j",
         "omp": "t"
     },
     "options": {
