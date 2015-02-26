@@ -28,6 +28,7 @@
         "flags": True,
         "scalars": True,
         "lds": False,
+        "work": False,
         "infos": False
     },
     "counters": [],

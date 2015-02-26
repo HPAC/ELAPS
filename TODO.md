@@ -8,8 +8,6 @@ GUI
 ---
 * Example GUI states
 * generalize range substitution
-* work variable dimension deduction
-* work variable hiding
 
 * (copy button - in addition to +, to add a copy of the last instruction) 
 * (status tips)

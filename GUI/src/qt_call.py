@@ -117,7 +117,7 @@ class QCall(QtGui.QListWidgetItem):
                     Qarg.currentIndexChanged.connect(self.arg_change)
                 elif isinstance(arg, (signature.Dim, signature.Scalar,
                                       signature.Ld, signature.Inc,
-                                      signature.Info)):
+                                      signature.Lwork, signature.Info)):
                     Qarg = QtGui.QLineEdit()
                     Qarg.textChanged.connect(self.arg_change)
                 elif isinstance(arg, signature.Data):
@@ -164,6 +164,7 @@ class QCall(QtGui.QListWidgetItem):
                 ("flags", signature.Flag),
                 ("scalars", signature.Scalar),
                 ("lds", (signature.Ld, signature.Inc)),
+                ("work", (signature.Work, signature.Lwork)),
                 ("infos", signature.Info)
             ):
                 if isinstance(arg, classes):

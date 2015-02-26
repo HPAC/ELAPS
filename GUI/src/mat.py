@@ -368,7 +368,9 @@ class Mat(object):
     def data_maxdim(self):
         """Compute the maximum dimension across all data."""
         return max(self.range_eval_minmax(dim)[1]
-                   for data in self.data.itervalues() if data["dims"]
+                   for data in self.data.itervalues()
+                   if data["dims"] and not issubclass(data["type"],
+                                                      signature.Work)
                    for dim in data["dims"])
 
     # inference system
@@ -378,9 +380,6 @@ class Mat(object):
             # infer lds for all calls
             for callid in range(len(self.calls)):
                 self.infer_lds(callid, force)
-            return
-
-        if self.showargs["lds"] and not force:
             return
 
         call = self.calls[callid]
@@ -394,17 +393,17 @@ class Mat(object):
         # complete leading dimension arguments
         call2 = call.copy()
         for argid, arg in enumerate(sig):
-            if isinstance(arg, (signature.Ld, signature.Inc)):
+            if isinstance(arg, (signature.Ld, signature.Inc, signature.Lwork)):
                 call2[argid] = None
         call2.complete()
 
         # set ld arguments
         for argid, arg in enumerate(sig):
             if isinstance(arg, (signature.Ld, signature.Inc)):
-                if isinstance(call[argid], int) and isinstance(call2[argid],
-                                                               int):
-                    call[argid] = max(call[argid], call2[argid])
-                else:
+                if not self.showargs["lds"] or force:
+                    call[argid] = call2[argid]
+            elif isinstance(arg, signature.Lwork):
+                if not self.showargs["work"] or force:
                     call[argid] = call2[argid]
 
         # 2: infer from data
@@ -414,7 +413,8 @@ class Mat(object):
         for argid, arg in enumerate(sig):
             if isinstance(arg, signature.Data):
                 symcall[argid] = None
-            elif isinstance(arg, (signature.Dim, signature.Ld, signature.Inc)):
+            elif isinstance(arg, (signature.Dim, signature.Ld, signature.Inc,
+                                  signature.Lwork)):
                 symcall[argid] = symbolic.Symbol("." + arg.name)
         symcall.complete()
 
@@ -442,11 +442,7 @@ class Mat(object):
                 if not isinstance(arg, signature.Ld):
                     continue
                 if "." + arg.name in symdims:
-                    newld = data["lds"][symdims.index("." + arg.name)]
-                    if isinstance(call[argid], int) and isinstance(newld, int):
-                        call[argid] = max(call[argid], newld)
-                    else:
-                        call[argid] = newld
+                    call[argid] = data["lds"][symdims.index("." + arg.name)]
 
     def data_update(self, callid=None):
         """update the data objects from the calls."""
@@ -474,7 +470,7 @@ class Mat(object):
                 symcall[argid] = None
             elif isinstance(arg, (signature.Ld, signature.Inc)):
                 symcall[argid] = None
-            elif isinstance(arg, signature.Dim):
+            elif isinstance(arg, (signature.Dim, signature.Lwork)):
                 symcall[argid] = symbolic.Symbol("." + arg.name)
         sizecall.complete()
         symcall.complete()
@@ -502,6 +498,8 @@ class Mat(object):
                     sym(**argdict)
                     if isinstance(sym, symbolic.Expression) else dim
                 ]
+            if issubclass(data["type"], signature.Lwork):
+                dims = [Prod(*dims)()]
             data["dims"] = dims
 
             # leading dimension
@@ -719,7 +717,7 @@ class Mat(object):
                 self.UI_vary_init()
                 self.UI_call_set(callid, argid)
                 self.UI_data_viz()
-        elif isinstance(arg, (signature.Ld, signature.Inc)):
+        elif isinstance(arg, (signature.Ld, signature.Inc, signature.Lwork)):
             call[argid] = self.range_parse(value)
             self.data_update()
             self.UI_calls_set(callid, argid)
@@ -1304,8 +1302,8 @@ class Mat(object):
 
     def UI_infer_lds(self):
         """Event: Infer leading dimensions."""
-        print("infering lds")
         self.infer_lds(force=True)
+        self.data_update()
         self.UI_calls_set()
 
     def UI_option_change(self, optionname, state):

@@ -84,7 +84,7 @@ class QDataArg(QtGui.QLineEdit):
         value = self.Qt_gui.calls[self.Qt_call.callid][self.argid]
         if value is None:
             value = ""
-        self.setText(value)
+        self.setText(str(value))
         self.viz()
 
     def setsize(self, height, width):
@@ -104,7 +104,8 @@ class QDataArg(QtGui.QLineEdit):
 
     def viz(self):
         """Visualization update."""
-        value = self.Qt_gui.calls[self.Qt_call.callid][self.argid]
+        call = self.Qt_gui.calls[self.Qt_call.callid]
+        value = call[self.argid]
         if value not in self.Qt_gui.data:
             self.viz_none()
             return
@@ -126,6 +127,13 @@ class QDataArg(QtGui.QLineEdit):
         if float("inf") in dimmin or -float("inf") in dimmax:
             self.viz_none()
             return
+        if "work" in call.properties(self.argid):
+            # maximum height for work
+            maxdim = max(1,self.Qt_gui.data_maxdim())
+            if dimmax[0] > maxdim:
+                dims = [0, 0]
+                dimmin = [maxdim, dimmin[0] // maxdim]
+                dimmax = [maxdim, dimmax[0] // maxdim]
         if len(dims) == 1:
             self.viz_vector(dimmin, dimmax)
         elif len(dims) == 2:

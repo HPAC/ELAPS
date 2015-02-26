@@ -169,6 +169,7 @@ class QMat(Mat):
                 ("flags", "show flag arguments"),
                 ("scalars", "show scalar arguments"),
                 ("lds", "show leading dimensions"),
+                ("work", "show workspace arguments"),
                 ("infos", "show info arguments")
             ):
                 showarg = QtGui.QAction(desc, window)
@@ -210,7 +211,7 @@ class QMat(Mat):
             self.Qt_infer_ldsT = window.addToolBar("infer lds")
             self.Qt_infer_ldsT.setMovable(False)
             self.Qt_infer_ldsT.setObjectName("infer lds")
-            infer = QtGui.QPushButton("infer lds")
+            infer = QtGui.QPushButton("infer secondary dims")
             self.Qt_infer_ldsT.addWidget(infer)
             infer.clicked.connect(self.Qt_infer_lds_click)
 
@@ -637,7 +638,8 @@ class QMat(Mat):
         self.Qt_setting += 1
         for name in self.Qt_showargs:
             self.Qt_showargs[name].setChecked(self.showargs[name])
-        self.Qt_infer_ldsT.setVisible(self.showargs["lds"])
+        self.Qt_infer_ldsT.setVisible(self.showargs["lds"] or
+                                      self.showargs["work"])
         self.Qt_setting -= 1
 
     def UI_header_set(self):
@@ -786,7 +788,8 @@ class QMat(Mat):
         """Apply which argument types are shown."""
         for callid in range(self.Qt_calls.count()):
             self.Qt_calls.item(callid).showargs_apply()
-        self.Qt_infer_ldsT.setVisible(self.showargs["lds"])
+        self.Qt_infer_ldsT.setVisible(self.showargs["lds"] or
+                                      self.showargs["work"])
 
     def UI_arg_setfocus(self, callid, argid):
         """Set the focus to an argument."""
