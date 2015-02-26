@@ -564,7 +564,10 @@ class Mat(object):
                         continue
                 else:
                     continue
-                datasize = [size.name for size in datasize]
+                datasize = [
+                    size.name if isinstance(size, symbolic.Symbol) else None
+                    for size in datasize
+                ]
                 sizes[call[argid]].append(datasize)
         # deduce connections from symbolic sizes for each dataname
         connections = {
