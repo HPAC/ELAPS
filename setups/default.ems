@@ -35,8 +35,8 @@
     "header": "# script header\n",
     "nrep": 10,
     "calls": [
-        ("dgemm_", "N", "N", Symbol("n"), Symbol("n"), Symbol("n"),
-         1, "A", Symbol("n"), "B", Symbol("n"), 1, "C", Symbol("n"))
+        ("dgemm_", "N", "N", Symbol("i"), Symbol("i"), Symbol("i"),
+         1, "A", Symbol("i"), "B", Symbol("i"), 1, "C", Symbol("i"))
     ],
     "vary": {},
 }
