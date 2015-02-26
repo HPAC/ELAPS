@@ -45,7 +45,10 @@ class Mat(object):
         self.state_init(loadstate)
         if len(sys.argv) > 1:
             if sys.argv[1][-4:] in (".ems", ".emr"):
-                self.state_load(sys.argv[1])
+                try:
+                    self.state_load(sys.argv[1])
+                except:
+                    self.alert("ERROR: Can't load %r" % sys.argv[1])
 
     # state access attributes
     def __getattr__(self, name):
@@ -206,20 +209,12 @@ class Mat(object):
 
     def state_load(self, filename):
         """Try to laod the state from a file."""
-        try:
-            with open(filename) as fin:
-                if filename[-4:] == ".ems":
-                    self.state_fromstring(fin.read())
-                    self.log("Loaded setup %r." % os.path.relpath(filename))
-                else:
-                    self.state_fromstring(fin.readline())
-                    self.log("Loaded setup from %r." %
-                             os.path.relpath(filename))
-            return True
-        except:
-            self.alert("ERROR: Can't load setup from %r." %
-                       os.path.relpath(filename))
-            return False
+        with open(filename) as fin:
+            if filename[-4:] == ".ems":
+                self.state_fromstring(fin.read())
+            else:
+                self.state_fromstring(fin.readline())
+            self.log("Loaded setup from %r." % os.path.relpath(filename))
 
     def state_write(self, filename):
         """Write the state to a file."""
