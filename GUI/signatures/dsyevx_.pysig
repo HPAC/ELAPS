@@ -16,9 +16,9 @@ Signature(
     dData("W", "n"),
     dData("Z", "ldZ * n"),  # actually: ldZ * m
     Ld("ldZ", "n if jobz == 'V' else 1"),
-    dData("Work", "lWork"),
-    Dim("lWork", "8 * n"),
-    iData("iWork", "5 * n"),
+    dWork("Work", "lWork"),
+    Lwork("lWork", "8 * n"),
+    iWork("iWork", "5 * n"),
     iData("iFail", "n"),
     Info()
 )

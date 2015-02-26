@@ -10,6 +10,7 @@ eval_replace = {
     "upper": repr("upper"),
     "symm": repr("symm"),
     "herm": repr("herm"),
+    "work": repr("work"),
 }
 
 
@@ -381,7 +382,6 @@ class Dim(Arg):
 
     def __repr__(self):
         """Format as python parsable string."""
-        args = []
         args = [self.name]
         if self.minstr:
             args.append(self.minstr)
@@ -596,6 +596,81 @@ class Inc(Arg):
     def default():
         """Default: 1."""
         return 1
+
+
+class Work(Data):
+
+    """Work space argument."""
+
+    def __init__(self, name, min_=None, attr=None):
+        """Set the "work" attribute."""
+        if not attr:
+            Data.__init__(self, name, min_, "work")
+        else:
+            Data.__init__(self, name, min_, "work, " + attr)
+
+
+class iWork(Work, iData):
+
+    """Double precision work argument."""
+
+    pass
+
+
+class sWork(Work, sData):
+
+    """Double precision work argument."""
+
+    pass
+
+
+class dWork(Work, dData):
+
+    """Double precision work argument."""
+
+    pass
+
+
+class cWork(Work, cData):
+
+    """Double precision work argument."""
+
+    pass
+
+
+class zWork(Work, zData):
+
+    """Double precision work argument."""
+
+    pass
+
+
+class Lwork(Arg):
+
+    """Work size argument."""
+
+    def __init__(self, name, min_=None, attr=None):
+        """Init: minimum expression possible."""
+        Arg.__init__(self, name, attr)
+        self.minstr = min_
+
+    def __repr__(self):
+        """Format as python parsable string."""
+        args = [self.name]
+        if self.minstr:
+            args.append(self.minstr)
+        if self.propertiesstr:
+            if not self.minstr:
+                args.append(None)
+            args.append(self.propertiesstr)
+        args = map(repr, args)
+        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+
+    def default(self):
+        """Default: 1."""
+        if self.minstr is None:
+            return 1
+        return None
 
 
 class Info(Arg):

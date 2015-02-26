@@ -1,12 +1,12 @@
 # double precision QR decomposition
 Signature(
-    "dpoqrf_",
+    "dgeqrf_",
     Dim("m"),
     Dim("n"),
     dData("A", "ldA * n"),
     Ld("ldA", "m"),
     dData("Tau", "m if m < n else n"),
-    dData("Work", "lWork"),
-    Dim("lWork", "n"),
+    dWork("Work", "lWork"),
+    Lwork("lWork", "n"),
     Info()
 )

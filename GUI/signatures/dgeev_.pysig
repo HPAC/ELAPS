@@ -12,7 +12,7 @@ Signature(
     Ld("ldVl", "1 if 'jobvl' == 'N' else n"),
     dData("Vr", "ldVr * n"),
     Ld("ldVr", "1 if 'jobvl' == 'N' else n"),
-    dData("Work", "lWork"),
-    Dim("lWork", "(3 if jobvl == jobvr == 'N'  else 4) * n"),
+    dWork("Work", "lWork"),
+    Lwork("lWork", "(3 if jobvl == jobvr == 'N' else 4) * n"),
     Info()
 )

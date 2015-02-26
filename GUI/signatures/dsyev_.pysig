@@ -7,7 +7,7 @@ Signature(
     dData("A", "ldA * n"),
     Ld("ldA", "n"),
     dData("W", "n"),
-    dData("Work", "lWork"),
-    Dim("lWork", "3 * n - 1"),
+    dWork("Work", "lWork"),
+    Lwork("lWork", "3 * n - 1"),
     Info()
 )
