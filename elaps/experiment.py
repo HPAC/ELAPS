@@ -42,7 +42,7 @@ class Experiment(dict):
         if name in self:
             return self[name]
         raise AttributeError("%r object has no attribute %r" %
-                             (self.__class__, name))
+                             (type(self), name))
 
     def __setattr__(self, name, value):
         """Element access through attributes."""
@@ -68,7 +68,7 @@ class Experiment(dict):
                 if any(call[0] == routine for call in self.calls)
             }
 
-        return "%s(%r)" % (self.__class__.__name__, changed)
+        return "%s(%r)" % (type(self).__name__, changed)
 
     def __str__(self):
         """Readable string representation."""
@@ -106,47 +106,93 @@ class Experiment(dict):
 
     def infer_ld(self, callid, argid):
         """Infer one leading dimension."""
-        pass
-        # TODO
+        self.data_update()
+
+        call = self.calls[callid]
+
+        if not isinstance(call, signature.Call):
+            raise TypeError(
+                "can only infer leading dimension for Call (not %r)" %
+                type(call)
+            )
+
+        sig = call.sig
+
+        if not isinstance(sig[argid], signature.Ld):
+            raise TypeError(
+                "can only infer leading dimension for Ld (not %r)" %
+                type(sig[argid])
+            )
+
+        name = sig[arig].name
+
+        # data dimensions in terms of lds
+        ldcall = call.copy()
+        for argid, arg in enumerate(sig):
+            if isinstance(arg, signature.Data):
+                ldcall[argid] = None
+            elif isinstance(arg, (signature.Dim, signature.Ld, signature.Inc,
+                                  signature.Lwork)):
+                ldcall[argid] = symbolic.Symbol("." + arg.name)
+        ldcall.complete()
+
+        # search for ld in all data args
+        for dataargid in sig.dataargs():
+            dims = symcall[dataargid]
+            if isinstance(sym, symbolic.Prod):
+                dims = dims[1:]
+            else:
+                dims = [dims]
+            dims = [dim() if isinstance(dim, symbolic.Expression) else dim
+                    for dim in dims]
+
+            if "." + name in dims:
+                break
+        else:
+            # ld not found
+            return
+
+        # extract stuff
+        dimidx = dims.index("." + name)
+        data = self.data[dataargid]
+        vary = data["vary"]
+
+        # initial: required by data
+        ld = data["dims"][dimidx]
+
+        # varying along this dimension
+        if vary["along"] == dimidx:
+            if self.sumrange and self.sumrange[0] in vary["with"]:
+                ld = symbolic.Sum(ld, **dict(self.sumrange))
+            if "rep" in vary["with"]:
+                ld *= self.nreps
+
+        # simplify
+        if isinstance(ld, symbolic.Operation):
+            ld = ld()
+
+        call[argid] = ld
+
+        self.data_update()
 
     def infer_lds(self, callid=None):
         """Infer all leading dimensions."""
         if callid is None:
-            for callid in range(len(self.calls)):
+            for callid, call in enumerate(self.calls):
                 self.infer_lds(callid)
             return
 
         call = self.calls[callid]
 
         if not isinstance(call, signature.Call):
-            # ignore non-signature calls
             return
+
+        self.calls[callid] = self.calls[callid].infer_lds()
 
         for argid, arg in call.sig:
             if isinstance(arg, signature.Ld):
                 self.infer_ld(callid, argid)
 
-    def infer_workspace(self, callid, argid):
-        """Infer one work space size."""
-        pass
-        # TODO
-
-    def infer_workspaces(self, callid=None):
-        """Infer all work space sizes."""
-        if callid is None:
-            for callid in range(len(self.calls)):
-                self.infer_workspaces(callid)
-            return
-
-        call = self.calls[callid]
-
-        if not isinstance(call, signature.Call):
-            # ignore non-signature calls
-            return
-
-        for argid, arg in call.sig:
-            if isinstance(arg, signature.Lwork):
-                self.infer_ld(callid, argid)
 
     def data_update(self, name=None):
         """Update the data from the calls."""
@@ -195,7 +241,7 @@ class Experiment(dict):
 
         data = {
             "size": sizecall[name_argid],
-            "type": sig[name_argid].__class__
+            "type": type(sig[name_argid])
         }
 
         # dimensions
