@@ -401,7 +401,7 @@ class Mat(object):
                 if not self.showargs["work"] or force:
                     call[argid] = call2[argid]
 
-        # 2: infer from data
+        # 2: infer lds from data
 
         # get a symbolic representaiton of the data arguments
         symcall = call.copy()
@@ -436,8 +436,12 @@ class Mat(object):
             for argid, arg in enumerate(sig):
                 if not isinstance(arg, signature.Ld):
                     continue
-                if "." + arg.name in symdims:
+                if "." + arg.name not in symdims:
+                    continue
+                if self.showargs["lds"] and not force:
                     call[argid] = data["lds"][symdims.index("." + arg.name)]
+                else:
+                    data["lds"][symdims.index("." + arg.name)] = call[argid]
 
     def data_update(self, callid=None):
         """update the data objects from the calls."""
