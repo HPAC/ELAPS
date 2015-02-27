@@ -187,12 +187,48 @@ class Experiment(dict):
         if not isinstance(call, signature.Call):
             return
 
-        self.calls[callid] = self.calls[callid].infer_lds()
-
         for argid, arg in call.sig:
             if isinstance(arg, signature.Ld):
                 self.infer_ld(callid, argid)
 
+    def infer_lwork(self, callid, argid):
+        """Infer one leading dimension."""
+        self.data_update()
+
+        call = self.calls[callid]
+
+        if not isinstance(call, signature.Call):
+            raise TypeError(
+                "can only infer work space size for Call (not %r)" %
+                type(call)
+            )
+
+        sig = call.sig
+
+        if not isinstance(sig[argid], signature.Lwork):
+            raise TypeError(
+                "can only infer work space size for Lwork (not %r)" %
+                type(sig[argid])
+            )
+
+        call[argid] = None
+        call.complete()
+
+    def infer_lworks(self, callid=None):
+        """Infer all leading dimensions."""
+        if callid is None:
+            for callid, call in enumerate(self.calls):
+                self.infer_lworks(callid)
+            return
+
+        call = self.calls[callid]
+
+        if not isinstance(call, signature.Call):
+            return
+
+        for argid, arg in call.sig:
+            if isinstance(arg, signature.Lwork):
+                self.infer_lwork(callid, argid)
 
     def data_update(self, name=None):
         """Update the data from the calls."""
