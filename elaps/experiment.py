@@ -64,7 +64,7 @@ class Experiment(dict):
         if "sampler" in changed:
             changed["sampler"]["kernels"] = {
                 routine: minsig
-                for routine: minsig in self.sampler["kernels"].items()
+                for routine, minsig in self.sampler["kernels"].items()
                 if any(call[0] == routine for call in self.calls)
             }
 
@@ -89,7 +89,7 @@ class Experiment(dict):
             indent += "    "
         if not isinstance(self.nthreads, int):
             result += indent + "#threads = %s\n" % self.nthreads
-        result += indent "repeat %s times :\n" % self.nreps
+        result += indent + "repeat %s times :\n" % self.nreps
         indent += "    "
         if self.sumrange:
             result += indent + "sum over %s = %s" % self.sumrange
@@ -247,7 +247,7 @@ class Experiment(dict):
 
         # get any call that contains name
         call, name_argid = next(
-            call, argid
+            (call, argid)
             for call in self.calls
             if isinstance(call, signature.Call)
             for argid in call.sig.dataargs()
@@ -332,6 +332,7 @@ class Experiment(dict):
 
     def check_sanity(self):
         """Check if the experiment is self-consistent."""
+        pass # TODO
 
     def generate_cmds(self, range_val=None):
         """Generate commands for the Sampler."""
@@ -584,9 +585,10 @@ class Experiment(dict):
         errfile = filebase + ".err"
 
         # emptly output files
-        # TODO delete instead
-        open(reportfile, "w").close()
-        open(errfile, "w").close()
+        if os.path.isfile(reportfile):
+            os.remove(reportfile)
+        if os.path.isfile(errfile):
+            os.remove(errfile)
 
         nthreads_vals = self.nthreads,
         if self.range and not self.range[0] == self.nthreads:
@@ -705,7 +707,7 @@ class Experiment(dict):
             nthreads = range.max()
         return(backend.submit(script, nt=nthreads, jobname=filebase))
 
-    # internal routines
+    # primarily internal routines
     def range_vals(self):
         """Get the range values if set, else None."""
         if self.range:
