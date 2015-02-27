@@ -3,6 +3,7 @@
 from __future__ import division, print_function
 
 import symbolic
+import signature
 
 from itertools import chain
 
@@ -103,36 +104,152 @@ class Experiment(dict):
             result += indent + str(call)
         return result
 
-    def infer_lds(self, callid=None, argid=None):
-        """Infer leading dimension(s)."""
+    def infer_ld(self, callid, argid):
+        """Infer one leading dimension."""
+        pass
+        # TODO
+
+    def infer_lds(self, callid=None):
+        """Infer all leading dimensions."""
         if callid is None:
             for callid in range(len(self.calls)):
                 self.infer_lds(callid)
             return
 
-        pass
-        # TODO
+        call = self.calls[callid]
 
-    def infer_workspace(self, callid=None, argid=None):
-        """Infer work space size(s)."""
-        if callid is None:
-            for callid in range(len(self.calls)):
-                self.infer_workspace(callid)
+        if not isinstance(call, signature.Call):
+            # ignore non-signature calls
             return
 
+        for argid, arg in call.sig:
+            if isinstance(arg, signature.Ld):
+                self.infer_ld(callid, argid)
+
+    def infer_workspace(self, callid, argid):
+        """Infer one work space size."""
         pass
         # TODO
+
+    def infer_workspaces(self, callid=None):
+        """Infer all work space sizes."""
+        if callid is None:
+            for callid in range(len(self.calls)):
+                self.infer_workspaces(callid)
+            return
+
+        call = self.calls[callid]
+
+        if not isinstance(call, signature.Call):
+            # ignore non-signature calls
+            return
+
+        for argid, arg in call.sig:
+            if isinstance(arg, signature.Lwork):
+                self.infer_ld(callid, argid)
 
     def data_update(self, name=None):
         """Update the data from the calls."""
-        pass
-        # TODO
+        assert(self.check_sanity())
+        if name is None:
+            names = set([
+                call[argid]
+                for call in self.calls
+                if isinstance(call, signature.Call)
+                for argid in call.sig.dataargs()
+                if isinstance(call[argid], str)
+            ])
+            for name in names:
+                self.data_update(name)
+            return
+
+        # get any call that contains name
+        call, name_argid = next(
+            call, argid
+            for call in self.calls
+            if isinstance(call, signature.Call)
+            for argid in call.sig.dataargs()
+            if call[argid] == name
+        )
+        sig = call.sig
+
+        dimcall = call.copy()
+        ldcall = call.copy()
+        sizecall = call.copy()
+        for argid, arg in enumerate(sig):
+            if isinstance(arg, signature.Data):
+                dimcall[argid] = None
+                ldcall[argid] = None
+                sizecall[argid] = None
+            elif isinstance(arg, (signature.Ld, signature.Inc)):
+                dimcall[argid] = None
+                ldcall[argid] = symbolic.Symbol("." + arg.name)
+            elif isinstance(arg, (signature.Dim, signature.Lwork)):
+                dimcall[argid] = symbolic.Symbol("." + arg.name)
+                ldcall[argid] = symbolic.Symbol("." + arg.name)
+        dimcall.complete()
+        ldcall.complete()
+        sizecall.complete()
+
+        argdict = {"." + arg.name: val for arg, val in zip(sig, call)}
+
+        data = {
+            "size": sizecall[name_argid],
+            "type": sig[name_argid].__class__
+        }
+
+        # dimensions
+        dims = dimcall[name_argid]
+        if isinstance(dims, symbolic.Prod):
+            dims = dims[1:]
+        else:
+            dims = [dims]
+        dims = [
+            dim(**argdict)
+            if isinstance(dim, symbolic.Expression) else dim
+            for dim in dims
+        ]
+        if isinstance(sig[name_argid], signature.Work):
+            # Workspace is 1D
+            dims = [symbolic.Prod(*dims)()]
+        data["dims"] = dims
+
+        # leading dimension
+        lds = ldcall[name_argid]
+        if isinstance(lds, symbolic.Prod):
+            lds = lds[1:]
+        else:
+            lds = [lds]
+        lds = [
+            ld(**argdict)
+            if isinstance(ld, symbolic.Expression) else ld
+            for ld in lds
+        ]
+        data["lds"] = lds
+
+        # vary
+        if name in self.data:
+            vary = self.data[name]["vary"]
+            # limit vary by dimensionality
+            vary["along"] = min(vary["along"], len(dims) - 1)
+        else:
+            vary = {
+                "with": set(),
+                "along": 0,
+                "offset": 0
+            }
+        data["vary"] = vary
+
+        self.data[name] = data
 
     def apply_connections(self, callid, argid):
         """Apply data-connections from this starging point."""
         value = self.calls[callid][argid]
         for callid2, argid2 in self.connections_get()[callid, argid]:
             self.calls[callid2][argid2] = value
+
+    def check_sanity(self):
+        """Check if the experiment is self-consistent."""
 
     def generate_cmds(self, range_val=None):
         """Generate commands for the Sampler."""
@@ -153,6 +270,7 @@ class Experiment(dict):
                 parts.append(sumrange_val)
             return "_".join(map(str, parts))
 
+        assert(self.check_sanity())
         cmds = []
 
         range_vals = range_val,
@@ -378,6 +496,7 @@ class Experiment(dict):
 
     def submit_prepare(self, filebase):
         """Create all files needed to run the experiment."""
+        assert(self.check_sanity())
         scriptfile = filebase + ".sh"
         reportfile = filebase + ".eer"
         errfile = filebase + ".err"
