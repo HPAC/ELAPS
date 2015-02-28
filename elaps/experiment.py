@@ -319,7 +319,7 @@ class Experiment(dict):
 
     def check_sanity(self):
         """Check if the experiment is self-consistent."""
-        pass # TODO
+        pass  # TODO
 
     def generate_cmds(self, range_val=None):
         """Generate commands for the Sampler."""
@@ -633,11 +633,14 @@ class Experiment(dict):
             if self.sumrange and self.sumrange_parallel:
                 if self.range:
                     if len(nthreads_vals) > 1:
-                        sumrangelen = len(self.sumrange(**dict(self.range)))
+                        sumrangelen = len(simplify(self.sumrange,
+                                                   **dict(self.range)))
                     else:
-                        sumrangelen = max(len(self.sumrange(**{self.range[0]:
-                                                               range_val}))
-                                          for range_val in self.range[1])
+                        sumrangelen = max(
+                            len(simplify(self.sumrange,
+                                         **{self.range[0]: range_val}))
+                            for range_val in self.range[1]
+                        )
                 else:
                     sumrangelen = len(self.sumrange)
                 ompthreads = sumrangelen * len(self.calls)
@@ -705,7 +708,8 @@ class Experiment(dict):
         """Get the range values if set, else None."""
         if self.sumrange:
             if self.range:
-                return tuple(self.sumrange[1](**{self.range[0]: range_val}))
+                return tuple(simplify(self.sumrange[1],
+                                      **{self.range[0]: range_val}))
             return tuple(self.sumrange[1])
         return None
 
