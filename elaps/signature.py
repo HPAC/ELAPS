@@ -85,7 +85,7 @@ class Signature(list):
         args = [repr(self[0].name)] + map(repr, self[1:])
         if self.complexity:
             args.append("complexity=" + repr(self.complexitystr))
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+        return type(self).__name__ + "(" + ", ".join(args) + ")"
 
     def __call__(self, *args):
         """Create a call from the signature with given arguments."""
@@ -94,12 +94,13 @@ class Signature(list):
         return Call(self, *args)
 
     def dataargs(self):
-        """Returen a list of data argument positions."""
+        """Return a list of data argument positions."""
         return [argid for argid, arg in enumerate(self)
                 if isinstance(arg, Data)]
 
     def datatype(self):
         """Deduce type of perands (single, double, complex, ...)."""
+        # datatype is type of first dataarg
         return self[self.dataargs()[0]].typename
 
 
@@ -124,7 +125,7 @@ class Call(list):
 
     def __repr__(self):
         """Format as python parsable string."""
-        return (self.__class__.__name__ + "(" + repr(self.sig) + ", " +
+        return (type(self).__name__ + "(" + repr(self.sig) + ", " +
                 ", ".join(map(repr, self[1:])) + ")")
 
     def __getattr__(self, name):
@@ -133,7 +134,7 @@ class Call(list):
             if arg.name == name:
                 return self[i]
         raise AttributeError("%r object has no attribute %r" %
-                             (self.__class__, name))
+                             (type(self), name))
 
     def __setattr__(self, name, value):
         """Variable names as attributes."""
@@ -142,7 +143,7 @@ class Call(list):
                 self[i] = value
                 return
         raise AttributeError("%r object has no attribute %r" %
-                             (self.__class__, name))
+                             (type(self), name))
 
     def __copy__(self):
         """Create a deep copy."""
@@ -175,12 +176,6 @@ class Call(list):
         while self[1:] not in calls:
             calls.append(self[1:])
             self.complete_once()
-
-    def clear_completable(self):
-        """Clear all completable arguments."""
-        for i, arg in enumerate(self.sig):
-            if arg.min:
-                self[i] = None
 
     def properties(self, argid=None):
         """Return a list of properties for the arguments."""
@@ -219,11 +214,17 @@ class Arg(object):
         if self.propertiesstr:
             args.append(self.propertiesstr)
         args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+        return type(self).__name__ + "(" + ", ".join(args) + ")"
 
     def __str__(self):
         """Format as human readable."""
         return str(self.name)
+
+    def __eq__(self, other):
+        """Compare with other argument."""
+        return (type(self) == type(other) and
+                self.name == other.name and
+                self.propertiesstr == other.propertiesstr)
 
     @staticmethod
     def format_str(val):
@@ -238,6 +239,10 @@ class Arg(object):
 class Name(Arg):
 
     """Name argument."""
+
+    def __eq__(self, other):
+        """Check for equality."""
+        return Arg.__eq__(self, other) or self.name == other
 
     def default(self):
         """Default: Kernel name."""
@@ -259,118 +264,46 @@ class Flag(Arg):
         if self.propertiesstr:
             args.append(self.propertiesstr)
         args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+        return type(self).__name__ + "(" + ", ".join(args) + ")"
+
+    def __eq__(self, other):
+        """Compare with other."""
+        return Arg.__eq__(self, other) and self.flags == other.flags
 
     def default(self):
         """Default: first possible falg."""
         return self.flags[0]
 
 
-class Side(Flag):
-
-    """Side (falg) argument."""
-
-    def __init__(self, name="side", attr=None):
-        """Possible values: L, R."""
-        Flag.__init__(self, name, ("L", "R"), attr)
+def _create_Flag(classname, defaultname, flags):
+    """Class factory for Flag arguments."""
+    def __init__(self, name=defaultname, attr=None):
+        """Initialize custon Flag."""
+        Flag.__init__(self, name, flags, attr)
 
     def __repr__(self):
         """Format as python parsable string."""
         args = []
-        if self.name != "side":
-            args.append(self.name)
-        if self.propertiesstr:
-            if self.name == "side":
-                args.append(None)
-            args.append(self.propertiesstr)
-        args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+        if self.name != defaultname:
+            args.append(repr(self.name))
+            if self.propertiesstr:
+                args.append(repr(self.propertiesstr))
+        elif self.propertiesstr:
+            args.append("attr=%r" % self.propertiesstr)
+        return type(self).__name__ + "(" + ", ".join(args) + ")"
 
+    class_ = type(classname, (Flag,), {
+        "__init__": __init__,
+        "__repr__": __repr__
+    })
+    globals()[classname] = class_
+    return class_
 
-class Uplo(Flag):
-
-    """Uplo (falg) argument."""
-
-    def __init__(self, name="uplo", attr=None):
-        """Possible values: L, U."""
-        Flag.__init__(self, name, ("L", "U"), attr)
-
-    def __repr__(self):
-        """Format as python parsable string."""
-        args = []
-        args = []
-        if self.name != "uplo":
-            args.append(self.name)
-        if self.propertiesstr:
-            if self.name == "uplo":
-                args.append(None)
-            args.append(self.propertiesstr)
-        args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
-
-
-class Trans(Flag):
-
-    """Trans (falg) argument."""
-
-    def __init__(self, name="trans", attr=None):
-        """Possible values: N, T."""
-        Flag.__init__(self, name, ("N", "T"), attr)
-
-    def __repr__(self):
-        """Format as python parsable string."""
-        args = []
-        if self.name != "trans":
-            args.append(self.name)
-        if self.propertiesstr:
-            if self.name == "trans":
-                args.append(None)
-            args.append(self.propertiesstr)
-        args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
-
-
-class cTrans(Flag):
-
-    """Complex trans (falg) argument."""
-
-    def __init__(self, name="trans", attr=None):
-        """Possible values: N, C."""
-        Flag.__init__(self, name, ("N", "C"), attr)
-
-    def __repr__(self):
-        """Format as python parsable string."""
-        args = []
-        if self.name != "trans":
-            args.append(self.name)
-        if self.propertiesstr:
-            if self.name == "trans":
-                args.append(None)
-            args.append(self.propertiesstr)
-        args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
-
-
-class Diag(Flag):
-
-    """Diag (falg) argument."""
-
-    def __init__(self, name="diag", attr=None):
-        """Possible values: N, U."""
-        Flag.__init__(self, name, ("N", "U"), attr)
-
-    def __repr__(self):
-        """Format as python parsable string."""
-        args = []
-        args = []
-        if self.name != "diag":
-            args.append(self.name)
-        if self.propertiesstr:
-            if self.name == "diag":
-                args.append(None)
-            args.append(self.propertiesstr)
-        args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+_create_Flag("Side", "side", ("L", "R"))
+_create_Flag("Uplo", "uplo", ("L", "U"))
+_create_Flag("Trans", "trans", ("N", "T"))
+_create_Flag("cTrans", "trans", ("N", "C"))
+_create_Flag("Diag", "diag", ("N", "U"))
 
 
 class Dim(Arg):
@@ -392,7 +325,11 @@ class Dim(Arg):
                 args.append(None)
             args.append(self.propertiesstr)
         args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+        return type(self).__name__ + "(" + ", ".join(args) + ")"
+
+    def __eq__(self, other):
+        """Compare for equality."""
+        return Arg.__eq__(self, other) and self.minstr == other.minstr
 
     def default(self):
         """Default: 0."""
@@ -405,6 +342,8 @@ class Scalar(Arg):
 
     """Scalar argument."""
 
+    typename = None
+
     def __init__(self, name="alpha", attr=None):
         """Initialize (no special case)."""
         Arg.__init__(self, name, attr)
@@ -413,13 +352,12 @@ class Scalar(Arg):
         """Format as python parsable string."""
         args = []
         if self.name != "alpha":
-            args.append(self.name)
-        if self.propertiesstr:
-            if self.name == "alpha":
-                args.append(None)
-            args.append(self.propertiesstr)
-        args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+            args.append(repr(self.name))
+            if self.propertiesstr:
+                args.append(repr(self.propertiesstr))
+        elif self.propertiesstr:
+            args.append("attr=%r" % self.propertiesstr)
+        return type(self).__name__ + "(" + ", ".join(args) + ")"
 
     @staticmethod
     def default():
@@ -472,13 +410,15 @@ class zScalar(Scalar):
         """Format python complex value as list for the smapler."""
         if isinstance(val, numbers.Number):
             val = complex(val)
-            return str(val.real) + "," + str(val.imag)
+            return "%s,%s" %(val.real, val.imag)
         return val
 
 
 class Data(Arg):
 
     """Data (operand) argument."""
+
+    typename = None
 
     def __init__(self, name, min_=None, attr=None):
         """Init: minimum expression possible."""
@@ -490,12 +430,15 @@ class Data(Arg):
         args = [self.name]
         if self.minstr:
             args.append(self.minstr)
-        if self.propertiesstr:
-            if not self.minstr:
-                args.append(None)
-            args.append(self.propertiesstr)
-        args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+            if self.propertiesstr:
+                args.append(repr(self.propertiesstr))
+        elif self.propertiesstr:
+            args.append("attr=%r" % self.propertiesstr)
+        return type(self).__name__ + "(" + ", ".join(args) + ")"
+
+    def __eq__(self, other):
+        """Compare for equality."""
+        return Arg.__eq__(self, other) and self.minstr == other.minstr
 
     def default(self):
         """Default: 1."""
@@ -571,12 +514,15 @@ class Ld(Arg):
         args = [self.name]
         if self.minstr:
             args.append(self.minstr)
-        if self.propertiesstr:
-            if self.minstr:
-                args.append(None)
-            args.append(self.propertiesstr)
-        args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+            if self.propertiesstr:
+                args.append(repr(self.propertiesstr))
+        elif self.propertiesstr:
+            args.append("attr=%r" % self.propertiesstr)
+        return type(self).__name__ + "(" + ", ".join(args) + ")"
+
+    def __eq__(self, other):
+        """Compare for equality."""
+        return Arg.__eq__(self, other) and self.minstr == other.minstr
 
     @staticmethod
     def format_sampler(val):
@@ -661,12 +607,15 @@ class Lwork(Arg):
         args = [self.name]
         if self.minstr:
             args.append(self.minstr)
-        if self.propertiesstr:
-            if not self.minstr:
-                args.append(None)
-            args.append(self.propertiesstr)
-        args = map(repr, args)
-        return self.__class__.__name__ + "(" + ", ".join(args) + ")"
+            if self.propertiesstr:
+                args.append(repr(self.propertiesstr))
+        elif self.propertiesstr:
+            args.append("attr=%r" % self.propertiesstr)
+        return type(self).__name__ + "(" + ", ".join(args) + ")"
+
+    def __eq__(self, other):
+        """Compare for equality."""
+        return Arg.__eq__(self, other) and self.minstr == other.minstr
 
     def default(self):
         """Default: 1."""

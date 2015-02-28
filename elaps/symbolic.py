@@ -130,6 +130,10 @@ class Operation(Expression, list):
         """Hash the expression."""
         return hash(tuple(map(hash, self)))
 
+    def __eq__(self, other):
+        """Compare Operation."""
+        return type(self) == type(other) and list.__eq__(self, other)
+
     def substitute(self, **kwargs):
         """Substitute in all arguments."""
         newargs = []
@@ -142,8 +146,8 @@ class Operation(Expression, list):
         return type(self)(*newargs)
 
     def simplify(self, **kwargs):
+        """(Substitute in and) simplify the operation."""
         return type(self)(*(simplify(arg, **kwargs) for arg in self[1:]))
-
 
     def findsymbols(self):
         """Find all contained symbols."""
@@ -661,9 +665,8 @@ class Range(object):
 
     def __eq__(self, other):
         """Compare with other Range."""
-        if not isinstance(other, Range):
-            return False
-        return self.subranges == other.subranges
+        return (type(self) == type(other) and
+                self.subranges == other.subranges)
 
     def __str__(self):
         """Format as (parsable) human readable string."""
@@ -734,8 +737,6 @@ class Sum(Operation):
 
     def __eq__(self, other):
         """Compare range too."""
-        if not isinstance(other, Sum):
-            return False
         return Operation.__eq__(self, other) and self.range_ == other.range_
 
     def substitute(self, **kwargs):

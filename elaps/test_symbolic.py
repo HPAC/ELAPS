@@ -2,14 +2,15 @@
 """Unittest for symbolic.py."""
 from __future__ import division, print_function
 
+from symbolic import *
+
 import unittest
 import random
-from symbolic import *
 
 
 class TestSymbolic(unittest.TestCase):
 
-    """Common setup for all tests."""
+    """Common setup for all symbolic tests."""
 
     def setUp(self):
         """Set up 3 symbolic variables and 3 random numbers."""
