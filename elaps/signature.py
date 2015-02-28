@@ -20,6 +20,7 @@ class Signature(list):
 
     def __init__(self, *args, **kwargs):
         """Initialize from file ore arguments."""
+        # TODO: remove file loader?
         if "file" in kwargs:
             self.filename = kwargs["file"]
             # read signature from file
@@ -35,6 +36,7 @@ class Signature(list):
             self.complexitystr = sig.complexitystr
             self.complexity = sig.complexity
             return
+
         # set attributes
         list.__init__(self, args)
         self.filename = None
