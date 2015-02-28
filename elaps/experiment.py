@@ -390,7 +390,7 @@ class Experiment(dict):
             # set up some reused variables
             rep_vals = None,
             if "rep" in vary["with"]:
-                repvals = range(self.nrep + 1)  # +1 for overhead
+                repvals = range(self.nrep)
 
             # init result variables
             offsetcmds = []
@@ -484,7 +484,7 @@ class Experiment(dict):
             sumrange_vals = self.sumrange_vals(range_val)
 
             # go over repetitions
-            for rep in range(self.nrep + 1):  # +1 for overhead
+            for rep in range(self.nrep):
                 if self.sumrange:
                     # comment
                     cmds += [[], ["#", "repetition",  rep]]
