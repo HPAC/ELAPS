@@ -5,6 +5,7 @@ from __future__ import division, print_function
 import symbolic
 import signature
 
+from collections import Iterable
 from itertools import chain
 
 
@@ -35,7 +36,10 @@ class Experiment(dict):
         # initialize from argument
         for key, value in chain(other.iteritems(), kwargs.items()):
             if key in self:
-                self[key] = value
+                self.__setattr__(key, value)
+            else:
+                warnings.warn("%s doesn't support the key %r" %
+                              (type(self).__name__, key), Warning)
 
     def __getattr__(self, name):
         """Element access through attributes."""
@@ -46,11 +50,53 @@ class Experiment(dict):
 
     def __setattr__(self, name, value):
         """Element access through attributes."""
-        # set state items
-        if name in self:
-            self[name] = value
-        else:
+        if name not in self:
             dict.__setattr__(name, value)
+            return
+        # attribute exists
+
+        # check type
+        required_types = {
+            "note": str,
+            "sampler": (type(None), dict),
+            "nthreads": (int, str),
+            "script_header": str,
+            "range": (type(None), tuple),
+            "nreps": int,
+            "sumrange": (type(None), tuple),
+            "sumrange_parallel": bool,
+            "calls_parallel": bool,
+            "calls": list,
+            "data": list,
+            "papi_counters": list
+        }
+        if not isinstance(value, required_types[name]):
+            raise TypeError("%r must be %r (not %r)" %
+                            (name, required_types[name], type(value)))
+        # check values for range
+        if name in ("range", "sumrange"):
+            if len(value) != 2:
+                raise TypeError("%r must be of length two" % name)
+            if not isinstance(value[0], str):
+                raise TypeError("frist element of %r must be '%r' (not %r)" %
+                                (name, type(value[0])))
+            if not isinstance(value[1], Iterable):
+                raise TypeError("second element of %r must be iterable" % name)
+        # check value for nthreads
+        if name == "nthreads" and isinstance(value, str):
+            if not self.range or value != self.range[0]:
+                raise TypeError(
+                    "'nthreads' must be 'int' or variable name of 'range'"
+                )
+
+        # set variable
+        self[name] = value
+
+        # enforce parallel consistency
+        if name == "sumrange_parallel" and value is True:
+            self.calls_parallel = True
+        if name == "calls_parallel" and value is False:
+            self.sumrange_parallel = False
 
     def __repr__(self):
         """Python parsable representation."""
@@ -68,7 +114,8 @@ class Experiment(dict):
                 if any(call[0] == routine for call in self.calls)
             }
 
-        return "%s(%r)" % (type(self).__name__, changed)
+        args = ["%s=%r" % keyval for keyval in changed.items()]
+        return type(self).__name__ + "(" + ", ".join(args) + ")"
 
     def __str__(self):
         """Readable string representation."""

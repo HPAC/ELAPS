@@ -5,7 +5,6 @@ from __future__ import division, print_function
 from signature import *
 
 import unittest
-import random
 
 
 class TestArgs(unittest.TestCase):
