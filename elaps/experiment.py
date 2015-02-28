@@ -143,8 +143,7 @@ class Experiment(dict):
                 dims = dims[1:]
             else:
                 dims = [dims]
-            dims = [dim() if isinstance(dim, symbolic.Expression) else dim
-                    for dim in dims]
+            dims = map(symbolic.simplify, dims)
 
             if "." + name in dims:
                 break
@@ -167,11 +166,7 @@ class Experiment(dict):
             if "rep" in vary["with"]:
                 ld *= self.nreps
 
-        # simplify
-        if isinstance(ld, symbolic.Operation):
-            ld = ld()
-
-        call[argid] = ld
+        call[argid] = symbolic.simplify(ld)
 
         self.data_update()
 
@@ -286,11 +281,7 @@ class Experiment(dict):
             dims = dims[1:]
         else:
             dims = [dims]
-        dims = [
-            dim(**argdict)
-            if isinstance(dim, symbolic.Expression) else dim
-            for dim in dims
-        ]
+        dims = [symbolic.simplify(dim, **argdict) for dim in dims]
         if isinstance(sig[name_argid], signature.Work):
             # Workspace is 1D
             dims = [symbolic.Prod(*dims)()]
@@ -302,11 +293,7 @@ class Experiment(dict):
             lds = lds[1:]
         else:
             lds = [lds]
-        lds = [
-            ld(**argdict)
-            if isinstance(ld, symbolic.Expression) else ld
-            for ld in lds
-        ]
+        lds = [symbolic.simplify(ld, **argdict) for ld in lds]
         data["lds"] = lds
 
         # vary
@@ -751,11 +738,9 @@ class Experiment(dict):
 
             # go over sumrange
             for sumrange_val in sumrange_vals:
-                if isinstance(expr, symbolic.Expression):
-                    # evaluate expression
-                    yield expr(**self.ranges_valdict(range_val, sumrange_val))
-                else:
-                    yield expr
+                yield symbolic.simplify(
+                    expr, **self.ranges_valdict(range_val, sumrange_val)
+                )
 
     def connections_get(self):
         """Update the connections between arguments based on coincidng data."""
