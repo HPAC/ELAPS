@@ -188,8 +188,6 @@ class Experiment(dict):
 
     def infer_lwork(self, callid, argid):
         """Infer one leading dimension."""
-        self.data_update()
-
         call = self.calls[callid]
 
         if not isinstance(call, signature.Call):
@@ -198,9 +196,7 @@ class Experiment(dict):
                 type(call)
             )
 
-        sig = call.sig
-
-        if not isinstance(sig[argid], signature.Lwork):
+        if not isinstance(call.sig[argid], signature.Lwork):
             raise TypeError(
                 "can only infer work space size for Lwork (not %r)" %
                 type(sig[argid])
@@ -208,6 +204,8 @@ class Experiment(dict):
 
         call[argid] = None
         call.complete()
+
+        self.data_update()
 
     def infer_lworks(self, callid=None):
         """Infer all leading dimensions."""
