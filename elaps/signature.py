@@ -4,14 +4,8 @@ from __future__ import division, print_function
 
 import numbers
 
-# environment for evaluations
-eval_replace = {
-    "lower": repr("lower"),
-    "upper": repr("upper"),
-    "symm": repr("symm"),
-    "herm": repr("herm"),
-    "work": repr("work"),
-}
+
+named_attributes = ("lower", "upper", "symm", "herm", "work")
 
 
 class Signature(list):
@@ -53,23 +47,18 @@ class Signature(list):
         """Initialize lambda expressions."""
         lambdaargs = ", ".join(arg.name for arg in self)
         if "complexity" in kwargs:
-            lambdarhs = kwargs["complexity"]
-            for key, value in eval_replace.iteritems():
-                lambdarhs = lambdarhs.replace(key, value)
             self.complexitystr = kwargs["complexity"]
-            self.complexity = eval("lambda %s: %s" % (lambdaargs, lambdarhs))
+            self.complexity = eval("lambda %s: %s" %
+                                   (lambdaargs, kwargs["complexity"]))
         for arg in self:
             arg.min = None
             if isinstance(arg, ArgWithMin) and arg.minstr:
-                lambdarhs = arg.minstr
-                for key, value in eval_replace.iteritems():
-                    lambdarhs = lambdarhs.replace(key, value)
-                arg.min = eval("lambda %s: %s" % (lambdaargs, lambdarhs))
+                arg.min = eval("lambda %s: %s" % (lambdaargs, arg.minstr))
             arg.properties = lambda *args: ()
             if arg.propertiesstr:
                 lambdarhs = arg.propertiesstr
-                for key, value in eval_replace.iteritems():
-                    lambdarhs = lambdarhs.replace(key, value)
+                for attrname in named_attributes:
+                    lambdarhs = lambdarhs.replace(attrname, repr(attrname))
                 arg.properties = eval("lambda %s: filter(None, (%s,))" %
                                       (lambdaargs, lambdarhs))
 
@@ -90,6 +79,14 @@ class Signature(list):
         if len(args) == 0:
             args = tuple(arg.default() for arg in self[1:])
         return Call(self, *args)
+
+    def __getattr__(self, name):
+        """Variable names as attributes."""
+        for i, arg in enumerate(self):
+            if arg.name == name:
+                return self[i]
+        raise AttributeError("%r object has no attribute %r" %
+                             (type(self).__name__, name))
 
     def dataargs(self):
         """Return a list of data argument positions."""
@@ -410,7 +407,7 @@ def _create_Data(classname, typename):
                 val *= 2
             return val
         attributes["format_sampler"] = format_sampler
-    globals()[classname] = type(classname, (Scalar,), attributes)
+    globals()[classname] = type(classname, (Data,), attributes)
 
 _create_Data("iData", "integer")
 _create_Data("sData", "single precision")
