@@ -2,7 +2,8 @@
 """Simple symbolic expression engine."""
 from __future__ import division, print_function
 
-import numbers
+from numbers import Number
+from collections import Iterable
 import __builtin__
 from copy import deepcopy
 
@@ -14,6 +15,10 @@ class Expression(object):
     def __neg__(self):
         """-Expression ."""
         return Minus(self)
+
+    def __abs__(self):
+        """abs(Expression) ."""
+        return Abs(self)
 
     def __add__(self, other):
         """Expression + Other ."""
@@ -39,19 +44,13 @@ class Expression(object):
         """Other * Expression ."""
         return Prod(other, self)
 
-    def __div__(self, other):
-        """Expression / Number ."""
-        if not isinstance(other, numbers.Number):
-            raise TypeError("unsupported operand type(s) for /: %r and %r" %
-                            (self.__class__, other.__class__))
-        return self * (1 / other)
-
     def __truediv__(self, other):
-        """Expression / Number ."""
-        if not isinstance(other, numbers.Number):
-            raise TypeError("unsupported operand type(s) for /: %r and %r" %
-                            (self.__class__, other.__class__))
-        return self * (1 / other)
+        """Expression / Other ."""
+        return Div(self, other)
+
+    def __rtruediv__(self, other):
+        """Other / Expression ."""
+        return Div(other, self)
 
     def __pow__(self, other):
         """Expression ** Other ."""
@@ -61,18 +60,13 @@ class Expression(object):
         """Variable substitution."""
         return self
 
-    def simplify(self):
-        """Simplify the expression."""
-        return self
+    def simplify(self, **kwargs):
+        """(Substitute and) simplify the expression."""
+        return self.substitute(**kwargs)
 
     def __call__(self, **kwargs):
         """Substitution and simplification."""
-        expr = self
-        if kwargs:
-            expr = expr.substitute(**kwargs)
-        if isinstance(expr, Expression):
-            expr = expr.simplify()
-        return expr
+        return self.simplify(**kwargs)
 
 
 class Symbol(Expression):
@@ -89,7 +83,7 @@ class Symbol(Expression):
 
     def __repr__(self):
         """Format as python parsable string."""
-        return "%s(%r)" % (self.__class__.__name__, self.name)
+        return "%s(%r)" % (type(self).__name__, self.name)
 
     def __eq__(self, other):
         """Compare for equality."""
@@ -128,12 +122,11 @@ class Operation(Expression, list):
 
     def __init__(self, *args):
         """Initialize as a list with the operation as first element."""
-        list.__init__(self, (self.__class__,) + args)
+        list.__init__(self, (type(self),) + args)
 
     def __repr__(self):
         """Python parsable representation."""
-        return (self.__class__.__name__ + "(" +
-                ", ".join(map(repr, self[1:])) + ")")
+        return type(self).__name__ + "(" + ", ".join(map(repr, self[1:])) + ")"
 
     def __hash__(self):
         """Hash the expression."""
@@ -146,12 +139,9 @@ class Operation(Expression, list):
             if arg in kwargs:
                 # argument found
                 args.append(kwargs[arg.name])
-            elif isinstance(arg, Operation):
-                # try to substitute in argument
-                args.append(arg.substitute(**kwargs))
             else:
-                args.append(arg)
-        return self.__class__(*args)
+                args.append(substitute(arg, **kwargs))
+        return type(self)(*args)
 
     def findsymbols(self):
         """Find all contained symbols."""
@@ -174,17 +164,16 @@ class Minus(Operation):
         """Format as human readable."""
         return "-" + str(self[1])
 
-    def simplify(self):
-        """Simplify the operation."""
-        # simplify argument
-        arg = simplify(self[1])
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        arg = Operation.simplify(**kwargs)[1]
+
         if isinstance(arg, Minus):
             # double negation
             return arg[1]
-        if isinstance(arg, numbers.Number):
-            # evaluate for numbers
-            return -arg
-        return self.__class__(arg)
+
+        return -arg
 
 
 class Abs(Operation):
@@ -199,17 +188,62 @@ class Abs(Operation):
         """Format as human readable."""
         return "abs(" + str(self[1]) + ")"
 
-    def simplify(self):
-        """Simblify the operation."""
-        # simplify argument
-        arg = simplify(self[1])
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        arg = Operation.simplify(**kwargs)[1]
+
         if isinstance(arg, Abs):
             # redundand recursive abs
             return arg[1]
-        if isinstance(arg, numbers.Number):
-            # evaluate for numbers
-            return abs(arg)
-        return self.__class__(arg)
+
+        return abs(arg)
+
+
+class Plus(Operation):
+
+    """Sum of multiple operands (at least 1 Expression)."""
+
+    def __str__(self):
+        """Format as human readable."""
+        return " + ".join(map(str, self[1:]))
+
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        args = Operation.simplify(**kwargs)[1:]
+
+        num = 0
+        newargs = []
+        for arg in args:
+            if isinstance(arg, Plus):
+                # flatten recursive Plus
+                otherargs = arg[1:]
+                if isinstance(otherargs[0], Number):
+                    num += otherargs[0]
+                    otherargs = otherargs[1:]
+                newargs += otherargs
+            elif isinstance(arg, Number):
+                # sum numbers
+                num += arg
+            else:
+                newargs.append(arg)
+
+        if num != 0:
+            # numeric part present
+            newargs.insert(0, num)
+
+        # Note: sum() would start with 0
+
+        if len(newargs) == 0:
+            # empty Plus = 0
+            return 0
+
+        if len(newargs) == 1:
+            # single argument
+            return newargs[0]
+
+        return type(self)(*newargs)
 
 
 class Prod(Operation):
@@ -226,73 +260,73 @@ class Prod(Operation):
         return " * ".join(strs)
 
     def simplify(self):
-        """Simplify the operation."""
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        args = Operation.simplify(**kwargs)[1:]
+
         num = 1
-        args = []
+        newargs = []
         for arg in self[1:]:
-            # simplify arg
-            arg = simplify(arg)
             if isinstance(arg, Prod):
                 # flatten recursive Prod
                 otherargs = arg[1:]
-                if isinstance(otherargs[0], numbers.Number):
+                if isinstance(otherargs[0], Number):
                     num *= otherargs[0]
                     otherargs = otherargs[1:]
-                args += otherargs
-            elif isinstance(arg, numbers.Number):
+                newargs += otherargs
+            elif isinstance(arg, Number):
                 # multiply numbers
                 num *= arg
             else:
-                args.append(arg)
+                newargs.append(arg)
+
         if num != 1:
             # numeric part present
-            args = [num] + args
-        if len(args) == 0:
+            newargs.insert(0, num)
+
+        if len(newargs) == 0:
             # empty Prod = 1
             return 1
-        if len(args) == 1:
+
+        if len(newargs) == 1:
             # single argument
-            return args[0]
-        return self.__class__(*args)
+            return newargs[0]
+
+        return type(self)(*newargs)
 
 
-class Plus(Operation):
+class Div(Operation):
 
-    """Sum of multiple operands (at least 1 Expression)."""
+    """Division with at least one of nom, denom an Expression."""
+
+    def __init__(self, nominator, denominator):
+        """Init: exactly two arguments."""
+        Operation.__init__(self, nominator, denominator)
 
     def __str__(self):
         """Format as human readable."""
-        return " + ".join(map(str, self[1:]))
+        strs = map(str, self[1:])
+        for i, arg in enumerate(self[1:]):
+            if isinstance(arg, Operation):
+                # paranteses around any Operation
+                strs[i] = "(" + strs[i] + ")"
+        return strs[0] + " / " + strs[1]
 
     def simplify(self):
-        """Simplify the operation."""
-        num = 0
-        args = []
-        for arg in self[1:]:
-            # simplify arg
-            arg = simplify(arg)
-            if isinstance(arg, Plus):
-                # flatten recursive Plus
-                otherargs = arg[1:]
-                if isinstance(otherargs[0], numbers.Number):
-                    num += otherargs[0]
-                    otherargs = otherargs[1:]
-                args += otherargs
-            elif isinstance(arg, numbers.Number):
-                # sum numbers
-                num += arg
-            else:
-                args.append(arg)
-        if num != 0:
-            # numeric part present
-            args = [num] + args
-        if len(args) == 0:
-            # empty Plus = 0
-            return 0
-        if len(args) == 1:
-            # single argument
-            return args[0]
-        return self.__class__(*args)
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        nominator, denominator = Operation.simplify(**kwargs)[1:]
+
+        if isinstance(nominator, Div):
+            return simplify(nominator[1] / nominator[2] * denominator)
+
+        if isinstance(denominator, Div):
+            return simplify(nominator * denominator[2] / denominator[1])
+
+        if isinstance(denominator, Number):
+            return 1 / denominator * nominator
+
+        return nominator / denominator
 
 
 class Power(Operation):
@@ -300,7 +334,7 @@ class Power(Operation):
     """Power with an experssion as the base."""
 
     def __init__(self, base, exponent):
-        """Init: Two exactly arguments."""
+        """Init: exactly two arguments."""
         Operation.__init__(self, base, exponent)
 
     def __str__(self):
@@ -310,20 +344,18 @@ class Power(Operation):
             if isinstance(arg, Operation):
                 # paranteses around any Operation
                 strs[i] = "(" + strs[i] + ")"
-        return strs[0] + " ** " + strs[1]
+        return strs[0] + " ^ " + strs[1]
 
     def simplify(self):
-        """Simplify the operation."""
-        # simplify base and exponent
-        base, exponent = map(simplify, self[1:])
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        base, expontent = Operation.simplify(**kwargs)[1:]
+
         if isinstance(exponent, int):
             # expand for integer exponent
             return Prod(*(exponent * [base]))()
-        if (isinstance(base, numbers.Number) and
-                isinstance(exponent, numbers.Number)):
-            # evaluate for numbers
-            return base ** exponent
-        return self.__class__(base, exponent)
+
+        return base ** exponent
 
 
 class Min(Operation):
@@ -335,34 +367,39 @@ class Min(Operation):
         return "min(" + ", ".join(map(str, self[1:])) + ")"
 
     def simplify(self):
-        """Simplify the operation."""
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        args = Operation.simplify(**kwargs)[1:]
+
         num = float("inf")
-        args = []
+        newargs = []
         for arg in self[1:]:
-            # simplify arg
-            arg = simplify(arg)
             if isinstance(arg, Min):
                 # flatten recursive Min
                 otherargs = arg[1:]
-                if isinstance(otherargs[0], numbers.Number):
+                if isinstance(otherargs[0], Number):
                     num = min(num, otherargs[0])
                     otherargs = otherargs[1:]
-                args += otherargs
-            elif isinstance(arg, numbers.Number):
+                newargs += otherargs
+            elif isinstance(arg, Number):
                 # minimum of numbers
                 num = min(num, arg)
             else:
-                args.append(arg)
+                newargs.append(arg)
+
         if num != float("inf"):
             # numeric part present
-            args = [num] + args
-        if len(args) == 0:
+            newargs.insert(0, num)
+
+        if len(newargs) == 0:
             # empty Min == -inf
             return float("-inf")
-        if len(args) == 1:
+
+        if len(newargs) == 1:
             # single argument
-            return args[0]
-        return self.__class__(*args)
+            return newargs[0]
+
+        return type(self)(*newargs)
 
 
 class Max(Operation):
@@ -374,34 +411,41 @@ class Max(Operation):
         return "max(" + ", ".join(map(str, self[1:])) + ")"
 
     def simplify(self):
-        """Simplify the operation."""
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        args = Operation.simplify(**kwargs)[1:]
+
         num = float("-inf")
-        args = []
+        newargs = []
         for arg in self[1:]:
             # simplify arg
             arg = simplify(arg)
             if isinstance(arg, Max):
                 # flatten recursive Max
                 otherargs = arg[1:]
-                if isinstance(otherargs[0], numbers.Number):
+                if isinstance(otherargs[0], Number):
                     num = max(num, otherargs[0])
                     otherargs = otherargs[1:]
-                args += otherargs
-            elif isinstance(arg, numbers.Number):
+                newargs += otherargs
+            elif isinstance(arg, Number):
                 # maximum of numbers
                 num = max(num, arg)
             else:
-                args.append(arg)
+                newargs.append(arg)
+
         if num != float("-inf"):
             # numeric part present
-            args = [num] + args
-        if len(args) == 0:
+            newargs.insert(0, num)
+
+        if len(newargs) == 0:
             # empty Max = inf
             return float("inf")
-        if len(args) == 1:
+
+        if len(newargs) == 1:
             # single argument
-            return args[0]
-        return self.__class__(*args)
+            return newargs[0]
+
+        return type(self)(*newargs)
 
 
 class Range(object):
@@ -444,7 +488,7 @@ class Range(object):
                     raise Exception("Invalid subrange: %r" % arg)
                 # check contents of subrange
                 for val in arg:
-                    if not isinstance(val, (numbers.Number, Expression)):
+                    if not isinstance(val, (Number, Expression)):
                         raise Exception("Invalid value in range:%r" % arg)
                 self.subranges.append(arg)
 
@@ -455,7 +499,7 @@ class Range(object):
 
         # consider all subranges
         for subrange in self.subranges:
-            if not all(isinstance(val, numbers.Number) for val in subrange):
+            if not all(isinstance(val, Number) for val in subrange):
                 # can only get the min for non-symbolic ranges
                 raise Exception("Not numeric: %r" % (subrange,))
 
@@ -484,7 +528,7 @@ class Range(object):
 
         # consider all subranges
         for subrange in self.subranges:
-            if not all(isinstance(val, numbers.Number) for val in subrange):
+            if not all(isinstance(val, Number) for val in subrange):
                 # can only get the max for non-symbolic Range
                 raise Exception("Not numeric: %r" % (subrange,))
 
@@ -508,39 +552,27 @@ class Range(object):
 
     def substitute(self, **kwargs):
         """Substitute Symbols."""
-        subranges = []
-        for subrange in self.subranges:
-            newsubrange = []
-            for val in subrange:
-                if isinstance(val, Expression):
-                    # substitit in range value
-                    newsubrange.append(val.substitute(**kwargs))
-                else:
-                    newsubrange.append(val)
-            subranges.append(tuple(newsubrange))
+        return type(self)(*[
+            tuple(substitute(val, **kwargs) for val in subrange)
+            for subrange in self.subranges
+        ])
 
-        return Range(*subranges)
-
-    def simplify(self):
+    def simplify(self, **kwargs):
         """Simplify the range."""
-        subranges = []
-        for subrange in self.subranges:
-            newsubrange = []
-            for val in subrange:
-                if isinstance(val, Expression):
-                    # simplify range value
-                    newsubrange.append(val())
-                else:
-                    newsubrange.append(val)
+        subranges = self.substitute(**kwargs)
 
-            if all(isinstance(val, numbers.Number) for val in newsubrange):
+        newsubranges = []
+        for subrange in subranges:
+            newsubrange = map(simplify, subrange)
+
+            if all(isinstance(val, Number) for val in newsubrange):
                 # discard empty subranges
                 start, step, stop = newsubrange
                 if (step > 0 and start <= stop or
                         step == 0 and start == stop or
                         start >= stop):
                     subranges.append(tuple(newsubrange))
-        return Range(*subranges)
+        return type(self)(*newsubranges)
 
     def findsymbols(self):
         """Find all contained symbols: self is a symbol."""
@@ -553,15 +585,12 @@ class Range(object):
 
     def __call__(self, **kwargs):
         """Substitute and simplify."""
-        expr = self
-        if kwargs:
-            expr = expr.substitute(**kwargs)
-        return expr.simplify()
+        return self.simplify(**kwargs)
 
     def __iter__(self):
         """Iterate over values in the complex range."""
         for subrange in self.subranges:
-            if not all(isinstance(val, numbers.Number) for val in subrange):
+            if not all(isinstance(val, Number) for val in subrange):
                 # can only iteration non-symbolic Range
                 raise Exception("Not numeric: %r" % (subrange,))
 
@@ -602,7 +631,7 @@ class Range(object):
         """Length of the range."""
         result = 0
         for subrange in self.subranges:
-            if not all(isinstance(val, numbers.Number) for val in subrange):
+            if not all(isinstance(val, Number) for val in subrange):
                 # can only get the length of non-symbolic Range
                 raise Exception("Not numeric: %r" % (subrange,))
 
@@ -654,11 +683,11 @@ class Sum(Operation):
             # no arguments: 0
             arg = 0
         elif len(args) == 1:
-            # signge argument
+            # single argument
             arg = args[0]
         else:
-            # multiple (or no) arguments: Plus
-            arg = Plus(*args)
+            # multiple (or no) arguments: sum
+            arg = sum(args)
         Operation.__init__(self, arg)
 
         if len(kwargs) != 1:
@@ -668,9 +697,9 @@ class Sum(Operation):
         # set range attributes
         self.rangevar, self.range_ = next(kwargs.iteritems())
 
-        if not isinstance(self.range_, Range):
-            # TODO: support general iterables?
-            raise Exception("Sum requires a symbolic Range")
+        if not isinstance(self.range_, Iterable):
+            # range must be iterable
+            raise TypeError("range must support iteration")
 
     def __str__(self):
         """Format as human readable (not parsable) string."""
@@ -678,36 +707,34 @@ class Sum(Operation):
 
     def __repr__(self):
         """Format s python parsable string."""
-        return "%s(%r, %s=%r)" % (self.__class__.__name__, self[1],
+        return "%s(%r, %s=%r)" % (type(self).__name__, self[1],
                                   self.rangevar, self.range_)
 
     def substitute(self, **kwargs):
         """Substitute in arg but not rangevar."""
+        # substitute in range
+        newrange = substitute(self.range_, **kwargs)
+
+        # don't substitute own rangevar in arg
         if self.rangevar in kwargs:
-            # don't substitute own rangevar
-            kwargs = kwargs.copy()
             del kwargs[self.rangevar]
 
-        arg = self[1]
-        if isinstance(arg, Exprssion):
-            # substitute in arg
-            arg = arg.substitute(**kwargs)
+        # substitute in arg
+        newarg = substitute(self[1], **kwargs)
 
-        # substitute in range
-        range_ = self.range.substitute(**kwargs)
+        return type(self)(newarg, **{self.rangevar: newrange})
 
-        return self.__class__(arg, **{self.rangevar: range_})
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify argument
+        arg = Operation.simplify(**kwargs)[1]
 
-    def simplify(self):
-        """Simplify the operation."""
-        # simplify arg
-        arg = simplify(self[1])
         # simplify range
-        range_ = self.range_()
+        range_ = simplify(self.range_)
 
         if range_.findsymbols():
             # range is symbolic
-            return self.__class__(arg, **{self.rangevar: self.range_})
+            return type(self)(arg, **{self.rangevar: range_})
 
         # range is not symbolic
         if (not isinstance(arg, Expression)
@@ -715,14 +742,23 @@ class Sum(Operation):
             # argument doesn't depend on range
             return len(range_) * arg
 
+        # Note: sum() would start with 0
+
         # argument depends on range
-        return Plus(arg(**{self.rangevar: val}) for val in range_)()
+        return Plus(warg(**{self.rangevar: val}) for val in newrange)()
 
 
-def simplify(expr):
-    """Simplify if expression."""
+def substitute(expr, **kwargs):
+    """Substitute if Expression."""
     if isinstance(expr, Expression):
-        return expr.simplify()
+        return expr.substitute(**kwargs)
+    return expr
+
+
+def simplify(expr, **kwargs):
+    """(Substitute and) simplify if Expression."""
+    if isinstance(expr, (Expression, Range)):
+        return expr.simplify(**kwargs)
     return expr
 
 
