@@ -30,11 +30,11 @@ class Expression(object):
 
     def __sub__(self, other):
         """Expression - Other ."""
-        return Plus(self, Minus(other))
+        return Plus(self, -(other))
 
     def __rsub__(self, other):
         """Other - Expression ."""
-        return Plus(other, Minus(self))
+        return Plus(other, -(self))
 
     def __mul__(self, other):
         """Expression * Other ."""
@@ -87,11 +87,9 @@ class Symbol(Expression):
 
     def __eq__(self, other):
         """Compare for equality."""
-        if isinstance(other, str):
-            return self.name == other
         if isinstance(other, Symbol):
             return self.name == other.name
-        return False
+        return self.name == other
 
     def __hash__(self):
         """Hash: hash name."""
@@ -134,14 +132,18 @@ class Operation(Expression, list):
 
     def substitute(self, **kwargs):
         """Substitute in all arguments."""
-        args = []
+        newargs = []
         for arg in self[1:]:
             if arg in kwargs:
                 # argument found
-                args.append(kwargs[arg.name])
+                newargs.append(kwargs[arg.name])
             else:
-                args.append(substitute(arg, **kwargs))
-        return type(self)(*args)
+                newargs.append(substitute(arg, **kwargs))
+        return type(self)(*newargs)
+
+    def simplify(self, **kwargs):
+        return type(self)(*(simplify(arg, **kwargs) for arg in self[1:]))
+
 
     def findsymbols(self):
         """Find all contained symbols."""
@@ -167,11 +169,11 @@ class Minus(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        arg = Operation.simplify(**kwargs)[1]
+        arg = Operation.simplify(self, **kwargs)[1]
 
         if isinstance(arg, Minus):
             # double negation
-            return arg[1]
+            return simplify(arg[1])
 
         return -arg
 
@@ -191,11 +193,15 @@ class Abs(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        arg = Operation.simplify(**kwargs)[1]
+        arg = Operation.simplify(self, **kwargs)[1]
+
+        if isinstance(arg, Minus):
+            # redundand -
+            return simplify(abs(arg[1]))
 
         if isinstance(arg, Abs):
             # redundand recursive abs
-            return arg[1]
+            return simplify(arg[1])
 
         return abs(arg)
 
@@ -211,7 +217,7 @@ class Plus(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        args = Operation.simplify(**kwargs)[1:]
+        args = Operation.simplify(self, **kwargs)[1:]
 
         num = 0
         newargs = []
@@ -259,10 +265,10 @@ class Prod(Operation):
                 strs[i] = "(" + strs[i] + ")"
         return " * ".join(strs)
 
-    def simplify(self):
+    def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        args = Operation.simplify(**kwargs)[1:]
+        args = Operation.simplify(self, **kwargs)[1:]
 
         num = 1
         newargs = []
@@ -312,18 +318,21 @@ class Div(Operation):
                 strs[i] = "(" + strs[i] + ")"
         return strs[0] + " / " + strs[1]
 
-    def simplify(self):
+    def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        nominator, denominator = Operation.simplify(**kwargs)[1:]
+        nominator, denominator = Operation.simplify(self, **kwargs)[1:]
 
         if isinstance(nominator, Div):
-            return simplify(nominator[1] / nominator[2] * denominator)
+            # top is a fraction
+            return simplify(nominator[1] / (nominator[2] * denominator))
 
         if isinstance(denominator, Div):
+            # bottom is a fraction
             return simplify(nominator * denominator[2] / denominator[1])
 
         if isinstance(denominator, Number):
+            # bottom is a number
             return 1 / denominator * nominator
 
         return nominator / denominator
@@ -346,10 +355,14 @@ class Power(Operation):
                 strs[i] = "(" + strs[i] + ")"
         return strs[0] + " ^ " + strs[1]
 
-    def simplify(self):
+    def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        base, expontent = Operation.simplify(**kwargs)[1:]
+        base, exponent = Operation.simplify(self, **kwargs)[1:]
+
+        if isinstance(base, Power):
+            # base is a power
+            return simplify(base[1] ** (base[2] * exponent))
 
         if isinstance(exponent, int):
             # expand for integer exponent
@@ -366,10 +379,10 @@ class Min(Operation):
         """Format as human readable."""
         return "min(" + ", ".join(map(str, self[1:])) + ")"
 
-    def simplify(self):
+    def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        args = Operation.simplify(**kwargs)[1:]
+        args = Operation.simplify(self, **kwargs)[1:]
 
         num = float("inf")
         newargs = []
@@ -410,10 +423,10 @@ class Max(Operation):
         """Format as human readable."""
         return "max(" + ", ".join(map(str, self[1:])) + ")"
 
-    def simplify(self):
+    def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        args = Operation.simplify(**kwargs)[1:]
+        args = Operation.simplify(self, **kwargs)[1:]
 
         num = float("-inf")
         newargs = []
@@ -454,12 +467,13 @@ class Range(object):
 
     def __init__(self, *args, **kwargs):
         """Initialize from tuples or string."""
-        self.subranges = []
         if len(args) == 1 and isinstance(args[0], str):
             # initialize from string
 
             # for each subrange
             rangeparts = args[0].split(",")
+
+            args = []
             for rangepart in rangeparts:
                 # format: min[[:step]:max]
                 parts = rangepart.strip().split(":")
@@ -470,85 +484,23 @@ class Range(object):
                 elif len(parts) == 2:
                     # min and max: step = 1
                     subrange = (parts[0], 1, parts[1])
-                elif len(parts) == 3:
-                    # min, step, and max
-                    subrange = (parts[0], parts[1], parts[2])
                 else:
-                    # too many ":"s
-                    raise Exception("Inavlid subrange: %r" % rangepart)
-                self.subranges.append(subrange)
+                    subrange = tuple(parts)
+                args.append(subrange)
         elif len(args) == 1 and isinstance(args[0], Range):
             # initialize from other range
-            self.subranges = deepcopy(args[0].subranges)
-        else:
-            # initialize from list of tuples
-            for arg in args:
-                # check form of subrange
-                if not isinstance(arg, tuple) or len(arg) != 3:
-                    raise Exception("Invalid subrange: %r" % arg)
-                # check contents of subrange
-                for val in arg:
-                    if not isinstance(val, (Number, Expression)):
-                        raise Exception("Invalid value in range:%r" % arg)
-                self.subranges.append(arg)
+            args = deepcopy(args[0].subranges)
 
-    def min(self):
-        """compute the minimum."""
-        # default minimum: inf
-        result = float("inf")
-
-        # consider all subranges
-        for subrange in self.subranges:
-            if not all(isinstance(val, Number) for val in subrange):
-                # can only get the min for non-symbolic ranges
-                raise Exception("Not numeric: %r" % (subrange,))
-
-            # min depends on range direction
-            start, step, stop = subrange
-            if step > 0:
-                # positive direction: start is smallest
-                if start <= stop:
-                    result = min(result, start)
-            elif step == 0:
-                # no direction: start is smallest
-                if start == stop:
-                    result = min(result, start)
-            else:
-                # negative direction: last is smallest
-                if start >= stop:
-                    result = min(result,
-                                 start + ((stop - start) // step) * step)
-
-        return result
-
-    def max(self):
-        """Compute the maximum."""
-        # default maximum: -inf
-        result = -float("inf")
-
-        # consider all subranges
-        for subrange in self.subranges:
-            if not all(isinstance(val, Number) for val in subrange):
-                # can only get the max for non-symbolic Range
-                raise Exception("Not numeric: %r" % (subrange,))
-
-            # max depends on range direction
-            start, step, stop = subrange
-            if step > 0:
-                # positive direction: last is largest
-                if start <= stop:
-                    result = max(result,
-                                 start + ((stop - start) // step) * step)
-            elif step == 0:
-                # no direction: start is largest
-                if start == stop:
-                    result = max(result, start)
-            else:
-                # negative direction: start is largest
-                if start >= stop:
-                    result = max(result, start)
-
-        return result
+        self.subranges = []
+        for arg in args:
+            # check form of subrange
+            if not isinstance(arg, tuple) or len(arg) != 3:
+                raise Exception("Invalid subrange: %r" % (arg,))
+            # check contents of subrange
+            for val in arg:
+                if not isinstance(val, (Number, Expression)):
+                    raise TypeError("Invalid value in range:%r" % (arg,))
+            self.subranges.append(arg)
 
     def substitute(self, **kwargs):
         """Substitute Symbols."""
@@ -559,19 +511,22 @@ class Range(object):
 
     def simplify(self, **kwargs):
         """Simplify the range."""
-        subranges = self.substitute(**kwargs)
+        subranges = self.substitute(**kwargs).subranges
 
         newsubranges = []
         for subrange in subranges:
-            newsubrange = map(simplify, subrange)
+            newsubrange = tuple(map(simplify, subrange))
 
-            if all(isinstance(val, Number) for val in newsubrange):
-                # discard empty subranges
-                start, step, stop = newsubrange
-                if (step > 0 and start <= stop or
-                        step == 0 and start == stop or
-                        start >= stop):
-                    subranges.append(tuple(newsubrange))
+            if any(not isinstance(val, Number) for val in newsubrange):
+                newsubranges.append(newsubrange)
+                continue
+
+            # discard empty subranges
+            start, step, stop = newsubrange
+            if (step > 0 and start <= stop or
+                    step == 0 and start == stop or
+                    step < 0 and start >= stop):
+                newsubranges.append(newsubrange)
         return type(self)(*newsubranges)
 
     def findsymbols(self):
@@ -608,7 +563,7 @@ class Range(object):
                 while val <= stop:
                     yield val
                     val += step
-            elif stgep == 0:
+            elif step == 0:
                 # no direction
 
                 if start == stop:
@@ -633,7 +588,7 @@ class Range(object):
         for subrange in self.subranges:
             if not all(isinstance(val, Number) for val in subrange):
                 # can only get the length of non-symbolic Range
-                raise Exception("Not numeric: %r" % (subrange,))
+                raise TypeError("Not numeric: %r" % (subrange,))
 
             start, step, stop = subrange
             if step == 0:
@@ -645,6 +600,70 @@ class Range(object):
                 result += 1 + (stop - start) // step
 
         return result
+
+    def min(self):
+        """compute the minimum."""
+        # default minimum: inf
+        result = float("inf")
+
+        # consider all subranges
+        for subrange in self.subranges:
+            if not all(isinstance(val, Number) for val in subrange):
+                # can only get the min for non-symbolic ranges
+                raise TypeError("Not numeric: %r" % (subrange,))
+
+            # min depends on range direction
+            start, step, stop = subrange
+            if step > 0:
+                # positive direction: start is smallest
+                if start <= stop:
+                    result = min(result, start)
+            elif step == 0:
+                # no direction: start is smallest
+                if start == stop:
+                    result = min(result, start)
+            else:
+                # negative direction: last is smallest
+                if start >= stop:
+                    result = min(result,
+                                 start + ((stop - start) // step) * step)
+
+        return result
+
+    def max(self):
+        """Compute the maximum."""
+        # default maximum: -inf
+        result = -float("inf")
+
+        # consider all subranges
+        for subrange in self.subranges:
+            if not all(isinstance(val, Number) for val in subrange):
+                # can only get the max for non-symbolic Range
+                raise TypeError("Not numeric: %r" % (subrange,))
+
+            # max depends on range direction
+            start, step, stop = subrange
+            if step > 0:
+                # positive direction: last is largest
+                if start <= stop:
+                    result = max(result,
+                                 start + ((stop - start) // step) * step)
+            elif step == 0:
+                # no direction: start is largest
+                if start == stop:
+                    result = max(result, start)
+            else:
+                # negative direction: start is largest
+                if start >= stop:
+                    result = max(result, start)
+
+        return result
+
+    def __eq__(self, other):
+        """Compare with other Range."""
+        if not isinstance(other, Range):
+            return False
+        return self.subranges == other.subranges
 
     def __str__(self):
         """Format as (parsable) human readable string."""
@@ -672,10 +691,13 @@ class Sum(Operation):
 
     def __new__(cls, *args, **kwargs):
         """Default to Plus if no kwargs are given."""
-        if not kwargs:
-            return Plus(*args)
-        else:
+        if kwargs:
             return Operation.__new__(cls)
+        if len(args) == 0:
+            return 0
+        if len(args) == 1:
+            return args[0]
+        return Plus(*args)
 
     def __init__(self, *args, **kwargs):
         """Initialize from argument and range."""
@@ -686,13 +708,13 @@ class Sum(Operation):
             # single argument
             arg = args[0]
         else:
-            # multiple (or no) arguments: sum
-            arg = sum(args)
+            # multiple arguments: Plus
+            arg = Plus(*args)
         Operation.__init__(self, arg)
 
         if len(kwargs) != 1:
             # more than one keyword argument
-            raise Exception("Sum can handle only 1 range")
+            raise Exception("Need exactly one range.")
 
         # set range attributes
         self.rangevar, self.range_ = next(kwargs.iteritems())
@@ -709,6 +731,12 @@ class Sum(Operation):
         """Format s python parsable string."""
         return "%s(%r, %s=%r)" % (type(self).__name__, self[1],
                                   self.rangevar, self.range_)
+
+    def __eq__(self, other):
+        """Compare range too."""
+        if not isinstance(other, Sum):
+            return False
+        return Operation.__eq__(self, other) and self.range_ == other.range_
 
     def substitute(self, **kwargs):
         """Substitute in arg but not rangevar."""
@@ -727,12 +755,12 @@ class Sum(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify argument
-        arg = Operation.simplify(**kwargs)[1]
+        arg = simplify(self[1], **kwargs)
 
         # simplify range
         range_ = simplify(self.range_)
 
-        if range_.findsymbols():
+        if isinstance(range_, Range) and range_.findsymbols():
             # range is symbolic
             return type(self)(arg, **{self.rangevar: range_})
 
@@ -745,12 +773,12 @@ class Sum(Operation):
         # Note: sum() would start with 0
 
         # argument depends on range
-        return Plus(warg(**{self.rangevar: val}) for val in newrange)()
+        return Plus(*(arg(**{self.rangevar: val}) for val in range_))()
 
 
 def substitute(expr, **kwargs):
     """Substitute if Expression."""
-    if isinstance(expr, Expression):
+    if isinstance(expr, (Expression, Range)):
         return expr.substitute(**kwargs)
     return expr
 
