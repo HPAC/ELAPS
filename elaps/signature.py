@@ -59,21 +59,19 @@ class Signature(list):
             self.complexitystr = kwargs["complexity"]
             self.complexity = eval("lambda %s: %s" % (lambdaargs, lambdarhs))
         for arg in self:
-            if hasattr(arg, "minstr") and arg.minstr:
+            arg.min = None
+            if isinstance(arg, ArgWithMin) and arg.minstr:
                 lambdarhs = arg.minstr
                 for key, value in eval_replace.iteritems():
                     lambdarhs = lambdarhs.replace(key, value)
                 arg.min = eval("lambda %s: %s" % (lambdaargs, lambdarhs))
-            else:
-                arg.min = None
+            arg.properties = lambda *args: ()
             if arg.propertiesstr:
                 lambdarhs = arg.propertiesstr
                 for key, value in eval_replace.iteritems():
                     lambdarhs = lambdarhs.replace(key, value)
                 arg.properties = eval("lambda %s: filter(None, (%s,))" %
                                       (lambdaargs, lambdarhs))
-            else:
-                arg.properties = lambda *args: ()
 
     def __str__(self):
         """Format as human readable."""
@@ -134,7 +132,7 @@ class Call(list):
             if arg.name == name:
                 return self[i]
         raise AttributeError("%r object has no attribute %r" %
-                             (type(self), name))
+                             (type(self).__name__, name))
 
     def __setattr__(self, name, value):
         """Variable names as attributes."""
@@ -143,7 +141,7 @@ class Call(list):
                 self[i] = value
                 return
         raise AttributeError("%r object has no attribute %r" %
-                             (type(self), name))
+                             (type(self).__name__, name))
 
     def __copy__(self):
         """Create a deep copy."""
@@ -292,12 +290,10 @@ def _create_Flag(classname, defaultname, flags):
             args.append("attr=%r" % self.propertiesstr)
         return type(self).__name__ + "(" + ", ".join(args) + ")"
 
-    class_ = type(classname, (Flag,), {
+    globals()[classname] = type(classname, (Flag,), {
         "__init__": __init__,
         "__repr__": __repr__
     })
-    globals()[classname] = class_
-    return class_
 
 _create_Flag("Side", "side", ("L", "R"))
 _create_Flag("Uplo", "uplo", ("L", "U"))
@@ -306,9 +302,9 @@ _create_Flag("cTrans", "trans", ("N", "C"))
 _create_Flag("Diag", "diag", ("N", "U"))
 
 
-class Dim(Arg):
+class ArgWithMin(Arg):
 
-    """Dimension argument."""
+    """Base class for Arguments with a minstr."""
 
     def __init__(self, name, min_=None, attr=None):
         """Optional minimum expression."""
@@ -332,10 +328,17 @@ class Dim(Arg):
         return Arg.__eq__(self, other) and self.minstr == other.minstr
 
     def default(self):
-        """Default: 0."""
+        """Default: 1."""
         if self.minstr is None:
-            return 0
+            return 1
         return None
+
+
+class Dim(ArgWithMin):
+
+    """Dimension argument."""
+
+    pass
 
 
 class Scalar(Arg):
@@ -365,86 +368,30 @@ class Scalar(Arg):
         return 1
 
 
-class iScalar(Scalar):
+def _create_Scalar(classname, typename):
+    """Class factory Scalar arguments."""
+    attributes = {"typename": typename}
+    if "complex" in typename:
+        def format_sampler(self, val):
+            if isinstance(val, numbers.Number):
+                val = complex(val)
+                return "%s,%s" % (val.real, val.imag)
+            return val
+        attributes["format_sampler"] = format_sampler
+    globals()[classname] = type(classname, (Scalar,), attributes)
 
-    """Integer scalar argument."""
-
-    typename = "integer"
-
-
-class sScalar(Scalar):
-
-    """Integer scalar argument."""
-
-    typename = "single precision"
-
-
-class dScalar(Scalar):
-
-    """Double precision scalar argument."""
-
-    typename = "double precision"
+_create_Scalar("iScalar", "integer")
+_create_Scalar("sScalar", "single precision")
+_create_Scalar("dScalar", "double precision")
+_create_Scalar("cScalar", "single precision complex")
+_create_Scalar("zScalar", "double precision complex")
 
 
-class cScalar(Scalar):
-
-    """Single precision complex scalar argument."""
-
-    typename = "single precision complex"
-
-    def format_sampler(self, val):
-        """Format python complex value as list for the smapler."""
-        if isinstance(val, numbers.Number):
-            val = complex(val)
-            return str(val.real) + "," + str(val.imag)
-        return val
-
-
-class zScalar(Scalar):
-
-    """Double precision complex scalar argument."""
-
-    typename = "double precision complex"
-
-    def format_sampler(self, val):
-        """Format python complex value as list for the smapler."""
-        if isinstance(val, numbers.Number):
-            val = complex(val)
-            return "%s,%s" %(val.real, val.imag)
-        return val
-
-
-class Data(Arg):
+class Data(ArgWithMin):
 
     """Data (operand) argument."""
 
     typename = None
-
-    def __init__(self, name, min_=None, attr=None):
-        """Init: minimum expression possible."""
-        Arg.__init__(self, name, attr)
-        self.minstr = min_
-
-    def __repr__(self):
-        """Format as python parsable string."""
-        args = [self.name]
-        if self.minstr:
-            args.append(self.minstr)
-            if self.propertiesstr:
-                args.append(repr(self.propertiesstr))
-        elif self.propertiesstr:
-            args.append("attr=%r" % self.propertiesstr)
-        return type(self).__name__ + "(" + ", ".join(args) + ")"
-
-    def __eq__(self, other):
-        """Compare for equality."""
-        return Arg.__eq__(self, other) and self.minstr == other.minstr
-
-    def default(self):
-        """Default: 1."""
-        if self.minstr is None:
-            return 1
-        return None
 
     def format_str(self, val):
         """Format surrounded by [] for the sampler."""
@@ -453,87 +400,33 @@ class Data(Arg):
         return str(val)
 
 
-class iData(Data):
+def _create_Data(classname, typename):
+    """Class factory Data arguments."""
+    attributes = {"typename": typename}
+    if "complex" in typename:
+        def format_sampler(self, val):
+            """Requrest 2x space (for real, compex parts)."""
+            if isinstance(val, int):
+                val *= 2
+            return val
+        attributes["format_sampler"] = format_sampler
+    globals()[classname] = type(classname, (Scalar,), attributes)
 
-    """Integer data argument."""
-
-    typename = "integer"
-
-
-class sData(Data):
-
-    """Single precision data argument."""
-
-    typename = "single precision"
-
-
-class dData(Data):
-
-    """Double precision data argument."""
-
-    typename = "double precision"
+_create_Data("iData", "integer")
+_create_Data("sData", "single precision")
+_create_Data("dData", "double precision")
+_create_Data("cData", "single precision complex")
+_create_Data("zData", "double precision complex")
 
 
-class cData(Data):
-
-    """Single precision complex data argument."""
-
-    typename = "single precision complex"
-
-    def format_sampler(self, val):
-        """Requrest 2x space (for real, compex parts)."""
-        if isinstance(val, int):
-            val *= 2
-        return val
-
-
-class zData(Data):
-
-    """Double precision complex data argument."""
-
-    typename = "double precision complex"
-
-    def format_sampler(self, val):
-        """Requrest 2x space (for real, compex parts)."""
-        if isinstance(val, int):
-            val *= 2
-        return val
-
-
-class Ld(Arg):
+class Ld(ArgWithMin):
 
     """Leading dimension argument."""
-
-    def __init__(self, name, min_=None, attr=None):
-        """Init: minimum expression possible."""
-        Arg.__init__(self, name, attr)
-        self.minstr = min_
-
-    def __repr__(self):
-        """Format as python parsable string."""
-        args = [self.name]
-        if self.minstr:
-            args.append(self.minstr)
-            if self.propertiesstr:
-                args.append(repr(self.propertiesstr))
-        elif self.propertiesstr:
-            args.append("attr=%r" % self.propertiesstr)
-        return type(self).__name__ + "(" + ", ".join(args) + ")"
-
-    def __eq__(self, other):
-        """Compare for equality."""
-        return Arg.__eq__(self, other) and self.minstr == other.minstr
 
     @staticmethod
     def format_sampler(val):
         """For Sampler: minimum = 1."""
         return str(max(1, val))
-
-    def default(self):
-        """Default: 1."""
-        if self.minstr is None:
-            return 1
-        return None
 
 
 class Inc(Arg):
@@ -558,70 +451,22 @@ class Work(Data):
             Data.__init__(self, name, min_, "work, " + attr)
 
 
-class iWork(Work, iData):
+def _create_Work(classname, dataclass):
+    """Class factory Work arguments."""
+    globals()[classname] = type(classname, (Work, dataclass), {})
 
-    """Double precision work argument."""
-
-    pass
-
-
-class sWork(Work, sData):
-
-    """Double precision work argument."""
-
-    pass
+_create_Work("iWork", iData)
+_create_Work("sWork", sData)
+_create_Work("dWork", dData)
+_create_Work("cWork", cData)
+_create_Work("zWork", zData)
 
 
-class dWork(Work, dData):
-
-    """Double precision work argument."""
-
-    pass
-
-
-class cWork(Work, cData):
-
-    """Double precision work argument."""
-
-    pass
-
-
-class zWork(Work, zData):
-
-    """Double precision work argument."""
-
-    pass
-
-
-class Lwork(Arg):
+class Lwork(ArgWithMin):
 
     """Work size argument."""
 
-    def __init__(self, name, min_=None, attr=None):
-        """Init: minimum expression possible."""
-        Arg.__init__(self, name, attr)
-        self.minstr = min_
-
-    def __repr__(self):
-        """Format as python parsable string."""
-        args = [self.name]
-        if self.minstr:
-            args.append(self.minstr)
-            if self.propertiesstr:
-                args.append(repr(self.propertiesstr))
-        elif self.propertiesstr:
-            args.append("attr=%r" % self.propertiesstr)
-        return type(self).__name__ + "(" + ", ".join(args) + ")"
-
-    def __eq__(self, other):
-        """Compare for equality."""
-        return Arg.__eq__(self, other) and self.minstr == other.minstr
-
-    def default(self):
-        """Default: 1."""
-        if self.minstr is None:
-            return 1
-        return None
+    pass
 
 
 class Info(Arg):
