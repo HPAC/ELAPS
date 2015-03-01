@@ -113,6 +113,21 @@ class TestExperiment(unittest.TestCase):
 
         self.assertEqual(ex.calls[0].lWork, 100 * 1000)
 
+    def test_apply_connections(self):
+        """Test for apply_connections()."""
+
+    def test_check_sanity(self):
+        """test for check_sanity()."""
+        pass
+
+    def test_generate_cmds(self):
+        """test for generate_cmds()."""
+        pass
+
+    def test_submit_prepare(self):
+        """test for generate_cmds()."""
+        pass
+
 
 if __name__ == "__main__":
     unittest.main()
