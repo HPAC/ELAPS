@@ -7,6 +7,7 @@ import signature
 
 from collections import Iterable, defaultdict
 from itertools import chain
+import warnings
 
 
 class Experiment(dict):
@@ -240,7 +241,7 @@ class Experiment(dict):
 
         self.data[name] = data
 
-    def infer_ld(self, callid, argid):
+    def infer_ld(self, callid, ldargid):
         """Infer one leading dimension."""
         self.data_update()
 
@@ -254,13 +255,13 @@ class Experiment(dict):
 
         sig = call.sig
 
-        if not isinstance(sig[argid], signature.Ld):
+        if not isinstance(sig[ldargid], signature.Ld):
             raise TypeError(
                 "can only infer leading dimension for Ld (not %r)" %
-                type(sig[argid])
+                type(sig[ldargid])
             )
 
-        ldname = sig[argid].name
+        ldname = sig[ldargid].name
 
         # data dimensions in terms of lds
         ldcall = call.copy()
@@ -303,7 +304,7 @@ class Experiment(dict):
             if "rep" in vary["with"]:
                 ld *= self.nreps
 
-        call[argid] = symbolic.simplify(ld)
+        call[ldargid] = symbolic.simplify(ld)
 
         self.data_update()
 
@@ -385,9 +386,11 @@ class Experiment(dict):
                 parts.append(range_val)
             if "rep" in vary["with"]:
                 parts.append(rep)
-            if self.sumrange and self.sumrang[0] in vary["with"]:
+            if self.sumrange and self.sumrange[0] in vary["with"]:
                 parts.append(sumrange_val)
             return "_".join(map(str, parts))
+
+        self.data_update()
 
         assert(self.check_sanity())
         cmds = []
@@ -396,7 +399,7 @@ class Experiment(dict):
         if range_val is None:
             range_vals = self.range_vals()
 
-        if len(self.pap_counters):
+        if len(self.papi_counters):
             cmds += [
                 ["########################################"],
                 ["# counters                             #"],
@@ -419,12 +422,14 @@ class Experiment(dict):
                 signature.iData: "i",
                 signature.sData: "s",
                 signature.dData: "d",
-                signature.cData: "s",
+                signature.cData: "c",
                 signature.zData: "z",
             }
 
         # go over all operands
-        for name, data in self.data.iteritems():
+        for name in sorted(self.data):
+            # TODO: merge this whole thing into call generation
+            data = self.data[name]
             cmdprefix = cmdprefixes[data["type"]]
 
             # comment
@@ -433,7 +438,7 @@ class Experiment(dict):
             vary = data["vary"]
             if not vary["with"]:
                 # argumnet doesn't vary
-                size = max(self.ranges_eval(data["size"], ntrangeval))
+                size = max(self.ranges_eval(data["size"], range_val))
                 cmds.append([cmdprefix + "malloc", name, size])
                 continue
             # operand varies
@@ -441,12 +446,11 @@ class Experiment(dict):
             # set up some reused variables
             rep_vals = None,
             if "rep" in vary["with"]:
-                repvals = range(self.nrep)
+                rep_vals = range(self.nreps)
 
             # init result variables
             offsetcmds = []
             size_max = 0
-            offset_max = 0
             # go over range
             for range_val in range_vals:
                 if range_val is not None:
@@ -456,29 +460,29 @@ class Experiment(dict):
                 # prepare sumrange
                 sumrange_vals = self.sumrange_vals(range_val)
 
+                offset = 0
+
                 # go over repetitions
                 for rep in rep_vals:
                     # offset for repetitions
-                    offset_rep = 0
-                    if "rep" in vary["with"]:
-                        # operand varies across repetitions
-                        offset_rep = offset_max
+                    if "rep" not in vary["with"]:
+                        offset = 0
 
                     if (not self.sumrange or
                             self.sumrange[0] not in vary["with"]):
                         # operand doesn't vary in sumrange (1 offset)
                         offsetcmds.append([
-                            cmdprefix + "offset", name, offset_rep,
+                            cmdprefix + "offset", name, offset,
                             varname(name, range_val, rep, None)
                         ])
                     else:
                         # comment (multiple offsets)
                         offsetcmds.append(["#", "repetition", rep])
 
-                    # offset for sumrnage
-                    offset = offset_rep
+                    # offset for rep
+                    offset_rep = offset
                     # go over sumrange
-                    for sumrange_val in sumrange_als:
+                    for sumrange_val in sumrange_vals:
                         if self.sumrange and self.sumrange[0] in vary["with"]:
                             # operand varies in sumrange (offset)
                             offsetcmds.append([
@@ -488,6 +492,11 @@ class Experiment(dict):
                         else:
                             # offset is the same every iteration
                             offset = offset_rep
+                        # compute current needed size
+                        size = next(self.ranges_eval(
+                            data["size"], range_val, sumrange_val
+                        ))
+                        size_max = max(size_max, offset + size)
                         # compute next offset
                         dim = 1
                         for idx in range(vary["along"]):
@@ -496,7 +505,7 @@ class Experiment(dict):
                                 data["lds"][idx], range_val, sumrange_val
                             ))
                         # dimension for traversed dim
-                        if along < len(data["dims"]):
+                        if vary["along"] < len(data["dims"]):
                             dim *= next(self.ranges_eval(
                                 data["dims"][vary["along"]], range_val,
                                 sumrange_val
@@ -505,12 +514,6 @@ class Experiment(dict):
                         offset += dim + next(self.ranges_eval(
                             vary["offset"], range_val, sumrange_val
                         ))
-                        # update max size and offset
-                        offset_max = max(offset_max, offset)
-                        size = next(self.ranges_eval(
-                            data["size"], range_val, sumrange_val
-                        ))
-                        size_max = max(size_max, offset + size)
 
             # malloc with needed size before offsetting
             cmds.append([cmdprefix + "malloc", name,  size_max])
@@ -535,7 +538,7 @@ class Experiment(dict):
             sumrange_vals = self.sumrange_vals(range_val)
 
             # go over repetitions
-            for rep in range(self.nrep):
+            for rep in range(self.nreps):
                 if self.sumrange:
                     # comment
                     cmds += [[], ["#", "repetition",  rep]]
@@ -751,7 +754,7 @@ class Experiment(dict):
         """Get the range values if set, else None."""
         if self.range:
             return tuple(self.range[1])
-        return None
+        return None,
 
     def sumrange_vals(self, range_val=None):
         """Get the range values if set, else None."""
@@ -760,7 +763,7 @@ class Experiment(dict):
                 return tuple(simplify(self.sumrange[1],
                                       **{self.range[0]: range_val}))
             return tuple(self.sumrange[1])
-        return None
+        return None,
 
     def ranges_valdict(self, range_val=None, sumrange_val=None):
         """Create a dictionary for the range substitution."""

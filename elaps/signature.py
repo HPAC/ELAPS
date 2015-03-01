@@ -163,8 +163,7 @@ class Call(list):
             if arg.name == name:
                 self[i] = value
                 return
-        raise AttributeError("%r object has no attribute %r" %
-                             (type(self).__name__, name))
+        list.__setattr__(self, name, value)
 
     def __copy__(self):
         """Create a deep copy."""
@@ -210,11 +209,6 @@ class Call(list):
             return self.sig.complexity(*self)
         return None
 
-    def format_str(self):
-        """Format as a tuple of strings."""
-        return tuple(arg.format_str(val)
-                     for arg, val in zip(self.sig, self))
-
     def format_sampler(self):
         """Format for a sampler."""
         return [arg.format_sampler(val) for arg, val in zip(self.sig, self)]
@@ -248,13 +242,9 @@ class Arg(object):
                 self.propertiesstr == other.propertiesstr)
 
     @staticmethod
-    def format_str(val):
-        """Format value as a string."""
-        return str(val)
-
-    def format_sampler(self, val):
+    def format_sampler(val):
         """Format value for a sampler."""
-        return self.format_str(val)
+        return val
 
 
 class Name(Arg):
@@ -416,11 +406,11 @@ class Data(ArgWithMin):
 
     typename = None
 
-    def format_str(self, val):
+    def format_sampler(self, val):
         """Format surrounded by [] for the sampler."""
         if isinstance(val, int):
             return "[" + str(val) + "]"
-        return str(val)
+        return val
 
 
 def _create_Data(classname, typename):
@@ -449,7 +439,7 @@ class Ld(ArgWithMin):
     @staticmethod
     def format_sampler(val):
         """For Sampler: minimum = 1."""
-        return str(max(1, val))
+        return max(1, val)
 
 
 class Inc(Arg):
