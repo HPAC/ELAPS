@@ -186,7 +186,7 @@ class TestExperimentSubmit(unittest.TestCase):
         ])
 
     def test_data_norange(self):
-        """Test for generated data commands, no range."""
+        """Test data commands without range."""
         nreps = random.randint(1, 10)
         lensumrange = random.randint(1, 10)
 
@@ -199,19 +199,23 @@ class TestExperimentSubmit(unittest.TestCase):
 
         cmds = self.ex.generate_cmds()
 
-        size = nreps * self.m * self.n + (nreps - 1) * self.m
-        self.assertIn(["smalloc", "X", size], cmds)
+        self.assertIn(["smalloc", "X",
+                       nreps * self.m * self.n + (nreps - 1) * self.m], cmds)
         idx = random.randint(0, nreps - 1)
         self.assertIn(["soffset", "X", idx * self.m, "X_%d" % idx], cmds)
 
-        size = lensumrange * self.m * self.m + (lensumrange - 1) * self.m
-        self.assertIn(["dmalloc", "Y", size], cmds)
+        self.assertIn([
+            "dmalloc", "Y",
+            lensumrange * self.m * self.m + (lensumrange - 1) * self.m
+        ], cmds)
         idx = random.randint(0, lensumrange - 1)
         self.assertIn(["doffset", "Y", idx * self.m, "Y_%d" % idx], cmds)
 
-        size = (nreps * lensumrange * self.n * self.n +
-                ((nreps - 1) * lensumrange + (lensumrange - 1)) * self.n)
-        self.assertIn(["cmalloc", "Z", size], cmds)
+        self.assertIn([
+            "cmalloc", "Z",
+            (nreps * lensumrange * self.n * self.n +
+             ((nreps - 1) * lensumrange + (lensumrange - 1)) * self.n)
+        ], cmds)
         idxrep = random.randint(0, nreps - 1)
         idxrange = random.randint(0, lensumrange - 1)
         self.assertIn(["coffset", "Z",
@@ -219,7 +223,7 @@ class TestExperimentSubmit(unittest.TestCase):
                        "Z_%d_%d" % (idxrep, idxrange)], cmds)
 
     def test_data_range(self):
-        """Test for generated data commands, range set."""
+        """Test data commands when range is set."""
         lenrange = random.randint(1, 10)
         nreps = random.randint(1, 10)
 
@@ -231,16 +235,65 @@ class TestExperimentSubmit(unittest.TestCase):
 
         cmds = self.ex.generate_cmds()
 
-        size = nreps * self.m * self.n + (nreps - 1) * self.m
-        self.assertIn(["smalloc", "X", size], cmds)
+        self.assertIn(["smalloc", "X",
+                       nreps * self.m * self.n + (nreps - 1) * self.m], cmds)
         rangeidx = random.randint(0, lenrange - 1)
         repidx = random.randint(0, nreps - 1)
         self.assertIn(["soffset", "X", repidx * self.m,
                        "X_%d_%d" % (rangeidx, repidx)], cmds)
 
     def test_data_dep(self):
-        """Test for generated data commands, depedencies in data, varying."""
-        self.ex.calls[0]
+        """Test data commands with depedencies in data."""
+        lenrange = random.randint(1, 10)
+        lensumrange = random.randint(1, 10)
+        self.ex.range = ("i", range(lenrange))
+        self.ex.sumrange = ("j", range(lensumrange))
+        self.ex.call.m = self.ex.ranges_parse("j")
+        self.ex.data["X"]["vary"]["with"].add("j")
+
+        self.ex.infer_lds()
+
+        cmds = self.ex.generate_cmds()
+
+        rangeidx = random.randint(0, lenrange - 1)
+        sumrangeidx = random.randint(0, lensumrange - 1)
+        offset = sum(j for j in range(sumrangeidx))
+        self.assertIn(["soffset", "X", offset,
+                       "X_%d_%d" % (rangeidx, sumrangeidx)], cmds)
+
+    def test_data_along(self):
+        """Test along = 1."""
+        nreps = random.randint(1, 10)
+        self.ex.nreps = nreps
+        self.ex.data["X"]["vary"]["with"].add("rep")
+        self.ex.data["X"]["vary"]["along"] = 1
+        self.ex.infer_lds()
+
+        cmds = self.ex.generate_cmds()
+
+        self.assertIn(["smalloc", "X", nreps * self.m * self.n], cmds)
+        repidx = random.randint(0, nreps - 1)
+        self.assertIn(["soffset", "X", repidx * self.m * self.n,
+                       "X_%d" % repidx], cmds)
+
+    def test_data_offset(self):
+        """Test offset."""
+        nreps = random.randint(1, 10)
+        self.ex.nreps = nreps
+        self.ex.data["X"]["vary"]["with"].add("rep")
+        offset = random.randint(1, 100)
+        self.ex.data["X"]["vary"]["offset"] = offset
+        self.ex.infer_lds()
+
+        cmds = self.ex.generate_cmds()
+
+        self.assertIn([
+            "smalloc", "X",
+            nreps * self.m * self.n + (nreps - 1) * (self.m + offset)
+        ], cmds)
+
+    def test_calls(self):
+        """Test for generate call commands."""
 
 
 if __name__ == "__main__":
