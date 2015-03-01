@@ -46,12 +46,17 @@ class Experiment(dict):
         """Element access through attributes."""
         if name in self:
             return self[name]
+        if name == "call" and len(self.calls) == 1:
+            return self.calls[0]
         raise AttributeError("%r object has no attribute %r" %
                              (type(self), name))
 
     def __setattr__(self, name, value):
         """Element access through attributes."""
         if name not in self:
+            if name == "call":
+                self.calls = [value]
+                return
             dict.__setattr__(self, name, value)
             return
         # attribute exists

@@ -68,7 +68,7 @@ class TestExperiment(unittest.TestCase):
 
         # vary is not touched
         ex.data["X"]["vary"]["with"].add("rep")
-        ex.calls[0].m = 500
+        ex.call.m = 500
         ex.data_update("X")
 
         self.assertIn("rep", ex.data["X"]["vary"]["with"])
@@ -76,12 +76,12 @@ class TestExperiment(unittest.TestCase):
     def test_infer_lds(self):
         """Test for infer_ld[s]()."""
         sig = Signature("name", Dim("m"), Dim("n"),
-                        cData("A", "ldA * n"), Ld("ldA", "m"))
-        ex = Experiment(calls=[sig(100, 1000, "X", 2000)])
+                        cData("A", "ldA * n"), Ld("ldA", "m"), Info())
+        ex = Experiment(calls=[sig(100, 1000, "X", 2000, 0)])
 
         ex.infer_ld(0, 4)
 
-        self.assertEqual(ex.calls[0].ldA, 100)
+        self.assertEqual(ex.call.ldA, 100)
 
         self.assertRaises(TypeError, ex.infer_ld, 0, 3)
 
@@ -92,7 +92,7 @@ class TestExperiment(unittest.TestCase):
 
         ex.infer_lds()
 
-        self.assertEqual(ex.calls[0].ldA, 8 * 100)
+        self.assertEqual(ex.call.ldA, 8 * 100)
         self.assertEqual(ex.data["X"]["lds"], [8 * 100, 1000])
 
         # range
@@ -101,7 +101,7 @@ class TestExperiment(unittest.TestCase):
 
         ex.infer_lds()
 
-        self.assertEqual(ex.calls[0].ldA, 8 * 100 * 10)
+        self.assertEqual(ex.call.ldA, 8 * 100 * 10)
 
     def test_infer_lwork(self):
         """Test for infer_lwork[s]()."""
@@ -111,7 +111,7 @@ class TestExperiment(unittest.TestCase):
 
         ex.infer_lwork(0, 4)
 
-        self.assertEqual(ex.calls[0].lWork, 100 * 1000)
+        self.assertEqual(ex.call.lWork, 100 * 1000)
 
     def test_apply_connections(self):
         """Test for apply_connections()."""
@@ -136,12 +136,16 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(ex.calls[0].m, ex.calls[1][2])
         self.assertEqual(ex.calls[0].n, ex.calls[1][2])
 
+        # acces .call as an attribute when only one call
+        with self.assertRaises(AttributeError):
+            ex.call
+
+        with self.assertRaises(AttributeError):
+            ex.calls = []
+            print(ex.call)
+
     def test_check_sanity(self):
         """test for check_sanity()."""
-        pass
-
-    def test_generate_cmds(self):
-        """test for generate_cmds()."""
         pass
 
     def test_submit_prepare(self):
