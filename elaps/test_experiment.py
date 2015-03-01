@@ -115,6 +115,26 @@ class TestExperiment(unittest.TestCase):
 
     def test_apply_connections(self):
         """Test for apply_connections()."""
+        sig = Signature("name", Dim("m"), Dim("n"),
+                        iData("A", "m * n"), iData("B", "n * n"))
+        call = sig(10, 20, "X", "Y")
+        ex = Experiment(calls=[call.copy()])
+
+        ex.apply_connections(0, 1)
+        self.assertEqual(call, ex.calls[0])
+
+        ex.calls[0].B = "X"
+        ex.apply_connections(0, 2)
+        self.assertNotEqual(call, ex.calls[0])
+        self.assertEqual(ex.calls[0][1], 20)
+
+        # two calls
+        ex.calls = [sig(10, 20, "X", "Y"), sig(30, 40, "Z", "X")]
+
+        ex.apply_connections(1, 2)
+
+        self.assertEqual(ex.calls[0].m, ex.calls[1][2])
+        self.assertEqual(ex.calls[0].n, ex.calls[1][2])
 
     def test_check_sanity(self):
         """test for check_sanity()."""

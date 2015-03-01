@@ -5,7 +5,7 @@ from __future__ import division, print_function
 import symbolic
 import signature
 
-from collections import Iterable
+from collections import Iterable, defaultdict
 from itertools import chain
 
 
@@ -363,7 +363,7 @@ class Experiment(dict):
     def apply_connections(self, callid, argid):
         """Apply data-connections from this starging point."""
         value = self.calls[callid][argid]
-        for callid2, argid2 in self.connections_get()[callid, argid]:
+        for callid2, argid2 in self.get_connections()[callid, argid]:
             self.calls[callid2][argid2] = value
 
     def check_sanity(self):
@@ -795,9 +795,9 @@ class Experiment(dict):
                     expr, **self.ranges_valdict(range_val, sumrange_val)
                 )
 
-    def connections_get(self):
+    def get_connections(self):
         """Update the connections between arguments based on coincidng data."""
-        msizes = defaultdict(list)
+        sizes = defaultdict(list)
         for callid, call in enumerate(self.calls):
             if not isinstance(call, signature.Call):
                 continue
@@ -842,7 +842,7 @@ class Experiment(dict):
         # combine connections for each data item
         for datasize in sizes.values():
             for idlist in zip(*datasize):
-                connected = union(connections[id_] for id_ in idlist)
+                connected = set().union(*(connections[id_] for id_ in idlist))
                 for id_ in connected:
                     connections[id_] = connected
         return connections
