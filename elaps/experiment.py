@@ -765,8 +765,8 @@ class Experiment(dict):
         """Get the range values if set, else None."""
         if self.sumrange:
             if self.range:
-                return tuple(simplify(self.sumrange[1],
-                                      **{self.range[0]: range_val}))
+                return tuple(symbolic.simplify(self.sumrange[1],
+                                               **{self.range[0]: range_val}))
             return tuple(self.sumrange[1])
         return None,
 
@@ -802,6 +802,14 @@ class Experiment(dict):
                 yield symbolic.simplify(
                     expr, **self.ranges_valdict(range_val, sumrange_val)
                 )
+
+    def ranges_parse(self, expr):
+        symdict = {}
+        if self.range:
+            symdict[self.range[0]] = symbolic.Symbol(self.range[0])
+        if self.sumrange:
+            symdict[self.sumrange[0]] = symbolic.Symbol(self.sumrange[0])
+        return eval(expr, symdict, symbolic.env)
 
     def get_connections(self):
         """Update the connections between arguments based on coincidng data."""
