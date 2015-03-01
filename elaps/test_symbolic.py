@@ -278,10 +278,10 @@ class TestSum(TestSymbolic):
 
     def test_init(self):
         """Test for __init__()."""
-        self.assertRaises(Exception, Sum, self.A, A=[self.n1], B=[self.n2])
+        self.assertRaises(TypeError, Sum, self.A, A=[self.n1], B=[self.n2])
+        self.assertRaises(TypeError, Sum, self.A)
         self.assertRaises(TypeError, Sum, self.A, A=self.n1)
 
-        self.assertEqual(Sum(self.A), self.A)
         self.assertEqual(Sum(self.A, self.n1, A=range(self.n2)),
                          Sum(self.A + self.n1, A=range(self.n2)))
 

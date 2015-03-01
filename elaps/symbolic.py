@@ -111,7 +111,7 @@ class Operation(Expression, list):
 
     """Base class for symbolic operations."""
 
-    def __new__(cls, *args):
+    def __new__(cls, *args, **kwargs):
         """If any argument is None, the operation is None."""
         if any(arg is None for arg in args):
             return None
@@ -692,16 +692,6 @@ class Sum(Operation):
 
     """Sum of an Expression over a Range."""
 
-    def __new__(cls, *args, **kwargs):
-        """Default to Plus if no kwargs are given."""
-        if kwargs:
-            return Operation.__new__(cls)
-        if len(args) == 0:
-            return 0
-        if len(args) == 1:
-            return args[0]
-        return Plus(*args)
-
     def __init__(self, *args, **kwargs):
         """Initialize from argument and range."""
         if len(args) == 0:
@@ -717,7 +707,7 @@ class Sum(Operation):
 
         if len(kwargs) != 1:
             # more than one keyword argument
-            raise Exception("Need exactly one range.")
+            raise TypeError("Need exactly one range.")
 
         # set range attributes
         self.rangevar, self.range_ = next(kwargs.iteritems())
