@@ -62,6 +62,32 @@ class Signature(list):
                 arg.properties = eval("lambda %s: filter(None, (%s,))" %
                                       (lambdaargs, lambdarhs))
 
+        self.check_lambdas()
+
+    def check_lambdas(self):
+        """Check lambdas for unknown arguments."""
+        args = range(len(self))
+        if self.complexity:
+            try:
+                self.complexity(*args)
+            except NameError as e:
+                raise NameError("Uknown argument %r used in complexity" %
+                                str(e).split("'")[1])
+        for arg in self:
+            if arg.min:
+                try:
+                    arg.min(*args)
+                except NameError as e:
+                    raise NameError("Uknown argument %r used in min for %s" %
+                                    (str(e).split("'")[1], arg))
+            if arg.properties:
+                try:
+                    arg.properties(*args)
+                except NameError as e:
+                    raise NameError("Uknown argument or properity %r "
+                                    "used in properties for %s" %
+                                    (str(e).split("'")[1], arg))
+
     def __str__(self):
         """Format as human readable."""
         return (self[0].name + "(" +

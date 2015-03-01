@@ -97,6 +97,17 @@ class TestSignature(unittest.TestCase):
         self.assertEqual(sig.alpha.properties("name", 5, None), ("lower",))
         self.assertEqual(sig.alpha.properties("name", 105, None), tuple())
 
+        # failure checking
+        self.assertRaises(NameError,
+                          Signature, "name", Dim("m"), complexity="n")
+
+        self.assertRaises(NameError,
+                          Signature, "name", Dim("m"), Data("X", "m * n"))
+
+        self.assertRaises(NameError,
+                          Signature, "name", Dim("m"),
+                          Data("X", "m", "lower if n else None"))
+
     def test_dataargs(self):
         """Test for dataargs()."""
         sig = Signature("name", Dim("n"), Data("A"), Data("B"), Ld("x"),
