@@ -294,6 +294,38 @@ class TestExperimentSubmit(unittest.TestCase):
 
     def test_calls(self):
         """Test for generate call commands."""
+        nreps = random.randint(1, 10)
+        self.ex.nreps = nreps
+        self.ex.data["X"]["vary"]["with"].add("rep")
+        self.ex.infer_lds()
+
+        cmds = self.ex.generate_cmds()
+
+        idx = random.randint(0, nreps - 1)
+        self.assertIn(["name", self.m, self.n, "X_%d" % idx, nreps * self.m,
+                       "Y", self.m, "Z", self.n], cmds)
+
+    def test_omp(self):
+        """Test for omp in genrated call commands."""
+        nreps = random.randint(1, 10)
+        ncalls = random.randint(1, 10)
+        self.ex.calls = ncalls * [self.ex.call]
+        self.ex.nreps = nreps
+        self.ex.calls_parallel = True
+
+        cmds = self.ex.generate_cmds()
+
+        self.assertEqual(cmds.count(["{omp"]), nreps)
+        self.assertEqual(cmds.count(["}"]), nreps)
+
+        lensumrange = random.randint(1, 10)
+        self.ex.sumrange = ("j", range(lensumrange))
+        self.ex.sumrange_parallel = True
+
+        cmds = self.ex.generate_cmds()
+
+        self.assertEqual(cmds.count(["{omp"]), nreps)
+        self.assertEqual(cmds.count(["}"]), nreps)
 
 
 if __name__ == "__main__":
