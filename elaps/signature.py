@@ -14,26 +14,7 @@ class Signature(list):
 
     def __init__(self, *args, **kwargs):
         """Initialize from file ore arguments."""
-        # TODO: remove file loader?
-        if "file" in kwargs:
-            self.filename = kwargs["file"]
-            # read signature from file
-            try:
-                with open(self.filename) as fin:
-                    sig = eval(fin.read())
-            except:
-                raise IOError(self.filename + " could not be loaded")
-            if not isinstance(sig, Signature):
-                raise TypeError(self.filename + " did not conatin a Signature")
-            # initialize from loaded signature
-            list.__init__(self, sig)
-            self.complexitystr = sig.complexitystr
-            self.complexity = sig.complexity
-            return
-
-        # set attributes
         list.__init__(self, args)
-        self.filename = None
         self.complexitystr = None
         self.complexity = None
 

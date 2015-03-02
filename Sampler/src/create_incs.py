@@ -95,6 +95,7 @@ def main():
 
     # create info.py
     info = {
+        "exe": os.path.join(os.environ["target_dir"], "sampler.x"),
         "buildtime": time(),
         "builtversion": 1422278229,
         "name":  os.environ["NAME"],
