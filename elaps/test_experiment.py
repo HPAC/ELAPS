@@ -7,6 +7,8 @@ from experiment import *
 
 import unittest
 import random
+import os
+import glob
 
 
 class TestExperiment(unittest.TestCase):
@@ -153,9 +155,9 @@ class TestExperiment(unittest.TestCase):
         pass
 
 
-class TestExperimentSubmit(unittest.TestCase):
+class TestExperimentCmds(unittest.TestCase):
 
-    """Tests for Experiment job generation."""
+    """Tests for Experiment.generate_cmds()."""
 
     def setUp(self):
         """Set up a signature and experiment with call."""
@@ -168,6 +170,7 @@ class TestExperimentSubmit(unittest.TestCase):
         self.ex = Experiment()
         self.ex.calls = [self.sig(self.m, self.n,
                                   "X", None, "Y", None, "Z", None)]
+        self.ex.infer_lds()
         self.ex.data_update()
 
     def test_cmd_order(self):
@@ -326,6 +329,69 @@ class TestExperimentSubmit(unittest.TestCase):
 
         self.assertEqual(cmds.count(["{omp"]), nreps)
         self.assertEqual(cmds.count(["}"]), nreps)
+
+
+class TestExperimentSubmit(TestExperimentCmds):
+
+    """Tests for Experiment.submit_prepate()."""
+
+    def setUp(self):
+        """Generate filenames."""
+        TestExperimentCmds.setUp(self)
+        self.sampler_ntmax = random.randint(1, 10)
+        self.ex.sampler = {
+            "backend_header": "",
+            "backend_prefix": "prefix{nt}",
+            "backend_suffix": "",
+            "backend_footer": "",
+            "kernels": {},
+            "nt_max": self.sampler_ntmax,
+            "exe": "executable"
+        }
+        self.filebase = "test_experiment.py_tmp"
+
+    def tearDown(self):
+        """Delete remporary files."""
+        for filename in glob.glob(self.filebase + "*"):
+            os.remove(filename)
+
+    def test_files(self):
+        """Test file creation."""
+        open(self.filebase + ".eer", "w").close()
+
+        self.ex.submit_prepare(self.filebase)
+
+        self.assertTrue(os.path.isfile(self.filebase + ".sh"))
+        self.assertTrue(os.path.isfile(self.filebase + ".calls"))
+        self.assertFalse(os.path.isfile(self.filebase + ".eer"))
+        self.assertFalse(os.path.isfile(self.filebase + ".err"))
+
+    def test_threadrange(self):
+        """Test files generated for #threads range."""
+        lenrange = random.randint(2, 10)
+        self.ex.range = ("i", range(1, lenrange + 1))
+
+        script = self.ex.submit_prepare(self.filebase)
+
+        for nt in self.ex.range[1]:
+            self.assertTrue(os.path.isfile("%s.%d.calls" %
+                                           (self.filebase, nt)))
+
+        idx = random.randint(1, lenrange)
+        self.assertIn("prefix%d" % idx, script)
+        self.assertIn("prefix%d" % idx, script)
+        self.assertEqual(script.count("executable"), lenrange + 1)
+
+    def test_ompthreads(self):
+        """Test setting OMP_NUM_THREADS."""
+        lensumrange = random.randint(2, 10)
+        self.ex.sumrange = ("j", range(1, lensumrange + 1))
+        self.ex.sumrange_parallel = True
+
+        script = self.ex.submit_prepare(self.filebase)
+
+        val = min(lensumrange, self.sampler_ntmax)
+        self.assertIn("OMP_NUM_THREADS=%d" % val, script)
 
 
 if __name__ == "__main__":

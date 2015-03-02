@@ -8,6 +8,7 @@ import signature
 from collections import Iterable, defaultdict
 from itertools import chain
 import warnings
+import os
 
 
 class Experiment(dict):
@@ -699,7 +700,7 @@ class Experiment(dict):
                             for range_val in self.range[1]
                         )
                 else:
-                    sumrangelen = len(self.sumrange)
+                    sumrangelen = len(self.sumrange[1])
                 ompthreads = sumrangelen * len(self.calls)
             elif self.calls_parallel:
                 ompthreads = len(self.calls)
@@ -804,6 +805,7 @@ class Experiment(dict):
                 )
 
     def ranges_parse(self, expr):
+        """Parse (eval) a string with symbolic range variables."""
         symdict = {}
         if self.range:
             symdict[self.range[0]] = symbolic.Symbol(self.range[0])
