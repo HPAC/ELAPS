@@ -276,7 +276,7 @@ class Prod(Operation):
 
         num = 1
         newargs = []
-        for arg in self[1:]:
+        for arg in args:
             if isinstance(arg, Prod):
                 # flatten recursive Prod
                 otherargs = arg[1:]
@@ -390,7 +390,7 @@ class Min(Operation):
 
         num = float("inf")
         newargs = []
-        for arg in self[1:]:
+        for arg in args:
             if isinstance(arg, Min):
                 # flatten recursive Min
                 otherargs = arg[1:]
@@ -434,7 +434,7 @@ class Max(Operation):
 
         num = float("-inf")
         newargs = []
-        for arg in self[1:]:
+        for arg in args:
             # simplify arg
             arg = simplify(arg)
             if isinstance(arg, Max):
@@ -779,6 +779,15 @@ def simplify(expr, **kwargs):
     if isinstance(expr, (Expression, Range)):
         return expr.simplify(**kwargs)
     return expr
+
+
+def findsymbols(expr):
+    """find symbols if Expression."""
+    if isinstance(expr, (Expression, Range)):
+        return expr.findsymbols()
+    if isinstance(expr, (list, tuple)):
+        return set().union(*map(findsymbols, expr))
+    return set()
 
 
 def min_sym(*args, **kwargs):

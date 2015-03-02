@@ -139,7 +139,38 @@ class TestExperiment(unittest.TestCase):
 
     def test_check_sanity(self):
         """test for check_sanity()."""
-        pass
+        ex = Experiment(sampler=self.sampler)
+        ex.check_sanity()
+
+        # instance checking
+        ex.note = 1
+        self.assertRaises(TypeError, ex.check_sanity, True)
+        self.assertFalse(ex.check_sanity())
+        ex.note = ""
+
+        # sampler
+        del self.sampler["exe"]
+        self.assertRaises(KeyError, ex.check_sanity, True)
+        self.sampler["exe"] = "x"
+
+        # ranges
+        ex.range = ("i", [1, 2], 3)
+        self.assertRaises(TypeError, ex.check_sanity, True)
+        ex.range = (1, [1, 2])
+        self.assertRaises(TypeError, ex.check_sanity, True)
+        ex.range = None
+        ex.sumrange = ("i", 1)
+        self.assertRaises(TypeError, ex.check_sanity, True)
+        ex.sumrange = ("j", range(random.randint(1, 10)))
+
+        # threads
+        ex.nthreads = ex.sampler["nt_max"] + random.randint(1, 10)
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.nthreads = "i"
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.range = ("i", [1, 2])
+        self.assertTrue(ex.check_sanity())
+
 
     def test_submit_prepare(self):
         """test for generate_cmds()."""

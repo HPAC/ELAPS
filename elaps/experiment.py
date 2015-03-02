@@ -327,9 +327,69 @@ class Experiment(dict):
         for callid2, argid2 in self.get_connections()[callid, argid]:
             self.calls[callid2][argid2] = value
 
-    def check_sanity(self):
+    def check_sanity(self, raise_=False):
         """Check if the experiment is self-consistent."""
-        return True  # TODO
+        if not raise_:
+            try:
+                self.check_sanity(True)
+                return True
+            except:
+                return False
+
+        # instance checking
+        for key, types in (
+            ("note", str),
+            ("sampler", dict),
+            ("nthreads", (int, str)),
+            ("script_header", str),
+            ("range", (type(None), tuple)),
+            ("nreps", int),
+            ("sumrange", (type(None), tuple)),
+            ("sumrange_parallel", bool),
+            ("calls_parallel", bool),
+            ("calls", list),
+            ("data", dict),
+            ("papi_counters", list)
+        ):
+            if not isinstance(self[key], types):
+                raise TypeError("Attribute %r should be of type %s" %
+                                (key, types))
+
+        # sampler
+        for key in ("backend_header", "backend_prefix", "backend_suffix",
+                    "backend_footer", "kernels", "nt_max", "exe"):
+            if key not in self.sampler:
+                raise KeyError("Sampler has not key %r" % key)
+
+        # ranges
+        if self.range:
+            if len(self.range) != 2:
+                raise TypeError("range must have length 2: str, iterator")
+            if not isinstance(self.range[0], str):
+                raise TypeError("range[0] must be int (not %s)" %
+                                type(self.range[0]))
+            if not isinstance(self.range[1], Iterable):
+                raise TypeError("range[1] must be iterable")
+        if self.sumrange:
+            if len(self.sumrange) != 2:
+                raise TypeError("sumrange must have length 2: str, iterator")
+            if not isinstance(self.sumrange[0], str):
+                raise TypeError("sumrange[0] must be int (not %s)" %
+                                type(self.sumrange[0]))
+            if not isinstance(self.sumrange[1], Iterable):
+                raise TypeError("sumrange[1] must be iterable")
+
+        # threads
+        if isinstance(self.nthreads, int):
+            if self.nthreads > self.sampler["nt_max"]:
+                raise ValueError("nthreads must be <= sampler[\"nt_max\"]")
+        else:
+            if not self.range or self.nthreads != self.range[0]:
+                raise ValueError("nthreads int or range[0]")
+
+
+
+        return True
 
     def generate_cmds(self, range_val=None):
         """Generate commands for the Sampler."""
