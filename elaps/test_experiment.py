@@ -15,32 +15,23 @@ class TestExperiment(unittest.TestCase):
 
     """Tests for Experiment."""
 
+    def setUp(self):
+        """Set up an empty sampler."""
+        self.sampler = {
+            "backend_header": "",
+            "backend_prefix": "",
+            "backend_suffix": "",
+            "backend_footer": "",
+            "kernels": {},
+            "nt_max": random.randint(1, 10),
+            "exe": "x"
+        }
+
     def test_init(self):
         """Test for __init__() and attribute access."""
         ex = Experiment(note="Test")
         self.assertEqual(ex["note"], "Test")
         self.assertEqual(ex.note, "Test")
-
-    def test_setattr(self):
-        """Test for __setattr__()."""
-        ex = Experiment()
-
-        with self.assertRaises(TypeError):
-            ex.note = 1234
-        with self.assertRaises(TypeError):
-            ex.sampler = []
-        with self.assertRaises(TypeError):
-            ex.range = (1, 2, 3)
-        with self.assertRaises(TypeError):
-            ex.sumrange = (1, 2)
-
-        ex.range = ("i", range(10))
-        with self.assertRaises(TypeError):
-            ex.nthreads = "j"
-        ex.nthreads = "i"
-
-        ex.sumrange_parallel = True
-        self.assertTrue(ex.calls_parallel)
 
     def test_repr(self):
         """Test for __repr__()."""
@@ -338,7 +329,7 @@ class TestExperimentSubmit(TestExperimentCmds):
     def setUp(self):
         """Generate filenames."""
         TestExperimentCmds.setUp(self)
-        self.sampler_ntmax = random.randint(1, 10)
+        self.sampler_ntmax = random.randint(2, 10)
         self.ex.sampler = {
             "backend_header": "",
             "backend_prefix": "prefix{nt}",

@@ -54,56 +54,11 @@ class Experiment(dict):
 
     def __setattr__(self, name, value):
         """Element access through attributes."""
-        if name not in self:
-            if name == "call":
-                self.calls = [value]
-                return
-            dict.__setattr__(self, name, value)
-            return
-        # attribute exists
-
-        # check type
-        required_types = {
-            "note": str,
-            "sampler": (type(None), dict),
-            "nthreads": (int, str),
-            "script_header": str,
-            "range": (type(None), tuple),
-            "nreps": int,
-            "sumrange": (type(None), tuple),
-            "sumrange_parallel": bool,
-            "calls_parallel": bool,
-            "calls": list,
-            "data": list,
-            "papi_counters": list
-        }
-        if not isinstance(value, required_types[name]):
-            raise TypeError("%r must be %r (not %r)" %
-                            (name, required_types[name], type(value)))
-        # check values for range
-        if name in ("range", "sumrange"):
-            if len(value) != 2:
-                raise TypeError("%r must be of length two" % name)
-            if not isinstance(value[0], str):
-                raise TypeError("frist element of %r must be '%r' (not %r)" %
-                                (name, type(value[0])))
-            if not isinstance(value[1], Iterable):
-                raise TypeError("second element of %r must be iterable" % name)
-        # check value for nthreads
-        if name == "nthreads" and isinstance(value, str):
-            if not self.range or value != self.range[0]:
-                raise TypeError(
-                    "'nthreads' must be 'int' or variable name of 'range'"
-                )
-
-        # set variable
-        self[name] = value
-
-        # enforce parallel consistency
-        if name == "sumrange_parallel" and value is True:
-            self.calls_parallel = True
-        if name == "calls_parallel" and value is False:
-            self.sumrange_parallel = False
+        if name in self:
+            self[name] = value
+        if name == "call":
+            self.calls = [value]
+        dict.__setattr__(self, name, value)
 
     def __repr__(self):
         """Python parsable representation."""
@@ -160,7 +115,6 @@ class Experiment(dict):
 
     def data_update(self, name=None):
         """Update the data from the calls."""
-        assert(self.check_sanity())
         if name is None:
             names = set([
                 call[argid]
@@ -398,7 +352,6 @@ class Experiment(dict):
 
         self.data_update()
 
-        assert(self.check_sanity())
         cmds = []
 
         range_vals = range_val,
