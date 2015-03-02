@@ -9,6 +9,7 @@ from collections import Iterable, defaultdict
 from itertools import chain
 import warnings
 import os
+from copy import deepcopy
 
 
 class Experiment(dict):
@@ -70,12 +71,8 @@ class Experiment(dict):
 
         # remove unused sampler kernels
         if "sampler" in changed:
-            changed["sampler"]["kernels"] = {
-                routine: minsig
-                for routine, minsig in self.sampler["kernels"].items()
-                if any(call[0] == routine for call in self.calls)
-            }
-
+            changed["sampler"] = self.sampler.copy()
+            del changed["sampler"]["kernels"]
         args = ["%s=%r" % keyval for keyval in changed.items()]
         return type(self).__name__ + "(" + ", ".join(args) + ")"
 
@@ -123,6 +120,8 @@ class Experiment(dict):
                 for argid in call.sig.dataargs()
                 if isinstance(call[argid], str)
             ])
+            for name in set(self.data) - names:
+                del self.data[name]
             for name in names:
                 self.data_update(name)
             return
@@ -189,12 +188,10 @@ class Experiment(dict):
         # vary
         if name in self.data:
             vary = self.data[name]["vary"]
-            # limit vary by dimensionality
-            vary["along"] = min(vary["along"], len(dims) - 1)
         else:
             vary = {
                 "with": set(),
-                "along": 0,
+                "along": len(dims) - 1,
                 "offset": 0
             }
         data["vary"] = vary
@@ -378,6 +375,15 @@ class Experiment(dict):
                                 type(self.sumrange[0]))
             if not isinstance(self.sumrange[1], Iterable):
                 raise TypeError("sumrange[1] must be iterable")
+            dependson = symbolic.findsymbols(self.sumrange[1])
+            if self.range:
+                dependson.discard(symbolic.Symbol(self.range[0]))
+            if dependson:
+                raise ValueError("unknown symbol %r in sumrange" %
+                                 dependson.pop())
+        if self.range and self.sumrange:
+            if self.sumrange[0] == self.range[0]:
+                raise ValueError("range and sumrange use the same symbol")
 
         # threads
         if isinstance(self.nthreads, int):
@@ -387,7 +393,68 @@ class Experiment(dict):
             if not self.range or self.nthreads != self.range[0]:
                 raise ValueError("nthreads int or range[0]")
 
+        # calls
+        symbols = set()
+        if self.range:
+            symbols.add(symbolic.Symbol(self.range[0]))
+        if self.sumrange:
+            symbols.add(symbolic.Symbol(self.sumrange[0]))
+        if len(self.calls) == 0:
+            raise ValueError("calls are empty")
+        for callid, call in enumerate(self.calls):
+            if not isinstance(call, signature.BasicCall):
+                raise ValueError("call[%d] must be Call or BasicCall" % callid)
+            if call[0] != str(call.sig[0]):
+                raise ValueError("call[%d] is for %s but has signature for %s"
+                                 % (callid, call[0], call.sig[0]))
+            if len(call) != len(call.sig):
+                raise ValueError("%s takes %d arguments but call[%d] has %d" %
+                                 (call.sig[0], len(call.sig) - 1, callid,
+                                  len(call) - 1))
 
+            # Nones
+            if any(arg is None for arg in call):
+                raise ValueError("call[%d] contains None")
+
+            # symbols
+            for argid, arg in enumerate(call):
+                excess = symbolic.findsymbols(arg) - symbols
+                if excess:
+                    raise ValueError("unknown symbol %r in call[%d][%d]" %
+                                     (excess.pop(), callid, argid))
+
+        # data
+        needed = set(call[argid] for call in self.calls
+                     if isinstance(call, signature.Call)
+                     for argid in call.sig.dataargs())
+        excess = needed - set(self.data)
+        if excess:
+            raise KeyError("%r not in data" % excess.pop())
+        withoptions = set(["rep"])
+        if self.range:
+            withoptions.add(self.range[0])
+        if self.sumrange:
+            withoptions.add(self.sumrange[0])
+        databackup = deepcopy(self.data)
+        self.data_update()
+        if self.data != databackup:
+            raise Exception("Data is not up to date")
+
+        # vary
+        for name, data in self.data.items():
+            self.data = databackup
+            excess = data["vary"]["with"] - withoptions
+            if excess:
+                raise ValueError("data[%s] varies with unknown %s" %
+                                 (name, excess.pop()))
+            if data["vary"]["along"] >= len(data["dims"]):
+                raise IndexError("data[%s] has %d dims but varies with dim %d"
+                                 % (name, len(data["dims"]),
+                                    data["vary"]["along"]))
+            excess = symbolic.findsymbols(data["vary"]["offset"]) - symbols
+            if excess:
+                raise ValueError("unknown symbol %r in offset for data[%s]" %
+                                 (excess.pop(), name))
 
         return True
 
@@ -590,34 +657,34 @@ class Experiment(dict):
                                 cmd[argid] = varname(
                                     cmd[argid], range_val, rep, sumrange_val
                                 )
-                        else:
+                        else:  # BasicCall
                             # call without signature
                             cmd = call[:]
-                            minsig = self.sampler["kernels"][call[0]]
+                            sig = call.sig
 
                             # go over arguments
                             for argid, value in enumerate(call):
-                                if argid == 0 or minsig[argid] == "char":
+                                if argid == 0 or sig[argid] == "char *":
                                     # chars don't need further processing
                                     continue
                                 if isinstance(value, str):
                                     if value[0] == "[" and value[-1] == "]":
                                         # parse string as array argument [ ]
-                                        expr = self.range_parse(value[1:-1])
+                                        expr = self.ranges_parse(value[1:-1])
                                         if expr is not None:
                                             value = next(self.ranges_eval(
                                                 expr, range_val, sumrange_val
                                             ))
-                                            call[argid] = "[%s]" % str(value)
+                                            value = "[%s]" % str(value)
                                         # TODO: parse list argument
-                                else:
-                                    # parse scalar arguments
-                                    expr = self.range_parse(value)
-                                    if expr is not None:
-                                        value = next(self.ranges_eval(
-                                            expr, range_val, sumrange_val
-                                        ))
-                                        call[argid] = str(value)
+                                    else:
+                                        # parse scalar arguments
+                                        expr = self.ranges_parse(value)
+                                        if expr is not None:
+                                            value = next(self.ranges_eval(
+                                                expr, range_val, sumrange_val
+                                            ))
+                                    cmd[argid] = value
 
                         # add created call
                         cmds.append(cmd)
@@ -637,7 +704,7 @@ class Experiment(dict):
 
     def submit_prepare(self, filebase):
         """Create all files needed to run the experiment."""
-        assert(self.check_sanity())
+        assert(self.check_sanity(True))  # DEBUG
         scriptfile = filebase + ".sh"
         reportfile = filebase + ".eer"
         errfile = filebase + ".err"

@@ -3,6 +3,7 @@
 from __future__ import division, print_function
 
 from signature import *
+import symbolic
 from experiment import *
 
 import unittest
@@ -57,7 +58,7 @@ class TestExperiment(unittest.TestCase):
 
         # initial vary setup
         self.assertEqual(ex.data["X"]["vary"],
-                         {"with": set(), "along": 0, "offset": 0})
+                         {"with": set(), "along": 1, "offset": 0})
 
         # vary is not touched
         ex.data["X"]["vary"]["with"].add("rep")
@@ -129,18 +130,15 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(ex.calls[0].m, ex.calls[1][2])
         self.assertEqual(ex.calls[0].n, ex.calls[1][2])
 
-        # acces .call as an attribute when only one call
-        with self.assertRaises(AttributeError):
-            ex.call
-
-        with self.assertRaises(AttributeError):
-            ex.calls = []
-            print(ex.call)
-
     def test_check_sanity(self):
         """test for check_sanity()."""
-        ex = Experiment(sampler=self.sampler)
-        ex.check_sanity()
+        ex = Experiment(
+            sampler=self.sampler,
+            calls=[Signature("name", Dim("m"))(5)]
+        )
+        ex.data_update()
+        ex.check_sanity(True)
+        self.assertTrue(ex.check_sanity())
 
         # instance checking
         ex.note = 1
@@ -159,18 +157,70 @@ class TestExperiment(unittest.TestCase):
         ex.range = (1, [1, 2])
         self.assertRaises(TypeError, ex.check_sanity, True)
         ex.range = None
-        ex.sumrange = ("i", 1)
+        ex.range = ("i", 1)
         self.assertRaises(TypeError, ex.check_sanity, True)
-        ex.sumrange = ("j", range(random.randint(1, 10)))
+        ex.range = ("j", range(random.randint(1, 10)))
+        ex.sumrange = ("j", [1, 2])
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.range = ("i", [1, 2, 3])
+        ex.sumrange = ("j", [symbolic.Symbol("k"), 2])
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.sumrange = ("j", [symbolic.Symbol("i"), 2])
+        ex.check_sanity(True)
+        ex.sumrange = None
 
         # threads
         ex.nthreads = ex.sampler["nt_max"] + random.randint(1, 10)
         self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.nthreads = "i"
+        ex.nthreads = "k"
         self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.range = ("i", [1, 2])
-        self.assertTrue(ex.check_sanity())
+        ex.range = ("k", [1, 2])
+        ex.check_sanity(True)
 
+        # calls
+        ex.calls = []
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.call = ["name", 5]
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.call = BasicCall(("name", "int *"), 5)
+        self.assertTrue(ex.check_sanity(True))
+        ex.call[0] = "name2"
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.call[0] = "name"
+        ex.call.append(6)
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.call.pop()
+        ex.call[-1] = None
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.call[-1] = 100
+        ex.check_sanity(True)
+
+        # symbols
+        ex.call[1] = symbolic.Symbol("a")
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.call[1] = symbolic.Symbol("k")
+        ex.check_sanity(True)
+
+        # data
+        sig = Signature("name", Dim("m"), Dim("n"),
+                        sData("A", "ldA * n"), Ld("ldA", "m"),
+                        dData("B", "ldB * m"), Ld("ldB", "m"),
+                        cData("C", "ldC * n"), Ld("ldC", "n"))
+        ex.call = sig(2, 3, "X", 4, "Y", 5, "Z", 6)
+        self.assertRaises(KeyError, ex.check_sanity, True)
+        ex.data_update()
+        ex.check_sanity(True)
+
+        # vary
+        ex.data["X"]["vary"]["with"].add("a")
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.data["X"]["vary"]["with"] = set("k")
+        ex.data["X"]["vary"]["along"] = 2
+        self.assertRaises(IndexError, ex.check_sanity, True)
+        ex.data["X"]["vary"]["along"] = 1
+        ex.data["X"]["vary"]["offset"] = symbolic.Symbol("a")
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.data["X"]["vary"]["offset"] = 10
 
     def test_submit_prepare(self):
         """test for generate_cmds()."""
@@ -219,15 +269,17 @@ class TestExperimentCmds(unittest.TestCase):
         self.ex.sumrange = ("j", range(lensumrange))
         self.ex.data["X"]["vary"]["with"].add("rep")
         self.ex.data["Y"]["vary"]["with"].add("j")
+        self.ex.data["Y"]["vary"]["along"] = 0
         self.ex.data["Z"]["vary"]["with"].update(["rep", "j"])
         self.ex.infer_lds()
 
         cmds = self.ex.generate_cmds()
 
         self.assertIn(["smalloc", "X",
-                       nreps * self.m * self.n + (nreps - 1) * self.m], cmds)
+                       nreps * self.m * self.n], cmds)
         idx = random.randint(0, nreps - 1)
-        self.assertIn(["soffset", "X", idx * self.m, "X_%d" % idx], cmds)
+        self.assertIn(["soffset", "X", idx * self.m * self.n, "X_%d" % idx],
+                      cmds)
 
         self.assertIn([
             "dmalloc", "Y",
@@ -236,15 +288,12 @@ class TestExperimentCmds(unittest.TestCase):
         idx = random.randint(0, lensumrange - 1)
         self.assertIn(["doffset", "Y", idx * self.m, "Y_%d" % idx], cmds)
 
-        self.assertIn([
-            "cmalloc", "Z",
-            (nreps * lensumrange * self.n * self.n +
-             ((nreps - 1) * lensumrange + (lensumrange - 1)) * self.n)
-        ], cmds)
+        self.assertIn(["cmalloc", "Z", nreps * lensumrange * self.n * self.n],
+                      cmds)
         idxrep = random.randint(0, nreps - 1)
         idxrange = random.randint(0, lensumrange - 1)
         self.assertIn(["coffset", "Z",
-                       (idxrep * lensumrange + idxrange) * self.n,
+                       (idxrep * lensumrange + idxrange) * self.n * self.n,
                        "Z_%d_%d" % (idxrep, idxrange)], cmds)
 
     def test_data_range(self):
@@ -255,6 +304,7 @@ class TestExperimentCmds(unittest.TestCase):
         self.ex.range = ("i", range(lenrange))
         self.ex.nreps = nreps
 
+        self.ex.data["X"]["vary"]["along"] = 0
         self.ex.data["X"]["vary"]["with"].add("rep")
         self.ex.infer_lds()
 
@@ -282,7 +332,7 @@ class TestExperimentCmds(unittest.TestCase):
 
         rangeidx = random.randint(0, lenrange - 1)
         sumrangeidx = random.randint(0, lensumrange - 1)
-        offset = sum(j for j in range(sumrangeidx))
+        offset = sum(self.n * j for j in range(sumrangeidx))
         self.assertIn(["soffset", "X", offset,
                        "X_%d_%d" % (rangeidx, sumrangeidx)], cmds)
 
@@ -312,10 +362,8 @@ class TestExperimentCmds(unittest.TestCase):
 
         cmds = self.ex.generate_cmds()
 
-        self.assertIn([
-            "smalloc", "X",
-            nreps * self.m * self.n + (nreps - 1) * (self.m + offset)
-        ], cmds)
+        self.assertIn(["smalloc", "X",
+                       nreps * self.m * self.n + (nreps - 1) * offset], cmds)
 
     def test_calls(self):
         """Test for generate call commands."""
@@ -327,7 +375,7 @@ class TestExperimentCmds(unittest.TestCase):
         cmds = self.ex.generate_cmds()
 
         idx = random.randint(0, nreps - 1)
-        self.assertIn(["name", self.m, self.n, "X_%d" % idx, nreps * self.m,
+        self.assertIn(["name", self.m, self.n, "X_%d" % idx, self.m,
                        "Y", self.m, "Z", self.n], cmds)
 
     def test_omp(self):
@@ -351,6 +399,27 @@ class TestExperimentCmds(unittest.TestCase):
 
         self.assertEqual(cmds.count(["{omp"]), nreps)
         self.assertEqual(cmds.count(["}"]), nreps)
+
+    def test_basecall(self):
+        """Test for BasicCall calls (i.e., no Signature)."""
+        self.ex.call = BasicCall(
+            ("name", "char *", "int *", "double *", "double *"),
+            "N", "100", "1.5", "[10000]"
+        )
+        self.ex.data_update()
+        cmds = self.ex.generate_cmds()
+        self.assertIn(["name", "N", 100, 1.5, "[10000]"], cmds)
+
+        # now with a range
+        lenrange = random.randint(1, 10)
+        self.ex.range = ("i", range(lenrange))
+        self.ex.call = BasicCall(
+            ("name", "char *", "int *", "double *", "double *"),
+            "N", "i", "1.5", "[i * i]"
+        )
+        cmds = self.ex.generate_cmds()
+        idx = random.randint(0, lenrange - 1)
+        self.assertIn(["name", "N", idx, 1.5, "[%d]" % (idx * idx)], cmds)
 
 
 class TestExperimentSubmit(TestExperimentCmds):

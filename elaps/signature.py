@@ -125,19 +125,16 @@ class Signature(list):
         return self[self.dataargs()[0]].typename
 
 
-class Call(list):
+class BasicCall(list):
 
-    """A call for to a signature."""
+    """Base class for Calls with and without a Signature."""
 
     def __init__(self, sig, *args):
-        """Initialize from signature and arguments."""
-        if not isinstance(sig, Signature):
-            raise TypeError("a Signature is requred as first argument")
-        if len(args) != len(sig) - 1:
-            raise TypeError(sig[0].name + "() takes exactly " +
-                            str(len(sig) - 1) + " arguments (" +
-                            str(len(args)) + " given)")
-        list.__init__(self, (sig[0].name,) + args)
+        """Initialize from arguments."""
+        if len(sig) != 1 + len(args):
+            raise TypeError("%s takes %d arguments (%d given)" %
+                            (sig[0], len(sig) - 1, len(args)))
+        list.__init__(self, (str(sig[0]),) + args)
         self.__dict__["sig"] = sig
 
     def __str__(self):
@@ -148,6 +145,25 @@ class Call(list):
         """Format as python parsable string."""
         return (type(self).__name__ + "(" + repr(self.sig) + ", " +
                 ", ".join(map(repr, self[1:])) + ")")
+
+    def __copy__(self):
+        """Create a deep copy."""
+        return Call(self.sig, *self[1:])
+
+    def copy(self):
+        """Create a deep copy."""
+        return self.__copy__()
+
+
+class Call(BasicCall):
+
+    """A call to a signature."""
+
+    def __init__(self, sig, *args):
+        """Initialize from signature and arguments."""
+        if not isinstance(sig, Signature):
+            raise TypeError("a Signature is requred as first argument")
+        BasicCall.__init__(self, sig, *args)
 
     def __getattr__(self, name):
         """Variable names as attributes."""
@@ -164,14 +180,6 @@ class Call(list):
                 self[i] = value
                 return
         list.__setattr__(self, name, value)
-
-    def __copy__(self):
-        """Create a deep copy."""
-        return Call(self.sig, *self[1:])
-
-    def copy(self):
-        """Create a deep copy."""
-        return self.__copy__()
 
     def argdict(self):
         """Create a dictionary of the calls arguments."""
