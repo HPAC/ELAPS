@@ -777,7 +777,7 @@ def substitute(expr, **kwargs):
 def simplify(expr, **kwargs):
     """(Substitute and) simplify if Expression."""
     if isinstance(expr, (Expression, Range)):
-        return expr(**kwargs)
+        return expr.simplify(**kwargs)
     return expr
 
 
