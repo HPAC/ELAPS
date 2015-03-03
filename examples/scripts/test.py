@@ -16,9 +16,8 @@ backend_local = load_backend("local")
 ex = Experiment(sampler=sampler)
 ex.range = ("i", range(100, 1000 + 1, 100))
 ex.nreps = 10
-i = ex.ranges_parse("i")
-ex.call = ex.ranges_parse(dgemm("N", "N", i, i, i, 1,
-                                "A", None, "B", None, 1, "C", None))
+ex.call = ex.ranges_parse(dgemm("n", "n", "i", "i", "i", 1,
+                                "a", None, "b", None, 1, "c", None))
 ex.infer_lds()
 
 ex.submit("test", backend_local)
