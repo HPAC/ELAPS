@@ -91,14 +91,14 @@ class Experiment(dict):
             result += "Header:\t%s\n" % self.script_header
         indent = ""
         if self.range:
-            result += "For %s = %s :\n" % self.range
+            result += "for %s = %s :\n" % tuple(self.range)
             indent += "    "
         if not isinstance(self.nthreads, int):
             result += indent + "#threads = %s\n" % self.nthreads
         result += indent + "repeat %s times :\n" % self.nreps
         indent += "    "
         if self.sumrange:
-            result += indent + "sum over %s = %s" % self.sumrange
+            result += indent + "sum over %s = %s" % tuple(self.sumrange)
             if self.sumrange_parallel:
                 result += " in parallel"
             result += " :\n"
@@ -350,9 +350,9 @@ class Experiment(dict):
             ("sampler", dict),
             ("nthreads", (int, str)),
             ("script_header", str),
-            ("range", (type(None), tuple)),
+            ("range", (type(None), list)),
             ("nreps", int),
-            ("sumrange", (type(None), tuple)),
+            ("sumrange", (type(None), list)),
             ("sumrange_parallel", bool),
             ("calls_parallel", bool),
             ("calls", list),

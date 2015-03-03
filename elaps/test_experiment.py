@@ -90,7 +90,7 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(ex.data["X"]["lds"], [8 * 100, 1000])
 
         # range
-        ex.sumrange = ("i", range(10))
+        ex.sumrange = ["i", range(10)]
         ex.data["X"]["vary"]["with"].add("i")
 
         ex.infer_lds()
@@ -136,7 +136,7 @@ class TestExperiment(unittest.TestCase):
                         iData("A", "m * n"), iData("B", "n * n"))
         ex = Experiment()
         ex.call = sig(10, 20, "X", "Y")
-        ex.range = ("i", range(random.randint(1, 10)))
+        ex.range = ["i", range(random.randint(1, 10))]
         ex.update_data()
         ex.vary_set("X", offset="10 * i")
 
@@ -165,20 +165,20 @@ class TestExperiment(unittest.TestCase):
         self.sampler["exe"] = "x"
 
         # ranges
-        ex.range = ("i", [1, 2], 3)
+        ex.range = ["i", [1, 2], 3]
         self.assertRaises(TypeError, ex.check_sanity, True)
-        ex.range = (1, [1, 2])
+        ex.range = [1, [1, 2]]
         self.assertRaises(TypeError, ex.check_sanity, True)
         ex.range = None
-        ex.range = ("i", 1)
+        ex.range = ["i", 1]
         self.assertRaises(TypeError, ex.check_sanity, True)
-        ex.range = ("j", range(random.randint(1, 10)))
-        ex.sumrange = ("j", [1, 2])
+        ex.range = ["j", range(random.randint(1, 10))]
+        ex.sumrange = ["j", [1, 2]]
         self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.range = ("i", [1, 2, 3])
-        ex.sumrange = ("j", [symbolic.Symbol("k"), 2])
+        ex.range = ["i", [1, 2, 3]]
+        ex.sumrange = ["j", [symbolic.Symbol("k"), 2]]
         self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.sumrange = ("j", [symbolic.Symbol("i"), 2])
+        ex.sumrange = ["j", [symbolic.Symbol("i"), 2]]
         ex.check_sanity(True)
         ex.sumrange = None
 
@@ -187,7 +187,7 @@ class TestExperiment(unittest.TestCase):
         self.assertRaises(ValueError, ex.check_sanity, True)
         ex.nthreads = "k"
         self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.range = ("k", [1, 2])
+        ex.range = ["k", [1, 2]]
         ex.check_sanity(True)
 
         # calls
@@ -275,7 +275,7 @@ class TestExperimentCmds(unittest.TestCase):
         lensumrange = random.randint(1, 10)
 
         self.ex.nreps = nreps
-        self.ex.sumrange = ("j", range(lensumrange))
+        self.ex.sumrange = ["j", range(lensumrange)]
         self.ex.data["X"]["vary"]["with"].add("rep")
         self.ex.data["Y"]["vary"]["with"].add("j")
         self.ex.data["Y"]["vary"]["along"] = 0
@@ -310,7 +310,7 @@ class TestExperimentCmds(unittest.TestCase):
         lenrange = random.randint(1, 10)
         nreps = random.randint(1, 10)
 
-        self.ex.range = ("i", range(lenrange))
+        self.ex.range = ["i", range(lenrange)]
         self.ex.nreps = nreps
 
         self.ex.data["X"]["vary"]["along"] = 0
@@ -330,8 +330,8 @@ class TestExperimentCmds(unittest.TestCase):
         """Test data commands with depedencies in data."""
         lenrange = random.randint(1, 10)
         lensumrange = random.randint(1, 10)
-        self.ex.range = ("i", range(lenrange))
-        self.ex.sumrange = ("j", range(lensumrange))
+        self.ex.range = ["i", range(lenrange)]
+        self.ex.sumrange = ["j", range(lensumrange)]
         self.ex.call.m = self.ex.ranges_parse("j")
         self.ex.data["X"]["vary"]["with"].add("j")
 
@@ -401,7 +401,7 @@ class TestExperimentCmds(unittest.TestCase):
         self.assertEqual(cmds.count(["}"]), nreps)
 
         lensumrange = random.randint(1, 10)
-        self.ex.sumrange = ("j", range(lensumrange))
+        self.ex.sumrange = ["j", range(lensumrange)]
         self.ex.sumrange_parallel = True
 
         cmds = self.ex.generate_cmds()
@@ -421,7 +421,7 @@ class TestExperimentCmds(unittest.TestCase):
 
         # now with a range
         lenrange = random.randint(1, 10)
-        self.ex.range = ("i", range(lenrange))
+        self.ex.range = ["i", range(lenrange)]
         self.ex.call = BasicCall(
             ("name", "char *", "int *", "double *", "double *"),
             "N", "i", "1.5", "[i * i]"
@@ -469,7 +469,7 @@ class TestExperimentSubmit(TestExperimentCmds):
     def test_threadrange(self):
         """Test files generated for #threads range."""
         lenrange = random.randint(2, 10)
-        self.ex.range = ("i", range(1, lenrange + 1))
+        self.ex.range = ["i", range(1, lenrange + 1)]
         self.ex.nthreads = "i"
 
         script = self.ex.submit_prepare(self.filebase)
@@ -486,7 +486,7 @@ class TestExperimentSubmit(TestExperimentCmds):
     def test_ompthreads(self):
         """Test setting OMP_NUM_THREADS."""
         lensumrange = random.randint(2, 10)
-        self.ex.sumrange = ("j", range(1, lensumrange + 1))
+        self.ex.sumrange = ["j", range(1, lensumrange + 1)]
         self.ex.sumrange_parallel = True
 
         script = self.ex.submit_prepare(self.filebase)
