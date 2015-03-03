@@ -2,8 +2,7 @@
 """GUI for Experiments."""
 from __future__ import division, print_function
 
-from loaders import load_all_samplers, load_all_backends, load_experiment
-from loaders import reportpath, setuppath
+import elapsio
 from experiment import Experiment
 import symbolic
 
@@ -17,7 +16,7 @@ class PlayMat(object):
 
     """GUI for Experiment."""
 
-    def __init__(self, app=None, reset=False):
+    def __init__(self, app=None, load=None, reset=False):
         """Initilialize the PlayMat."""
         if app:
             self.Qapp = app
@@ -25,24 +24,32 @@ class PlayMat(object):
             self.Qapp = QtGui.QApplication(sys.argv)
             self.Qapp.viewer = None
         self.Qapp.playmat = self
-        self.backends = load_all_backends()
-        self.samplers = load_all_samplers()
+        self.backends = elapsio.load_all_backends()
+        self.samplers = elapsio.load_all_samplers()
         self.docs = {}
         self.sigs = {}
         self.jobs = {}
-        self.experiment_reset()
 
-        # initialize components
         self.UI_init()
 
-        if len(sys.argv) > 1:
-            if sys.argv[1][-4:] in (".ems", ".emr"):
-                try:
-                    self.experiment_load(sys.argv[1])
-                except:
-                    self.alert("ERROR: Can't load %r" % sys.argv[1])
+        # set experiment
+        self.experiment = None
+        if load:
+            try:
+                self.experiment_load(sys.argv[1])
+            except:
+                self.alert("ERROR: Can't load %r" % sys.argv[1])
+        if not self.experiment and not reset:
+            try:
+                self.experiment_qt_load()
+            except:
+                pass
+        if not self.experiment:
+            self.experiment_load(os.path.join(elapsio.setuppath, "default.ees"))
         self.experiment_back = Experiment(self.experiment)
         self.UI_setall()
+        if not reset:
+            self.UI_settings_load()
 
     def UI_init(self):
         """Initialize all GUI elements."""
@@ -192,7 +199,7 @@ class PlayMat(object):
             self.UI_rangeW.setLayout(rangeL)
 
             # reps
-            self.UI_nreps = QtGui.QLineEdit()
+            self.UI_nreps = QtGui.QLineEdit(textChanged=self.on_nreps_change)
             self.UI_nreps.setValidator(QtGui.QRegExpValidator(
                 QtCore.QRegExp("[1-9][0-9]*"), self.UI_nreps
             ))
@@ -356,6 +363,18 @@ class PlayMat(object):
         self.UI_setting -= 1
         self.UI_initialized = True
 
+    def UI_settings_load(self):
+        """Load Qt settings."""
+        settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
+        self.UI_setting += 1
+        self.UI_window.restoreGeometry(
+            settings.value("geometry").toByteArray()
+        )
+        self.UI_window.restoreState(
+            settings.value("windowState").toByteArray()
+        )
+        self.UI_setting -= 1
+
     def start(self):
         """Start the Mat (enter the main loop)."""
         import signal
@@ -380,23 +399,33 @@ class PlayMat(object):
               file=sys.stderr)
 
     # experiment routines
-    def experiment_load(self, filename):
-        """Load Experiment from a file."""
-        ex = load_experiment(filename)
+    def experiment_qt_load(self):
+        """Load Experiment from Qt setting."""
+        settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
+        exvalue = str(settings.value("Experiment").toString())
+        elapsio.load_experiment_string(exvalue)
+        ex = elapsio.load_experiment_string(exvalue)
         if ex.sampler is None or ex.sampler["name"] not in self.samplers:
             ex.sampler = self.samplers[min(self.samplers)]
+        else:
+            ex.sampler = self.samplers[ex.sampler["name"]]
+        self.experiment = ex
+        self.log("Loaded last Experiment")
+
+    def experiment_load(self, filename):
+        """Load Experiment from a file."""
+        ex = elapsio.load_experiment(filename)
+        if ex.sampler is None or ex.sampler["name"] not in self.samplers:
+            ex.sampler = self.samplers[min(self.samplers)]
+        else:
+            ex.sampler = self.samplers[ex.sampler["name"]]
         self.experiment = ex
         self.log("Loaded Experiment from %r." % os.path.relpath(filename))
 
     def experiment_write(self, filename):
         """Write Experiment to a file."""
-        with open(filename, "w") as fout:
-            fout.write(repr(self.experiment))
+        elapsio.wrte_experiment(self.experiment, filename)
         self.log("Written Experiment to %r." % os.path.relpath(filename))
-
-    def experiment_reset(self):
-        """Reset the state to an initial configuration."""
-        self.experiment_load(os.path.join(setuppath, "default.ees"))
 
     # info string
     def sampler_about_str(self):
@@ -422,7 +451,7 @@ class PlayMat(object):
         """(Try to) get the Signature for a routine."""
         if routine not in self.sigs:
             try:
-                self.sigs[routine] = load_signature(routine)
+                self.sigs[routine] = elapsio.load_signature(routine)
                 self.log("Loaded Signature for %r." % routine)
             except:
                 self.sigs[routine] = None
@@ -433,7 +462,7 @@ class PlayMat(object):
         """(Try to) get the documentation for a routine."""
         if routine not in self.sigs:
             try:
-                self.docs[routine] = load_docs(routine)
+                self.docs[routine] = elapsio.load_docs(routine)
                 self.log("Loaded documentation for %r." % routine)
             except:
                 self.docs[routine] = None
@@ -541,13 +570,15 @@ class PlayMat(object):
     @pyqtSlot()
     def on_window_close(self, event):
         """Event: close main window."""
-        # TODO
+        settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
+        settings.setValue("geometry", self.UI_window.saveGeometry())
+        settings.setValue("windowState", self.UI_window.saveState())
+        settings.setValue("Experiment", QtCore.QVariant(repr(self.experiment)))
+        self.log("Experiment saved.")
 
     @pyqtSlot()
     def on_submit(self):
         """Event: submit."""
-        if self.UI_setting:
-            return
         # TODO
 
     @pyqtSlot()
@@ -557,31 +588,38 @@ class PlayMat(object):
         self.UI_setall()
 
     @pyqtSlot()
-    def on_experiment_load(self):
+    def on_experiment_load(self, report=False):
         """Event: load experiment."""
-        if self.UI_setting:
-            return
-        # TODO
+        filename = QtGui.QFileDialog.getOpenFileName(
+            self.UI_window,
+            "Load Experiment",
+            elapsio.reportpath if report else elapsio.setuppath,
+            "*.eer *.ees"
+        )
+        if filename:
+            self.load_experiment(str(filename))
 
     @pyqtSlot()
     def on_experiment_load_report(self):
         """Event: load experiment from report."""
-        if self.UI_setting:
-            return
-        # TODO
+        self.on_experiment_load(True)
 
     @pyqtSlot()
     def on_experiment_save(self):
         """Event: save experiment."""
-        if self.UI_setting:
-            return
-        # TODO
+        filename = QtGui.QFileDialog.getSaveFileName(
+            self.UI_window,
+            "Save Setup",
+            elapsio.setuppath,
+            "*.ems"
+        )
+        if filename:
+            with open(str(filename), "w") as fout:
+                fout.write(repr(self.experiment))
 
     @pyqtSlot()
     def on_viewer_start(self):
         """Event: start Viewer."""
-        if self.UI_setting:
-            return
         # TODO
 
     @pyqtSlot(str)
@@ -642,12 +680,16 @@ class PlayMat(object):
         """Event: change range."""
         if self.UI_setting:
             return
+        self.experiment.range[1] = symbolic.Range(str(value))
+
+    @pyqtSlot(str)
+    def on_nreps_change(self, value):
+        """Event: change #repetitions."""
+        if self.UI_setting:
+            return
         value = str(value)
-        if not value:
-            value = None
-        else:
-            value = symbolic.Range(value)
-        self.experiment.range[1] = value
+        if value:
+            self.experiment.nreps = int(value)
 
     @pyqtSlot(int)
     def on_usesumrange_change(self, value):
@@ -694,12 +736,7 @@ class PlayMat(object):
         """Event: change sumrange."""
         if self.UI_setting:
             return
-        value = str(value)
-        if not value:
-            value = None
-        else:
-            value = symbolic.Range(value)
-        self.experiment.sumrange[1] = value
+        self.experiment.sumrange[1] = symbolic.Range(str(value))
 
     @pyqtSlot(int)
     def on_calls_parallel_change(self, value):
@@ -718,13 +755,19 @@ class PlayMat(object):
 
     def on_calls_focusout(self, event):
         """Event: unfocus calls."""
-        if self.UI_setting:
-            return
         # TODO
 
 
 def main():
     """Main entry point."""
+    if "--reset" in sys.argv:
+        PlayMat(reset=True).start()
+        return
+    if len(sys.argv) > 1:
+        filename = sys.argv[1]
+        if filename[-4:] in (".ees", ".eer"):
+            PlayMat(load=filename).start()
+            return
     PlayMat().start()
 
 

@@ -70,7 +70,7 @@ class Experiment(dict):
                    if value != empty[key]}
 
         # remove unused sampler kernels
-        if "sampler" in changed:
+        if "sampler" in changed and "kernels" in changed["sampler"]:
             changed["sampler"] = self.sampler.copy()
             del changed["sampler"]["kernels"]
         args = ["%s=%r" % keyval for keyval in changed.items()]
