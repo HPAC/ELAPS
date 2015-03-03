@@ -45,7 +45,9 @@ class PlayMat(object):
             except:
                 pass
         if not self.experiment:
-            self.experiment_load(os.path.join(elapsio.setuppath, "default.ees"))
+            self.experiment_load(
+                os.path.join(elapsio.setuppath, "default.ees")
+            )
         self.experiment_back = Experiment(self.experiment)
         self.UI_setall()
         if not reset:
