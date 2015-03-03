@@ -130,6 +130,19 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(ex.calls[0].m, ex.calls[1][2])
         self.assertEqual(ex.calls[0].n, ex.calls[1][2])
 
+    def test_vary_set(self):
+        """Test for vary_set()."""
+        sig = Signature("name", Dim("m"), Dim("n"),
+                        iData("A", "m * n"), iData("B", "n * n"))
+        ex = Experiment()
+        ex.call = sig(10, 20, "X", "Y")
+        ex.range = ("i", range(random.randint(1, 10)))
+        ex.update_data()
+        ex.vary_set("X", offset="10 * i")
+
+        self.assertEqual(ex.data["X"]["vary"]["offset"], 10 *
+                         symbolic.Symbol("i"))
+
     def test_check_sanity(self):
         """test for check_sanity()."""
         ex = Experiment(
@@ -221,10 +234,6 @@ class TestExperiment(unittest.TestCase):
         ex.data["X"]["vary"]["offset"] = symbolic.Symbol("a")
         self.assertRaises(ValueError, ex.check_sanity, True)
         ex.data["X"]["vary"]["offset"] = 10
-
-    def test_submit_prepare(self):
-        """test for generate_cmds()."""
-        pass
 
 
 class TestExperimentCmds(unittest.TestCase):

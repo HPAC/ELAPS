@@ -324,6 +324,17 @@ class Experiment(dict):
         for callid2, argid2 in self.get_connections()[callid, argid]:
             self.calls[callid2][argid2] = value
 
+    def vary_set(self, name, with_=None, along=None, offset=0):
+        """Set the vary specs of a variable."""
+        data = self.data[name]
+        if with_ is None:
+            with_ = set()
+        if along is None:
+            along = len(data["dims"]) - 1
+        if isinstance(offset, str):
+            offset = self.ranges_parse(offset)
+            data["vary"] = {"with": with_, "along": along, "offset": offset}
+
     def check_sanity(self, raise_=False):
         """Check if the experiment is self-consistent."""
         if not raise_:
@@ -886,13 +897,23 @@ class Experiment(dict):
                 )
 
     def ranges_parse(self, expr):
-        """Parse (eval) a string with symbolic range variables."""
-        symdict = {}
-        if self.range:
-            symdict[self.range[0]] = symbolic.Symbol(self.range[0])
-        if self.sumrange:
-            symdict[self.sumrange[0]] = symbolic.Symbol(self.sumrange[0])
-        return eval(expr, symdict, symbolic.env)
+        """Parse (eval) a string or Call with symbolic range variables."""
+        if isinstance(expr, signature.Call):
+            args = []
+            for arg, val in zip(expr.sig[1:], expr[1:]):
+                if isinstance(arg, (signature.Dim, signature.Ld,
+                                    signature.Scalar)):
+                    val = self.ranges_parse(val)
+                args.append(val)
+            return expr.sig(*args)
+        if isinstance(expr, str):
+            symdict = {}
+            if self.range:
+                symdict[self.range[0]] = symbolic.Symbol(self.range[0])
+            if self.sumrange:
+                symdict[self.sumrange[0]] = symbolic.Symbol(self.sumrange[0])
+            return eval(expr, symdict, symbolic.env)
+        return expr
 
     def get_connections(self):
         """Update the connections between arguments based on coincidng data."""
