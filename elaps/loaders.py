@@ -10,16 +10,27 @@ import os
 import imp
 
 rootpath = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 sigpath = os.path.join(rootpath, "data", "signatures")
 docpath = os.path.join(rootpath, "data", "kerneldocs")
 samplerpath = os.path.join(rootpath, "Sampler", "build")
 backendpath = os.path.join(rootpath, "elaps", "backends")
+setuppath = os.path.join(rootpath, "setups")
+reportpath = os.path.join(rootpath, "reports")
+
+
+def load_signature_string(string):
+    """Load a Signature from a string."""
+    sig = eval(string)
+    if not isinstance(sig, Signature):
+        raise TypeError("not a Signature")
+    return sig
 
 
 def load_signature_file(filename):
     """Load a Signature from a file."""
     with open(filename) as fin:
-        return eval(fin.read())
+        return load_signature_string(fin.read())
 
 
 def load_signature(name):
@@ -52,9 +63,19 @@ def load_all_signatures():
     return sigs
 
 
+def load_experiment_string(string):
+    """Load a Experiment from a string."""
+    ex = eval(string)
+    if not isinstance(sig, Experiment):
+        raise TypeError("not an Experiment")
+    return ex
+
+
 def load_experiment(filename):
     """Load an experiment."""
     with open(filename) as fin:
+        if filename[-4:] == ".ees":
+            return eval(fin.read())
         return eval(fin.readline())
 
 
@@ -145,7 +166,7 @@ def load_all_backends():
         if filename[-3:] != ".py":
             continue
         filepath = os.path.join(backendpath, filename)
-        if not os.path.isfile(filpath):
+        if not os.path.isfile(filepath):
             continue
         try:
             backends[filename[:-3]] = load_backend_file(filepath)
