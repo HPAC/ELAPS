@@ -461,6 +461,7 @@ class TestExperimentSubmit(TestExperimentCmds):
         """Test files generated for #threads range."""
         lenrange = random.randint(2, 10)
         self.ex.range = ("i", range(1, lenrange + 1))
+        self.ex.nthreads = "i"
 
         script = self.ex.submit_prepare(self.filebase)
 
