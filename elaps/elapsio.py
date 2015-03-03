@@ -19,6 +19,12 @@ setuppath = os.path.join(rootpath, "setups")
 reportpath = os.path.join(rootpath, "reports")
 
 
+def write_signature(sig, filename):
+    """Write a Siganture."""
+    with open(filename, "w") as fout:
+        fout.write(repr(sig))
+
+
 def load_signature_string(string):
     """Load a Signature from a string."""
     sig = eval(string)
@@ -63,10 +69,16 @@ def load_all_signatures():
     return sigs
 
 
+def write_experiment(ex, filename):
+    """Write an Experiment."""
+    with open(filename, "w") as fout:
+        fout.write(repr(ex))
+
+
 def load_experiment_string(string):
     """Load a Experiment from a string."""
     ex = eval(string)
-    if not isinstance(sig, Experiment):
+    if not isinstance(ex, Experiment):
         raise TypeError("not an Experiment")
     return ex
 

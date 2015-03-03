@@ -7,7 +7,7 @@ import sys
 sys.path.append("../../elaps/")
 
 from experiment import Experiment
-from loaders import load_sampler, load_signature, load_backend
+from elapsio import load_sampler, load_signature, load_backend
 
 sampler = load_sampler("Mac_OpenBLAS")
 dgemm = load_signature("dgemm_")

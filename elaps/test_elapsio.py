@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-"""Unittest for loaders.py."""
+"""Unittest for elapsio.py."""
 from __future__ import division, print_function
 
-from loaders import *
+from elapsio import *
 from signature import *
 from experiment import Experiment
 
@@ -27,21 +27,20 @@ class TestLoaders(unittest.TestCase):
         """Test for load_signature_file()."""
         sig = Signature("adsf", Dim("m"), sData("A", "m * m"))
         filename = self.filebase + ".pysig"
-        with open(filename, "w") as fout:
-            fout.write(repr(sig))
+
+        write_signature(sig, filename)
         self.assertEqual(load_signature_file(filename), sig)
 
     def test_load_signature(self):
-        """Test for load_signature()."""
+        """Test for write/load_signature()."""
         sig = load_signature("dtrsm_")
         self.assertIsInstance(sig, Signature)
 
     def test_load_expeirment(self):
-        """Test for load_experiment()."""
+        """Test for write/load_experiment()."""
         ex = Experiment(note="adsf")
         filename = self.filebase + ".ees"
-        with open(filename, "w") as fout:
-            fout.write(repr(ex))
+        write_experiment(ex, filename)
         self.assertEqual(load_experiment(filename), ex)
 
     def test_load_doc_file(self):
