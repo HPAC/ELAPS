@@ -83,8 +83,8 @@ class Experiment(dict):
             result += "Note:\t%s\n" % self.note
         if self.sampler:
             result += "Sampler:\t%s (%s, %s)\n" % (self.sampler["name"],
-                                                   self.sampler["system"],
-                                                   self.sampler["blas"])
+                                                   self.sampler["system_name"],
+                                                   self.sampler["blas_name"])
         if isinstance(self.nthreads, int):
             result += "#threads:\t%s\n" % self.nthreads
         if self.script_header:
@@ -110,7 +110,7 @@ class Experiment(dict):
             result += indent + str(call)
         return result
 
-    def data_update(self, name=None):
+    def update_data(self, name=None):
         """Update the data from the calls."""
         if name is None:
             names = set([
@@ -123,7 +123,7 @@ class Experiment(dict):
             for name in set(self.data) - names:
                 del self.data[name]
             for name in names:
-                self.data_update(name)
+                self.update_data(name)
             return
 
         # get any call that contains name
@@ -200,7 +200,7 @@ class Experiment(dict):
 
     def infer_ld(self, callid, ldargid):
         """Infer one leading dimension."""
-        self.data_update()
+        self.update_data()
 
         call = self.calls[callid]
 
@@ -263,7 +263,7 @@ class Experiment(dict):
 
         call[ldargid] = symbolic.simplify(ld)
 
-        self.data_update()
+        self.update_data()
 
     def infer_lds(self, callid=None):
         """Infer all leading dimensions."""
@@ -300,7 +300,7 @@ class Experiment(dict):
         call[argid] = None
         call.complete()
 
-        self.data_update()
+        self.update_data()
 
     def infer_lworks(self, callid=None):
         """Infer all leading dimensions."""
@@ -436,7 +436,7 @@ class Experiment(dict):
         if self.sumrange:
             withoptions.add(self.sumrange[0])
         databackup = deepcopy(self.data)
-        self.data_update()
+        self.update_data()
         if self.data != databackup:
             raise Exception("Data is not up to date")
 
@@ -477,7 +477,7 @@ class Experiment(dict):
                 parts.append(sumrange_val)
             return "_".join(map(str, parts))
 
-        self.data_update()
+        self.update_data()
 
         cmds = []
 
@@ -704,7 +704,8 @@ class Experiment(dict):
 
     def submit_prepare(self, filebase):
         """Create all files needed to run the experiment."""
-        assert(self.check_sanity(True))  # DEBUG
+        self.update_data()
+        assert(self.check_sanity())
         scriptfile = filebase + ".sh"
         reportfile = filebase + ".eer"
         errfile = filebase + ".err"
@@ -716,7 +717,7 @@ class Experiment(dict):
             os.remove(errfile)
 
         nthreads_vals = self.nthreads,
-        if self.range and not self.range[0] == self.nthreads:
+        if self.range and self.range[0] == self.nthreads:
             nthreads_vals = tuple(self.range[1])
 
         script = ""

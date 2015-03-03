@@ -39,15 +39,15 @@ class TestExperiment(unittest.TestCase):
         ex = Experiment(note="1234", range=("i", range(10)))
         self.assertEqual(eval(repr(ex)), ex)
 
-    def test_data_update(self):
-        """Test for data_update()."""
+    def test_update_data(self):
+        """Test for update_data()."""
         sig = Signature("name", Dim("m"), Dim("n"),
                         cData("A", "ldA * n"), Ld("ldA", "m"))
         ex = Experiment(calls=[sig(100, 1000, "X", 2000)])
 
-        self.assertRaises(KeyError, ex.data_update, "B")
+        self.assertRaises(KeyError, ex.update_data, "B")
 
-        ex.data_update()
+        ex.update_data()
 
         self.assertDictContainsSubset({
             "size": 2000 * 1000,
@@ -63,7 +63,7 @@ class TestExperiment(unittest.TestCase):
         # vary is not touched
         ex.data["X"]["vary"]["with"].add("rep")
         ex.call.m = 500
-        ex.data_update("X")
+        ex.update_data("X")
 
         self.assertIn("rep", ex.data["X"]["vary"]["with"])
 
@@ -136,7 +136,7 @@ class TestExperiment(unittest.TestCase):
             sampler=self.sampler,
             calls=[Signature("name", Dim("m"))(5)]
         )
-        ex.data_update()
+        ex.update_data()
         ex.check_sanity(True)
         self.assertTrue(ex.check_sanity())
 
@@ -208,7 +208,7 @@ class TestExperiment(unittest.TestCase):
                         cData("C", "ldC * n"), Ld("ldC", "n"))
         ex.call = sig(2, 3, "X", 4, "Y", 5, "Z", 6)
         self.assertRaises(KeyError, ex.check_sanity, True)
-        ex.data_update()
+        ex.update_data()
         ex.check_sanity(True)
 
         # vary
@@ -243,7 +243,7 @@ class TestExperimentCmds(unittest.TestCase):
         self.ex.calls = [self.sig(self.m, self.n,
                                   "X", None, "Y", None, "Z", None)]
         self.ex.infer_lds()
-        self.ex.data_update()
+        self.ex.update_data()
 
     def test_cmd_order(self):
         """Test for generate_cmds()."""
@@ -406,7 +406,7 @@ class TestExperimentCmds(unittest.TestCase):
             ("name", "char *", "int *", "double *", "double *"),
             "N", "100", "1.5", "[10000]"
         )
-        self.ex.data_update()
+        self.ex.update_data()
         cmds = self.ex.generate_cmds()
         self.assertIn(["name", "N", 100, 1.5, "[10000]"], cmds)
 
