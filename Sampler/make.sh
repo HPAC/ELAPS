@@ -7,9 +7,10 @@
 . $1
 
 # set default values
+: ${NAME:=`basename "$1" .cfg`}
+: ${TARGET_DIR:="build/$NAME"}
 [ -z "$BLAS_NAME" ] && echo "BLAS_NAME is not set" && exit
 : ${SYSTEM_NAME:="local"}
-: ${NAME:=`basename "$1" .cfg`}
 : ${NCORES:=1}
 : ${THREADS_PER_CORE:=1}
 : ${CC:=gcc}
@@ -28,25 +29,24 @@
 : ${BACKEND_SUFFIX:=""}
 : ${BACKEND_FOOTER:=""}
 
-export BLAS_NAME SYSTEM_NAME NAME KERNEL_HEADERS
+export TARGET_DIR NAME BLAS_NAME SYSTEM_NAME KERNEL_HEADERS
 export BACKEND BACKEND_HEADER BACKEND_PREFIX BACKEND_SUFFIX BACKEND_FOOTER
 export PAPI_COUNTERS_MAX PAPI_COUNTERS_AVAIL OPENMP
 export DFLOPS_PER_CYCLE SFLOPS_PER_CYCLE 
 export CPU_MODEL FREQUENCY_HZ NCORES THREADS_PER_CORE
 
 # set paths
-target_dir=build/$NAME
-cfg_h=$target_dir/cfg.h
-kernel_h=$target_dir/kernels.h
-sigs_c_inc=$target_dir/sigs.c.inc
-calls_c_inc=$target_dir/calls.c.inc
-info_py=$target_dir/info.py
+cfg_h=$TARGET_DIR/cfg.h
+kernel_h=$TARGET_DIR/kernels.h
+sigs_c_inc=$TARGET_DIR/sigs.c.inc
+calls_c_inc=$TARGET_DIR/calls.c.inc
+info_py=$TARGET_DIR/info.py
 
 # clean previous build
-rm -rf $target_dir
+rm -rf $TARGET_DIR
 
 # craete buld directory
-mkdir -p $target_dir
+mkdir -p $TARGET_DIR
 
 # create headers file
 src/create_header.py > $kernel_h
@@ -60,11 +60,11 @@ defines=-D\ CFG_H="\"$cfg_h\""
 
 # build .o
 for x in main CallParser MemoryManager Sampler Sampler_utility Signature; do
-    $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c $defines src/$x.cpp -o $target_dir/$x.o || exit
+    $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c $defines src/$x.cpp -o $TARGET_DIR/$x.o || exit
 done
 
 # build sample.o
-$CC $CFLAGS $INCLUDE_FLAGS -I. -c $defines src/sample.c -o $target_dir/sample.o || exit
+$CC $CFLAGS $INCLUDE_FLAGS -I. -c $defines src/sample.c -o $TARGET_DIR/sample.o || exit
 
 # build sampler
-$CXX $CXXFLAGS $target_dir/*.o -o $target_dir/sampler.x $LINK_FLAGS || exit
+$CXX $CXXFLAGS $TARGET_DIR/*.o -o $TARGET_DIR/sampler.x $LINK_FLAGS || exit
