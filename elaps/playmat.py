@@ -61,7 +61,6 @@ class PlayMat(object):
             QtGui.QKeySequence.Print, window, lambda: print(self.experiment)
         )
 
-
         def create_menus():
             """Create all menus."""
             menu = window.menuBar()
@@ -604,7 +603,6 @@ class PlayMat(object):
             value = int(value)
         self.experiment.nthreads = value
 
-
     @pyqtSlot(int)
     def on_userange_change(self, value):
         """Event: change if range is used."""
@@ -616,7 +614,7 @@ class PlayMat(object):
             else:
                 var, range_ = "i", symbolic.Range((1, 1, 1,))
             if (self.experiment.sumrange and
-                self.experiment.sumrange[0] == var):
+                    self.experiment.sumrange[0] == var):
                 var = "j" if self.experiment.sumrange[0] == "i" else "i"
             self.experiment.range = [var, range_]
         else:
