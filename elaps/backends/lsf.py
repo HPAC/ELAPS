@@ -2,19 +2,16 @@
 """Backend for running ELAPS:Mat jobs through LSF."""
 from __future__ import division, print_function
 
-from backend import Backend
-
 import subprocess
 import re
 
 
-class lsf(Backend):
+class lsf(object):
 
     """Backend to run ELAPS:Mat jobs through an LSF scheduler."""
 
     def __init__(self, header="#!/bin/bash -l\n#BSUB -o /dev/null\n"):
         """Initialize the backend."""
-        Backend.__init__(self)
         self.jobs = []
         self.header = header
 

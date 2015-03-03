@@ -44,6 +44,23 @@ class TestLoaders(unittest.TestCase):
             fout.write(repr(ex))
         self.assertEqual(load_experiment(filename), ex)
 
+    def test_load_doc_file(self):
+        """Test for load_doc_file()."""
+        doc = {"adsf": "routine doc", "arg1": "argdoc"}
+        filename = self.filebase + ".pydoc"
+        with open(filename, "w") as fout:
+            fout.write(repr(doc))
+        self.assertEqual(load_doc_file(filename), doc)
+
+    def test_load_doc(self):
+        """Test for load_doc()."""
+        # TODO
+
+    def test_load_backend(self):
+        """Test for load_experiment()."""
+        backend = load_backend("local")
+        self.assertTrue(hasattr(backend, "submit"))
+
 
 if __name__ == "__main__":
     unittest.main()

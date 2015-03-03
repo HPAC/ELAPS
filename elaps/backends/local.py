@@ -2,19 +2,16 @@
 """Backend for running ELAPS:Mat jobs locally."""
 from __future__ import division, print_function
 
-from backend import Backend
-
 import subprocess
 import threading
 
 
-class local(Backend):
+class local(object):
 
     """Backend to run ELAPS:Mat jobs locally in the background."""
 
     def __init__(self):
         """Initialize the backend."""
-        Backend.__init__(self)
         self.jobs = {}
         self.scripts = {}
         self.lastsubmitted = None

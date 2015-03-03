@@ -7,11 +7,13 @@ from symbolic import *
 from experiment import Experiment
 
 import os
+import imp
 
 rootpath = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sigpath = os.path.join(rootpath, "data", "signatures")
 docpath = os.path.join(rootpath, "data", "kerneldocs")
 samplerpath = os.path.join(rootpath, "Sampler", "build")
+backendpath = os.path.join(rootpath, "elaps", "backends")
 
 
 def load_signature_file(filename):
@@ -82,12 +84,15 @@ def load_all_docs():
         if not os.path.isdir(dirpath):
             continue
         for filename in os.listdir(sigpath):
-            if not filename[-6:] == ".pydoc":
+            if filename[-6:] != ".pydoc":
                 continue
             filepath = os.path.join(dirpath, filename)
             if not os.path.isfile(filepath):
                 continue
-            docs[filename[:-6]] = load_doc_file(filepath)
+            try:
+                docs[filename[:-6]] = load_doc_file(filepath)
+            except:
+                pass
     return docs
 
 
@@ -111,8 +116,42 @@ def load_all_samplers():
     for dirname in os.listdir(samplerpath):
         filename = os.path.join(samplerpath, dirname, "info.py")
         if os.path.isfile(filename):
-            samplers[dirname] = load_sampler_file(filename)
+            try:
+                samplers[dirname] = load_sampler_file(filename)
+            except:
+                pass
     return samplers
+
+
+def load_backend_file(filename):
+    """Load a backend from a file."""
+    name = os.path.basename(filename)[:-3]
+    module = imp.load_source(name, filename)
+    return getattr(module, name)()
+
+
+def load_backend(name):
+    """Load a backend."""
+    filename = os.path.join(backendpath, name + ".py")
+    if os.path.isfile(filename):
+        return load_backend_file(filename)
+    raise IOError("Backend %s not found" % name)
+
+
+def load_all_backends():
+    """Load all backends."""
+    backends = {}
+    for filename in os.listdir(backendpath):
+        if filename[-3:] != ".py":
+            continue
+        filepath = os.path.join(backendpath, filename)
+        if not os.path.isfile(filpath):
+            continue
+        try:
+            backends[filename[:-3]] = load_backend_file(filepath)
+        except:
+            pass
+    return backends
 
 
 def load_report(name):
