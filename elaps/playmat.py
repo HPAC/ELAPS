@@ -586,7 +586,9 @@ class PlayMat(object):
     @pyqtSlot()
     def on_experiment_reset(self):
         """Event: reset experiment."""
-        self.experiment_reset()
+        self.experiment_load(
+            os.path.join(elapsio.setuppath, "default.ees")
+        )
         self.UI_setall()
 
     @pyqtSlot()
@@ -599,7 +601,8 @@ class PlayMat(object):
             "*.eer *.ees"
         )
         if filename:
-            self.load_experiment(str(filename))
+            self.experiment_load(str(filename))
+            self.UI_setall()
 
     @pyqtSlot()
     def on_experiment_load_report(self):
@@ -613,11 +616,10 @@ class PlayMat(object):
             self.UI_window,
             "Save Setup",
             elapsio.setuppath,
-            "*.ems"
+            "*.ees"
         )
         if filename:
-            with open(str(filename), "w") as fout:
-                fout.write(repr(self.experiment))
+            elapsio.write_experiment(self.experiment, filename)
 
     @pyqtSlot()
     def on_viewer_start(self):
