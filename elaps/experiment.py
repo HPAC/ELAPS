@@ -896,21 +896,21 @@ class Experiment(dict):
                     expr, **self.ranges_valdict(range_val, sumrange_val)
                 )
 
-    def ranges_parse(self, expr):
+    def ranges_parse(self, expr, dorange=True, dosumrange=True):
         """Parse (eval) a string or Call with symbolic range variables."""
         if isinstance(expr, signature.Call):
             args = []
             for arg, val in zip(expr.sig[1:], expr[1:]):
                 if isinstance(arg, (signature.Dim, signature.Ld,
                                     signature.Scalar)):
-                    val = self.ranges_parse(val)
+                    val = self.ranges_parse(val, dorange, dosumrange)
                 args.append(val)
             return expr.sig(*args)
         if isinstance(expr, str):
             symdict = {}
-            if self.range:
+            if dorange and self.range:
                 symdict[self.range[0]] = symbolic.Symbol(self.range[0])
-            if self.sumrange:
+            if dosumrange and self.sumrange:
                 symdict[self.sumrange[0]] = symbolic.Symbol(self.sumrange[0])
             return eval(expr, symdict, symbolic.env)
         return expr
