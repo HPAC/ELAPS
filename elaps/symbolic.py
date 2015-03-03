@@ -177,7 +177,7 @@ class Minus(Operation):
 
         if isinstance(arg, Minus):
             # double negation
-            return simplify(arg[1])
+            return arg[1]
 
         return -arg
 
@@ -205,7 +205,7 @@ class Abs(Operation):
 
         if isinstance(arg, Abs):
             # redundand recursive abs
-            return simplify(arg[1])
+            return arg[1]
 
         return abs(arg)
 
@@ -435,8 +435,6 @@ class Max(Operation):
         num = float("-inf")
         newargs = []
         for arg in args:
-            # simplify arg
-            arg = simplify(arg)
             if isinstance(arg, Max):
                 # flatten recursive Max
                 otherargs = arg[1:]
