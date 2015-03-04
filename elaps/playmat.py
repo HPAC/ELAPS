@@ -156,8 +156,9 @@ class PlayMat(object):
                 self.UI_viewM.addAction(action)
                 self.UI_hideargs.append((action, set(classes)))
 
-        def create_sampler():
-            """Create the sampler Toolbar."""
+        def create_toolbar():
+            """Create the sampler toolbasr."""
+            # sampler
             self.UI_sampler = QtGui.QComboBox()
             self.UI_sampler.addItems(sorted(self.samplers.keys()))
             self.UI_sampler.currentIndexChanged[str].connect(
@@ -169,8 +170,7 @@ class PlayMat(object):
             samplerT.addWidget(QtGui.QLabel("Sampler:"))
             samplerT.addWidget(self.UI_sampler)
 
-        def create_nthreads():
-            """Create the #threads toolbar."""
+            # #threads
             self.UI_nthreads = QtGui.QComboBox()
             self.UI_nthreads.currentIndexChanged[str].connect(
                 self.on_nthreads_change
@@ -181,8 +181,7 @@ class PlayMat(object):
             nthreadsT.addWidget(QtGui.QLabel("#threads:"))
             nthreadsT.addWidget(self.UI_nthreads)
 
-        def create_submit():
-            """Create the submit toolbar."""
+            # submit
             samplerT = window.addToolBar("Submit")
             samplerT.pyqtConfigure(movable=False, objectName="Submit")
 
@@ -222,7 +221,8 @@ class PlayMat(object):
             ))
             self.UI_rangevar.setFixedWidth(32)
             self.UI_rangevals = QtGui.QLineEdit(
-                textChanged=self.on_rangevals_change
+                textChanged=self.on_rangevals_change,
+                minimumWidth=32
             )
 
             rangeL = QtGui.QHBoxLayout(spacing=0)
@@ -264,7 +264,8 @@ class PlayMat(object):
             ))
             self.UI_sumrangevar.setFixedWidth(32)
             self.UI_sumrangevals = QtGui.QLineEdit(
-                textChanged=self.on_sumrangevals_change
+                textChanged=self.on_sumrangevals_change,
+                minimumWidth=32
             )
 
             sumrangeL = QtGui.QHBoxLayout(spacing=0)
@@ -306,6 +307,21 @@ class PlayMat(object):
             rangesD.setWidget(rangesW)
 
             window.addDockWidget(QtCore.Qt.TopDockWidgetArea, rangesD)
+
+        def create_note():
+            """Create the note input."""
+            noteW = QtGui.QTextEdit(
+                textChanged=self.on_note_change
+            )
+
+            noteD = QtGui.QDockWidget(
+                "Note", objectName="Note",
+                features=(QtGui.QDockWidget.DockWidgetVerticalTitleBar |
+                          QtGui.QDockWidget.DockWidgetMovable)
+            )
+            noteD.setWidget(noteW)
+
+            window.addDockWidget(QtCore.Qt.TopDockWidgetArea, noteD)
 
         def create_calls():
             """Create the calls list and add button (central widget)."""
@@ -409,10 +425,9 @@ class PlayMat(object):
             }
 
         create_menus()
-        create_sampler()
-        create_nthreads()
-        create_submit()
+        create_toolbar()
         create_ranges()
+        create_note()
         create_calls()
         create_jobprogress()
         create_statusbar()
@@ -850,6 +865,11 @@ class PlayMat(object):
             self.hideargs -= classes
         self.UI_hideargs_set()
         self.UI_calls_set()
+
+    @pyqtSlot(str)
+    def on_note_change(self, value):
+        """Event: changed note."""
+        self.experiment.note = str(value)
 
     @pyqtSlot(str)
     def on_sampler_change(self, value):
