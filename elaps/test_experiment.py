@@ -67,6 +67,9 @@ class TestExperiment(unittest.TestCase):
 
         self.assertIn("rep", ex.data["X"]["vary"]["with"])
 
+        ex.call.A = None
+        ex.update_data()
+
     def test_infer_lds(self):
         """Test for infer_ld[s]()."""
         sig = Signature("name", Dim("m"), Dim("n"),
