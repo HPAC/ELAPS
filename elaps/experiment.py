@@ -335,6 +335,70 @@ class Experiment(dict):
             offset = self.ranges_parse(offset)
             data["vary"] = {"with": with_, "along": along, "offset": offset}
 
+    def check_arg_valid(self, callid, argid):
+        """Check if call[callid][argid] is valid."""
+        if callid >= len(self.calls):
+            raise IndexError("no call #%d" % callid)
+        call = self.calls[callid]
+        if argid >= len(call):
+            raise IndexError("call[%d] has no arg %d" % (callid, argid))
+
+        if not isinstance(call, signature.BasicCall):
+            # not a Call
+            return False
+
+        value = call[argid]
+
+        if not value:
+            return False
+
+        arg = call.sig[argid]
+
+        if isinstance(arg, signature.Name):
+            return value == arg.name
+        if isinstance(arg, signature.Flag):
+            return value in arg.flags
+
+        symbols = set(self.ranges_valdict(1, 1))
+        if isinstance(arg, (signature.Dim, signature.Ld, signature.Inc,
+                            signature.Lwork)):
+            if not isinstance(value, (int, symbolic.Expression)):
+                # invalid type
+                return False
+            if not symbolic.findsymbols(value) <= symbols:
+                # unknown symbol
+                return False
+        if isinstance(arg, (signature.Ld, signature.Lwork)):
+            # check minimum size
+            databackup = self.data
+            self.data = deepcopy(self.data)
+            self.infer_ld(callid, argid)
+            minvalue = self.calls[callid][argid]
+            self.calls[callid][argid] = value
+            self.data = databackup
+            if minvalue > value:
+                return False
+        if isinstance(arg, signature.Data):
+            return value in self.data
+        if isinstance(call, signature.BasicCall):
+            if argid == 0:
+                return value == arg
+            if arg == "char*":
+                return isinstance(arg, str)
+            if isinstance(arg, str) and arg[0] == "[" and arg[-1] == "]":
+                try:
+                    self.ranges_parse(arg[1:-1])
+                except:
+                    return False
+                try:
+                    self.ranges_parse(arg)
+                except:
+                    return False
+            if not symbolic.findsymbols(value) <= symbols:
+                # unknown symbol
+                return False
+        return True
+
     def check_sanity(self, raise_=False):
         """Check if the experiment is self-consistent."""
         if not raise_:
@@ -415,24 +479,14 @@ class Experiment(dict):
         for callid, call in enumerate(self.calls):
             if not isinstance(call, signature.BasicCall):
                 raise ValueError("call[%d] must be Call or BasicCall" % callid)
-            if call[0] != str(call.sig[0]):
-                raise ValueError("call[%d] is for %s but has signature for %s"
-                                 % (callid, call[0], call.sig[0]))
             if len(call) != len(call.sig):
                 raise ValueError("%s takes %d arguments but call[%d] has %d" %
                                  (call.sig[0], len(call.sig) - 1, callid,
                                   len(call) - 1))
-
-            # Nones
-            if any(arg is None for arg in call):
-                raise ValueError("call[%d] contains None")
-
-            # symbols
-            for argid, arg in enumerate(call):
-                excess = symbolic.findsymbols(arg) - symbols
-                if excess:
-                    raise ValueError("unknown symbol %r in call[%d][%d]" %
-                                     (excess.pop(), callid, argid))
+            for argid in range(len(call)):
+                if not self.check_arg_valid(callid, argid):
+                    raise ValueError("argument %d of call %d is invalid" %
+                                     (callid, argid))
 
         # data
         needed = set(call[argid] for call in self.calls
@@ -446,9 +500,12 @@ class Experiment(dict):
             withoptions.add(self.range[0])
         if self.sumrange:
             withoptions.add(self.sumrange[0])
-        databackup = deepcopy(self.data)
+        databackup = self.data
+        self.data = deepcopy(self.data)
         self.update_data()
-        if self.data != databackup:
+        newdata = self.data
+        self.data = databackup
+        if newdata != databackup:
             raise Exception("Data is not up to date")
 
         # vary
@@ -675,7 +732,7 @@ class Experiment(dict):
 
                             # go over arguments
                             for argid, value in enumerate(call):
-                                if argid == 0 or sig[argid] == "char *":
+                                if argid == 0 or sig[argid] == "char*":
                                     # chars don't need further processing
                                     continue
                                 if isinstance(value, str):

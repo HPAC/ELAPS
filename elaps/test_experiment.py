@@ -143,6 +143,10 @@ class TestExperiment(unittest.TestCase):
         self.assertEqual(ex.data["X"]["vary"]["offset"], 10 *
                          symbolic.Symbol("i"))
 
+    def test_check_arg_value(self):
+        """test for check_arg_value()."""
+        # TODO
+
     def test_check_sanity(self):
         """test for check_sanity()."""
         ex = Experiment(
@@ -220,7 +224,7 @@ class TestExperiment(unittest.TestCase):
                         dData("B", "ldB * m"), Ld("ldB", "m"),
                         cData("C", "ldC * n"), Ld("ldC", "n"))
         ex.call = sig(2, 3, "X", 4, "Y", 5, "Z", 6)
-        self.assertRaises(KeyError, ex.check_sanity, True)
+        self.assertRaises(ValueError, ex.check_sanity, True)
         ex.update_data()
         ex.check_sanity(True)
 
@@ -411,10 +415,8 @@ class TestExperimentCmds(unittest.TestCase):
 
     def test_basecall(self):
         """Test for BasicCall calls (i.e., no Signature)."""
-        self.ex.call = BasicCall(
-            ("name", "char *", "int *", "double *", "double *"),
-            "N", "100", "1.5", "[10000]"
-        )
+        sig = ("name", "char*", "int*", "double*", "double*")
+        self.ex.call = BasicCall(sig, "N", "100", "1.5", "[10000]")
         self.ex.update_data()
         cmds = self.ex.generate_cmds()
         self.assertIn(["name", "N", 100, 1.5, "[10000]"], cmds)
@@ -422,10 +424,7 @@ class TestExperimentCmds(unittest.TestCase):
         # now with a range
         lenrange = random.randint(1, 10)
         self.ex.range = ["i", range(lenrange)]
-        self.ex.call = BasicCall(
-            ("name", "char *", "int *", "double *", "double *"),
-            "N", "i", "1.5", "[i * i]"
-        )
+        self.ex.call = BasicCall(sig, "N", "i", "1.5", "[i * i]")
         cmds = self.ex.generate_cmds()
         idx = random.randint(0, lenrange - 1)
         self.assertIn(["name", "N", idx, 1.5, "[%d]" % (idx * idx)], cmds)
