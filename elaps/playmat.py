@@ -202,15 +202,15 @@ class PlayMat(object):
             """Create the ranges dock widget."""
             # checkboxes
             self.UI_userange = QtGui.QCheckBox(
-                " ", stateChanged=self.on_userange_change
+                " ", toggled=self.on_userange_toggle
             )
 
             self.UI_usesumrange = QtGui.QCheckBox(
-                " ", stateChanged=self.on_usesumrange_change
+                " ", toggled=self.on_usesumrange_toggle
             )
 
             self.UI_calls_parallel = QtGui.QCheckBox(
-                " ", stateChanged=self.on_calls_parallel_change
+                " ", toggled=self.on_calls_parallel_toggle
             )
 
             # range
@@ -426,10 +426,7 @@ class PlayMat(object):
     def UI_settings_load(self):
         """Load Qt settings."""
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
-        self.hideargs = set([
-            signature.__dict__[classname] for classname in
-            eval(str(settings.value("hideargs").toString()))
-        ])
+        self.hideargs = eval(settings.value("hideargs", type=str))
         self.UI_setting += 1
         self.UI_window.restoreGeometry(
             settings.value("geometry").toByteArray()
@@ -465,10 +462,10 @@ class PlayMat(object):
     # experiment routines
     def experiment_qt_load(self):
         """Load Experiment from Qt setting."""
-        settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
-        exvalue = str(settings.value("Experiment").toString())
-        elapsio.load_experiment_string(exvalue)
-        ex = elapsio.load_experiment_string(exvalue)
+        ex = elapsio.load_experiment_string(str(
+            QtCore.QSettings("HPAC", "ELAPS:PlayMat").value("Experiment",
+                                                            type=str)
+        ))
         if ex.sampler is None or ex.sampler["name"] not in self.samplers:
             ex.sampler = self.samplers[min(self.samplers)]
         else:
@@ -490,6 +487,15 @@ class PlayMat(object):
         """Write Experiment to a file."""
         elapsio.wrte_experiment(self.experiment, filename)
         self.log("Written Experiment to %r." % os.path.relpath(filename))
+
+    def experiment_infer_update(self, callid=None):
+        """Infer Ld and Lwork (if not showing) and update_data()."""
+        ex = self.experiment
+        if signature.Ld in self.hideargs:
+            ex.infer_lds(callid)
+        if signature.Lwork in self.hideargs:
+            ex.infer_lworks(callid)
+        ex.update_data()
 
     # info string
     def sampler_about_str(self):
@@ -571,6 +577,15 @@ class PlayMat(object):
         ex = self.experiment
         data = ex.data[name]
         vary = data["vary"]
+
+        if not vary["with"] and not ex.sumrange:
+            action = QtGui.QAction(
+                "Vary Operand", self.UI_window, checkable=True,
+                toggled=self.on_vary_with_toggle
+            )
+            action.name = name
+            action.with_ = "rep"
+            return action
 
         menu = QtGui.QMenu("Vary Operand")
 
@@ -772,10 +787,8 @@ class PlayMat(object):
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
         settings.setValue("geometry", self.UI_window.saveGeometry())
         settings.setValue("windowState", self.UI_window.saveState())
-        settings.setValue("Experiment", QtCore.QVariant(repr(self.experiment)))
-        settings.setValue("hideargs", QtCore.QVariant(
-            repr([class_.__name__ for class_ in self.hideargs])
-        ))
+        settings.setValue("Experiment", repr(self.experiment))
+        settings.setValue("hideargs", repr(self.hideargs))
         self.log("Experiment saved.")
 
     @pyqtSlot()
@@ -827,12 +840,12 @@ class PlayMat(object):
         # TODO
 
     @pyqtSlot(bool)
-    def on_hideargs_toggle(self, value):
+    def on_hideargs_toggle(self, checked):
         """Event: toggle showarg."""
         if self.UI_setting:
             return
         classes = self.Qapp.sender().classes
-        if value:
+        if checked:
             self.hideargs |= classes
         else:
             self.hideargs -= classes
@@ -858,13 +871,13 @@ class PlayMat(object):
             value = int(value)
         self.experiment.nthreads = value
 
-    @pyqtSlot(int)
-    def on_userange_change(self, value):
+    @pyqtSlot(bool)
+    def on_userange_toggle(self, checked):
         """Event: change if range is used."""
         if self.UI_setting:
             return
         ex = self.experiment
-        if value:
+        if checked:
             if self.experiment_back.range:
                 var, range_ = self.experiment_back.range
             else:
@@ -920,8 +933,8 @@ class PlayMat(object):
             self.experiment.nreps = 0
         self.UI_ranges_setvalid()
 
-    @pyqtSlot(int)
-    def on_usesumrange_change(self, value):
+    @pyqtSlot(bool)
+    def on_usesumrange_toggle(self, checked):
         """Event: change if sumrange is used."""
         if self.UI_setting:
             return
@@ -984,8 +997,8 @@ class PlayMat(object):
         self.UI_ranges_setvalid()
         self.UI_calls_set()
 
-    @pyqtSlot(int)
-    def on_calls_parallel_change(self, value):
+    @pyqtSlot(bool)
+    def on_calls_parallel_toggle(self, value):
         """Event: change if calls are in parallel."""
         if self.UI_setting:
             return
@@ -1183,11 +1196,7 @@ class PlayMat(object):
             vary["with"].add(sender.with_)
         else:
             vary["with"].discard(sender.with_)
-        if signature.Ld in self.hideargs:
-            ex.infer_lds(callid)
-        if signature.Lwork in self.hideargs:
-            ex.infer_lworks(callid)
-        ex.update_data()
+        self.experiment_infer_update()
         self.UI_calls_set()
 
     @pyqtSlot(bool)
@@ -1197,16 +1206,27 @@ class PlayMat(object):
         ex = self.experiment
         vary = ex.data[sender.name]["vary"]
         vary["along"] = sender.along
-        if signature.Ld in self.hideargs:
-            ex.infer_lds(callid)
-        if signature.Lwork in self.hideargs:
-            ex.infer_lworks(callid)
-        ex.update_data()
+        self.experiment_infer_update()
         self.UI_calls_set()
 
     @pyqtSlot()
     def on_vary_offset(self):
         """Event: set vary offset."""
+        sender = self.Qapp.sender()
+        name = sender.name
+        value, ok = QtGui.QInputDialog.getText(
+            self.UI_window, "Vary offset for %s" % name,
+            "Vary offset for %s:" % name,
+        )
+        if not ok:
+            return
+        try:
+            value = self.experiment.ranges_parse(str(value))
+        except:
+            self.UI_alert("Invalid offset:\n%s" % value)
+        self.experiment.data[name]["vary"]["offset"] = value
+        self.experiment_infer_update()
+        self.UI_calls_set()
 
 
 def main():

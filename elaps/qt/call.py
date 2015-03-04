@@ -233,8 +233,10 @@ class QCall(QtGui.QListWidgetItem):
                 menu.insertAction(actions[0], inferlwork)
             if isinstance(self.call.sig[argid], signature.Data):
                 varyM = self.playmat.UI_varyM(self.call[argid])
-                if varyM:
+                if isinstance(varyM, QtGui.QMenu):
                     menu.insertMenu(actions[0], varyM)
+                elif isinstance(varyM, QtGui.QAction):
+                    menu.insertAction(actions[0], varyM)
             if len(menu.actions()) > len(actions):
                 menu.insertSeparator(actions[0])
         menu.exec_(globalpos)

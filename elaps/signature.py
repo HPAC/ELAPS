@@ -207,6 +207,14 @@ class Arg(object):
 
     """Base class for signature arguments."""
 
+    class __metaclass__(type):
+
+        """Meta class for Arg."""
+
+        def __repr__(cls):
+            """Class name as representation."""
+            return cls.__name__
+
     def __init__(self, name, attr=None):
         """Keep name and attributes."""
         self.name = name
