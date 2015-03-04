@@ -949,7 +949,7 @@ class Experiment(dict):
                 symdict[self.range[0]] = symbolic.Symbol(self.range[0])
             if dosumrange and self.sumrange:
                 symdict[self.sumrange[0]] = symbolic.Symbol(self.sumrange[0])
-            return eval(expr, symdict, symbolic.env)
+            return eval(expr, symdict, symbolic.__dict__)
         return expr
 
     def ranges_eval(self, expr, range_val=None, sumrange_val=None):
