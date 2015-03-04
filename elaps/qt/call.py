@@ -83,7 +83,7 @@ class QCall(QtGui.QListWidgetItem):
             if self.sig:
                 self.args_clear()
                 self.sig = None
-        hideargs = tuple(self.playmat.hideargs)
+        hideargs = tuple(self.playmat.hideargs) + (type(None),)
         for argid, value in enumerate(self.call):
             # set value
             value = value or ""
@@ -104,7 +104,7 @@ class QCall(QtGui.QListWidgetItem):
 
             # apply hideargs
             if isinstance(self.call, signature.Call):
-                show = hideargs and not isinstance(self.sig[argid], hideargs)
+                show = not isinstance(self.sig[argid], hideargs)
                 UI_arg.setVisible(show)
                 UI_arglabel.setVisible(show)
 

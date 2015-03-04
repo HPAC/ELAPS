@@ -36,8 +36,8 @@ class PlayMat(object):
         self.docs = {}
         self.sigs = {}
         self.jobs = {}
-        self.hideargs = set([signature.Ld, signature.Work, signature.Lwork,
-                             signature.Info])
+        self.hideargs = set([signature.Ld, signature.Inc, signature.Work,
+                             signature.Lwork, signature.Info])
 
         self.UI_init()
         if not reset:
@@ -130,6 +130,25 @@ class PlayMat(object):
             viewer = QtGui.QAction("Start Viewer", window,
                                    triggered=self.on_viewer_start)
             fileM.addAction(viewer)
+
+            # view
+            self.UI_viewM = menu.addMenu("View")
+
+            # view > hideargs
+            self.UI_hideargs = []
+            for desc, classes in (
+                ("hide flags", (signature.Flag,)),
+                ("hide scalars", (signature.Scalar,)),
+                ("hide leading dimensions", (signature.Ld, signature.Inc)),
+                ("hide work spaces", (signature.Work, signature.Lwork)),
+                ("hide infos", (signature.Info,))
+            ):
+                action = QtGui.QAction(desc, window,
+                                       toggled=self.on_hideargs_toggle)
+                action.setCheckable(True)
+                action.classes = set(classes)
+                self.UI_viewM.addAction(action)
+                self.UI_hideargs.append((action, set(classes)))
 
         def create_sampler():
             """Create the sampler Toolbar."""
@@ -383,7 +402,7 @@ class PlayMat(object):
     def UI_settings_load(self):
         """Load Qt settings."""
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
-        self.hideargs = repr(str(settings.value("hideargs").toString()))
+        self.hideargs = eval(str(settings.value("hideargs").toString()))
         self.UI_setting += 1
         self.UI_window.restoreGeometry(
             settings.value("geometry").toByteArray()
@@ -522,6 +541,7 @@ class PlayMat(object):
     def UI_setall(self):
         """Set all UI elements."""
         # sampler
+        self.UI_hideargs_set()
         self.UI_sampler_set()
         self.UI_nthreads_set()
         self.UI_range_set()
@@ -529,6 +549,13 @@ class PlayMat(object):
         self.UI_sumrange_set()
         self.UI_calls_parallel_set()
         self.UI_calls_set()
+
+    def UI_hideargs_set(self):
+        """Set UI element: hideargs options."""
+        self.UI_setting += 1
+        for UI_showarg, classes in self.UI_hideargs:
+            UI_showarg.setChecked(self.hideargs >= classes)
+        self.UI_setting -= 1
 
     def UI_sampler_set(self):
         """Set UI element: sampler."""
@@ -706,6 +733,18 @@ class PlayMat(object):
     def on_viewer_start(self):
         """Event: start Viewer."""
         # TODO
+
+    @pyqtSlot(bool)
+    def on_hideargs_toggle(self, value):
+        """Event: toggle showarg."""
+        if self.UI_setting:
+            return
+        classes = self.Qapp.sender().classes
+        if value:
+            self.hideargs |= classes
+        else:
+            self.hideargs -= classes
+        self.UI_calls_set()
 
     @pyqtSlot(str)
     def on_sampler_change(self, value):
