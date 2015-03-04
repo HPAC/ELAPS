@@ -383,7 +383,7 @@ class PlayMat(object):
     def UI_settings_load(self):
         """Load Qt settings."""
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
-        self.hideargs = repr(str(settings.value("hideargs").toString()))
+        self.hideargs = eval(str(settings.value("hideargs").toString()))
         self.UI_setting += 1
         self.UI_window.restoreGeometry(
             settings.value("geometry").toByteArray()
