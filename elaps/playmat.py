@@ -1071,6 +1071,9 @@ class PlayMat(object):
             return
         self.experiment.calls.append([""])
         self.UI_calls_set()
+        self.UI_calls.item(
+            len(self.experiment.calls) - 1
+        ).UI_args[0].setFocus()
 
     @pyqtSlot()
     def on_call_remove(self):
