@@ -788,7 +788,7 @@ def findsymbols(expr):
     return set()
 
 
-def min_sym(*args, **kwargs):
+def min(*args, **kwargs):
     """Symbolic minimum."""
     if len(args) == 1:
         # 1 argument: iterable
@@ -802,7 +802,7 @@ def min_sym(*args, **kwargs):
         return __builtin__.min(*args, **kwargs)
 
 
-def max_sym(*args, **kwargs):
+def max(*args, **kwargs):
     """Symbolic maximum."""
     if len(args) == 1:
         # 1 argument: iterable
@@ -814,13 +814,3 @@ def max_sym(*args, **kwargs):
         if any(isinstance(arg, Expression) for arg in args):
             return Max(*args)
         return __builtin__.max(*args, **kwargs)
-
-env = {
-    "min": min_sym,
-    "max": max_sym,
-}
-
-eval_replace = {
-    "min(": "min_sym(",
-    "max(": "max_sym(",
-}
