@@ -721,8 +721,10 @@ class PlayMat(object):
             self.experiment.range = [var, range_]
         else:
             self.experiment_back.range = self.experiment.range
-            # TODO: remove elsewhere
+            self.experiment.substitute(**{self.range[0]: max(self.range[1])})
             self.experiment.range = None
+            self.experiment.update_data()
+            self.calls_set()
         self.UI_range_set()
 
     @pyqtSlot(str)
@@ -745,6 +747,8 @@ class PlayMat(object):
         if self.UI_setting:
             return
         self.experiment.range[1] = symbolic.Range(str(value))
+        self.experiment.update_data()
+        self.UI_calls_set()
 
     @pyqtSlot(str)
     def on_nreps_change(self, value):
@@ -770,7 +774,12 @@ class PlayMat(object):
             self.experiment.sumrange = [var, range_]
         else:
             self.experiment_back.sumrange = self.experiment.sumrange
-            # TODO: remove elsewhere
+            sumrange_vals = self.sumrange[1]
+            if self.range:
+                sumrange_vals = symbolic.simplify(
+                    sumrange_vals, **{self.range[0]: max(self.range[1])}
+                )
+            self.experiment.substitute(**{self.sumrange[0]: sumrange_vals})
             self.experiment.sumrange = None
         self.UI_sumrange_set()
 
@@ -800,7 +809,18 @@ class PlayMat(object):
         """Event: change sumrange."""
         if self.UI_setting:
             return
-        self.experiment.sumrange[1] = symbolic.Range(str(value))
+        symdict = {}
+        range_ = self.experiment.range
+        if range_:
+            symdict[range_[0]] = symbolic.Symbol(range_[0])
+        try:
+            self.experiment.sumrange[1] = symbolic.Range(str(value), **symdict)
+        except:
+            self.alert("ERROR: invalid range %r" % value)
+            # TODO: alert
+            pass
+        self.experiment.update_data()
+        self.UI_calls_set()
 
     @pyqtSlot(int)
     def on_calls_parallel_change(self, value):

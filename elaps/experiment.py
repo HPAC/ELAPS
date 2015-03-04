@@ -995,8 +995,12 @@ class Experiment(dict):
             # sumrange values
             sumrange_vals = sumrange_val_fixed,
             if sumrange_val_fixed is None and self.sumrange:
-                sumrange_vals = (symbolic.min(self.sumrange[1]),
-                                 symbolic.max(self.sumrange[1]))
+                sumrange_vals = self.sumrange
+                if self.range:
+                    sumrange_vals = symbolic.simplify(
+                        self.sumrange[1], **{self.range[0]: range_val})
+                sumrange_vals = (symbolic.min(sumrange_vals),
+                                 symbolic.max(sumrange_vals))
 
             # go over sumrange
             for sumrange_val in sumrange_vals:
@@ -1004,6 +1008,19 @@ class Experiment(dict):
                     expr, **self.ranges_valdict(range_val, sumrange_val)
                 ))
         return min(values), max(values)
+
+    def substitute(self, **kwargs):
+        """Substitute symbols everywhere."""
+        for call in calls:
+            for callid, value in call:
+                call[argid] = symbolic.simplify(value, **kwargs)
+        for data in self.data:
+            data["vary"]["offset"] = symbolic.simplify(data["vary"]["offset"],
+                                                       **kwargs)
+        if self.range:
+            self.range[1] = symbolic.simplify(self.range[1], **kwargs)
+        if self.sumrange:
+            self.sumrange[1] = symbolic.simplify(self.sumrange[1], **kwargs)
 
     def data_maxdim(self):
         """Get maximum size along any data dimension."""
