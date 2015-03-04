@@ -1,5 +1,7 @@
 Sampler
 -------
+* make_spd(uplo, n, A, ldA)
+
 * (help command)
 * (about command)
 
