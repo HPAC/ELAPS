@@ -314,7 +314,7 @@ class Experiment(dict):
         if not isinstance(call, signature.Call):
             return
 
-        for argid, arg in call.sig:
+        for argid, arg in enumerate(call.sig):
             if isinstance(arg, signature.Lwork):
                 self.infer_lwork(callid, argid)
 
@@ -1023,7 +1023,7 @@ class Experiment(dict):
             for argid, arg in enumerate(call.sig):
                 if isinstance(arg, (signature.Dim, signature.Lwork)):
                     symcall[argid] = symbolic.Symbol((callid, argid))
-                elif isinstance(arg, signature.Data):
+                elif isinstance(arg, (signature.Data, signature.Ld)):
                     symcall[argid] = None
             symcall.complete()
             for argid in call.sig.dataargs():
