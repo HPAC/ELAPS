@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Representation of data arguments in calls in the Qt Mat."""
+"""Representation of data arguments in QCalls in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
 import symbolic
@@ -11,11 +11,11 @@ class QDataArg(QtGui.QLineEdit):
 
     """Operand argument representation."""
 
-    def __init__(self, call):
+    def __init__(self, UI_call, *args, **kwargs):
         """Initialize the operand representation."""
-        QtGui.QLineEdit.__init__(self)
-        self.Qt_call = call
-        self.Qt_gui = call.Qt_gui
+        QtGui.QLineEdit.__init__(self, *args, **kwargs)
+        self.UI_call = UI_call
+        self.playmat = UI_call.playmat
         self.polygonmin = None
         self.linesminfront = None
         self.linesminback = None
@@ -25,12 +25,16 @@ class QDataArg(QtGui.QLineEdit):
 
         self.UI_init()
 
+    @property
+    def call(self):
+        """Get the call."""
+        return self.UI_call.call
+
     def UI_init(self):
         """Initialize the GUI element."""
         self.setAlignment(QtCore.Qt.AlignHCenter)
-        self.textChanged.connect(self.change)
         self.setValidator(QtGui.QRegExpValidator(
-            QtCore.QRegExp("[a-zA-Z][a-zA-Z0-9_]*"), self.Qt_gui.Qt_app
+            QtCore.QRegExp("[a-zA-Z][a-zA-Z0-9_]*"), self
         ))
 
         # self.setsize(0, 0)
@@ -52,8 +56,8 @@ class QDataArg(QtGui.QLineEdit):
             # nothing to draw
             return QtGui.QLineEdit.paintEvent(self, event)
 
-        brushes = self.Qt_gui.Qt_brushes
-        pens = self.Qt_gui.Qt_pens
+        brushes = self.playmat.brushes
+        pens = self.playmat.pens
         painter = QtGui.QPainter(self)
 
         # max
@@ -79,14 +83,6 @@ class QDataArg(QtGui.QLineEdit):
         return QtGui.QLineEdit.paintEvent(self, event)
 
     # setters
-    def set(self):
-        """Set the value and update visualization."""
-        value = self.Qt_gui.calls[self.Qt_call.callid][self.argid]
-        if value is None:
-            value = ""
-        self.setText(str(value))
-        self.viz()
-
     def setsize(self, height, width):
         """Set the size of the widget."""
         minsizehint = QtGui.QLineEdit().minimumSizeHint()
@@ -104,21 +100,19 @@ class QDataArg(QtGui.QLineEdit):
 
     def viz(self):
         """Visualization update."""
-        call = self.Qt_gui.calls[self.Qt_call.callid]
+        call = self.call
         value = call[self.argid]
-        if value not in self.Qt_gui.data:
+        ex = self.playmat.experiment
+        if value not in self.playmat.experiment.data:
             self.viz_none()
             return
-        data = self.Qt_gui.data[value]
-        if data["dims"] is None:
-            self.viz_none()
-            return
+        data = self.playmat.experiment.data[value]
         dims = data["dims"]
         # compute min and max from range
         dimmin = []
         dimmax = []
         for expr in dims:
-            rangemin, rangemax = self.Qt_gui.range_eval_minmax(expr)
+            rangemin, rangemax = ex.ranges_eval_minmax(expr)
             if rangemin is None or rangemax is None:
                 self.viz_none()
                 return
@@ -129,7 +123,7 @@ class QDataArg(QtGui.QLineEdit):
             return
         if "work" in call.properties(self.argid):
             # maximum height for work
-            maxdim = max(1,self.Qt_gui.data_maxdim())
+            maxdim = max(1, self.playmat.experiment.data_maxdim())
             if dimmax[0] > maxdim:
                 dims = [0, 0]
                 dimmin = [maxdim, dimmin[0] // maxdim]
@@ -157,10 +151,11 @@ class QDataArg(QtGui.QLineEdit):
 
     def viz_matrix(self, dimmin, dimmax):
         """Visualize a matrix."""
-        scale = self.Qt_gui.datascale / max(1, self.Qt_gui.data_maxdim())
+        scale = (self.playmat.datascale /
+                 max(1, self.playmat.experiment.data_maxdim()))
         dimmin = [int(round(scale * dim)) for dim in dimmin]
         dimmax = [int(round(scale * dim)) for dim in dimmax]
-        call = self.Qt_gui.calls[self.Qt_call.callid]
+        call = self.playmat.experiment.calls[self.UI_call.callid]
         properties = call.properties(self.argid)
         for prop in properties:
             if prop in ("lower", "upper"):
@@ -315,14 +310,3 @@ class QDataArg(QtGui.QLineEdit):
             QtCore.QLine(points[1][0][1], points[1][1][1]),  # -
             QtCore.QLine(points[0][0][1], points[1][0][1]),  # |
         ]
-
-    # event handlers
-    def change(self):
-        """Event: Value changed."""
-        if self.Qt_gui.Qt_setting:
-            return
-        try:
-            value = str(self.text())
-        except:
-            return
-        self.Qt_gui.UI_arg_change(self.Qt_call.callid, self.argid, value)

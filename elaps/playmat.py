@@ -5,9 +5,13 @@ from __future__ import division, print_function
 import elapsio
 from experiment import Experiment
 import symbolic
+import signature
+
+from qt import QCall
 
 import sys
 import os
+import string
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot
 
@@ -15,6 +19,9 @@ from PyQt4.QtCore import pyqtSlot
 class PlayMat(object):
 
     """GUI for Experiment."""
+
+    datascale = 100
+    defaultdim = 1000
 
     def __init__(self, app=None, load=None, reset=False):
         """Initilialize the PlayMat."""
@@ -29,8 +36,15 @@ class PlayMat(object):
         self.docs = {}
         self.sigs = {}
         self.jobs = {}
+        self.hideargs = set([signature.Ld, signature.Work, signature.Lwork,
+                             signature.Info])
 
         self.UI_init()
+        if not reset:
+            try:
+                self.UI_settings_load()
+            except:
+                pass
 
         # set experiment
         self.experiment = None
@@ -49,9 +63,10 @@ class PlayMat(object):
                 os.path.join(elapsio.setuppath, "default.ees")
             )
         self.experiment_back = Experiment(self.experiment)
+
+        self.experiment.update_data()
+
         self.UI_setall()
-        if not reset:
-            self.UI_settings_load()
 
     def UI_init(self):
         """Initialize all GUI elements."""
@@ -368,6 +383,7 @@ class PlayMat(object):
     def UI_settings_load(self):
         """Load Qt settings."""
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
+        self.hideargs = repr(str(settings.value("hideargs").toString()))
         self.UI_setting += 1
         self.UI_window.restoreGeometry(
             settings.value("geometry").toByteArray()
@@ -399,6 +415,37 @@ class PlayMat(object):
         """Log a message to stderr."""
         print("\033[31m" + " ".join(map(str, args)) + "\033[0m",
               file=sys.stderr)
+
+    def UI_dialog(self, msgtype, title, text, callbacks=None):
+        """Show a simple user dialog with multiple options."""
+        if callbacks is None:
+            callbacks = {"Ok": None}
+        msgtypes = {
+            "information": QtGui.QMessageBox.information,
+            "warning": QtGui.QMessageBox.warning,
+            "question": QtGui.QMessageBox.question,
+            "critical": QtGui.QMessageBox.question
+        }
+        buttontypes = {
+            "Ok": QtGui.QMessageBox.Ok,
+            "Cancel": QtGui.QMessageBox.Cancel
+        }
+
+        callbackmap = {}
+        buttons = 0
+        for key, callback in callbacks.iteritems():
+            callbackmap[buttontypes[key]] = callback
+            buttons |= buttontypes[key]
+
+        ret = msgtypes[msgtype](self.UI_window, title, text, buttons)
+        if callbackmap[ret] is not None:
+            callbackmap[ret][0](*callbackmap[ret][1])
+
+    def UI_alert(*args, **kwargs):
+        """Alert a messagebox."""
+        msg = " ".join(map(str, args))
+        title = kwargs.get("title", "")
+        self.UI_dialog("information", title, msg)
 
     # experiment routines
     def experiment_qt_load(self):
@@ -481,6 +528,7 @@ class PlayMat(object):
         self.UI_nreps_set()
         self.UI_sumrange_set()
         self.UI_calls_parallel_set()
+        self.UI_calls_set()
 
     def UI_sampler_set(self):
         """Set UI element: sampler."""
@@ -555,6 +603,17 @@ class PlayMat(object):
         self.UI_calls_parallelW.setEnabled(calls_parallel)
         self.UI_setting -= 1
 
+    def UI_calls_set(self):
+        """Set UI element: calls."""
+        self.UI_setting += 1
+        for callid, call in enumerate(self.experiment.calls):
+            if callid >= self.UI_calls.count():
+                UI_call = QCall(self, callid)
+                self.UI_calls.addItem(UI_call)
+                self.UI_calls.setItemWidget(UI_call, UI_call.widget)
+            self.UI_calls.item(callid).setall()
+        self.UI_setting -= 1
+
     # UI events
     @pyqtSlot()
     def on_jobprogress_timer(self):
@@ -576,6 +635,7 @@ class PlayMat(object):
         settings.setValue("geometry", self.UI_window.saveGeometry())
         settings.setValue("windowState", self.UI_window.saveState())
         settings.setValue("Experiment", QtCore.QVariant(repr(self.experiment)))
+        settings.setValue("hideargs", QtCore.QVariant(repr(self.hideargs)))
         self.log("Experiment saved.")
 
     @pyqtSlot()
@@ -707,7 +767,7 @@ class PlayMat(object):
                 var, range_ = "j", symbolic.Range((1, 1, 1))
             if (self.experiment.range and self.experiment.range[0] == var):
                 var = "j" if self.experiment.range[0] == "i" else "i"
-                self.experiment.sumrange = [var, symbolic.Range((1, 1, 1))]
+            self.experiment.sumrange = [var, range_]
         else:
             self.experiment_back.sumrange = self.experiment.sumrange
             # TODO: remove elsewhere
@@ -759,7 +819,112 @@ class PlayMat(object):
 
     def on_calls_focusout(self, event):
         """Event: unfocus calls."""
-        # TODO
+        for callid in range(self.UI_calls.count()):
+            self.UI_calls.setItemSelected(self.UI_calls.item(callid), False)
+
+    def on_routine_set(self, callid, value):
+        """Event: Set routine value."""
+        try:
+            if value not in self.experiment.sampler["kernels"]:
+                # not a kernel
+                self.experiment.calls[callid] = [value]
+                raise Exception
+
+            minsig = self.experiment.sampler["kernels"][value]
+            self.experiment.calls[callid] = signature.BasicCall(
+                minsig, *((len(minsig) - 1) * [None])
+            )
+            sig = self.sig_get(value)
+            if not sig:
+                # no Signature
+                raise Exception
+
+            if len(sig) != len(minsig):
+                # wrong Signature
+                self.UI_alert(
+                    ("Kernel %r of Sampler %r has %d arguments,\n"
+                        "but Signature '%s' requires %d.\n"
+                        "Signature ignored.")
+                    % (value, self.experiment.sampler["name"],
+                        len(minsig) - 1, sig, len(sig) - 1)
+                )
+                raise Exception
+
+            try:
+                call = sig()
+            except:
+                # Signature not working
+                self.UI_alert(
+                    "Can't use Signature %r\nSignature Ignored" % sig
+                )
+                raise Exception
+
+            names = list(self.experiment.data)
+            for argid, arg in enumerate(sig):
+                if isinstance(arg, signature.Dim):
+                    call[argid] = self.defaultdim
+                    continue
+                if not isinstance(arg, signature.Data):
+                    continue
+                try:
+                    name = next(n for n in string.ascii_uppercase
+                                if n not in names)
+                except:
+                    name = next(
+                        n for n in (
+                            "%s%s" % (l, d) for d in itertools.count(1)
+                            for l in string.ascii_uppercasei
+                        ) if n not in names
+                    )
+                call[argid] = name
+                names.append(name)
+
+            self.experiment.calls[callid] = call
+            self.experiment.infer_lds(callid)
+            self.experiment.infer_lworks(callid)
+        except:
+            pass
+        self.experiment.update_data()
+        self.UI_calls_set()
+
+    def on_arg_set(self, callid, argid, value):
+        """Event: Set argument value."""
+        if self.UI_setting:
+            return
+        if argid == 0:
+            self.on_routine_set(callid, value)
+            return
+        call = self.experiment.calls[callid]
+        arg = call.sig[argid]
+        parsed = None
+        try:
+            parsed = self.experiment.ranges_parse(value)
+        except:
+            pass
+        if isinstance(arg, signature.Flag):
+            call[argid] = value
+        elif isinstance(arg, signature.Dim):
+            call[argid] = parsed
+            self.experiment.apply_connections(callid, argid)
+            if signature.Ld in self.hideargs:
+                self.experiment.infer_lds(callid)
+            if signature.Lwork in self.hideargs:
+                self.experiment.infer_lworks(callid)
+        elif isinstance(arg, signature.Data):
+            if value in self.data:
+                self.data_override(callid, argid, value)
+                return
+            call[argid] = value
+        elif isinstance(arg, signature.Arg):
+            call[argid] = parsed
+        else:
+            if arg != "char*":
+                try:
+                    call[argid] = self.experiment.ranges_parse(value)
+                except:
+                    pass
+        self.experiment.update_data()
+        self.UI_calls_set()
 
 
 def main():
