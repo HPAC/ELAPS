@@ -16,6 +16,7 @@ class QDataArg(QtGui.QLineEdit):
         QtGui.QLineEdit.__init__(self, *args, **kwargs)
         self.UI_call = UI_call
         self.playmat = UI_call.playmat
+        self.offsetstr = None
         self.polygonmin = None
         self.linesminfront = None
         self.linesminback = None
@@ -78,6 +79,14 @@ class QDataArg(QtGui.QLineEdit):
         painter.setPen(pens["minfront"])
         painter.drawLines(self.linesminfront)
 
+        # offset
+        if self.offsetstr:
+            painter.drawText(
+                QtCore.QRect(2, 2, self.width() - 4, self.height() - 4),
+                QtCore.Qt.AlignBottom | QtCore.Qt.AlignRight,
+                self.offsetstr
+            )
+
         # draw input on top
         painter.end()
         return QtGui.QLineEdit.paintEvent(self, event)
@@ -103,11 +112,25 @@ class QDataArg(QtGui.QLineEdit):
         call = self.call
         value = call[self.argid]
         ex = self.playmat.experiment
-        if value not in self.playmat.experiment.data:
+        if value not in ex.data:
             self.viz_none()
             return
-        data = self.playmat.experiment.data[value]
+        data = ex.data[value]
+
+        # vary
         dims = data["dims"]
+        vary = data["vary"]
+        self.offsetstr = None
+        if vary["with"]:
+            if len(dims) > 1:
+                if vary["along"] < 3:
+                    self.offsetstr = u"\u2190\u2192\u2197"[vary["along"]]
+                else:
+                    self.offsetstr = str(vary["along"])
+            self.offsetstr += " (%s)" % ", ".join(vary["with"])
+            if vary["offset"]:
+                self.offsetstr += " + %s" % vary["offset"]
+
         # compute min and max from range
         dimmin = []
         dimmax = []
@@ -123,7 +146,7 @@ class QDataArg(QtGui.QLineEdit):
             return
         if "work" in call.properties(self.argid):
             # maximum height for work
-            maxdim = max(1, self.playmat.experiment.data_maxdim())
+            maxdim = max(1, ex.data_maxdim())
             if dimmax[0] > maxdim:
                 dims = [0, 0]
                 dimmin = [maxdim, dimmin[0] // maxdim]
@@ -138,6 +161,7 @@ class QDataArg(QtGui.QLineEdit):
     def viz_none(self):
         """Empty visualization."""
         self.setsize(0, 0)
+        self.offsetstr = None
         self.polygonmax = None
         self.linesmaxfront = None
         self.linesmaxback = None

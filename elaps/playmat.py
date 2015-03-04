@@ -165,7 +165,7 @@ class PlayMat(object):
             )
 
             samplerT = window.addToolBar("Sampler")
-            samplerT.pyqtConfigure(movable=True, objectName="Sampler")
+            samplerT.pyqtConfigure(movable=False, objectName="Sampler")
             samplerT.addWidget(QtGui.QLabel("Sampler:"))
             samplerT.addWidget(self.UI_sampler)
 
@@ -177,7 +177,7 @@ class PlayMat(object):
             )
 
             nthreadsT = window.addToolBar("#threads")
-            nthreadsT.pyqtConfigure(movable=True, objectName="#threads")
+            nthreadsT.pyqtConfigure(movable=False, objectName="#threads")
             nthreadsT.addWidget(QtGui.QLabel("#threads:"))
             nthreadsT.addWidget(self.UI_nthreads)
 
@@ -426,14 +426,13 @@ class PlayMat(object):
     def UI_settings_load(self):
         """Load Qt settings."""
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
-        self.hideargs = eval(settings.value("hideargs", type=str))
+        self.hideargs = eval(str(settings.value("hideargs", type=str)),
+                             signature.__dict__)
         self.UI_setting += 1
-        self.UI_window.restoreGeometry(
-            settings.value("geometry").toByteArray()
-        )
-        self.UI_window.restoreState(
-            settings.value("windowState").toByteArray()
-        )
+        self.UI_window.restoreGeometry(settings.value("geometry",
+                                                      type=QtCore.QByteArray))
+        self.UI_window.restoreState(settings.value("windowState",
+                                                   type=QtCore.QByteArray))
         self.UI_setting -= 1
 
     def start(self):
@@ -632,7 +631,7 @@ class PlayMat(object):
                 menu.addAction(alongA)
             menu.addSeparator()
 
-        text = "Set offset (%d)" % vary["offset"]
+        text = "Set offset (%s)" % vary["offset"]
         offset = QtGui.QAction(text, menu,
                                triggered=self.on_vary_offset)
         offset.name = name
@@ -939,7 +938,7 @@ class PlayMat(object):
         if self.UI_setting:
             return
         ex = self.experiment
-        if value:
+        if checked:
             if self.experiment_back.sumrange:
                 var, range_ = self.experiment_back.sumrange
             else:
@@ -1214,17 +1213,19 @@ class PlayMat(object):
         """Event: set vary offset."""
         sender = self.Qapp.sender()
         name = sender.name
+        vary = self.experiment.data[name]["vary"]
         value, ok = QtGui.QInputDialog.getText(
             self.UI_window, "Vary offset for %s" % name,
-            "Vary offset for %s:" % name,
+            "Vary offset for %s:" % name, text=str(vary["offset"])
         )
         if not ok:
             return
+        vlaue = value or "0"
         try:
             value = self.experiment.ranges_parse(str(value))
         except:
             self.UI_alert("Invalid offset:\n%s" % value)
-        self.experiment.data[name]["vary"]["offset"] = value
+        vary["offset"] = value
         self.experiment_infer_update()
         self.UI_calls_set()
 
