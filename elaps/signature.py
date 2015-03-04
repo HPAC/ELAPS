@@ -129,7 +129,7 @@ class BasicCall(list):
 
     def __copy__(self):
         """Create a deep copy."""
-        return Call(self.sig, *self[1:])
+        return type(self)(self.sig, *self[1:])
 
     def copy(self):
         """Create a deep copy."""
