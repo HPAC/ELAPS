@@ -107,7 +107,7 @@ class Experiment(dict):
             result += indent + "in parallel :\n"
             indent += "    "
         for call in self.calls:
-            result += indent + str(call)
+            result += indent + str(call) + "\n"
         return result
 
     def update_data(self, name=None):

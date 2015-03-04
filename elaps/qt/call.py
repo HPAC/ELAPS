@@ -74,6 +74,7 @@ class QCall(QtGui.QListWidgetItem):
     def setall(self):
         """Set all UI elements."""
         self.playmat.UI_setting += 1
+        self.fixcallid = self.callid
         if isinstance(self.call, signature.BasicCall):
             if self.sig != self.call.sig:
                 self.args_clear()

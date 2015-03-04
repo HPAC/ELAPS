@@ -102,9 +102,8 @@ class PlayMat(object):
             fileM.addSeparator()
 
             # file > reset
-            reset = QtGui.QAction("Reset Experiment", window,
-                                  triggered=self.on_experiment_reset)
-            fileM.addAction(reset)
+            fileM.addAction(QtGui.QAction("Reset Experiment", window,
+                                          triggered=self.on_experiment_reset))
 
             # file > load
             load = QtGui.QAction("Load Experiment ...", window,
@@ -311,14 +310,40 @@ class PlayMat(object):
 
         def create_calls():
             """Create the calls list and add button (central widget)."""
-            self.UI_calls = QtGui.QListWidget()
+            self.UI_calls = QtGui.QListWidget(
+                customContextMenuRequested=self.on_calls_rightclick
+            )
+            self.UI_calls.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
             self.UI_calls.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
             self.UI_calls.model().layoutChanged.connect(self.on_calls_reorder)
             self.UI_calls.focusOutEvent = self.on_calls_focusout
 
             window.setCentralWidget(self.UI_calls)
 
-            # TODO: context menu
+            # context menus
+            self.UI_call_contextmenu = QtGui.QMenu()
+            self.UI_calls_contextmenu = QtGui.QMenu()
+
+            # add
+            add = QtGui.QAction("Add call", window, triggered=self.on_call_add)
+            self.UI_call_contextmenu.addAction(add)
+            self.UI_calls_contextmenu.addAction(add)
+
+            # remove
+            self.UI_call_contextmenu.addAction(QtGui.QAction(
+                "Remove call", window, triggered=self.on_call_remove
+            ))
+
+            # clone
+            self.UI_call_contextmenu.addAction(QtGui.QAction(
+                "Clone call", window, triggered=self.on_call_clone
+            ))
+
+            self.UI_call_contextmenu.addSeparator()
+            self.UI_calls_contextmenu.addSeparator()
+
+            self.UI_call_contextmenu.addMenu(self.UI_viewM)
+            self.UI_calls_contextmenu.addMenu(self.UI_viewM)
 
         def create_jobprogress():
             """Create the job pgoress dock widget."""
@@ -528,7 +553,7 @@ class PlayMat(object):
 
     def docs_get(self, routine):
         """(Try to) get the documentation for a routine."""
-        if routine not in self.sigs:
+        if routine not in self.docs:
             try:
                 self.docs[routine] = elapsio.load_docs(routine)
                 self.log("Loaded documentation for %r." % routine)
@@ -639,6 +664,8 @@ class PlayMat(object):
                 self.UI_calls.addItem(UI_call)
                 self.UI_calls.setItemWidget(UI_call, UI_call.widget)
             self.UI_calls.item(callid).setall()
+        while self.UI_calls.count() > len(self.experiment.calls):
+            self.UI_calls.takeItem(len(self.experiment.calls))
         self.UI_setting -= 1
 
     def UI_ranges_setvalid(self):
@@ -744,6 +771,7 @@ class PlayMat(object):
             self.hideargs |= classes
         else:
             self.hideargs -= classes
+        self.UI_hideargs_set()
         self.UI_calls_set()
 
     @pyqtSlot(str)
@@ -904,7 +932,13 @@ class PlayMat(object):
         """Event: change call order."""
         if self.UI_setting:
             return
-        # TODO
+        calls = self.experiment.calls
+        self.experiment.calls = []
+        for idx in range(self.UI_calls.count()):
+            self.experiment.calls.append(
+                calls[self.UI_calls.item(idx).fixcallid]
+            )
+        self.UI_calls_set()
 
     def on_calls_focusout(self, event):
         """Event: unfocus calls."""
@@ -1015,6 +1049,61 @@ class PlayMat(object):
                 except:
                     pass
         ex.update_data()
+        self.UI_calls_set()
+
+    @pyqtSlot(QtCore.QPoint)
+    def on_calls_rightclick(self, pos):
+        """Event: right click in calls."""
+        if self.UI_setting:
+            return
+        globalpos = self.UI_calls.viewport().mapToGlobal(pos)
+        item = self.UI_calls.itemAt(pos)
+        if item:
+            self.UI_call_contextmenu.item = item
+            self.UI_call_contextmenu.exec_(globalpos)
+        else:
+            self.UI_calls_contextmenu.exec_(globalpos)
+
+    @pyqtSlot()
+    def on_call_add(self):
+        """Event: add call."""
+        if self.UI_setting:
+            return
+        self.experiment.calls.append([""])
+        self.UI_calls_set()
+
+    @pyqtSlot()
+    def on_call_remove(self):
+        """Event: remove call."""
+        if self.UI_setting:
+            return
+        self.experiment.calls.pop(self.UI_call_contextmenu.item.callid)
+        self.UI_calls_set()
+
+    @pyqtSlot()
+    def on_call_clone(self):
+        """Event: clone call."""
+        if self.UI_setting:
+            return
+        self.experiment.calls.append(
+            self.experiment.calls[self.UI_call_contextmenu.item.callid].copy()
+        )
+        self.UI_calls_set()
+
+    @pyqtSlot()
+    def on_call_inferlds(self):
+        """Event: infer lds."""
+        if self.UI_setting:
+            return
+        self.experiment.infer_lds(self.UI_call_contextmenu.item.callid)
+        self.UI_calls_set()
+
+    @pyqtSlot()
+    def on_call_inferlworks(self):
+        """Event: infer lworks."""
+        if self.UI_setting:
+            return
+        self.experiment.infer_lworks(self.UI_call_contextmenu.item.callid)
         self.UI_calls_set()
 
 
