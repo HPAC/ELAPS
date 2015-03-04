@@ -142,9 +142,9 @@ class QCall(QtGui.QListWidgetItem):
                                 "Array:\t[#elements]"
                                 "\te.g. [10000] for a 100x100 matrix")
             # arglabel
-            UI_arglabel = QtGui.QLabel(argname)
-            UI_arglabel.setToolTip(tooltip)
-            UI_arglabel.setAlignment(QtCore.Qt.AlignCenter)
+            UI_arglabel = QtGui.QLabel(
+                argname, toolTip=tooltip, alignment=QtCore.Qt.AlignCenter
+            )
             self.UI_arglabels.append(UI_arglabel)
             self.widget.layout().addWidget(UI_arglabel, 0, argid)
             # arg
@@ -160,9 +160,11 @@ class QCall(QtGui.QListWidgetItem):
                     UI_arg = QtGui.QLineEdit(textChanged=self.on_arg_change)
             else:
                 UI_arg = QtGui.QLineEdit("", textChanged=self.on_arg_change)
-            UI_arg.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-            UI_arg.customContextMenuRequested.connect(self.on_arg_rightclick)
-            UI_arg.setToolTip(tooltip)
+            UI_arg.pyqtConfigure(
+                contextMenuPolicy=QtCore.Qt.CustomContextMenu,
+                toolTip=tooltip,
+                customContextMenuRequested=self.on_arg_rightclick
+            )
             UI_arg.argid = argid
             self.UI_args.append(UI_arg)
             self.widget.layout().addWidget(UI_arg, 1, argid,
@@ -233,7 +235,7 @@ class QCall(QtGui.QListWidgetItem):
                 varyM = self.playmat.UI_varyM(self.call[argid])
                 if varyM:
                     menu.insertMenu(actions[0], varyM)
-            if len(menu.actions()) > len(action):
+            if len(menu.actions()) > len(actions):
                 menu.insertSeparator(actions[0])
         menu.exec_(globalpos)
 

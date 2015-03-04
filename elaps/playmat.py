@@ -73,9 +73,10 @@ class PlayMat(object):
         self.UI_setting = 1
 
         # window
-        window = self.UI_window = QtGui.QMainWindow()
-        window.setWindowTitle("ELAPS:PlayMat")
-        window.setUnifiedTitleAndToolBarOnMac(True)
+        window = self.UI_window = QtGui.QMainWindow(
+            windowTitle="ELAPS:PlayMat",
+            unifiedTitleAndToolBarOnMac=True
+        )
         window.closeEvent = self.on_window_close
         window.setCorner(QtCore.Qt.TopRightCorner,
                          QtCore.Qt.RightDockWidgetArea)
@@ -93,23 +94,27 @@ class PlayMat(object):
             fileM = menu.addMenu("File")
 
             # file > submit
-            self.UI_submitA = QtGui.QAction("Run", window,
-                                            triggered=self.on_submit)
+            self.UI_submitA = QtGui.QAction(
+                "Run", window,
+                shortcut=QtGui.QKeySequence("Ctrl+R"), triggered=self.on_submit
+            )
             fileM.addAction(self.UI_submitA)
-            self.UI_submitA.setShortcut(QtGui.QKeySequence("Ctrl+R"))
 
             # file
             fileM.addSeparator()
 
             # file > reset
-            fileM.addAction(QtGui.QAction("Reset Experiment", window,
-                                          triggered=self.on_experiment_reset))
+            fileM.addAction(QtGui.QAction(
+                "Reset Experiment", window, triggered=self.on_experiment_reset
+            ))
 
             # file > load
-            load = QtGui.QAction("Load Experiment ...", window,
-                                 triggered=self.on_experiment_load)
+            load = QtGui.QAction(
+                "Load Experiment ...", window,
+                shortcut=QtGui.QKeySequence.Open,
+                triggered=self.on_experiment_load
+            )
             fileM.addAction(load)
-            load.setShortcut(QtGui.QKeySequence.Open)
 
             # load report shortcut
             loadreport = QtGui.QShortcut(
@@ -118,17 +123,18 @@ class PlayMat(object):
             )
 
             # fie > save
-            save = QtGui.QAction("Save Experiment ...", window,
-                                 triggered=self.on_experiment_save)
-            fileM.addAction(save)
-            save.setShortcut(QtGui.QKeySequence.Save)
+            fileM.addAction(QtGui.QAction(
+                "Save Experiment ...", window,
+                shortcut=QtGui.QKeySequence.Save,
+                triggered=self.on_experiment_save
+            ))
 
             # file
             fileM.addSeparator()
 
-            viewer = QtGui.QAction("Start Viewer", window,
-                                   triggered=self.on_viewer_start)
-            fileM.addAction(viewer)
+            fileM.addAction(QtGui.QAction(
+                "Start Viewer", window, triggered=self.on_viewer_start
+            ))
 
             # view
             self.UI_viewM = menu.addMenu("View")
@@ -142,9 +148,10 @@ class PlayMat(object):
                 ("hide work spaces", (signature.Work, signature.Lwork)),
                 ("hide infos", (signature.Info,))
             ):
-                action = QtGui.QAction(desc, window,
-                                       toggled=self.on_hideargs_toggle)
-                action.setCheckable(True)
+                action = QtGui.QAction(
+                    desc, window,
+                    checkable=True, toggled=self.on_hideargs_toggle
+                )
                 action.classes = set(classes)
                 self.UI_viewM.addAction(action)
                 self.UI_hideargs.append((action, set(classes)))
@@ -158,8 +165,7 @@ class PlayMat(object):
             )
 
             samplerT = window.addToolBar("Sampler")
-            samplerT.setMovable(False)
-            samplerT.setObjectName("Sampler")
+            samplerT.pyqtConfigure(movable=True, objectName="Sampler")
             samplerT.addWidget(QtGui.QLabel("Sampler:"))
             samplerT.addWidget(self.UI_sampler)
 
@@ -171,16 +177,14 @@ class PlayMat(object):
             )
 
             nthreadsT = window.addToolBar("#threads")
-            nthreadsT.setMovable(False)
-            nthreadsT.setObjectName("#threads")
+            nthreadsT.pyqtConfigure(movable=True, objectName="#threads")
             nthreadsT.addWidget(QtGui.QLabel("#threads:"))
             nthreadsT.addWidget(self.UI_nthreads)
 
         def create_submit():
             """Create the submit toolbar."""
             samplerT = window.addToolBar("Submit")
-            samplerT.setMovable(False)
-            samplerT.setObjectName("Submit")
+            samplerT.pyqtConfigure(movable=False, objectName="Submit")
 
             # spacer
             spacer = QtGui.QWidget()
@@ -221,9 +225,8 @@ class PlayMat(object):
                 textChanged=self.on_rangevals_change
             )
 
-            rangeL = QtGui.QHBoxLayout()
+            rangeL = QtGui.QHBoxLayout(spacing=0)
             rangeL.setContentsMargins(0, 0, 0, 0)
-            rangeL.setSpacing(0)
             rangeL.addWidget(QtGui.QLabel("for "))
             rangeL.addWidget(self.UI_rangevar)
             rangeL.addWidget(QtGui.QLabel(" = "))
@@ -235,14 +238,11 @@ class PlayMat(object):
 
             # reps
             self.UI_nreps = QtGui.QLineEdit(textChanged=self.on_nreps_change)
-            validator = QtGui.QIntValidator()
-            validator.setBottom(1)
-            self.UI_nreps.setValidator(validator)
+            self.UI_nreps.setValidator(QtGui.QIntValidator(bottom=1))
             self.UI_nreps.setFixedWidth(32)
 
-            nrepsL = QtGui.QHBoxLayout()
+            nrepsL = QtGui.QHBoxLayout(spacing=0)
             nrepsL.setContentsMargins(16, 4, 0, 0)
-            nrepsL.setSpacing(0)
             nrepsL.addWidget(QtGui.QLabel("repeat "))
             nrepsL.addWidget(self.UI_nreps)
             nrepsL.addWidget(QtGui.QLabel(" times:"))
@@ -267,8 +267,7 @@ class PlayMat(object):
                 textChanged=self.on_sumrangevals_change
             )
 
-            sumrangeL = QtGui.QHBoxLayout()
-            sumrangeL.setSpacing(0)
+            sumrangeL = QtGui.QHBoxLayout(spacing=0)
             sumrangeL.setContentsMargins(32, 0, 0, 0)
             sumrangeL.addWidget(self.UI_sumrange_parallel)
             sumrangeL.addWidget(QtGui.QLabel(" "))
@@ -288,8 +287,7 @@ class PlayMat(object):
             self.UI_calls_parallelW = QtGui.QWidget()
             self.UI_calls_parallelW.setLayout(calls_parallelL)
 
-            rangesL = QtGui.QGridLayout()
-            rangesL.setSpacing(0)
+            rangesL = QtGui.QGridLayout(spacing=0)
             rangesL.addWidget(self.UI_userange, 0, 0)
             rangesL.addWidget(self.UI_rangeW, 0, 1)
             rangesL.addWidget(self.UI_nrepsW, 1, 1)
@@ -301,9 +299,10 @@ class PlayMat(object):
             rangesW = QtGui.QWidget()
             rangesW.setLayout(rangesL)
 
-            rangesD = QtGui.QDockWidget("Ranges")
-            rangesD.setObjectName("Ranges")
-            rangesD.setFeatures(QtGui.QDockWidget.DockWidgetVerticalTitleBar)
+            rangesD = QtGui.QDockWidget(
+                "Ranges", objectName="Ranges",
+                features=QtGui.QDockWidget.DockWidgetVerticalTitleBar,
+            )
             rangesD.setWidget(rangesW)
 
             window.addDockWidget(QtCore.Qt.TopDockWidgetArea, rangesD)
@@ -311,10 +310,10 @@ class PlayMat(object):
         def create_calls():
             """Create the calls list and add button (central widget)."""
             self.UI_calls = QtGui.QListWidget(
+                contextMenuPolicy=QtCore.Qt.CustomContextMenu,
+                dragDropMode=QtGui.QAbstractItemView.InternalMove,
                 customContextMenuRequested=self.on_calls_rightclick
             )
-            self.UI_calls.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-            self.UI_calls.setDragDropMode(QtGui.QAbstractItemView.InternalMove)
             self.UI_calls.model().layoutChanged.connect(self.on_calls_reorder)
             self.UI_calls.focusOutEvent = self.on_calls_focusout
 
@@ -350,13 +349,13 @@ class PlayMat(object):
             jobprogressL = QtGui.QGridLayout()
 
             jobprogress = QtGui.QWidget()
-            jobprogress.setSizePolicy(
-                QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed
-            )
+            jobprogress.setSizePolicy(QtGui.QSizePolicy.Preferred,
+                                      QtGui.QSizePolicy.Fixed)
             jobprogress.setLayout(jobprogressL)
 
-            self.UI_jobprogressD = QtGui.QDockWidget("Job Progress")
-            self.UI_jobprogressD.setObjectName("Job Progress")
+            self.UI_jobprogressD = QtGui.QDockWidget(
+                "Job Progress", objectName="Job Progress"
+            )
             self.UI_jobprogressD.setWidget(jobprogress)
 
             window.addDockWidget(QtCore.Qt.BottomDockWidgetArea,
@@ -367,9 +366,9 @@ class PlayMat(object):
 
             # timer
             self.jobprogress_timer = QtCore.QTimer(
+                interval=1000,
                 timeout=self.on_jobprogress_timer
             )
-            self.jobprogress_timer.setInterval(1000)
 
         def create_statusbar():
             """Create the staus bar."""
@@ -463,37 +462,6 @@ class PlayMat(object):
         print("\033[31m" + " ".join(map(str, args)) + "\033[0m",
               file=sys.stderr)
 
-    def UI_dialog(self, msgtype, title, text, callbacks=None):
-        """Show a simple user dialog with multiple options."""
-        if callbacks is None:
-            callbacks = {"Ok": None}
-        msgtypes = {
-            "information": QtGui.QMessageBox.information,
-            "warning": QtGui.QMessageBox.warning,
-            "question": QtGui.QMessageBox.question,
-            "critical": QtGui.QMessageBox.question
-        }
-        buttontypes = {
-            "Ok": QtGui.QMessageBox.Ok,
-            "Cancel": QtGui.QMessageBox.Cancel
-        }
-
-        callbackmap = {}
-        buttons = 0
-        for key, callback in callbacks.iteritems():
-            callbackmap[buttontypes[key]] = callback
-            buttons |= buttontypes[key]
-
-        ret = msgtypes[msgtype](self.UI_window, title, text, buttons)
-        if callbackmap[ret] is not None:
-            callbackmap[ret][0](*callbackmap[ret][1])
-
-    def UI_alert(*args, **kwargs):
-        """Alert a messagebox."""
-        msg = " ".join(map(str, args))
-        title = kwargs.get("title", "")
-        self.UI_dialog("information", title, msg)
-
     # experiment routines
     def experiment_qt_load(self):
         """Load Experiment from Qt setting."""
@@ -542,7 +510,7 @@ class PlayMat(object):
             )
         return info
 
-    # loader routines
+    # loaders
     def sig_get(self, routine):
         """(Try to) get the Signature for a routine."""
         if routine not in self.sigs:
@@ -564,6 +532,98 @@ class PlayMat(object):
                 self.docs[routine] = None
                 self.log("Can't load documentation for %r." % routine)
         return self.docs[routine]
+
+    # UI utility
+
+    def UI_dialog(self, msgtype, title, text, callbacks=None):
+        """Show a simple user dialog with multiple options."""
+        if callbacks is None:
+            callbacks = {"Ok": None}
+        msgtypes = {
+            "information": QtGui.QMessageBox.information,
+            "warning": QtGui.QMessageBox.warning,
+            "question": QtGui.QMessageBox.question,
+            "critical": QtGui.QMessageBox.question
+        }
+        buttontypes = {
+            "Ok": QtGui.QMessageBox.Ok,
+            "Cancel": QtGui.QMessageBox.Cancel
+        }
+
+        callbackmap = {}
+        buttons = 0
+        for key, callback in callbacks.iteritems():
+            callbackmap[buttontypes[key]] = callback
+            buttons |= buttontypes[key]
+
+        ret = msgtypes[msgtype](self.UI_window, title, text, buttons)
+        if callbackmap[ret] is not None:
+            callbackmap[ret][0](*callbackmap[ret][1])
+
+    def UI_alert(self, *args, **kwargs):
+        """Alert a messagebox."""
+        msg = " ".join(map(str, args))
+        title = kwargs.get("title", "")
+        self.UI_dialog("information", title, msg)
+
+    def UI_varyM(self, name):
+        """Generate vary menu for Operand."""
+        ex = self.experiment
+        data = ex.data[name]
+        vary = data["vary"]
+
+        menu = QtGui.QMenu("Vary Operand")
+
+        withrep = QtGui.QAction(
+            "With repetitions", menu,
+            checkable=True, checked="rep" in vary["with"],
+            toggled=self.on_vary_with_toggle
+        )
+        withrep.name = name
+        withrep.with_ = "rep"
+        menu.addAction(withrep)
+
+        if ex.sumrange:
+            withsumrange = QtGui.QAction(
+                "With %s" % ex.sumrange[0], menu,
+                checkable=True, checked=ex.sumrange[0] in vary["with"],
+                toggled=self.on_vary_with_toggle
+            )
+
+            withsumrange.name = name
+            withsumrange.with_ = ex.sumrange[0]
+            menu.addAction(withsumrange)
+
+        if not vary["with"]:
+            return menu
+
+        if len(data["dims"]) > 1:
+            menu.addSeparator()
+            alongG = QtGui.QActionGroup(menu, exclusive=True)
+            for along in range(len(data["dims"])):
+                text = "Along dimension %d" % (along + 1)
+                if along < 3:
+                    text += "\t" + u"\u2190\u2192\u2197"[along]
+
+                alongA = QtGui.QAction(
+                    text, menu,
+                    checkable=True,
+                    checked=vary["along"] == along,
+                    toggled=self.on_vary_along_toggle,
+                )
+                alongA.name = name
+                alongA.along = along
+                alongG.addAction(alongA)
+                menu.addAction(alongA)
+            menu.addSeparator()
+
+        text = "Set offset (%d)" % vary["offset"]
+        offset = QtGui.QAction(text, menu,
+                               triggered=self.on_vary_offset)
+        offset.name = name
+        menu.addAction(offset)
+
+        return menu
 
     # UI setters
     def UI_setall(self):
@@ -1112,6 +1172,41 @@ class PlayMat(object):
             return
         self.experiment.infer_lwork(callid, argid)
         self.UI_calls_set()
+
+    @pyqtSlot(bool)
+    def on_vary_with_toggle(self, checked):
+        """Event: changed vary with."""
+        sender = self.Qapp.sender()
+        ex = self.experiment
+        vary = ex.data[sender.name]["vary"]
+        if checked:
+            vary["with"].add(sender.with_)
+        else:
+            vary["with"].discard(sender.with_)
+        if signature.Ld in self.hideargs:
+            ex.infer_lds(callid)
+        if signature.Lwork in self.hideargs:
+            ex.infer_lworks(callid)
+        ex.update_data()
+        self.UI_calls_set()
+
+    @pyqtSlot(bool)
+    def on_vary_along_toggle(self, checked):
+        """Event: changed vary along."""
+        sender = self.Qapp.sender()
+        ex = self.experiment
+        vary = ex.data[sender.name]["vary"]
+        vary["along"] = sender.along
+        if signature.Ld in self.hideargs:
+            ex.infer_lds(callid)
+        if signature.Lwork in self.hideargs:
+            ex.infer_lworks(callid)
+        ex.update_data()
+        self.UI_calls_set()
+
+    @pyqtSlot()
+    def on_vary_offset(self):
+        """Event: set vary offset."""
 
 
 def main():
