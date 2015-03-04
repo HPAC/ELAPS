@@ -160,6 +160,8 @@ class QCall(QtGui.QListWidgetItem):
                     UI_arg = QtGui.QLineEdit(textChanged=self.on_arg_change)
             else:
                 UI_arg = QtGui.QLineEdit("", textChanged=self.on_arg_change)
+            UI_arg.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+            UI_arg.customContextMenuRequested.connect(self.on_arg_rightclick)
             UI_arg.setToolTip(tooltip)
             UI_arg.argid = argid
             self.UI_args.append(UI_arg)
@@ -205,3 +207,50 @@ class QCall(QtGui.QListWidgetItem):
         if self.playmat.UI_setting:
             return
         self.playmat.on_arg_set(self.callid, argid, value)
+
+    @pyqtSlot(QtCore.QPoint)
+    def on_arg_rightclick(self, pos):
+        """Event: right click on arg."""
+        if self.playmat.UI_setting:
+            return
+        sender = self.playmat.Qapp.sender()
+        globalpos = sender.mapToGlobal(pos)
+        menu = sender.createStandardContextMenu()
+        if isinstance(self.call, signature.Call):
+            actions = menu.actions()
+            argid = sender.argid
+            if isinstance(self.call.sig[argid], signature.Ld):
+                inferld = QtGui.QAction("Infer leading dimension", sender,
+                                        triggered=self.on_inferld)
+                inferld.argid = argid
+                menu.insertAction(actions[0], inferld)
+            elif isinstance(self.call.sig[argid], signature.Lwork):
+                inferlwork = QtGui.QAction("Infer workspace size", sender,
+                                           triggered=self.on_inferlwork)
+                inferlwork.argid = argid
+                menu.insertAction(actions[0], inferlwork)
+            if isinstance(self.call.sig[argid], signature.Data):
+                varyM = self.playmat.UI_varyM(self.call[argid])
+                if varyM:
+                    menu.insertMenu(actions[0], varyM)
+            if len(menu.actions()) > len(action):
+                menu.insertSeparator(actions[0])
+        menu.exec_(globalpos)
+
+    @pyqtSlot()
+    def on_inferld(self):
+        """Event: infer ld."""
+        if self.playmat.UI_setting:
+            return
+        argid = self.playmat.Qapp.sender().argid
+        self.UI_args[argid].clearFocus()
+        self.playmat.on_infer_ld(self.callid, argid)
+
+    @pyqtSlot()
+    def on_inferlwork(self):
+        """Event: infer ld."""
+        if self.playmat.UI_setting:
+            return
+        argid = self.playmat.Qapp.sender().argid
+        self.UI_args[argid].clearFocus()
+        self.playmat.on_infer_lwork(self.callid, argid)

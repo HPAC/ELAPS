@@ -173,7 +173,7 @@ class Experiment(dict):
         dims = [symbolic.simplify(dim, **argdict) for dim in dims]
         if isinstance(sig[name_argid], signature.Work):
             # Workspace is 1D
-            dims = [symbolic.Prod(*dims)()]
+            dims = [symbolic.simplify(symbolic.Prod(*dims))]
         data["dims"] = dims
 
         # leading dimension
@@ -372,7 +372,10 @@ class Experiment(dict):
             # check minimum size
             databackup = self.data
             self.data = deepcopy(self.data)
-            self.infer_ld(callid, argid)
+            if isinstance(arg, signature.Ld):
+                self.infer_ld(callid, argid)
+            else:
+                self.infer_lwork(callid, argid)
             minvalue = self.calls[callid][argid]
             self.calls[callid][argid] = value
             self.data = databackup

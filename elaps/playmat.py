@@ -427,7 +427,10 @@ class PlayMat(object):
     def UI_settings_load(self):
         """Load Qt settings."""
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
-        self.hideargs = eval(str(settings.value("hideargs").toString()))
+        self.hideargs = set([
+            signature.__dict__[classname] for classname in
+            eval(str(settings.value("hideargs").toString()))
+        ])
         self.UI_setting += 1
         self.UI_window.restoreGeometry(
             settings.value("geometry").toByteArray()
@@ -710,7 +713,9 @@ class PlayMat(object):
         settings.setValue("geometry", self.UI_window.saveGeometry())
         settings.setValue("windowState", self.UI_window.saveState())
         settings.setValue("Experiment", QtCore.QVariant(repr(self.experiment)))
-        settings.setValue("hideargs", QtCore.QVariant(repr(self.hideargs)))
+        settings.setValue("hideargs", QtCore.QVariant(
+            repr([class_.__name__ for class_ in self.hideargs])
+        ))
         self.log("Experiment saved.")
 
     @pyqtSlot()
@@ -1093,20 +1098,19 @@ class PlayMat(object):
         )
         self.UI_calls_set()
 
-    @pyqtSlot()
-    def on_call_inferlds(self):
-        """Event: infer lds."""
+    def on_infer_ld(self, callid, argid):
+        """Event: infer ld."""
         if self.UI_setting:
             return
-        self.experiment.infer_lds(self.UI_call_contextmenu.item.callid)
+        self.experiment.infer_ld(callid, argid)
         self.UI_calls_set()
 
     @pyqtSlot()
-    def on_call_inferlworks(self):
-        """Event: infer lworks."""
+    def on_infer_lwork(self, callid, argid):
+        """Event: infer lwork."""
         if self.UI_setting:
             return
-        self.experiment.infer_lworks(self.UI_call_contextmenu.item.callid)
+        self.experiment.infer_lwork(callid, argid)
         self.UI_calls_set()
 
 
