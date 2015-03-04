@@ -984,8 +984,11 @@ class Experiment(dict):
         # range values
         range_vals = range_val_fixed,
         if range_val_fixed is None and self.range:
-            range_vals = (symbolic.min(self.range[1]),
-                          symbolic.max(self.range[1]))
+            if not len(self.range[1]):
+                range_vals = None,
+            else:
+                range_vals = (symbolic.min(self.range[1]),
+                              symbolic.max(self.range[1]))
 
         values = []
 
@@ -995,12 +998,16 @@ class Experiment(dict):
             # sumrange values
             sumrange_vals = sumrange_val_fixed,
             if sumrange_val_fixed is None and self.sumrange:
-                sumrange_vals = self.sumrange
+                sumrange = self.sumrange[1]
                 if self.range:
-                    sumrange_vals = symbolic.simplify(
-                        self.sumrange[1], **{self.range[0]: range_val})
-                sumrange_vals = (symbolic.min(sumrange_vals),
-                                 symbolic.max(sumrange_vals))
+                    sumrange = symbolic.simplify(
+                        sumrange, **{self.range[0]: range_val}
+                    )
+                if not len(sumrange):
+                    sumrange_vals = None,
+                else:
+                    sumrange_vals = (symbolic.min(sumrange_vals),
+                                     symbolic.max(sumrange_vals))
 
             # go over sumrange
             for sumrange_val in sumrange_vals:
@@ -1011,16 +1018,20 @@ class Experiment(dict):
 
     def substitute(self, **kwargs):
         """Substitute symbols everywhere."""
-        for call in calls:
-            for callid, value in call:
-                call[argid] = symbolic.simplify(value, **kwargs)
-        for data in self.data:
-            data["vary"]["offset"] = symbolic.simplify(data["vary"]["offset"],
-                                                       **kwargs)
         if self.range:
             self.range[1] = symbolic.simplify(self.range[1], **kwargs)
+        if self.nthreads in kwargs:
+            self.nthreads = kwargs[self.nthreads]
+            if self.sampler:
+                self.nthreads = min(self.sampler["nt_max"], self.nthreads)
         if self.sumrange:
             self.sumrange[1] = symbolic.simplify(self.sumrange[1], **kwargs)
+        for call in self.calls:
+            for argid, value in enumerate(call):
+                call[argid] = symbolic.simplify(value, **kwargs)
+        for data in self.data.values():
+            data["vary"]["offset"] = symbolic.simplify(data["vary"]["offset"],
+                                                       **kwargs)
 
     def data_maxdim(self):
         """Get maximum size along any data dimension."""

@@ -504,6 +504,11 @@ class Range(object):
                     raise TypeError("Invalid value in range:%r" % (arg,))
             self.subranges.append(arg)
 
+    def __bool__(self):
+        if self.findsymbols():
+            return True
+        return bool(len(self.subranges))
+
     def substitute(self, **kwargs):
         """Substitute Symbols."""
         return type(self)(*[
@@ -546,12 +551,9 @@ class Range(object):
 
     def __iter__(self):
         """Iterate over values in the complex range."""
+        if self.findsymbols():
+            raise TypeError("Not numeric: %s" % self)
         for subrange in self.subranges:
-            if not all(isinstance(val, Number) for val in subrange):
-                # can only iteration non-symbolic Range
-                raise Exception("Not numeric: %r" % (subrange,))
-
-            # iterate
             start, step, stop = subrange
             if step > 0:
                 # positive direction
@@ -587,11 +589,9 @@ class Range(object):
     def __len__(self):
         """Length of the range."""
         result = 0
+        if self.findsymbols():
+            raise TypeError("Not numeric: %s" % self)
         for subrange in self.subranges:
-            if not all(isinstance(val, Number) for val in subrange):
-                # can only get the length of non-symbolic Range
-                raise TypeError("Not numeric: %r" % (subrange,))
-
             start, step, stop = subrange
             if step == 0:
                 # no direction: empty or length 1
@@ -605,15 +605,12 @@ class Range(object):
 
     def min(self):
         """compute the minimum."""
+        if self.findsymbols():
+            raise TypeError("Not numeric: %s" % self)
         # default minimum: inf
         result = float("inf")
-
         # consider all subranges
         for subrange in self.subranges:
-            if not all(isinstance(val, Number) for val in subrange):
-                # can only get the min for non-symbolic ranges
-                raise TypeError("Not numeric: %r" % (subrange,))
-
             # min depends on range direction
             start, step, stop = subrange
             if step > 0:
@@ -634,15 +631,12 @@ class Range(object):
 
     def max(self):
         """Compute the maximum."""
+        if self.findsymbols():
+            raise TypeError("Not numeric: %s" % self)
         # default maximum: -inf
         result = -float("inf")
-
         # consider all subranges
         for subrange in self.subranges:
-            if not all(isinstance(val, Number) for val in subrange):
-                # can only get the max for non-symbolic Range
-                raise TypeError("Not numeric: %r" % (subrange,))
-
             # max depends on range direction
             start, step, stop = subrange
             if step > 0:
@@ -790,27 +784,22 @@ def findsymbols(expr):
 
 def min(*args, **kwargs):
     """Symbolic minimum."""
-    if len(args) == 1:
-        # 1 argument: iterable
-        if any(isinstance(arg, Expression) for arg in args[0]):
-            return Min(*args[0])
-        return __builtin__.min(*args, **kwargs)
-    else:
-        # multiple arguments
-        if any(isinstance(arg, Expression) for arg in args):
-            return Min(*args)
-        return __builtin__.min(*args, **kwargs)
+    if len(args) > 1:
+        return min(args)
+    # 1 argument: iterable
+    if isinstance(args[0], Range):
+        return args[0].min()
+    if any(isinstance(arg, Expression) for arg in args[0]):
+        return Min(*args[0])
+    return __builtin__.min(*args, **kwargs)
 
 
 def max(*args, **kwargs):
     """Symbolic maximum."""
-    if len(args) == 1:
-        # 1 argument: iterable
-        if any(isinstance(arg, Expression) for arg in args[0]):
-            return Max(*args[0])
-        return __builtin__.max(*args, **kwargs)
-    else:
-        # multiple arguments
-        if any(isinstance(arg, Expression) for arg in args):
-            return Max(*args)
-        return __builtin__.max(*args, **kwargs)
+    if len(args) > 1:
+        return max(args)
+    if isinstance(args[0], Range):
+        return args[0].max()
+    if any(isinstance(arg, Expression) for arg in args[0]):
+        return Max(*args[0])
+    return __builtin__.max(*args, **kwargs)

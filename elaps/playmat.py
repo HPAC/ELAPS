@@ -217,9 +217,9 @@ class PlayMat(object):
 
             # reps
             self.UI_nreps = QtGui.QLineEdit(textChanged=self.on_nreps_change)
-            self.UI_nreps.setValidator(QtGui.QRegExpValidator(
-                QtCore.QRegExp("[1-9][0-9]*"), self.UI_nreps
-            ))
+            validator = QtGui.QIntValidator()
+            validator.setBottom(1)
+            self.UI_nreps.setValidator(validator)
             self.UI_nreps.setFixedWidth(32)
 
             nrepsL = QtGui.QHBoxLayout()
@@ -614,6 +614,27 @@ class PlayMat(object):
             self.UI_calls.item(callid).setall()
         self.UI_setting -= 1
 
+    def UI_ranges_setvalid(self):
+        """Set the "invlaid" property for the ranges."""
+        ex = self.experiment
+        if ex.range:
+            self.UI_rangevar.setProperty("invalid", not ex.range[0])
+            self.UI_rangevals.setProperty("invalid", not ex.range[1])
+        if ex.sumrange:
+            self.UI_sumrangevar.setProperty("invalid", not ex.sumrange[0])
+            self.UI_sumrangevals.setProperty("invalid", not ex.sumrange[1])
+        if ex.range and ex.sumrange:
+            if ex.range[0] == ex.sumrange[0]:
+                self.UI_rangevar.setProperty("invalid", True)
+                self.UI_sumrangevar.setProperty("invalid", True)
+        self.UI_nreps.setProperty("invalid", not ex.nreps)
+        for UI_elem in (self.UI_rangevar, self.UI_sumrangevar,
+                        self.UI_rangevals, self.UI_sumrangevals,
+                        self.UI_nreps):
+            UI_elem.style().unpolish(UI_elem)
+            UI_elem.style().polish(UI_elem)
+            UI_elem.update()
+
     # UI events
     @pyqtSlot()
     def on_jobprogress_timer(self):
@@ -710,21 +731,22 @@ class PlayMat(object):
         """Event: change if range is used."""
         if self.UI_setting:
             return
+        ex = self.experiment
         if value:
             if self.experiment_back.range:
                 var, range_ = self.experiment_back.range
             else:
                 var, range_ = "i", symbolic.Range((1, 1, 1,))
-            if (self.experiment.sumrange and
-                    self.experiment.sumrange[0] == var):
-                var = "j" if self.experiment.sumrange[0] == "i" else "i"
-            self.experiment.range = [var, range_]
+            if ex.sumrange and ex.sumrange[0] == var:
+                var = "j" if ex.sumrange[0] == "i" else "i"
+            ex.range = [var, range_]
         else:
-            self.experiment_back.range = self.experiment.range
-            self.experiment.substitute(**{self.range[0]: max(self.range[1])})
-            self.experiment.range = None
-            self.experiment.update_data()
-            self.calls_set()
+            self.experiment_back.range = ex.range
+            ex.substitute(**{ex.range[0]: max(ex.range[1])})
+            ex.range = None
+            ex.update_data()
+            self.UI_nthreads_set()
+            self.UI_calls_set()
         self.UI_range_set()
 
     @pyqtSlot(str)
@@ -733,21 +755,25 @@ class PlayMat(object):
         if self.UI_setting:
             return
         value = str(value)
-        # TODO: check if == sumrange[0]
-        if value:
-            # TODO: change elsewhere
-            self.experiment.range[0] = value
-        else:
-            # TODO: invalid
-            pass
+        ex = self.experiment
+        ex.substitute(**{ex.range[0]: symbolic.Symbol(value)})
+        ex.range[0] = value
+        ex.update_data()
+        self.UI_ranges_setvalid()
+        self.UI_nthreads_set()
+        self.UI_calls_set()
 
     @pyqtSlot(str)
     def on_rangevals_change(self, value):
         """Event: change range."""
         if self.UI_setting:
             return
-        self.experiment.range[1] = symbolic.Range(str(value))
+        try:
+            self.experiment.range[1] = symbolic.Range(str(value))
+        except:
+            self.experiment.range[1] = symbolic.Range()
         self.experiment.update_data()
+        self.UI_ranges_setvalid()
         self.UI_calls_set()
 
     @pyqtSlot(str)
@@ -758,29 +784,33 @@ class PlayMat(object):
         value = str(value)
         if value:
             self.experiment.nreps = int(value)
+        else:
+            self.experiment.nreps = 0
+        self.UI_ranges_setvalid()
 
     @pyqtSlot(int)
     def on_usesumrange_change(self, value):
         """Event: change if sumrange is used."""
         if self.UI_setting:
             return
+        ex = self.experiment
         if value:
             if self.experiment_back.sumrange:
                 var, range_ = self.experiment_back.sumrange
             else:
                 var, range_ = "j", symbolic.Range((1, 1, 1))
-            if (self.experiment.range and self.experiment.range[0] == var):
-                var = "j" if self.experiment.range[0] == "i" else "i"
-            self.experiment.sumrange = [var, range_]
+            if ex.range and ex.range[0] == var:
+                var = "j" if ex.range[0] == "i" else "i"
+            ex.sumrange = [var, range_]
         else:
-            self.experiment_back.sumrange = self.experiment.sumrange
+            self.experiment_back.sumrange = ex.sumrange
             sumrange_vals = self.sumrange[1]
-            if self.range:
+            if ex.range:
                 sumrange_vals = symbolic.simplify(
-                    sumrange_vals, **{self.range[0]: max(self.range[1])}
+                    sumrange_vals, **{ex.range[0]: max(ex.range[1])}
                 )
-            self.experiment.substitute(**{self.sumrange[0]: sumrange_vals})
-            self.experiment.sumrange = None
+            ex.substitute(**{ex.sumrange[0]: sumrange_vals})
+            ex.sumrange = None
         self.UI_sumrange_set()
 
     @pyqtSlot(int)
@@ -797,29 +827,29 @@ class PlayMat(object):
         if self.UI_setting:
             return
         value = str(value)
-        if value:
-            # TODO: change elsewhere
-            self.experiment.sumrange[0] = value
-        else:
-            # TODO: invalid
-            pass
+        ex = self.experiment
+        ex.substitute(**{ex.sumrange[0]: symbolic.Symbol(value)})
+        ex.sumrange[0] = value
+        ex.update_data()
+        self.UI_ranges_setvalid()
+        self.UI_calls_set()
 
     @pyqtSlot(str)
     def on_sumrangevals_change(self, value):
         """Event: change sumrange."""
         if self.UI_setting:
             return
+        ex = self.experiment
         symdict = {}
-        range_ = self.experiment.range
+        range_ = ex.range
         if range_:
             symdict[range_[0]] = symbolic.Symbol(range_[0])
         try:
-            self.experiment.sumrange[1] = symbolic.Range(str(value), **symdict)
+            ex.sumrange[1] = symbolic.Range(str(value), **symdict)
         except:
-            self.alert("ERROR: invalid range %r" % value)
-            # TODO: alert
-            pass
-        self.experiment.update_data()
+            ex.sumrange[1] = symbolic.Range()
+        ex.update_data()
+        self.UI_ranges_setvalid()
         self.UI_calls_set()
 
     @pyqtSlot(int)
@@ -844,14 +874,15 @@ class PlayMat(object):
 
     def on_routine_set(self, callid, value):
         """Event: Set routine value."""
+        ex = self.experiment
         try:
-            if value not in self.experiment.sampler["kernels"]:
+            if value not in ex.sampler["kernels"]:
                 # not a kernel
-                self.experiment.calls[callid] = [value]
+                ex.calls[callid] = [value]
                 raise Exception
 
-            minsig = self.experiment.sampler["kernels"][value]
-            self.experiment.calls[callid] = signature.BasicCall(
+            minsig = ex.sampler["kernels"][value]
+            ex.calls[callid] = signature.BasicCall(
                 minsig, *((len(minsig) - 1) * [None])
             )
             sig = self.sig_get(value)
@@ -865,8 +896,8 @@ class PlayMat(object):
                     ("Kernel %r of Sampler %r has %d arguments,\n"
                         "but Signature '%s' requires %d.\n"
                         "Signature ignored.")
-                    % (value, self.experiment.sampler["name"],
-                        len(minsig) - 1, sig, len(sig) - 1)
+                    % (value, ex.sampler["name"], len(minsig) - 1, sig,
+                       len(sig) - 1)
                 )
                 raise Exception
 
@@ -879,7 +910,7 @@ class PlayMat(object):
                 )
                 raise Exception
 
-            names = list(self.experiment.data)
+            names = list(ex.data)
             for argid, arg in enumerate(sig):
                 if isinstance(arg, signature.Dim):
                     call[argid] = self.defaultdim
@@ -899,12 +930,12 @@ class PlayMat(object):
                 call[argid] = name
                 names.append(name)
 
-            self.experiment.calls[callid] = call
-            self.experiment.infer_lds(callid)
-            self.experiment.infer_lworks(callid)
+            ex.calls[callid] = call
+            ex.infer_lds(callid)
+            ex.infer_lworks(callid)
         except:
             pass
-        self.experiment.update_data()
+        ex.update_data()
         self.UI_calls_set()
 
     def on_arg_set(self, callid, argid, value):
@@ -914,22 +945,23 @@ class PlayMat(object):
         if argid == 0:
             self.on_routine_set(callid, value)
             return
-        call = self.experiment.calls[callid]
+        ex = self.experiment
+        call = ex.calls[callid]
         arg = call.sig[argid]
         parsed = None
         try:
-            parsed = self.experiment.ranges_parse(value)
+            parsed = ex.ranges_parse(value)
         except:
             pass
         if isinstance(arg, signature.Flag):
             call[argid] = value
         elif isinstance(arg, signature.Dim):
             call[argid] = parsed
-            self.experiment.apply_connections(callid, argid)
+            ex.apply_connections(callid, argid)
             if signature.Ld in self.hideargs:
-                self.experiment.infer_lds(callid)
+                ex.infer_lds(callid)
             if signature.Lwork in self.hideargs:
-                self.experiment.infer_lworks(callid)
+                ex.infer_lworks(callid)
         elif isinstance(arg, signature.Data):
             if value in self.data:
                 self.data_override(callid, argid, value)
@@ -940,10 +972,10 @@ class PlayMat(object):
         else:
             if arg != "char*":
                 try:
-                    call[argid] = self.experiment.ranges_parse(value)
+                    call[argid] = ex.ranges_parse(value)
                 except:
                     pass
-        self.experiment.update_data()
+        ex.update_data()
         self.UI_calls_set()
 
 
