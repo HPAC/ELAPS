@@ -376,7 +376,11 @@ class Experiment(dict):
             minvalue = self.calls[callid][argid]
             self.calls[callid][argid] = value
             self.data = databackup
-            if minvalue > value:
+            range_val = 2
+            sumrange_val = 3
+            minval = next(self.ranges_eval(minvalue, range_val, sumrange_val))
+            tmpval = next(self.ranges_eval(value, range_val, sumrange_val))
+            if minval > tmpval:
                 return False
         if isinstance(arg, signature.Data):
             return value in self.data
@@ -929,6 +933,25 @@ class Experiment(dict):
             valdict[self.sumrange[0]] = sumrange_val
         return valdict
 
+    def ranges_parse(self, expr, dorange=True, dosumrange=True):
+        """Parse (eval) a string or Call with symbolic range variables."""
+        if isinstance(expr, signature.Call):
+            args = []
+            for arg, val in zip(expr.sig[1:], expr[1:]):
+                if isinstance(arg, (signature.Dim, signature.Ld,
+                                    signature.Scalar)):
+                    val = self.ranges_parse(val, dorange, dosumrange)
+                args.append(val)
+            return expr.sig(*args)
+        if isinstance(expr, str):
+            symdict = {}
+            if dorange and self.range:
+                symdict[self.range[0]] = symbolic.Symbol(self.range[0])
+            if dosumrange and self.sumrange:
+                symdict[self.sumrange[0]] = symbolic.Symbol(self.sumrange[0])
+            return eval(expr, symdict, symbolic.env)
+        return expr
+
     def ranges_eval(self, expr, range_val=None, sumrange_val=None):
         """Evaluate an symbolic expression for the ranges."""
         range_val_fixed = range_val
@@ -953,24 +976,42 @@ class Experiment(dict):
                     expr, **self.ranges_valdict(range_val, sumrange_val)
                 )
 
-    def ranges_parse(self, expr, dorange=True, dosumrange=True):
-        """Parse (eval) a string or Call with symbolic range variables."""
-        if isinstance(expr, signature.Call):
-            args = []
-            for arg, val in zip(expr.sig[1:], expr[1:]):
-                if isinstance(arg, (signature.Dim, signature.Ld,
-                                    signature.Scalar)):
-                    val = self.ranges_parse(val, dorange, dosumrange)
-                args.append(val)
-            return expr.sig(*args)
-        if isinstance(expr, str):
-            symdict = {}
-            if dorange and self.range:
-                symdict[self.range[0]] = symbolic.Symbol(self.range[0])
-            if dosumrange and self.sumrange:
-                symdict[self.sumrange[0]] = symbolic.Symbol(self.sumrange[0])
-            return eval(expr, symdict, symbolic.env)
-        return expr
+    def ranges_eval_minmax(self, expr, range_val=None, sumrange_val=None):
+        """Get the minimum for an symbolic expression for the ranges."""
+        range_val_fixed = range_val
+        sumrange_val_fixed = sumrange_val
+
+        # range values
+        range_vals = range_val_fixed,
+        if range_val_fixed is None and self.range:
+            range_vals = (symbolic.min(self.range[1]),
+                          symbolic.max(self.range[1]))
+
+        values = []
+
+        # go over the range
+        for range_val in range_vals:
+
+            # sumrange values
+            sumrange_vals = sumrange_val_fixed,
+            if sumrange_val_fixed is None and self.sumrange:
+                sumrange_vals = (symbolic.min(self.sumrange[1]),
+                                 symbolic.max(self.sumrange[1]))
+
+            # go over sumrange
+            for sumrange_val in sumrange_vals:
+                values.append(symbolic.simplify(
+                    expr, **self.ranges_valdict(range_val, sumrange_val)
+                ))
+        return min(values), max(values)
+
+    def data_maxdim(self):
+        """Get maximum size along any data dimension."""
+        return max(self.ranges_eval_minmax(dim)[1]
+                   for data in self.data.values()
+                   if data["dims"] and not issubclass(data["type"],
+                                                      signature.Work)
+                   for dim in data["dims"])
 
     def get_connections(self):
         """Update the connections between arguments based on coincidng data."""
