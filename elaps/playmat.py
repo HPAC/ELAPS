@@ -7,7 +7,7 @@ from experiment import Experiment
 import symbolic
 import signature
 
-from qt import QCall
+from qt import QCall, QJobProgress
 
 import sys
 import os
@@ -62,7 +62,7 @@ class PlayMat(object):
             self.experiment_load(
                 os.path.join(elapsio.setuppath, "default.ees")
             )
-        self.experiment_back = Experiment(self.experiment)
+        self.experiment_back = self.experiment.copy()
 
         self.experiment.update_data()
 
@@ -80,6 +80,7 @@ class PlayMat(object):
         window.closeEvent = self.on_window_close
         window.setCorner(QtCore.Qt.TopRightCorner,
                          QtCore.Qt.RightDockWidgetArea)
+        window.statusBar()
 
         # DEBUG: print experiment
         loadreport = QtGui.QShortcut(
@@ -326,6 +327,7 @@ class PlayMat(object):
         def create_calls():
             """Create the calls list and add button (central widget)."""
             self.UI_calls = QtGui.QListWidget(
+                verticalScrollMode=QtGui.QListWidget.ScrollPerPixel,
                 contextMenuPolicy=QtCore.Qt.CustomContextMenu,
                 dragDropMode=QtGui.QAbstractItemView.InternalMove,
                 customContextMenuRequested=self.on_calls_rightclick
@@ -359,36 +361,6 @@ class PlayMat(object):
 
             self.UI_call_contextmenu.addMenu(self.UI_viewM)
             self.UI_calls_contextmenu.addMenu(self.UI_viewM)
-
-        def create_jobprogress():
-            """Create the job pgoress dock widget."""
-            jobprogressL = QtGui.QGridLayout()
-
-            jobprogress = QtGui.QWidget()
-            jobprogress.setSizePolicy(QtGui.QSizePolicy.Preferred,
-                                      QtGui.QSizePolicy.Fixed)
-            jobprogress.setLayout(jobprogressL)
-
-            self.UI_jobprogressD = QtGui.QDockWidget(
-                "Job Progress", objectName="Job Progress"
-            )
-            self.UI_jobprogressD.setWidget(jobprogress)
-
-            window.addDockWidget(QtCore.Qt.BottomDockWidgetArea,
-                                 self.UI_jobprogressD)
-            self.UI_jobprogressD.hide()
-
-            self.UI_jobprogress_jobs = {}
-
-            # timer
-            self.jobprogress_timer = QtCore.QTimer(
-                interval=1000,
-                timeout=self.on_jobprogress_timer
-            )
-
-        def create_statusbar():
-            """Create the staus bar."""
-            window.statusBar()
 
         def create_style():
             """Set style options."""
@@ -429,9 +401,9 @@ class PlayMat(object):
         create_ranges()
         create_note()
         create_calls()
-        create_jobprogress()
-        create_statusbar()
         create_style()
+
+        self.UI_jobprogress = QJobProgress(self)
 
         window.show()
 
@@ -462,16 +434,17 @@ class PlayMat(object):
         sys.exit(self.Qapp.exec_())
 
     # utility
-    @staticmethod
-    def log(*args):
-        """Log a message to stdout."""
-        print(*args)
+    def log(self, *args):
+        """Log a message to stdout and statusbar."""
+        msg = " ".join(map(str, args))
+        self.UI_window.statusBar().showMessage(msg, 2000)
+        print(msg)
 
-    @staticmethod
-    def alert(*args):
-        """Log a message to stderr."""
-        print("\033[31m" + " ".join(map(str, args)) + "\033[0m",
-              file=sys.stderr)
+    def alert(self, *args):
+        """Log a message to stderr and statusbar."""
+        msg = " ".join(map(str, args))
+        self.UI_window.statusBar().showMessage(msg)
+        print("\033[31m%s\033[0m" % msg, file=sys.stderr)
 
     # experiment routines
     def experiment_qt_load(self):
@@ -502,7 +475,7 @@ class PlayMat(object):
         elapsio.wrte_experiment(self.experiment, filename)
         self.log("Written Experiment to %r." % os.path.relpath(filename))
 
-    def experiment_infer_update(self, callid=None):
+    def experiment_infer_update_set(self, callid=None):
         """Infer Ld and Lwork (if not showing) and update_data()."""
         ex = self.experiment
         if signature.Ld in self.hideargs:
@@ -510,6 +483,8 @@ class PlayMat(object):
         if signature.Lwork in self.hideargs:
             ex.infer_lworks(callid)
         ex.update_data()
+        self.UI_submit_setenabled()
+        self.UI_calls_set()
 
     # info string
     def sampler_about_str(self):
@@ -554,7 +529,6 @@ class PlayMat(object):
         return self.docs[routine]
 
     # UI utility
-
     def UI_dialog(self, msgtype, title, text, callbacks=None):
         """Show a simple user dialog with multiple options."""
         if callbacks is None:
@@ -665,6 +639,7 @@ class PlayMat(object):
         self.UI_nreps_set()
         self.UI_sumrange_set()
         self.UI_calls_parallel_set()
+        self.UI_submit_setenabled()
         self.UI_calls_set()
 
     def UI_hideargs_set(self):
@@ -707,7 +682,7 @@ class PlayMat(object):
         elif self.experiment_back.range:
             range_ = self.experiment_back.range
         else:
-            range_ = (None, "")
+            range_ = ["", ""]
         if range_[0] is None:
             range_[0] = ""
         self.UI_rangevar.setText(range_[0])
@@ -734,7 +709,7 @@ class PlayMat(object):
         elif self.experiment_back.sumrange:
             sumrange = self.experiment_back.sumrange
         else:
-            sumrange = ("", "")
+            sumrange = ["", ""]
         self.UI_sumrangevar.setText(sumrange[0])
         self.UI_sumrangevals.setText(str(sumrange[1]))
         self.UI_setting -= 1
@@ -759,6 +734,12 @@ class PlayMat(object):
         while self.UI_calls.count() > len(self.experiment.calls):
             self.UI_calls.takeItem(len(self.experiment.calls))
         self.UI_setting -= 1
+
+    def UI_submit_setenabled(self):
+        """En/Disable the submit Action."""
+        enabled = self.experiment.check_sanity()
+        self.UI_submitA.setEnabled(enabled)
+        self.UI_submit.setEnabled(enabled)
 
     def UI_ranges_setvalid(self):
         """Set the "invlaid" property for the ranges."""
@@ -808,7 +789,20 @@ class PlayMat(object):
     @pyqtSlot()
     def on_submit(self):
         """Event: submit."""
-        # TODO
+        filename = QtGui.QFileDialog.getSaveFileName(
+            self.UI_window, "Generate Report", elapsio.reportpath, "*.eer"
+        )
+        if not filename:
+            return
+        filebase = str(filename)
+        if filebase[-4:] == ".eer":
+            filebase = filebase[:-4]
+
+        ex = self.experiment
+        backend = ex.sampler["backend"]
+        jobid = ex.submit(filebase, self.backends[backend])
+        self.UI_jobprogress.add_job(backend, jobid, filebase, ex)
+        self.log("Submitted job for %r to %r." % (str(filename), backend))
 
     @pyqtSlot()
     def on_experiment_reset(self):
@@ -910,6 +904,7 @@ class PlayMat(object):
             ex.range = None
             ex.update_data()
             self.UI_nthreads_set()
+            self.UI_submit_setenabled()
             self.UI_calls_set()
         self.UI_range_set()
 
@@ -925,6 +920,7 @@ class PlayMat(object):
         ex.update_data()
         self.UI_ranges_setvalid()
         self.UI_nthreads_set()
+        self.UI_submit_setenabled()
         self.UI_calls_set()
 
     @pyqtSlot(str)
@@ -938,6 +934,7 @@ class PlayMat(object):
             self.experiment.range[1] = symbolic.Range()
         self.experiment.update_data()
         self.UI_ranges_setvalid()
+        self.UI_submit_setenabled()
         self.UI_calls_set()
 
     @pyqtSlot(str)
@@ -996,6 +993,7 @@ class PlayMat(object):
         ex.sumrange[0] = value
         ex.update_data()
         self.UI_ranges_setvalid()
+        self.UI_submit_setenabled()
         self.UI_calls_set()
 
     @pyqtSlot(str)
@@ -1014,6 +1012,7 @@ class PlayMat(object):
             ex.sumrange[1] = symbolic.Range()
         ex.update_data()
         self.UI_ranges_setvalid()
+        self.UI_submit_setenabled()
         self.UI_calls_set()
 
     @pyqtSlot(bool)
@@ -1027,8 +1026,6 @@ class PlayMat(object):
     @pyqtSlot()
     def on_calls_reorder(self):
         """Event: change call order."""
-        if self.UI_setting:
-            return
         calls = self.experiment.calls
         self.experiment.calls = []
         for idx in range(self.UI_calls.count()):
@@ -1105,8 +1102,7 @@ class PlayMat(object):
             ex.infer_lworks(callid)
         except:
             pass
-        ex.update_data()
-        self.UI_calls_set()
+        self.experiment_infer_update_set()
 
     def on_arg_set(self, callid, argid, value):
         """Event: Set argument value."""
@@ -1128,12 +1124,9 @@ class PlayMat(object):
         elif isinstance(arg, signature.Dim):
             call[argid] = parsed
             ex.apply_connections(callid, argid)
-            if signature.Ld in self.hideargs:
-                ex.infer_lds(callid)
-            if signature.Lwork in self.hideargs:
-                ex.infer_lworks(callid)
         elif isinstance(arg, signature.Data):
             if value in self.data:
+                # TODO
                 self.data_override(callid, argid, value)
                 return
             call[argid] = value
@@ -1145,14 +1138,11 @@ class PlayMat(object):
                     call[argid] = ex.ranges_parse(value)
                 except:
                     pass
-        ex.update_data()
-        self.UI_calls_set()
+        self.experiment_infer_update_set()
 
     @pyqtSlot(QtCore.QPoint)
     def on_calls_rightclick(self, pos):
         """Event: right click in calls."""
-        if self.UI_setting:
-            return
         globalpos = self.UI_calls.viewport().mapToGlobal(pos)
         item = self.UI_calls.itemAt(pos)
         if item:
@@ -1164,9 +1154,8 @@ class PlayMat(object):
     @pyqtSlot()
     def on_call_add(self):
         """Event: add call."""
-        if self.UI_setting:
-            return
         self.experiment.calls.append([""])
+        self.UI_submit_setenabled()
         self.UI_calls_set()
         self.UI_calls.item(
             len(self.experiment.calls) - 1
@@ -1175,34 +1164,30 @@ class PlayMat(object):
     @pyqtSlot()
     def on_call_remove(self):
         """Event: remove call."""
-        if self.UI_setting:
-            return
         self.experiment.calls.pop(self.UI_call_contextmenu.item.callid)
+        self.UI_submit_setenabled()
         self.UI_calls_set()
 
     @pyqtSlot()
     def on_call_clone(self):
         """Event: clone call."""
-        if self.UI_setting:
-            return
         self.experiment.calls.append(
             self.experiment.calls[self.UI_call_contextmenu.item.callid].copy()
         )
+        self.UI_submit_setenabled()
         self.UI_calls_set()
 
     def on_infer_ld(self, callid, argid):
         """Event: infer ld."""
-        if self.UI_setting:
-            return
         self.experiment.infer_ld(callid, argid)
+        self.UI_submit_setenabled()
         self.UI_calls_set()
 
     @pyqtSlot()
     def on_infer_lwork(self, callid, argid):
         """Event: infer lwork."""
-        if self.UI_setting:
-            return
         self.experiment.infer_lwork(callid, argid)
+        self.UI_submit_setenabled()
         self.UI_calls_set()
 
     @pyqtSlot(bool)
@@ -1215,8 +1200,7 @@ class PlayMat(object):
             vary["with"].add(sender.with_)
         else:
             vary["with"].discard(sender.with_)
-        self.experiment_infer_update()
-        self.UI_calls_set()
+        self.experiment_infer_update_set()
 
     @pyqtSlot(bool)
     def on_vary_along_toggle(self, checked):
@@ -1225,8 +1209,7 @@ class PlayMat(object):
         ex = self.experiment
         vary = ex.data[sender.name]["vary"]
         vary["along"] = sender.along
-        self.experiment_infer_update()
-        self.UI_calls_set()
+        self.experiment_infer_update_set()
 
     @pyqtSlot()
     def on_vary_offset(self):
@@ -1246,8 +1229,18 @@ class PlayMat(object):
         except:
             self.UI_alert("Invalid offset:\n%s" % value)
         vary["offset"] = value
-        self.experiment_infer_update()
-        self.UI_calls_set()
+        self.experiment_infer_update_set()
+
+    def on_job_kill(self, backend, jobid):
+        """Event: kill a job."""
+        try:
+            self.backends[backend].kill(jobid)
+        except:
+            pass
+
+    def on_open_viewer(self, filename):
+        """Event: open report in Viewer."""
+        # TODO
 
 
 def main():

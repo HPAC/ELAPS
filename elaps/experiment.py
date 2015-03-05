@@ -110,6 +110,10 @@ class Experiment(dict):
             result += indent + str(call) + "\n"
         return result
 
+    def copy(self):
+        """Create a deep copy of the experiment."""
+        return Experiment(deepcopy(dict(self)))
+
     def update_data(self, name=None):
         """Update the data from the calls."""
         if name is None:
@@ -1095,3 +1099,19 @@ class Experiment(dict):
                 for id_ in connected:
                     connections[id_] = connected
         return connections
+
+    def nresults(self):
+        """How many results the current experiment woudl produce."""
+        assert(self.check_sanity())
+        nresults = 0
+        for range_val in self.range_vals():
+            for rep in range(self.nreps):
+                if self.sumrange and self.sumrange_parallel:
+                    nresults += 1
+                else:
+                    for sumrange_val in self.sumrange_vals(range_val):
+                        if self.calls_parallel:
+                            nresults += 1
+                        else:
+                            nresults += len(self.calls)
+        return nresults

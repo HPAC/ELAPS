@@ -11,7 +11,7 @@ from PyQt4.QtCore import pyqtSlot
 
 class QCall(QtGui.QListWidgetItem):
 
-    """Representation of a call in the Qt GUI."""
+    """Representation of a call in ELAPS:PlayMat."""
 
     def __init__(self, playmat, callid):
         """Initialize the call representation."""
@@ -115,11 +115,10 @@ class QCall(QtGui.QListWidgetItem):
 
     def args_init(self):
         """Initialize the arguments."""
-        call = self.call
         Qroutine = self.UI_args[0]
-        assert(isinstance(call, signature.BasicCall))
-        sig = call.sig
-        doc = self.playmat.docs_get(call[0])
+        assert(isinstance(self.call, signature.BasicCall))
+        sig = self.call.sig
+        doc = self.playmat.docs_get(self.call[0])
         if doc:
             Qroutine.setToolTip(doc[0][1])
         for argid, arg in enumerate(sig):
