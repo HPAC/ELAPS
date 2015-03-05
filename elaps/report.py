@@ -62,7 +62,7 @@ class Report(object):
             # results for each repetition
             # complextiy evaluation
             flops = len(ex.calls) * [0]
-            for sumrage_val in ex.sumrange_vals(range_val):
+            for sumrange_val in ex.sumrange_vals(range_val):
                 for callid, call in enumerate(ex.calls):
                     if not isinstance(call, signature.Call):
                         flops[callid] = None
@@ -121,7 +121,7 @@ class Report(object):
                     dict_data[callid] = dict(zip(data_keys,
                                                  tuple_data[callid]))
                     if flops[callid] is not None:
-                        dict_data[callid][intern(flops)] = flops[callid]
+                        dict_data[callid][intern("flops")] = flops[callid]
                 rep_data.append(dict_data)
 
             range_data[range_val] = tuple(rep_data)

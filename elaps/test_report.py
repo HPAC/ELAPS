@@ -42,7 +42,7 @@ class TestReportInit(unittest.TestCase):
                                                0: {"rdtsc": val}},)})
 
     def test_range(self):
-        """Test for Experimetn with range."""
+        """Test for Experiment with range."""
         lenrange = random.randint(1, 10)
         range_vals = [random.randint(1, 1000) for _ in range(lenrange)]
         vals = {range_val: random.randint(1, 1000) for range_val in range_vals}
@@ -60,7 +60,7 @@ class TestReportInit(unittest.TestCase):
 
 
     def test_reps(self):
-        """Test for Experimetn with repetitions."""
+        """Test for Experiment with repetitions."""
         nreps = random.randint(1, 10)
         vals = [random.randint(1, 1000) for _ in range(nreps)]
 
@@ -75,7 +75,7 @@ class TestReportInit(unittest.TestCase):
         self.assertEqual(report.data[None][idx][None]["rdtsc"], vals[idx])
 
     def test_sumrange(self):
-        """Test for Experimetn with sumrange."""
+        """Test for Experiment with sumrange."""
         lenrange = random.randint(1, 10)
         range_vals = [random.randint(1, 1000) for _ in range(lenrange)]
         vals = {range_val: random.randint(1, 1000) for range_val in range_vals}
@@ -93,7 +93,7 @@ class TestReportInit(unittest.TestCase):
                          sum(vals.values()))
 
     def test_calls(self):
-        """Test for Experimetn multiple calls."""
+        """Test for Experiment multiple calls."""
         ncalls = random.randint(1, 10)
         vals = [random.randint(1, 1000) for _ in range(ncalls)]
 
@@ -107,7 +107,7 @@ class TestReportInit(unittest.TestCase):
         self.assertEqual(report.data[None][0][None]["rdtsc"], sum(vals))
 
     def test_counters(self):
-        """Test for Experimetn with counters."""
+        """Test for Experiment with counters."""
         ncounters = random.randint(1, 10)
         vals = [random.randint(1, 1000) for _ in range(ncounters + 1)]
         names = ["counter%d" % counterid for counterid in range(ncounters)]
@@ -123,6 +123,22 @@ class TestReportInit(unittest.TestCase):
         idx = random.randint(0, ncounters - 1)
         name = names[idx]
         self.assertEqual(report.data[None][0][None][name], vals[1 + idx])
+
+    def test_complexity(self):
+        """Test for Call with complexity."""
+        lenrange = random.randint(1, 10)
+        lensumrange = random.randint(1, 10)
+
+        self.ex.range = ["i", range(lenrange)]
+        self.ex.sumrange = ["j", range(lensumrange)]
+        sig = Signature("name", Dim("m"), Dim("n"), complexity="m * n")
+        self.ex.call = sig(self.ex.ranges_parse("i"), self.ex.ranges_parse("j"))
+        rawdata = [[0]] + lenrange * lensumrange * [[0]] + [[1]]
+
+        report = Report(self.ex, rawdata)
+        range_idx = random.randint(0, lenrange - 1)
+        self.assertEqual(report.data[range_idx][0][0]["flops"],
+                         range_idx * sum(i for i in range(lensumrange)))
 
 
 if __name__ == "__main__":
