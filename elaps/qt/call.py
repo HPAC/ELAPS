@@ -221,6 +221,8 @@ class QCall(QtGui.QListWidgetItem):
         menu = sender.createStandardContextMenu()
         if isinstance(self.call, signature.Call):
             actions = menu.actions()
+            if actions[-1].text() == "Insert Unicode control character":
+                actions[-1].setVisible(False)
             argid = sender.argid
             if isinstance(self.call.sig[argid], signature.Ld):
                 inferld = QtGui.QAction("Infer leading dimension", sender,
