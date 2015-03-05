@@ -11,6 +11,8 @@ Experiment
 
 PlayMat
 -------
+* counters
+* script header
 * tailing _ for routines optional
 
 * (status tips)

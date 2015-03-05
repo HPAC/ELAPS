@@ -4,7 +4,6 @@ from __future__ import division, print_function
 
 import signature
 import experiment
-import elapsio
+import io
 from signature import Signature
 from experiment import Experiment
-import elapsio as io

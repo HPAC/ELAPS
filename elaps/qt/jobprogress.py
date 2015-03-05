@@ -15,6 +15,7 @@ class QJobProgress(QtGui.QDockWidget):
         """Initialize the progress tracker."""
         QtGui.QDockWidget.__init__(
             self, "Job Progress",
+            objectName="Job Progress",
             features=(QtGui.QDockWidget.DockWidgetMovable |
                       QtGui.QDockWidget.DockWidgetFloatable),
         )
@@ -34,6 +35,7 @@ class QJobProgress(QtGui.QDockWidget):
         self.hide()
 
         self.setWidget(QtGui.QTreeWidget(
+            selectionMode=QtGui.QListWidget.ExtendedSelection,
             contextMenuPolicy=QtCore.Qt.CustomContextMenu,
             customContextMenuRequested=self.on_rightclick
         ))
@@ -72,7 +74,6 @@ class QJobProgress(QtGui.QDockWidget):
             maximum=job["nresults"]
         )
         self.widget().setItemWidget(item, 1, job["progressbar"])
-        self.widget().focusOutEvent = self.on_focusout
 
         self.resize_columns()
         self.show()
@@ -116,10 +117,6 @@ class QJobProgress(QtGui.QDockWidget):
                 item.setText(2, "done")
 
         self.resize_columns()
-
-    def on_focusout(self, event):
-        """Event: unfocus."""
-        self.widget().currentItem().setSelected(False)
 
     @pyqtSlot(QtGui.QTreeWidgetItem, int)
     def on_double_clic(self, item, col):

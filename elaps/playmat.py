@@ -2,7 +2,7 @@
 """GUI for Experiments."""
 from __future__ import division, print_function
 
-import elapsio
+import io as elapsio
 from experiment import Experiment
 import symbolic
 import signature
@@ -329,12 +329,12 @@ class PlayMat(object):
             """Create the calls list and add button (central widget)."""
             self.UI_calls = QtGui.QListWidget(
                 verticalScrollMode=QtGui.QListWidget.ScrollPerPixel,
+                selectionMode=QtGui.QListWidget.ExtendedSelection,
+                dragDropMode=QtGui.QListWidget.InternalMove,
                 contextMenuPolicy=QtCore.Qt.CustomContextMenu,
-                dragDropMode=QtGui.QAbstractItemView.InternalMove,
                 customContextMenuRequested=self.on_calls_rightclick
             )
             self.UI_calls.model().layoutChanged.connect(self.on_calls_reorder)
-            self.UI_calls.focusOutEvent = self.on_calls_focusout
 
             window.setCentralWidget(self.UI_calls)
 
@@ -762,11 +762,6 @@ class PlayMat(object):
             UI_elem.update()
 
     # UI events
-    @pyqtSlot()
-    def on_jobprogress_timer(self):
-        """Event: jobprogress timer interrupt."""
-        # TODO
-
     def on_console_quit(self, *args):
         """Event: Ctrl-C from the console."""
         print("\r", end="")
@@ -1033,11 +1028,6 @@ class PlayMat(object):
             )
         self.UI_calls_set()
 
-    def on_calls_focusout(self, event):
-        """Event: unfocus calls."""
-        for callid in range(self.UI_calls.count()):
-            self.UI_calls.setItemSelected(self.UI_calls.item(callid), False)
-
     def on_routine_set(self, callid, value):
         """Event: Set routine value."""
         ex = self.experiment
@@ -1103,6 +1093,49 @@ class PlayMat(object):
             pass
         self.experiment_infer_update_set()
 
+    def on_dataarg_set(self, callid, argid, value):
+        """Event Set data argument value."""
+        ex = self.experiment
+        call = ex.calls[callid]
+        if value not in ex.data:
+            call[argid] = value
+            self.experiment_infer_update_set()
+            return
+        # data already existst
+        data = ex.data[value]
+        arg = call.sig[argid]
+        sender = self.Qapp.sender()
+        if data["type"] != type(arg):
+            self.UI_alert("Incompatible data types for %r: %r and %r." %
+                          (value, data["type"].typename, type(arg).typename))
+            sender.clearFocus()
+            self.experiment_infer_update_set()
+            sender.setFocus()
+        # try and check if data changes:
+        oldvalue = call[argid]
+        call[argid] = value
+        connections = ex.get_connections()
+        call[argid] = oldvalue
+        if any(
+            ex.calls[callid][argid] != ex.calls[callid2][argid2]
+            for (callid, argid), connections2 in connections.items()
+            for callid2, argid2 in connections2
+        ):
+            ret = QtGui.QMessageBox.warning(
+                self.UI_window, "Incompatible sizes for %s" % value,
+                "Dimensions will be adjusted automatically.",
+                QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
+            )
+            if ret == QtGui.QMessageBox.Ok:
+                call[argid] = value
+                for argid in range(len(call)):
+                    ex.apply_connections(callid, argid)
+                self.experiment_infer_update_set()
+            else:
+                sender.clearFocus()
+                self.experiment_infer_update_set()
+                sender.setFocus()
+
     def on_arg_set(self, callid, argid, value):
         """Event: Set argument value."""
         if self.UI_setting:
@@ -1124,11 +1157,8 @@ class PlayMat(object):
             call[argid] = parsed
             ex.apply_connections(callid, argid)
         elif isinstance(arg, signature.Data):
-            if value in self.data:
-                # TODO
-                self.data_override(callid, argid, value)
-                return
-            call[argid] = value
+            self.on_dataarg_set(callid, argid, value)
+            return
         elif isinstance(arg, signature.Arg):
             call[argid] = parsed
         else:

@@ -1064,7 +1064,6 @@ class Experiment(dict):
             for argid in call.sig.dataargs():
                 name = call[argid]
                 datasize = symcall[argid]
-                # TODO: pull out?
                 if isinstance(datasize, symbolic.Symbol):
                     datasize = [datasize]
                 elif isinstance(datasize, symbolic.Prod):
@@ -1098,6 +1097,7 @@ class Experiment(dict):
                 connected = set().union(*(connections[id_] for id_ in idlist))
                 for id_ in connected:
                     connections[id_] = connected
+        del connections[None]
         return connections
 
     def nresults(self):

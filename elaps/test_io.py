@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-"""Unittest for elapsio.py."""
+"""Unittest for io.py."""
 from __future__ import division, print_function
 
-from elapsio import *
+from io import *
 from signature import *
 from experiment import Experiment
 
