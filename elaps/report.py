@@ -130,19 +130,29 @@ class Report(object):
     def apply_metric(self, metric):
         """Evaluate data with respect to a metric."""
         ex = self.experiment
-        nthreads = ex.nthreads
         result = {}
         for range_val in ex.range_vals():
+            nthreads = ex.nthreads
             if isinstance(ex.nthreads, str):
                 nthreads = range_val
+            if ex.sumrange_parallel:
+                nthreads *= len(ex.sumrange_vals(range_val)) * len(ex.calls)
+            elif ex.calls_parallel:
+                nthreads *= len(ex.calls)
+            nthreads = min(nthreads, ex.sampler["nt_max"])
             rep_result = []
             for rep in range(ex.nreps):
-                try:
-                    value = metric(self.data[range_val][rep], experiment=ex,
-                                   nthreads=nthreads)
-                except:
-                    value = None
-                rep_results.append(value)
+                calls_data = self.data[range_val][rep]
+                calls_result = {}
+                for callid, value in calls_data.items:
+                    try:
+                        call_results[callid] = metric(
+                            value, experiment=ex, callid=callid,
+                            nthreads=nthreads
+                        )
+                    except:
+                        pass
+                rep_results.append(calls_result)
             result[range_val] = rep_result
         return result
 

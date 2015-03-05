@@ -18,6 +18,7 @@ samplerpath = os.path.join(rootpath, "Sampler", "build")
 backendpath = os.path.join(rootpath, "elaps", "backends")
 setuppath = os.path.join(rootpath, "setups")
 reportpath = os.path.join(rootpath, "reports")
+metricpath = os.path.join(rootpath, "elaps", "metrics")
 
 
 def write_signature(sig, filename):
@@ -195,3 +196,20 @@ def load_report(filename):
         experiment = eval(fin.readline())
         rawdata = (tuple(map(eval, line.split())) for line in fin.readlines())
         return Report(experiment, rawdata)
+
+
+def load_metric_file(filename):
+    """Load a metric from a file."""
+    name = os.path.basename(filename)[:-3]
+    module = imp.load_source(name, filename)
+    metric = module.metric
+    metric.name = module.name
+    return metric
+
+
+def load_metric(name):
+    """Load a metric."""
+    filename = os.path.join(metricpath, name + ".py")
+    if os.path.isfile(filename):
+        return load_metric_file(filename)
+    raise IOError("Metric %s not found" % name)

@@ -3,11 +3,11 @@
 from __future__ import division, print_function
 
 
-def metric(data, report, callid):
+def metric(data, **kwargs):
     """Number of floating point operations necessary to perform the operation.
 
     Counting mathematically required operations.
     """
-    return data.get("complexity")
+    return data.get("flops")
 
 name = "flops"

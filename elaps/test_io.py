@@ -60,6 +60,11 @@ class TestLoaders(unittest.TestCase):
         backend = load_backend("local")
         self.assertTrue(hasattr(backend, "submit"))
 
+    def test_load_metric(self):
+        """Test for load_metric()."""
+        metric = load_metric("efficiency")
+        self.assertTrue(hasattr(metric, "name"))
+
 
 if __name__ == "__main__":
     unittest.main()

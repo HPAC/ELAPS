@@ -3,21 +3,21 @@
 from __future__ import division, print_function
 
 
-def metric(data, report, callid):
+def metric(data, experiment, nthreads, callid, **kwargs):
     """Performance the operations relative to peak.
 
     Comparing the flops/cycle to the system's peak.
     Not acocuting for Turbo Boost.
     """
-    nops = data.get("complexity")
+    nops = data.get("flops")
     rdtsc = data.get("rdtsc")
     if nops is None or rdtsc is None:
         return None
 
     # get datatype
-    calls = report["calls"]
+    calls = experimen.calls
     if callid is not None:
-        calls = [report["calls"][callid]]
+        calls = [callid[callid]]
     if any(not hasattr(call, "sig") for call in calls):
         return None
     datatypes = set(call.sig.datatype() for call in calls)
@@ -26,7 +26,7 @@ def metric(data, report, callid):
     datatype = datatypes.pop()
 
     # get ipc
-    sampler = report["sampler"]
+    sampler = experiment.sampler
     if "single" in datatype:
         ipc = sampler["sflops/cycle"]
     elif "double" in datatype:
@@ -34,14 +34,6 @@ def metric(data, report, callid):
     else:
         return None
 
-    # get #threads
-    nt = report["nt"]
-    if report["options"]["omp"]:
-        nt *= len(report["calls"])
-    nt = min(sampler["ncores"], nt)
-    if report["userange"]["inner"] == "omp":
-        nt = sampler["ncores"]
-
-    return nops / (rdtsc * ipc * nt)
+    return nops / (rdtsc * ipc * nthreads)
 
 name = "efficiency"

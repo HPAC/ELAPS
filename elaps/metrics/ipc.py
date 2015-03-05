@@ -3,13 +3,13 @@
 from __future__ import division, print_function
 
 
-def metric(data, report, callid):
+def metric(data, **kwargs):
     """Floating point operations per cycle.
 
     Counting mathematically required operations.
     Not accounting for Turbo Boost.
     """
-    nops = data.get("complexity")
+    nops = data.get("flops")
     rdtsc = data.get("rdtsc")
     if nops is None or rdtsc is None:
         return None
