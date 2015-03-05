@@ -106,7 +106,8 @@ class Report(object):
                         for callid in range(len(ex.calls)):
                             call_fulldata = calls_fulldata[callid]
                             for id_ in range(1 + len(ex.papi_counters)):
-                                sumrange_data[callid][id_] += call_fulldata[id_]
+                                sumrange_data[callid][id_] +=\
+                                    call_fulldata[id_]
                     tuple_data = {
                         callid: tuple(sumrange_data[callid])
                         for callid in range(len(ex.calls))

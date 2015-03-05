@@ -15,6 +15,7 @@ class TestReportInit(unittest.TestCase):
     """Tests for Report initialization."""
 
     def setUp(self):
+        """Set up Sampler for Experiment."""
         self.ex = Experiment(sampler={
             "backend_header": "",
             "backend_prefix": "prefix{nt}",
@@ -29,7 +30,7 @@ class TestReportInit(unittest.TestCase):
         """Test for simple Experiment."""
         val = random.randint(1, 1000)
         start_time = random.randint(1, 1000)
-        end_time  = random.randint(1, 1000)
+        end_time = random.randint(1, 1000)
 
         self.ex.call = Signature("name")()
         rawdata = [[start_time], [val], [end_time]]
@@ -57,7 +58,6 @@ class TestReportInit(unittest.TestCase):
         idx = random.choice(range_vals)
         self.assertEqual(report.fulldata[idx][0][None][0][0], vals[idx])
         self.assertEqual(report.data[idx][0][0]["rdtsc"], vals[idx])
-
 
     def test_reps(self):
         """Test for Experiment with repetitions."""
@@ -132,7 +132,8 @@ class TestReportInit(unittest.TestCase):
         self.ex.range = ["i", range(lenrange)]
         self.ex.sumrange = ["j", range(lensumrange)]
         sig = Signature("name", Dim("m"), Dim("n"), complexity="m * n")
-        self.ex.call = sig(self.ex.ranges_parse("i"), self.ex.ranges_parse("j"))
+        self.ex.call = sig(self.ex.ranges_parse("i"),
+                           self.ex.ranges_parse("j"))
         rawdata = [[0]] + lenrange * lensumrange * [[0]] + [[1]]
 
         report = Report(self.ex, rawdata)
