@@ -11,8 +11,8 @@ import imp
 
 rootpath = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-sigpath = os.path.join(rootpath, "data", "signatures")
-docpath = os.path.join(rootpath, "data", "kerneldocs")
+sigpath = os.path.join(rootpath, "resources", "signatures")
+docpath = os.path.join(rootpath, "resources", "kerneldocs")
 samplerpath = os.path.join(rootpath, "Sampler", "build")
 backendpath = os.path.join(rootpath, "elaps", "backends")
 setuppath = os.path.join(rootpath, "setups")
