@@ -5,6 +5,7 @@ from __future__ import division, print_function
 from signature import *
 from symbolic import *
 from experiment import Experiment
+from report import Report
 
 import os
 import imp
@@ -187,6 +188,10 @@ def load_all_backends():
     return backends
 
 
-def load_report(name):
-    """Load a report from a frile."""
-    # TODO
+def load_report(filename):
+    """Load a Report from a frile."""
+    # TODO: check for error file
+    with open(filename) as fin:
+        experiment = eval(fin.readline())
+        rawdata = (tuple(map(eval, line.split())) for line in fin.readlines())
+        return Report(experiment, rawdata)
