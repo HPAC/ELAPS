@@ -79,7 +79,7 @@ class Signature(list):
         args = [repr(self[0].name)] + map(repr, self[1:])
         if self.complexity:
             args.append("complexity=" + repr(self.complexitystr))
-        return type(self).__name__ + "(" + ", ".join(args) + ")"
+        return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __call__(self, *args):
         """Create a call from the signature with given arguments."""
@@ -124,8 +124,8 @@ class BasicCall(list):
 
     def __repr__(self):
         """Format as python parsable string."""
-        return (type(self).__name__ + "(" + repr(self.sig) + ", " +
-                ", ".join(map(repr, self[1:])) + ")")
+        args = map(repr, [self.sig] + self[1:])
+        return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __copy__(self):
         """Create a deep copy."""
@@ -226,7 +226,7 @@ class Arg(object):
         if self.propertiesstr:
             args.append(self.propertiesstr)
         args = map(repr, args)
-        return type(self).__name__ + "(" + ", ".join(args) + ")"
+        return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __str__(self):
         """Format as human readable."""
@@ -272,7 +272,7 @@ class Flag(Arg):
         if self.propertiesstr:
             args.append(self.propertiesstr)
         args = map(repr, args)
-        return type(self).__name__ + "(" + ", ".join(args) + ")"
+        return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __eq__(self, other):
         """Compare with other."""
@@ -298,7 +298,7 @@ def _create_Flag(classname, defaultname, flags):
                 args.append(repr(self.propertiesstr))
         elif self.propertiesstr:
             args.append("attr=%r" % self.propertiesstr)
-        return type(self).__name__ + "(" + ", ".join(args) + ")"
+        return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     globals()[classname] = type(classname, (Flag,), {
         "__init__": __init__,
@@ -331,7 +331,7 @@ class ArgWithMin(Arg):
                 args.append(None)
             args.append(self.propertiesstr)
         args = map(repr, args)
-        return type(self).__name__ + "(" + ", ".join(args) + ")"
+        return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __eq__(self, other):
         """Compare for equality."""
@@ -370,7 +370,7 @@ class Scalar(Arg):
                 args.append(repr(self.propertiesstr))
         elif self.propertiesstr:
             args.append("attr=%r" % self.propertiesstr)
-        return type(self).__name__ + "(" + ", ".join(args) + ")"
+        return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     @staticmethod
     def default():

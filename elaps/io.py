@@ -84,7 +84,7 @@ def load_experiment_string(string):
 
 
 def load_experiment(filename):
-    """Load an experiment."""
+    """Load an Experiment."""
     with open(filename) as fin:
         if filename[-4:] == ".ees":
             return eval(fin.read())

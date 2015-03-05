@@ -148,7 +148,20 @@ class TestExperiment(unittest.TestCase):
 
     def test_check_arg_value(self):
         """test for check_arg_value()."""
-        # TODO
+        ex = Experiment(
+            sampler=self.sampler,
+            calls=[Signature("name", Dim("m"))(5)]
+        )
+        ex.call[0] = "name2"
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.call[0] = "name"
+        ex.call.append(6)
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.call.pop()
+        ex.call[-1] = None
+        self.assertRaises(ValueError, ex.check_sanity, True)
+        ex.call[-1] = 100
+        ex.check_sanity(True)
 
     def test_check_sanity(self):
         """test for check_sanity()."""
@@ -204,16 +217,6 @@ class TestExperiment(unittest.TestCase):
         self.assertRaises(ValueError, ex.check_sanity, True)
         ex.call = BasicCall(("name", "int *"), 5)
         self.assertTrue(ex.check_sanity(True))
-        ex.call[0] = "name2"
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.call[0] = "name"
-        ex.call.append(6)
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.call.pop()
-        ex.call[-1] = None
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.call[-1] = 100
-        ex.check_sanity(True)
 
         # symbols
         ex.call[1] = symbolic.Symbol("a")

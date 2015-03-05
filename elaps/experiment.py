@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Central Experiment concept."""
+"""Central ELAPS:Experiment."""
 from __future__ import division, print_function
 
 import symbolic
@@ -14,7 +14,7 @@ from copy import deepcopy
 
 class Experiment(dict):
 
-    """Representation of one experiment."""
+    """ELAPS:Experiment."""
 
     def __init__(self, other={}, **kwargs):
         """Initialize experiment from (optional) other expeirment."""
@@ -74,7 +74,7 @@ class Experiment(dict):
             changed["sampler"] = self.sampler.copy()
             del changed["sampler"]["kernels"]
         args = ["%s=%r" % keyval for keyval in changed.items()]
-        return type(self).__name__ + "(" + ", ".join(args) + ")"
+        return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __str__(self):
         """Readable string representation."""

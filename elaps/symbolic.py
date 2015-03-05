@@ -124,7 +124,7 @@ class Operation(Expression, list):
 
     def __repr__(self):
         """Python parsable representation."""
-        return type(self).__name__ + "(" + ", ".join(map(repr, self[1:])) + ")"
+        return "%s(%s)" % (type(self).__name__, ", ".join(map(repr, self[1:])))
 
     def __hash__(self):
         """Hash the expression."""
@@ -677,7 +677,8 @@ class Range(object):
 
     def __repr__(self):
         """Format as python parsable string."""
-        return "Range(" + ", ".join(map(repr, self.subranges)) + ")"
+        return "%s(%s)" % (type(self).__name__,
+                           ", ".join(map(repr, self.subranges)))
 
 
 class Sum(Operation):
