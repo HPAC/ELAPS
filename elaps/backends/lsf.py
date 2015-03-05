@@ -6,7 +6,7 @@ import subprocess
 import re
 
 
-class lsf(object):
+class Backend(object):
 
     """Backend to run ELAPS:Mat jobs through an LSF scheduler."""
 

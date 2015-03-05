@@ -161,7 +161,7 @@ def load_backend_file(filename):
     """Load a backend from a file."""
     name = os.path.basename(filename)[:-3]
     module = imp.load_source(name, filename)
-    return getattr(module, name)()
+    return module.Backend()
 
 
 def load_backend(name):

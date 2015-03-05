@@ -6,7 +6,7 @@ import subprocess
 import threading
 
 
-class local(object):
+class Backend(object):
 
     """Backend to run ELAPS:Mat jobs locally in the background."""
 
