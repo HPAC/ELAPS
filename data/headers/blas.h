@@ -1,3 +1,5 @@
+#ifndef BLAS_H
+#define BLAS_H
 typedef struct {
     float r, i;
 } floatc_t;
@@ -146,3 +148,4 @@ void strsm_(char *, char *, char *, char *, int *, int *, float *, float *, int 
 void dtrsm_(char *, char *, char *, char *, int *, int *, double *, double *, int *, double *, int *);
 void ctrsm_(char *, char *, char *, char *, int *, int *, float *, float *, int *, float *, int *);
 void ztrsm_(char *, char *, char *, char *, int *, int *, double *, double *, int *, double *, int *);
+#endif /* BLAS_H */

@@ -19,7 +19,7 @@
 [ "$CXX" == "g++" ] && : ${CXXFLAGS:="-fopenmp"} || : ${CXXFLAGS:=""}
 : ${LINK_FLAGS:=""}
 : ${INCLUDE_FLAGS:=""}
-: ${KERNEL_HEADERS:=`echo ../data/headers/{blas,lapack}.h`}
+: ${KERNEL_HEADERS:=`echo ../data/headers/{blas,lapack,utility}.h`}
 : ${OPENMP:=1}
 : ${PAPI_COUNTERS_MAX:=0}
 : ${PAPI_COUNTERS_AVAIL:=""}
@@ -63,8 +63,14 @@ for x in main CallParser MemoryManager Sampler Sampler_utility Signature; do
     $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c $defines src/$x.cpp -o $TARGET_DIR/$x.o || exit
 done
 
+# build kernels
+mkdir $TARGET_DIR/kernels
+for file in kernels/*.c; do
+    $CC $CFLAGS -c $file -o $TARGET_DIR/${file%.c}.o || exit
+done
+
 # build sample.o
 $CC $CFLAGS $INCLUDE_FLAGS -I. -c $defines src/sample.c -o $TARGET_DIR/sample.o || exit
 
 # build sampler
-$CXX $CXXFLAGS $TARGET_DIR/*.o -o $TARGET_DIR/sampler.x $LINK_FLAGS || exit
+$CXX $CXXFLAGS $TARGET_DIR/*.o $TARGET_DIR/kernels/*.o -o $TARGET_DIR/sampler.x $LINK_FLAGS || exit

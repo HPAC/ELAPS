@@ -1,3 +1,5 @@
+#ifndef LAPACK_H
+#define LAPACK_H
 int sgesv_(int *, int *, float *, int *, int *, float *, int *, int *);
 int dgesv_(int *, int *, double *, int *, int *, double *, int *, int *);
 int cgesv_(int *, int *, float *, int *, int *, float *, int *, int *);
@@ -937,3 +939,4 @@ int slaswp_(int *, float *, int *, int *, int *, int *, int *);
 int dlaswp_(int *, double *, int *, int *, int *, int *, int *);
 int claswp_(int *, float *, int *, int *, int *, int *, int *);
 int zlaswp_(int *, double *, int *, int *, int *, int *, int *);
+#endif /* LAPACK_H */
