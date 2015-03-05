@@ -2,7 +2,7 @@
 """Representation of data arguments in QCalls in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
-import symbolic
+from elaps import symbolic
 
 from PyQt4 import QtCore, QtGui
 

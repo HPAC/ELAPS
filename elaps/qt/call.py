@@ -2,7 +2,7 @@
 """Representation of calls in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
-import signature
+from elaps import signature
 from dataarg import QDataArg
 
 from PyQt4 import QtCore, QtGui

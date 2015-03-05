@@ -1243,20 +1243,3 @@ class PlayMat(object):
     def on_open_viewer(self, filename):
         """Event: open report in Viewer."""
         # TODO
-
-
-def main():
-    """Main entry point."""
-    if "--reset" in sys.argv:
-        PlayMat(reset=True).start()
-        return
-    if len(sys.argv) > 1:
-        filename = sys.argv[1]
-        if filename[-4:] in (".ees", ".eer"):
-            PlayMat(load=filename).start()
-            return
-    PlayMat().start()
-
-
-if __name__ == "__main__":
-    main()
