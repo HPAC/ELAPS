@@ -2,12 +2,12 @@
 """GUI for Experiments."""
 from __future__ import division, print_function
 
-import io as elapsio
-from experiment import Experiment
-import symbolic
-import signature
+import elaps.io
+from elaps.experiment import Experiment
+import elaps.symbolic as symbolic
+import elaps.signature as signature
 
-from qt import QCall, QJobProgress
+from elaps.qt import QCall, QJobProgress
 
 import sys
 import os
@@ -16,7 +16,7 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot
 
 
-class PlayMat(object):
+class PlayMat(QtGui.QMainWindow):
 
     """GUI for Experiment."""
 
@@ -30,9 +30,10 @@ class PlayMat(object):
         else:
             self.Qapp = QtGui.QApplication(sys.argv)
             self.Qapp.viewer = None
+        QtGui.QMainWindow.__init__(self)
         self.Qapp.playmat = self
-        self.backends = elapsio.load_all_backends()
-        self.samplers = elapsio.load_all_samplers()
+        self.backends = elaps.io.load_all_backends()
+        self.samplers = elaps.io.load_all_samplers()
         self.docs = {}
         self.sigs = {}
         self.jobs = {}
@@ -60,7 +61,7 @@ class PlayMat(object):
                 pass
         if not self.experiment:
             self.experiment_load(
-                os.path.join(elapsio.setuppath, "default.ees")
+                os.path.join(elaps.io.setuppath, "default.ees")
             )
         self.experiment_back = self.experiment.copy()
 
@@ -73,30 +74,29 @@ class PlayMat(object):
         self.UI_setting = 1
 
         # window
-        window = self.UI_window = QtGui.QMainWindow(
+        self.pyqtConfigure(
             windowTitle="ELAPS:PlayMat",
             unifiedTitleAndToolBarOnMac=True
         )
-        window.closeEvent = self.on_window_close
-        window.setCorner(QtCore.Qt.TopRightCorner,
-                         QtCore.Qt.RightDockWidgetArea)
-        window.statusBar()
+        self.setCorner(QtCore.Qt.TopRightCorner,
+                       QtCore.Qt.RightDockWidgetArea)
+        self.statusBar()
 
         # DEBUG: print experiment
         loadreport = QtGui.QShortcut(
-            QtGui.QKeySequence.Print, window, lambda: print(self.experiment)
+            QtGui.QKeySequence.Print, self, lambda: print(self.experiment)
         )
 
         def create_menus():
             """Create all menus."""
-            menu = window.menuBar()
+            menu = self.menuBar()
 
             # file
             fileM = menu.addMenu("File")
 
             # file > submit
             self.UI_submitA = QtGui.QAction(
-                "Run", window,
+                "Run", self,
                 shortcut=QtGui.QKeySequence("Ctrl+R"), triggered=self.on_submit
             )
             fileM.addAction(self.UI_submitA)
@@ -106,12 +106,12 @@ class PlayMat(object):
 
             # file > reset
             fileM.addAction(QtGui.QAction(
-                "Reset Experiment", window, triggered=self.on_experiment_reset
+                "Reset Experiment", self, triggered=self.on_experiment_reset
             ))
 
             # file > load
             load = QtGui.QAction(
-                "Load Experiment ...", window,
+                "Load Experiment ...", self,
                 shortcut=QtGui.QKeySequence.Open,
                 triggered=self.on_experiment_load
             )
@@ -120,12 +120,12 @@ class PlayMat(object):
             # load report shortcut
             loadreport = QtGui.QShortcut(
                 QtGui.QKeySequence("Ctrl+Shift+O"),
-                window, self.on_experiment_load_report
+                self, self.on_experiment_load_report
             )
 
             # fie > save
             fileM.addAction(QtGui.QAction(
-                "Save Experiment ...", window,
+                "Save Experiment ...", self,
                 shortcut=QtGui.QKeySequence.Save,
                 triggered=self.on_experiment_save
             ))
@@ -134,7 +134,7 @@ class PlayMat(object):
             fileM.addSeparator()
 
             fileM.addAction(QtGui.QAction(
-                "Start Viewer", window, triggered=self.on_viewer_start
+                "Start Viewer", self, triggered=self.on_viewer_start
             ))
 
             # view
@@ -150,8 +150,7 @@ class PlayMat(object):
                 ("hide infos", (signature.Info,))
             ):
                 action = QtGui.QAction(
-                    desc, window,
-                    checkable=True, toggled=self.on_hideargs_toggle
+                    desc, self, checkable=True, toggled=self.on_hideargs_toggle
                 )
                 action.classes = set(classes)
                 self.UI_viewM.addAction(action)
@@ -166,7 +165,7 @@ class PlayMat(object):
                 self.on_sampler_change
             )
 
-            samplerT = window.addToolBar("Sampler")
+            samplerT = self.addToolBar("Sampler")
             samplerT.pyqtConfigure(movable=False, objectName="Sampler")
             samplerT.addWidget(QtGui.QLabel("Sampler:"))
             samplerT.addWidget(self.UI_sampler)
@@ -177,13 +176,13 @@ class PlayMat(object):
                 self.on_nthreads_change
             )
 
-            nthreadsT = window.addToolBar("#threads")
+            nthreadsT = self.addToolBar("#threads")
             nthreadsT.pyqtConfigure(movable=False, objectName="#threads")
             nthreadsT.addWidget(QtGui.QLabel("#threads:"))
             nthreadsT.addWidget(self.UI_nthreads)
 
             # submit
-            samplerT = window.addToolBar("Submit")
+            samplerT = self.addToolBar("Submit")
             samplerT.pyqtConfigure(movable=False, objectName="Submit")
 
             # spacer
@@ -193,9 +192,9 @@ class PlayMat(object):
             samplerT.addWidget(spacer)
 
             # submit
-            self.UI_submit = QtGui.QAction(window.style().standardIcon(
+            self.UI_submit = QtGui.QAction(self.style().standardIcon(
                 QtGui.QStyle.SP_DialogOkButton
-            ), "Run", window, triggered=self.on_submit)
+            ), "Run", self, triggered=self.on_submit)
             samplerT.addAction(self.UI_submit)
 
         def create_ranges():
@@ -308,7 +307,7 @@ class PlayMat(object):
             )
             rangesD.setWidget(rangesW)
 
-            window.addDockWidget(QtCore.Qt.TopDockWidgetArea, rangesD)
+            self.addDockWidget(QtCore.Qt.TopDockWidgetArea, rangesD)
 
         def create_note():
             """Create the note input."""
@@ -323,7 +322,7 @@ class PlayMat(object):
             )
             noteD.setWidget(noteW)
 
-            window.addDockWidget(QtCore.Qt.TopDockWidgetArea, noteD)
+            self.addDockWidget(QtCore.Qt.TopDockWidgetArea, noteD)
 
         def create_calls():
             """Create the calls list and add button (central widget)."""
@@ -336,25 +335,25 @@ class PlayMat(object):
             )
             self.UI_calls.model().layoutChanged.connect(self.on_calls_reorder)
 
-            window.setCentralWidget(self.UI_calls)
+            self.setCentralWidget(self.UI_calls)
 
             # context menus
             self.UI_call_contextmenu = QtGui.QMenu()
             self.UI_calls_contextmenu = QtGui.QMenu()
 
             # add
-            add = QtGui.QAction("Add call", window, triggered=self.on_call_add)
+            add = QtGui.QAction("Add call", self, triggered=self.on_call_add)
             self.UI_call_contextmenu.addAction(add)
             self.UI_calls_contextmenu.addAction(add)
 
             # remove
             self.UI_call_contextmenu.addAction(QtGui.QAction(
-                "Remove call", window, triggered=self.on_call_remove
+                "Remove call", self, triggered=self.on_call_remove
             ))
 
             # clone
             self.UI_call_contextmenu.addAction(QtGui.QAction(
-                "Clone call", window, triggered=self.on_call_clone
+                "Clone call", self, triggered=self.on_call_clone
             ))
 
             self.UI_call_contextmenu.addSeparator()
@@ -366,7 +365,7 @@ class PlayMat(object):
         def create_style():
             """Set style options."""
             # stylesheet
-            window.setStyleSheet("""
+            self.setStyleSheet("""
                 QLineEdit[invalid="true"],
                 *[invalid="true"] QLineEdit {
                     background: #FFDDDD;
@@ -406,7 +405,7 @@ class PlayMat(object):
 
         self.UI_jobprogress = QJobProgress(self)
 
-        window.show()
+        self.show()
 
         self.UI_setting -= 1
         self.UI_initialized = True
@@ -417,10 +416,10 @@ class PlayMat(object):
         self.hideargs = eval(str(settings.value("hideargs", type=str)),
                              signature.__dict__)
         self.UI_setting += 1
-        self.UI_window.restoreGeometry(settings.value("geometry",
-                                                      type=QtCore.QByteArray))
-        self.UI_window.restoreState(settings.value("windowState",
-                                                   type=QtCore.QByteArray))
+        self.restoreGeometry(settings.value("geometry",
+                                            type=QtCore.QByteArray))
+        self.restoreState(settings.value("windowState",
+                                         type=QtCore.QByteArray))
         self.UI_setting -= 1
 
     def start(self):
@@ -438,19 +437,19 @@ class PlayMat(object):
     def log(self, *args):
         """Log a message to stdout and statusbar."""
         msg = " ".join(map(str, args))
-        self.UI_window.statusBar().showMessage(msg, 2000)
+        self.statusBar().showMessage(msg, 2000)
         print(msg)
 
     def alert(self, *args):
         """Log a message to stderr and statusbar."""
         msg = " ".join(map(str, args))
-        self.UI_window.statusBar().showMessage(msg)
+        self.statusBar().showMessage(msg)
         print("\033[31m%s\033[0m" % msg, file=sys.stderr)
 
     # experiment routines
     def experiment_qt_load(self):
         """Load Experiment from Qt setting."""
-        ex = elapsio.load_experiment_string(str(
+        ex = elaps.io.load_experiment_string(str(
             QtCore.QSettings("HPAC", "ELAPS:PlayMat").value("Experiment",
                                                             type=str)
         ))
@@ -463,7 +462,7 @@ class PlayMat(object):
 
     def experiment_load(self, filename):
         """Load Experiment from a file."""
-        ex = elapsio.load_experiment(filename)
+        ex = elaps.io.load_experiment(filename)
         if ex.sampler is None or ex.sampler["name"] not in self.samplers:
             ex.sampler = self.samplers[min(self.samplers)]
         else:
@@ -473,7 +472,7 @@ class PlayMat(object):
 
     def experiment_write(self, filename):
         """Write Experiment to a file."""
-        elapsio.wrte_experiment(self.experiment, filename)
+        elaps.io.wrte_experiment(self.experiment, filename)
         self.log("Written Experiment to %r." % os.path.relpath(filename))
 
     def experiment_infer_update_set(self, callid=None):
@@ -511,7 +510,7 @@ class PlayMat(object):
         """(Try to) get the Signature for a routine."""
         if routine not in self.sigs:
             try:
-                self.sigs[routine] = elapsio.load_signature(routine)
+                self.sigs[routine] = elaps.io.load_signature(routine)
                 self.log("Loaded Signature for %r." % routine)
             except:
                 self.sigs[routine] = None
@@ -522,7 +521,7 @@ class PlayMat(object):
         """(Try to) get the documentation for a routine."""
         if routine not in self.docs:
             try:
-                self.docs[routine] = elapsio.load_docs(routine)
+                self.docs[routine] = elaps.io.load_docs(routine)
                 self.log("Loaded documentation for %r." % routine)
             except:
                 self.docs[routine] = None
@@ -551,7 +550,7 @@ class PlayMat(object):
             callbackmap[buttontypes[key]] = callback
             buttons |= buttontypes[key]
 
-        ret = msgtypes[msgtype](self.UI_window, title, text, buttons)
+        ret = msgtypes[msgtype](self, title, text, buttons)
         if callbackmap[ret] is not None:
             callbackmap[ret][0](*callbackmap[ret][1])
 
@@ -570,7 +569,7 @@ class PlayMat(object):
         actions = []
 
         withrep = QtGui.QAction(
-            "Vary with repetitions", self.UI_window,
+            "Vary with repetitions", self,
             checkable=True, checked="rep" in vary["with"],
             toggled=self.on_vary_with_toggle
         )
@@ -580,7 +579,7 @@ class PlayMat(object):
 
         if ex.sumrange:
             withsumrange = QtGui.QAction(
-                "Vary with %s" % ex.sumrange[0], self.UI_window,
+                "Vary with %s" % ex.sumrange[0], self,
                 checkable=True, checked=ex.sumrange[0] in vary["with"],
                 toggled=self.on_vary_with_toggle
             )
@@ -594,7 +593,7 @@ class PlayMat(object):
 
         if len(data["dims"]) > 1:
             actions.append(None)
-            alongG = QtGui.QActionGroup(self.UI_window, exclusive=True)
+            alongG = QtGui.QActionGroup(self, exclusive=True)
             for along in range(len(data["dims"])):
                 if along < 3:
                     text = "Vary along %s (dim %d)" % (
@@ -605,7 +604,7 @@ class PlayMat(object):
                     text = "Vary along dim %d" % (along + 1)
 
                 alongA = QtGui.QAction(
-                    text, self.UI_window,
+                    text, self,
                     checkable=True,
                     checked=vary["along"] == along,
                     toggled=self.on_vary_along_toggle,
@@ -618,7 +617,7 @@ class PlayMat(object):
         actions.append(None)
         text = "Change vary offset (%s)" % vary["offset"]
         offset = QtGui.QAction(
-            text, self.UI_window, triggered=self.on_vary_offset
+            text, self, triggered=self.on_vary_offset
         )
         offset.name = name
         actions.append(offset)
@@ -765,17 +764,16 @@ class PlayMat(object):
     def on_console_quit(self, *args):
         """Event: Ctrl-C from the console."""
         print("\r", end="")
-        self.UI_window.close()
+        self.close()
         if self.Qapp.viewer:
             self.Qapp.viewer.UI_window.close()
         self.Qapp.quit()
 
-    @pyqtSlot()
-    def on_window_close(self, event):
+    def closeEvent(self, event):
         """Event: close main window."""
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
-        settings.setValue("geometry", self.UI_window.saveGeometry())
-        settings.setValue("windowState", self.UI_window.saveState())
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("windowState", self.saveState())
         settings.setValue("Experiment", repr(self.experiment))
         settings.setValue("hideargs", repr(self.hideargs))
         self.log("Experiment saved.")
@@ -784,7 +782,7 @@ class PlayMat(object):
     def on_submit(self):
         """Event: submit."""
         filename = QtGui.QFileDialog.getSaveFileName(
-            self.UI_window, "Generate Report", elapsio.reportpath, "*.eer"
+            self, "Generate Report", elaps.io.reportpath, "*.eer"
         )
         if not filename:
             return
@@ -802,7 +800,7 @@ class PlayMat(object):
     def on_experiment_reset(self):
         """Event: reset experiment."""
         self.experiment_load(
-            os.path.join(elapsio.setuppath, "default.ees")
+            os.path.join(elaps.io.setuppath, "default.ees")
         )
         self.UI_setall()
 
@@ -810,9 +808,9 @@ class PlayMat(object):
     def on_experiment_load(self, report=False):
         """Event: load experiment."""
         filename = QtGui.QFileDialog.getOpenFileName(
-            self.UI_window,
+            self,
             "Load Experiment",
-            elapsio.reportpath if report else elapsio.setuppath,
+            elaps.io.reportpath if report else elaps.io.setuppath,
             "*.eer *.ees"
         )
         if filename:
@@ -828,13 +826,13 @@ class PlayMat(object):
     def on_experiment_save(self):
         """Event: save experiment."""
         filename = QtGui.QFileDialog.getSaveFileName(
-            self.UI_window,
+            self,
             "Save Setup",
-            elapsio.setuppath,
+            elaps.io.setuppath,
             "*.ees"
         )
         if filename:
-            elapsio.write_experiment(self.experiment, filename)
+            elaps.io.write_experiment(self.experiment, filename)
 
     @pyqtSlot()
     def on_viewer_start(self):
@@ -1122,7 +1120,7 @@ class PlayMat(object):
             for callid2, argid2 in connections2
         ):
             ret = QtGui.QMessageBox.warning(
-                self.UI_window, "Incompatible sizes for %s" % value,
+                self, "Incompatible sizes for %s" % value,
                 "Dimensions will be adjusted automatically.",
                 QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
             )
@@ -1250,7 +1248,7 @@ class PlayMat(object):
         name = sender.name
         vary = self.experiment.data[name]["vary"]
         value, ok = QtGui.QInputDialog.getText(
-            self.UI_window, "Vary offset for %s" % name,
+            self, "Vary offset for %s" % name,
             "Vary offset for %s:" % name, text=str(vary["offset"])
         )
         if not ok:

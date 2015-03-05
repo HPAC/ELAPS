@@ -2,7 +2,7 @@
 """Wrapper for ELAPS:PlayMat."""
 from __future__ import division, print_function
 
-from elaps.playmat import PlayMat
+from elaps.qt import PlayMat
 
 import sys
 

@@ -30,8 +30,7 @@ class QJobProgress(QtGui.QDockWidget):
 
     def UI_init(self):
         """Initialize the GUI elements."""
-        self.playmat.UI_window.addDockWidget(QtCore.Qt.BottomDockWidgetArea,
-                                             self)
+        self.playmat.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self)
         self.hide()
 
         self.setWidget(QtGui.QTreeWidget(
