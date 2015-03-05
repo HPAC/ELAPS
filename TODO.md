@@ -20,11 +20,6 @@ PlayMat
 * ("file" backend)
 
 
-Report
-------
-* Everything
-
-
 Viewer
 ------
 * legend placement
