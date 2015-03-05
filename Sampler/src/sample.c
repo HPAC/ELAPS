@@ -147,29 +147,34 @@ void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 
 #ifdef PAPI_ENABLED
 void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, int ncounters) {
-    // macros start and end everywhere
-#define COUNTERS_START COUNTERS_START0
-#define COUNTERS_END COUNTERS_END0
     // for each call
     int i;
     for (i = 0; i < ncalls; i++) {
         void **argv = calls[i].argv;
         unsigned long ticks0, ticks1; 
 
+    // start and end counters
+#define COUNTERS_START COUNTERS_START0
+#define COUNTERS_END COUNTERS_END0
+
         // branch depending on #arguments
+        // actual routine invocations are 
+        // automatically generated depending on the number of arguments
         switch (calls[i].argc) {
-            // actual routine invocations are 
-            // automatically generated depending on the number of arguments
 #include CALLS_C_INC
         }
 
         // compute rdtsc dfference (time)
         calls[i].rdtsc = ticks1 - ticks0;
+
+        // clean macros
+#undef COUNTERS_START
+#undef COUNTERS_END
     }
 }
 
 #ifdef OPENMP_ENABLED
-void sample_papi_omp(KernelCall *calls, size_t ncalls) {
+void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, int ncounters) {
 #pragma omp parallel
     {
 #pragma omp single
