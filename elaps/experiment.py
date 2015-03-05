@@ -440,7 +440,7 @@ class Experiment(dict):
 
         # sampler
         for key in ("backend_header", "backend_prefix", "backend_suffix",
-                    "backend_footer", "kernels", "nt_max", "exe"):
+                    "backend_footer", "nt_max", "exe"):
             if key not in self.sampler:
                 raise KeyError("Sampler has not key %r" % key)
 

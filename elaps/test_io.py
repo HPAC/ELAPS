@@ -60,6 +60,24 @@ class TestLoaders(unittest.TestCase):
         backend = load_backend("local")
         self.assertTrue(hasattr(backend, "submit"))
 
+    def test_load_report(self):
+        """Test for load_report()."""
+        ex = Experiment(calls=[Signature("name")()], sampler={
+            "backend_header": "",
+            "backend_prefix": "prefix{nt}",
+            "backend_suffix": "",
+            "backend_footer": "",
+            "kernels": {},
+            "nt_max": 10,
+            "exe": "executable"
+        })
+        filename = self.filebase + ".eer"
+
+        with open(filename, "w") as fout:
+            fout.write("%r\n1\n2\n3" % ex)
+
+        report = load_report(filename)
+
     def test_load_metric(self):
         """Test for load_metric()."""
         metric = load_metric("efficiency")

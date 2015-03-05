@@ -194,7 +194,7 @@ def load_report(filename):
     # TODO: check for error file
     with open(filename) as fin:
         experiment = eval(fin.readline())
-        rawdata = (tuple(map(eval, line.split())) for line in fin.readlines())
+        rawdata = [map(eval, line.split()) for line in fin.readlines()]
         return Report(experiment, rawdata)
 
 

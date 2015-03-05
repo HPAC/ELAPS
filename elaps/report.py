@@ -13,7 +13,7 @@ class Report(object):
     def __init__(self, experiment, rawdata):
         """Initialize report."""
         self.experiment = experiment
-        self.rawdata = rawdata
+        self.rawdata = tuple(map(tuple, rawdata))
 
         if len(rawdata) != experiment.nresults() + 2:
             raise Exception("Unexpected #results: %d (expecting %d)" %
@@ -24,7 +24,7 @@ class Report(object):
     def process_rawdata(self):
         """Initialize data."""
         ex = self.experiment
-        rawdata = map(tuple, self.rawdata)
+        rawdata = list(self.rawdata)
         self.starttime = rawdata.pop(0)[0]
         self.endtime = rawdata.pop()[0]
 
