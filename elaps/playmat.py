@@ -297,6 +297,7 @@ class PlayMat(object):
             rangesL.addWidget(self.UI_sumrangeW, 2, 1)
             rangesL.addWidget(self.UI_calls_parallel, 3, 0)
             rangesL.addWidget(self.UI_calls_parallelW, 3, 1)
+            rangesL.setRowStretch(4, 1)
 
             rangesW = QtGui.QWidget()
             rangesW.setLayout(rangesL)
@@ -560,56 +561,51 @@ class PlayMat(object):
         title = kwargs.get("title", "")
         self.UI_dialog("information", title, msg)
 
-    def UI_varyM(self, name):
+    def UI_varyactions(self, name):
         """Generate vary menu for Operand."""
         ex = self.experiment
         data = ex.data[name]
         vary = data["vary"]
 
-        if not vary["with"] and not ex.sumrange:
-            action = QtGui.QAction(
-                "Vary Operand", self.UI_window, checkable=True,
-                toggled=self.on_vary_with_toggle
-            )
-            action.name = name
-            action.with_ = "rep"
-            return action
-
-        menu = QtGui.QMenu("Vary Operand")
+        actions = []
 
         withrep = QtGui.QAction(
-            "With repetitions", menu,
+            "Vary with repetitions", self.UI_window,
             checkable=True, checked="rep" in vary["with"],
             toggled=self.on_vary_with_toggle
         )
         withrep.name = name
         withrep.with_ = "rep"
-        menu.addAction(withrep)
+        actions.append(withrep)
 
         if ex.sumrange:
             withsumrange = QtGui.QAction(
-                "With %s" % ex.sumrange[0], menu,
+                "Vary with %s" % ex.sumrange[0], self.UI_window,
                 checkable=True, checked=ex.sumrange[0] in vary["with"],
                 toggled=self.on_vary_with_toggle
             )
 
             withsumrange.name = name
             withsumrange.with_ = ex.sumrange[0]
-            menu.addAction(withsumrange)
+            actions.append(withsumrange)
 
         if not vary["with"]:
-            return menu
+            return actions
 
         if len(data["dims"]) > 1:
-            menu.addSeparator()
-            alongG = QtGui.QActionGroup(menu, exclusive=True)
+            actions.append(None)
+            alongG = QtGui.QActionGroup(self.UI_window, exclusive=True)
             for along in range(len(data["dims"])):
-                text = "Along dimension %d" % (along + 1)
                 if along < 3:
-                    text += "\t" + u"\u2190\u2192\u2197"[along]
+                    text = "Vary along %s (dim %d)" % (
+                        u"\u2193\u2192\u2197"[along],
+                        along + 1
+                    )
+                else:
+                    text = "Vary along dim %d" % (along + 1)
 
                 alongA = QtGui.QAction(
-                    text, menu,
+                    text, self.UI_window,
                     checkable=True,
                     checked=vary["along"] == along,
                     toggled=self.on_vary_along_toggle,
@@ -617,16 +613,19 @@ class PlayMat(object):
                 alongA.name = name
                 alongA.along = along
                 alongG.addAction(alongA)
-                menu.addAction(alongA)
-            menu.addSeparator()
+                actions.append(alongA)
 
-        text = "Set offset (%s)" % vary["offset"]
-        offset = QtGui.QAction(text, menu,
-                               triggered=self.on_vary_offset)
+        actions.append(None)
+        text = "Change vary offset (%s)" % vary["offset"]
+        offset = QtGui.QAction(
+            text, self.UI_window, triggered=self.on_vary_offset
+        )
         offset.name = name
-        menu.addAction(offset)
+        actions.append(offset)
 
-        return menu
+        actions.append(None)
+
+        return actions
 
     # UI setters
     def UI_setall(self):
@@ -1194,9 +1193,12 @@ class PlayMat(object):
     def on_vary_with_toggle(self, checked):
         """Event: changed vary with."""
         sender = self.Qapp.sender()
-        ex = self.experiment
-        vary = ex.data[sender.name]["vary"]
+        data = self.experiment.data[sender.name]
+        vary = data["vary"]
         if checked:
+            if not vary["with"]:
+                vary["offset"] = 0
+                vary["along"] = len(data["dims"]) - 1
             vary["with"].add(sender.with_)
         else:
             vary["with"].discard(sender.with_)

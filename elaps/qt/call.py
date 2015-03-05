@@ -197,8 +197,10 @@ class QCall(QtGui.QListWidgetItem):
         if isinstance(sender, QtGui.QLineEdit) and not isinstance(sender,
                                                                   QDataArg):
             # adjust widt no matter where the change came from
-            width = sender.fontMetrics().width(value)
+            width = sender.fontMetrics().width(value) + 4
             width += sender.minimumSizeHint().width()
+            margins = sender.getTextMargins()
+            width += margins[0] + margins[2]
             width = min(width, sender.sizeHint().width())
             height = sender.sizeHint().height()
             if argid == 0:
@@ -231,11 +233,11 @@ class QCall(QtGui.QListWidgetItem):
                 inferlwork.argid = argid
                 menu.insertAction(actions[0], inferlwork)
             if isinstance(self.call.sig[argid], signature.Data):
-                varyM = self.playmat.UI_varyM(self.call[argid])
-                if isinstance(varyM, QtGui.QMenu):
-                    menu.insertMenu(actions[0], varyM)
-                elif isinstance(varyM, QtGui.QAction):
-                    menu.insertAction(actions[0], varyM)
+                for action in self.playmat.UI_varyactions(self.call[argid]):
+                    if action:
+                        menu.insertAction(actions[0], action)
+                    else:
+                        menu.insertSeparator(actions[0])
             if len(menu.actions()) > len(actions):
                 menu.insertSeparator(actions[0])
         menu.exec_(globalpos)
