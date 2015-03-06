@@ -4,6 +4,18 @@ from __future__ import division, print_function
 
 import signature
 
+from math import sqrt
+
+stat_funs = {
+    "min": min,
+    "med": lambda l: (sum(sorted(l)[((len(l) - 1) // 2):(len(l) // 2 + 1)]) /
+                      (2 - len(l) % 2)),
+    "max": max,
+    "avg": lambda l: sum(l) / len(l),
+    "std": lambda l: sqrt(max(sum(x ** 2 for x in l) / len(l) -
+                              (sum(l) / len(l)) ** 2, 0)),
+}
+
 
 class Report(object):
 
@@ -127,8 +139,14 @@ class Report(object):
             range_data[range_val] = tuple(rep_data)
         self.data = range_data
 
-    def apply_metric(self, metric):
+    def apply_metric(self, metric, callid=-1):
         """Evaluate data with respect to a metric."""
+        if callid == -1:
+            results = {}
+            for callid in self.data.values()[0][0]:
+                results[callid] = self.apply_metric(metric, callid)
+            return results
+
         ex = self.experiment
         result = {}
         for range_val in ex.range_vals():
@@ -140,20 +158,39 @@ class Report(object):
             elif ex.calls_parallel:
                 nthreads *= len(ex.calls)
             nthreads = min(nthreads, ex.sampler["nt_max"])
+
             rep_result = []
             for rep in range(ex.nreps):
-                calls_data = self.data[range_val][rep]
-                calls_result = {}
-                for callid, value in calls_data.items:
-                    try:
-                        calls_result[callid] = metric(
-                            value, experiment=ex, callid=callid,
-                            nthreads=nthreads
-                        )
-                    except:
-                        pass
-                rep_result.append(calls_result)
-            result[range_val] = rep_result
+                try:
+                    rep_result.append(metric(
+                        self.data[range_val][rep][callid], experiment=ex,
+                        callid=callid, nthreads=nthreads
+                    ))
+                except:
+                    pass
+            if rep_result:
+                result[range_val] = rep_result
+        return result
+
+    def apply_metric_stats(self, metric, callid=-1):
+        """Eveluate data with respect to a metric and compute statistics."""
+        if callid == -1:
+            results = {}
+            for callid in self.data.values()[0][0]:
+                results[callid] = self.apply_metric_stats(metric, callid)
+            return results
+
+        metric_data = self.apply_metric(metric, callid)
+        result = {}
+        for range_val, rep_metric_data in metric_data.items():
+            rep_result = {}
+            for stat_name, stat_fun in stat_funs.items():
+                try:
+                    rep_result[stat_name] = stat_fun(rep_metric_data)
+                except:
+                    pass
+            if rep_result:
+                result[range_val] = rep_result
         return result
 
     def __repr__(self):
