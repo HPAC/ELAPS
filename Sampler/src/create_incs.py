@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Create include files for the Sampler."""
 from __future__ import division, print_function
 
 import sys
@@ -7,8 +8,11 @@ import re
 from time import time
 from __builtin__ import intern  # fix for pyflake error
 
+buildversion= 1425604076
+
 
 def main():
+    """Create include files for the Sampler."""
     if len(sys.argv) != 6:
         print("usage: gcc -E kernel.h | ", sys.argv[0],
               "cfg.h kernel.h sigs.c.ing calls.c.inc info.py",
@@ -95,10 +99,11 @@ def main():
 
     # create info.py
     info = {
-        "exe": os.path.abspath(os.path.join(os.environ["TARGET_DIR"],
-                                            "sampler.x")),
+        "exe": os.path.abspath(os.path.join(
+            os.environ["TARGET_DIR"], "sampler.x"
+        )),
         "buildtime": time(),
-        "builtversion": 1422278229,
+        "buildversion": buildversion,
         "name":  os.environ["NAME"],
         "system_name":  os.environ["SYSTEM_NAME"],
         "blas_name": os.environ["BLAS_NAME"],
