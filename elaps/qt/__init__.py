@@ -6,3 +6,4 @@ from call import QCall
 from dataarg import QDataArg
 from jobprogress import QJobProgress
 from playmat import PlayMat
+from viewer import Viewer
