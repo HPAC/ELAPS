@@ -42,6 +42,9 @@ class TestReportInit(unittest.TestCase):
         self.assertEqual(report.data, {None: ({None: {"rdtsc": val},
                                                0: {"rdtsc": val}},)})
 
+        rawdata = [[0], [1], [2], [3]]
+        self.assertRaises(ValueError, Report, self.ex, rawdata)
+
     def test_range(self):
         """Test for Experiment with range."""
         lenrange = random.randint(1, 10)

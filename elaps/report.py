@@ -27,8 +27,8 @@ class Report(object):
         self.rawdata = tuple(map(tuple, rawdata))
 
         if len(rawdata) != experiment.nresults() + 2:
-            raise Exception("Unexpected #results: %d (expecting %d)" %
-                            (len(rawdata) - 2, experiment.nresults()))
+            raise ValueError("Unexpected #results: %d (expecting %d)" %
+                             (len(rawdata) - 2, experiment.nresults()))
 
         self.process_rawdata()
 
