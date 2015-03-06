@@ -220,3 +220,20 @@ def load_metric(name):
     if os.path.isfile(filename):
         return load_metric_file(filename)
     raise IOError("Metric %s not found" % name)
+
+
+def load_all_metrics():
+    """Load all metrics."""
+    metrics = {}
+    for filename in os.listdir(metricpath):
+        if filename[-3:] != ".py":
+            continue
+        filepath = os.path.join(metricpath, filename)
+        if not os.path.isfile(filepath):
+            continue
+        try:
+            metric = load_metric_file(filepath)
+            metrics[metric.name] = metric
+        except:
+            pass
+    return metrics

@@ -30,18 +30,19 @@ class PlayMat(QtGui.QMainWindow):
         else:
             self.Qapp = QtGui.QApplication(sys.argv)
             self.Qapp.viewer = None
-        QtGui.QMainWindow.__init__(self)
         self.Qapp.playmat = self
+        QtGui.QMainWindow.__init__(self)
         self.backends = elaps.io.load_all_backends()
         self.samplers = elaps.io.load_all_samplers()
         self.docs = {}
         self.sigs = {}
         self.jobs = {}
-        self.hideargs = set([signature.Ld, signature.Inc, signature.Work,
-                             signature.Lwork, signature.Info])
         self.papi_names = elaps.io.load_papinames()
 
+        # set up UI
         self.UI_init()
+        self.hideargs = set([signature.Ld, signature.Inc, signature.Work,
+                             signature.Lwork, signature.Info])
         if not reset:
             try:
                 self.UI_settings_load()
@@ -52,9 +53,9 @@ class PlayMat(QtGui.QMainWindow):
         self.experiment = None
         if load:
             try:
-                self.experiment_load(sys.argv[1])
+                self.experiment_load(load)
             except:
-                self.alert("ERROR: Can't load %r" % sys.argv[1])
+                self.alert("ERROR: Can't load %r" % load)
         if not self.experiment and not reset:
             try:
                 self.experiment_qt_load()
@@ -65,7 +66,6 @@ class PlayMat(QtGui.QMainWindow):
                 os.path.join(elaps.io.setuppath, "default.ees")
             )
         self.experiment_back = self.experiment.copy()
-
         self.experiment.update_data()
 
         self.UI_setall()
@@ -111,12 +111,11 @@ class PlayMat(QtGui.QMainWindow):
             ))
 
             # file > load
-            load = QtGui.QAction(
+            fileM.addAction(QtGui.QAction(
                 "Load Experiment ...", self,
                 shortcut=QtGui.QKeySequence.Open,
                 triggered=self.on_experiment_load
-            )
-            fileM.addAction(load)
+            ))
 
             # load report shortcut
             QtGui.QShortcut(
@@ -158,7 +157,7 @@ class PlayMat(QtGui.QMainWindow):
                 self.UI_hideargs.append((action, set(classes)))
 
         def create_toolbar():
-            """Create the sampler toolbasr."""
+            """Create all toolbars."""
             # sampler
             self.UI_sampler = QtGui.QComboBox()
             self.UI_sampler.addItems(sorted(self.samplers.keys()))
@@ -428,7 +427,6 @@ class PlayMat(QtGui.QMainWindow):
         self.show()
 
         self.UI_setting -= 1
-        self.UI_initialized = True
 
     def UI_settings_load(self):
         """Load Qt settings."""
