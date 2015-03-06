@@ -298,7 +298,7 @@ class Experiment(dict):
         if not isinstance(call.sig[argid], signature.Lwork):
             raise TypeError(
                 "can only infer work space size for Lwork (not %r)" %
-                type(sig[argid])
+                type(call.sig[argid])
             )
 
         call[argid] = None
@@ -851,13 +851,14 @@ class Experiment(dict):
             if self.sumrange and self.sumrange_parallel:
                 if self.range:
                     if len(nthreads_vals) > 1:
-                        sumrangelen = len(simplify(self.sumrange,
-                                                   **dict(self.range)))
+                        sumrangelen = len(symbolic.simplify(
+                            self.sumrange, **dict(self.range)
+                        ))
                     else:
                         sumrangelen = max(
-                            len(simplify(self.sumrange,
-                                         **{self.range[0]: range_val}))
-                            for range_val in self.range[1]
+                            len(symbolic.simplify(
+                                self.sumrange, **{self.range[0]: range_val}
+                            )) for range_val in self.range[1]
                         )
                 else:
                     sumrangelen = len(self.sumrange[1])
@@ -899,7 +900,7 @@ class Experiment(dict):
         script += "rm %s" % errfile
 
         if b_footer:
-            script += "\n" + footer.format(nt=self.nt)
+            script += "\n" + b_footer.format(nt=self.nt)
 
         # write script file
         with open(scriptfile, "w") as fout:

@@ -2,7 +2,6 @@
 """Result for an ELAPS:Experiment."""
 from __future__ import division, print_function
 
-import symbolic
 import signature
 
 
@@ -147,13 +146,13 @@ class Report(object):
                 calls_result = {}
                 for callid, value in calls_data.items:
                     try:
-                        call_results[callid] = metric(
+                        calls_result[callid] = metric(
                             value, experiment=ex, callid=callid,
                             nthreads=nthreads
                         )
                     except:
                         pass
-                rep_results.append(calls_result)
+                rep_result.append(calls_result)
             result[range_val] = rep_result
         return result
 

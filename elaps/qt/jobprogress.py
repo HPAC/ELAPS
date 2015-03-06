@@ -170,7 +170,7 @@ class QJobProgress(QtGui.QDockWidget):
     @pyqtSlot()
     def on_open(self):
         """Event: open job."""
-        job = self.sender().job
+        item = self.sender().job["item"]
         self.playmat.on_open_viewer(item["filebase"] + ".eer")
 
     @pyqtSlot()

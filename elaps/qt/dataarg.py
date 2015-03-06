@@ -2,8 +2,6 @@
 """Representation of data arguments in QCalls in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
-from elaps import symbolic
-
 from PyQt4 import QtCore, QtGui
 
 
@@ -94,12 +92,11 @@ class QDataArg(QtGui.QLineEdit):
     # setters
     def setsize(self, height, width):
         """Set the size of the widget."""
-        minsizehint = QtGui.QLineEdit().minimumSizeHint()
         sizehint = QtGui.QLineEdit().minimumSizeHint()
         fontmetrics = self.fontMetrics()
 
-        minheight = minsizehint.height()
-        minwidth = minsizehint.width() + fontmetrics.width(self.text())
+        minheight = sizehint.height()
+        minwidth = sizehint.width() + fontmetrics.width(self.text())
         minwidth = max(minwidth, minheight)
         if self.offsetstr:
             minheight += 2 * fontmetrics.height() + 8

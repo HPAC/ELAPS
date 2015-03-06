@@ -76,7 +76,7 @@ class TestLoaders(unittest.TestCase):
         with open(filename, "w") as fout:
             fout.write("%r\n1\n2\n3" % ex)
 
-        report = load_report(filename)
+        load_report(filename)
 
     def test_load_metric(self):
         """Test for load_metric()."""
