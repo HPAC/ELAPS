@@ -169,6 +169,8 @@ class Report(object):
             range_data[range_val] = tuple(rep_data)
         self.data = range_data
 
+        self.callids = self.data.values()[0][0].keys()
+
     def __repr__(self):
         """Python parsable representation."""
         return "%s(%r, %r)" % (type(self).__name__, self.experiment,
