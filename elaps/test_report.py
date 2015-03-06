@@ -92,6 +92,22 @@ class TestReportInit(unittest.TestCase):
         self.assertEqual(report.data[None][0][None]["rdtsc"],
                          sum(vals.values()))
 
+    def test_sumrange_parallel(self):
+        """Test for Experiment with parallel sumrange."""
+        lenrange = random.randint(1, 10)
+        range_vals = [random.randint(1, 1000) for _ in range(lenrange)]
+        val = random.randint(1, 1000)
+
+        self.ex.call = Signature("name")()
+        self.ex.sumrange = ["i", range_vals]
+        self.ex.sumrange_parallel = True
+        rawdata = [[0], [val], [-1]]
+
+        report = Report(self.ex, rawdata)
+        self.assertEqual(len(report.fulldata[None][0]), 1)
+        self.assertEqual(report.fulldata[None][0][0], val)
+        self.assertEqual(report.data[None][0][None]["rdtsc"], val)
+
     def test_calls(self):
         """Test for Experiment multiple calls."""
         ncalls = random.randint(1, 10)
@@ -105,6 +121,20 @@ class TestReportInit(unittest.TestCase):
         idx = random.randint(0, ncalls - 1)
         self.assertEqual(report.fulldata[None][0][None][idx][0], vals[idx])
         self.assertEqual(report.data[None][0][None]["rdtsc"], sum(vals))
+
+    def test_calls_parallel(self):
+        """Test for Experiment parallel calls."""
+        ncalls = random.randint(1, 10)
+        val = random.randint(1, 1000)
+
+        self.ex.calls = [Signature("name")() for _ in range(ncalls)]
+        self.ex.calls_parallel = True
+        rawdata = [[0], [val], [-1]]
+
+        report = Report(self.ex, rawdata)
+        self.assertEqual(len(report.fulldata[None][0][None]), 1)
+        self.assertEqual(report.fulldata[None][0][None][0], val)
+        self.assertEqual(report.data[None][0][None]["rdtsc"], val)
 
     def test_counters(self):
         """Test for Experiment with counters."""
