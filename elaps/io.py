@@ -19,6 +19,7 @@ backendpath = os.path.join(rootpath, "elaps", "backends")
 setuppath = os.path.join(rootpath, "setups")
 reportpath = os.path.join(rootpath, "reports")
 metricpath = os.path.join(rootpath, "elaps", "metrics")
+papinamespath = os.path.join(rootpath, "resources", "papinames.py")
 
 
 def write_signature(sig, filename):
@@ -187,6 +188,12 @@ def load_all_backends():
         except:
             pass
     return backends
+
+
+def load_papinames():
+    """Load all papi names."""
+    with open(papinamespath) as fin:
+        return eval(fin.read())
 
 
 def load_report(filename):

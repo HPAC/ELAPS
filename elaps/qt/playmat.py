@@ -3,7 +3,6 @@
 from __future__ import division, print_function
 
 import elaps.io
-from elaps.experiment import Experiment
 import elaps.symbolic as symbolic
 import elaps.signature as signature
 
@@ -12,6 +11,7 @@ from elaps.qt import QCall, QJobProgress
 import sys
 import os
 import string
+import itertools
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot
 
@@ -39,6 +39,7 @@ class PlayMat(QtGui.QMainWindow):
         self.jobs = {}
         self.hideargs = set([signature.Ld, signature.Inc, signature.Work,
                              signature.Lwork, signature.Info])
+        self.papi_names = elaps.io.load_papinames()
 
         self.UI_init()
         if not reset:
@@ -79,11 +80,11 @@ class PlayMat(QtGui.QMainWindow):
             unifiedTitleAndToolBarOnMac=True
         )
         self.setCorner(QtCore.Qt.TopRightCorner,
-                       QtCore.Qt.RightDockWidgetArea)
+                       QtCore.Qt.TopDockWidgetArea)
         self.statusBar()
 
         # DEBUG: print experiment
-        loadreport = QtGui.QShortcut(
+        QtGui.QShortcut(
             QtGui.QKeySequence.Print, self, lambda: print(self.experiment)
         )
 
@@ -118,7 +119,7 @@ class PlayMat(QtGui.QMainWindow):
             fileM.addAction(load)
 
             # load report shortcut
-            loadreport = QtGui.QShortcut(
+            QtGui.QShortcut(
                 QtGui.QKeySequence("Ctrl+Shift+O"),
                 self, self.on_experiment_load_report
             )
@@ -362,6 +363,24 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_call_contextmenu.addMenu(self.UI_viewM)
             self.UI_calls_contextmenu.addMenu(self.UI_viewM)
 
+        def create_counters():
+            """Create the counters widget."""
+            countersW = QtGui.QWidget()
+            countersW.setLayout(QtGui.QVBoxLayout())
+            countersW.layout().insertStretch(100, 1)
+
+            self.UI_countersD = QtGui.QDockWidget(
+                "PAPI counters", objectName="PAPI counters",
+                features=(QtGui.QDockWidget.DockWidgetVerticalTitleBar |
+                          QtGui.QDockWidget.DockWidgetMovable)
+            )
+            self.UI_countersD.setWidget(countersW)
+
+            self.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.UI_countersD)
+            self.UI_countersD.hide()
+
+            self.UI_countersD.widgets = []
+
         def create_style():
             """Set style options."""
             # stylesheet
@@ -401,6 +420,7 @@ class PlayMat(QtGui.QMainWindow):
         create_ranges()
         create_note()
         create_calls()
+        create_counters()
         create_style()
 
         self.UI_jobprogress = QJobProgress(self)
@@ -639,6 +659,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_calls_parallel_set()
         self.UI_submit_setenabled()
         self.UI_calls_set()
+        self.UI_counters_set()
 
     def UI_hideargs_set(self):
         """Set UI element: hideargs options."""
@@ -731,6 +752,48 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_calls.item(callid).setall()
         while self.UI_calls.count() > len(self.experiment.calls):
             self.UI_calls.takeItem(len(self.experiment.calls))
+        self.UI_setting -= 1
+
+    def UI_counters_set(self):
+        """Set UI elemnt: counters."""
+        self.UI_setting += 1
+        ex = self.experiment
+        if not ex.sampler["papi_enabled"]:
+            self.UI_countersD.hide()
+            self.UI_setting -= 1
+            return
+
+        # PAPI is available
+        counterWs = self.UI_countersD.widgets
+        for counterid in range(ex.sampler["papi_counters_max"]):
+            if counterid >= len(counterWs):
+                # create widgets as needed
+                counterW = QtGui.QComboBox(
+                    currentIndexChanged=self.on_counter_change
+                )
+                counterW.addItem("", QtCore.QVariant(""))
+                for i, name in enumerate(ex.sampler["papi_counters_avail"]):
+                    event = self.papi_names[name]
+                    counterW.addItem(event["short"], QtCore.QVariant(name))
+                    counterW.setItemData(i, name + "\n" + event["long"],
+                                         QtCore.Qt.ToolTipRole)
+                self.UI_countersD.widget().layout().insertWidget(counterid,
+                                                                 counterW)
+                counterWs.append(counterW)
+            else:
+                counterW = counterWs[counterid]
+            # set values
+            if counterid < len(ex.papi_counters):
+                counterW.setCurrentIndex(counterW.findData(
+                    QtCore.QVariant(ex.papi_counters[counterid])
+                ))
+            else:
+                counterW.setCurrentIndex(0)
+        # remove additional widgets
+        while len(counterWs) > ex.sampler["papi_counters_max"]:
+            counterWs[-1].deleteLater()
+            del counterWs[-1]
+        self.UI_countersD.show()
         self.UI_setting -= 1
 
     def UI_submit_setenabled(self):
@@ -1253,13 +1316,25 @@ class PlayMat(QtGui.QMainWindow):
         )
         if not ok:
             return
-        vlaue = value or "0"
+        value = value or "0"
         try:
             value = self.experiment.ranges_parse(str(value))
         except:
             self.UI_alert("Invalid offset:\n%s" % value)
         vary["offset"] = value
         self.experiment_infer_update_set()
+
+    @pyqtSlot()
+    def on_counter_change(self):
+        """Event: changed PAPI counter."""
+        if self.UI_setting:
+            return
+        counternames = [
+            str(widget.itemData(widget.currentIndex()).toString())
+            for widget in self.UI_countersD.widgets
+        ]
+        self.experiment.papi_counters = [name for name in counternames if name]
+        self.UI_counters_set()
 
     def on_job_kill(self, backend, jobid):
         """Event: kill a job."""
