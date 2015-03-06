@@ -3,7 +3,7 @@
 from __future__ import division, print_function
 
 
-def metric(data, **kwargs):
+def metric(data, experiment, **kwargs):
     """Floating point operations per second.
 
     Counting mathematically required operations.

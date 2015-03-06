@@ -3,7 +3,7 @@
 from __future__ import division, print_function
 
 
-def metric(data, **kwargs):
+def metric(data, experiment, **kwargs):
     """milliseconds spent during the operations.
 
     Obtained form the RDTSC instruction and information on the system.
