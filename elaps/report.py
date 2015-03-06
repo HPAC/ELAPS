@@ -3,8 +3,10 @@
 from __future__ import division, print_function
 
 import signature
+from experiment import Experiment
 
 from math import sqrt
+from collections import Iterable
 
 stat_funs = {
     "min": min,
@@ -17,18 +19,40 @@ stat_funs = {
 }
 
 
+def apply_stat(stat_name, data):
+    """Apply a statistic to the data."""
+    if isinstance(data.values()[0], dict):
+        # list of callids:
+        return {callid: apply_stat(stat_name, values)
+                for callid, values in data.items()}
+
+    stat_fun = stat_funs[stat_name]
+
+    result = {}
+    for range_val, rep_data in data.items():
+        try:
+            result[range_val] = stat_fun(rep_data)
+        except:
+            pass
+    return result
+
+
 class Report(object):
 
     """ELAPS:Report, result of an ELAPS:Experiment."""
 
     def __init__(self, experiment, rawdata):
         """Initialize report."""
+        if not isinstance(experiment, Experiment):
+            raise TypeError("first argument must be Experiment (not %s)" %
+                            type(experiment).__name__)
+        try:
+            len(rawdata)
+            isinstance(rawdata, Iterable)
+        except:
+            raise TypeError("second argument must be iterable")
         self.experiment = experiment
         self.rawdata = tuple(map(tuple, rawdata))
-
-        if len(rawdata) != experiment.nresults() + 2:
-            raise ValueError("Unexpected #results: %d (expecting %d)" %
-                             (len(rawdata) - 2, experiment.nresults()))
 
         self.process_rawdata()
 
@@ -38,6 +62,12 @@ class Report(object):
         rawdata = list(self.rawdata)
         self.starttime = rawdata.pop(0)[0]
         self.endtime = rawdata.pop()[0]
+
+        if len(rawdata) != self.experiment.nresults():
+            raise ValueError("Unexpected #results: %d (expecting %d)" %
+                             (len(rawdata), self.experiment.nresults()))
+        for i, rawentry in enumerate(rawdata):
+            len(rawentry)
 
         # full structured data
         range_data = {}
@@ -139,6 +169,11 @@ class Report(object):
             range_data[range_val] = tuple(rep_data)
         self.data = range_data
 
+    def __repr__(self):
+        """Python parsable representation."""
+        return "%s(%r, %r)" % (type(self).__name__, self.experiment,
+                               self.rawdata)
+
     def apply_metric(self, metric, callid=-1):
         """Evaluate data with respect to a metric."""
         if callid == -1:
@@ -171,29 +206,3 @@ class Report(object):
             if rep_result:
                 result[range_val] = rep_result
         return result
-
-    def apply_metric_stats(self, metric, callid=-1):
-        """Eveluate data with respect to a metric and compute statistics."""
-        if callid == -1:
-            results = {}
-            for callid in self.data.values()[0][0]:
-                results[callid] = self.apply_metric_stats(metric, callid)
-            return results
-
-        metric_data = self.apply_metric(metric, callid)
-        result = {}
-        for range_val, rep_metric_data in metric_data.items():
-            rep_result = {}
-            for stat_name, stat_fun in stat_funs.items():
-                try:
-                    rep_result[stat_name] = stat_fun(rep_metric_data)
-                except:
-                    pass
-            if rep_result:
-                result[range_val] = rep_result
-        return result
-
-    def __repr__(self):
-        """Python parsable representation."""
-        return "%s(%r, %r)" % (type(self).__name__, self.experiment,
-                               self.rawdata)

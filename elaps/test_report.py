@@ -10,9 +10,9 @@ import unittest
 import random
 
 
-class TestReportInit(unittest.TestCase):
+class TestReport(unittest.TestCase):
 
-    """Tests for Report initialization."""
+    """Tests for Report."""
 
     def setUp(self):
         """Set up Sampler for Experiment."""
@@ -174,11 +174,6 @@ class TestReportInit(unittest.TestCase):
         self.assertEqual(report.data[range_idx][0][0]["flops"],
                          range_idx * sum(i for i in range(lensumrange)))
 
-
-class TestReport(TestReportInit):
-
-    """Tests for Report."""
-
     def test_apply_metric(self):
         """Test for simple Experiment."""
         val = random.randint(1, 1000)
@@ -194,23 +189,6 @@ class TestReport(TestReportInit):
         self.assertEqual(metricdata, {None: [val]})
 
         metricdata = report.apply_metric(metric)
-        self.assertEqual(len(metricdata), 2)
-
-    def test_apply_metric_stats(self):
-        """Test for simple Experiment."""
-        val = random.randint(1, 1000)
-
-        self.ex.call = Signature("name")()
-        rawdata = [[0], [val], [1]]
-
-        def metric(data, **kwargs):
-            return data.get("rdtsc")
-
-        report = Report(self.ex, rawdata)
-        metricdata = report.apply_metric_stats(metric, 0)
-        self.assertDictContainsSubset({"min": val, "std": 0}, metricdata[None])
-
-        metricdata = report.apply_metric_stats(metric)
         self.assertEqual(len(metricdata), 2)
 
 if __name__ == "__main__":
