@@ -1,5 +1,6 @@
 Experiment(
     range=["i", Range((100, 100, 2000))], 
+    nreps=10,
     calls=[
         Signature(
             "dgemm_",

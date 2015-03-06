@@ -485,6 +485,7 @@ class PlayMat(QtGui.QMainWindow):
             ex.sampler = self.samplers[min(self.samplers)]
         else:
             ex.sampler = self.samplers[ex.sampler["name"]]
+        ex.update_data()
         self.experiment = ex
         self.log("Loaded Experiment from %r." % os.path.relpath(filename))
 
@@ -869,14 +870,14 @@ class PlayMat(QtGui.QMainWindow):
     def on_experiment_load(self, report=False):
         """Event: load experiment."""
         filename = QtGui.QFileDialog.getOpenFileName(
-            self,
-            "Load Experiment",
+            self, "Load Experiment",
             elaps.io.reportpath if report else elaps.io.setuppath,
             "*.eer *.ees"
         )
-        if filename:
-            self.experiment_load(str(filename))
-            self.UI_setall()
+        if not filename:
+            return
+        self.experiment_load(str(filename))
+        self.UI_setall()
 
     @pyqtSlot()
     def on_experiment_load_report(self):
