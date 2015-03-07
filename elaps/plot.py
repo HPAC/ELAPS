@@ -27,45 +27,46 @@ default_styles = {
 
 
 def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
-         ylabel=None):
+         ylabel=None, figure=None):
     """Plot a series of data sets."""
     styles = default_styles.copy()
     styles.update(styles)
 
-    range_min = min(min(data) for data in datas.values())
-    range_max = max(max(data) for data in datas.values())
+    range_min = min(min(data) for name, data in datas)
+    range_max = max(max(data) for name, data in datas)
 
     if range_min == range_max:
-        bar_datas = {
-            key: data.values()[0] for key, data in datas
-        }
-        return bar_plot(bar_datas, stat_names, colors, styles, ylabel)
+        bar_datas = [(key, data.values()[0]) for key, data in datas]
+        return bar_plot(bar_datas, stat_names, colors, styles, ylabel, figure)
     else:
-        range_datas = {}
+        range_datas = []
         for key, data in datas:
             if min(data) == max(data):
                 values = data.values[0]
-                range_datas[key] = {range_min: values, range_max: values}
+                range_datas.append(
+                    (key, {range_min: values, range_max: values})
+                )
             else:
-                range_datas[key] = data
+                range_datas.append((key, data))
         return range_plot(range_datas, stat_names, colors, styles, xlabel,
-                          ylabel)
+                          ylabel, figure)
 
 
 def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
-               ylabel=None):
+               ylabel=None, figure=None):
     """Plot with range on the x axis."""
-    fig = Figure()
+    fig = figure or Figure()
     axes = fig.gca()
 
+    axes.cla()
     axes.set_axis_bgcolor("#f0f0f0")
-    if hasattr(metric, "name"):
-        axes.set_ylabel(metric.name)
+    if ylabel is not None:
+        axes.set_ylabel(ylabel)
 
     axes.hold(True)
 
     # plots
-    colorpool = defaultcolors[::-1]
+    colorpool = default_colors[::-1]
     for name, data in datas:
         color = colors.get(name) or colorpool.pop()
         plot_stat_names = stat_names[:]
@@ -106,35 +107,48 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
             ys = [stat_data[x] for x in xs]
             axes.plot(xs, ys, color=color, **styles[stat_name])
 
+    # ymin = 0
+    limits = axes.axis()
+    axes.axis((limits[0], limits[1], 0, limits[3]))
+
     # legend
-    colorpool = defaultcolors[::-1]
+    colorpool = default_colors[::-1]
     legend = []
-    for name in datas:
+    legend_style = styles["legend"].copy()
+    for name, values in datas:
         color = colors.get(name) or colorpool.pop()
-        legend.append((Line2D([], [], color=color, **styles["legend"]), name))
+        legend_style["color"] = color
+        legend.append((Line2D([], [], **legend_style), name))
     legend_stat_names = stat_names[:]
     if "min" in legend_stat_names and "max" in legend_stat_names:
         legend_stat_names.insert(0, "min-max")
         legend_stat_names.remove("min")
         legend_stat_names.remove("max")
+    color = styles["legend"]["color"]
     for stat_name in legend_stat_names:
-        if stat_name in ("min-max", "std"):
-            legend.append((Patch(**styles["legend"]), stat_name))
+        legend_style = styles["legend"].copy()
+        if stat_name == "min-max":
+            legend_elem = Patch(edgecolor=color, **styles[stat_name])
+        elif stat_name == "std":
+            legend_elem = Patch(color=color, **styles[stat_name])
         else:
-            legend.append((Line2D([], [], **styles["legend"]), stat_name))
+            legend_elem = Line2D([], [], color=color, **styles[stat_name])
+        legend.append((legend_elem, stat_name))
     axes.legend(*zip(*legend), loc=0, numpoints=3)
 
     return fig
 
 
-def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None):
+def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
+             figure=None):
     """Barplot."""
-    fig = Figure()
+    fig = figure or Figure()
     axes = fig.gca()
 
+    axes.cla()
     axes.set_axis_bgcolor("#f0f0f0")
-    if hasattr(metric, "name"):
-        axes.set_ylabel(metric.name)
+    if ylabel is not None:
+        axes.set_ylabel(ylabel)
 
     axes.hold(True)
 

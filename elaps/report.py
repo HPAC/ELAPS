@@ -25,10 +25,16 @@ def apply_stat(stat_name, data):
         raise KeyError("unknown statistic %r" % stat_name)
 
     if isinstance(data, dict):
-        # list of callids:
-        return {key: apply_stat(stat_name, value)
+        # return a dict
+        return {key: apply_stat(stat_name, values)
                 for key, values in data.items()}
-    return stat_funs[stat_name](data)
+
+    if isinstance(data, Iterable):
+        # apply to list
+        return stat_funs[stat_name](list(data))
+
+    # apply to single value
+    return stat_funs[stat_name]([data])
 
 
 class Report(object):
