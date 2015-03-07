@@ -108,7 +108,7 @@ class Experiment(dict):
             indent += "    "
         for call in self.calls:
             result += indent + str(call) + "\n"
-        return result
+        return result[:-1]
 
     def copy(self):
         """Create a deep copy of the experiment."""

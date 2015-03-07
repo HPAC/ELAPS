@@ -65,7 +65,7 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     axes.hold(True)
 
     # plots
-    colorpool = reversed(defaultcolors)
+    colorpool = defaultcolors[::-1]
     for name, data in datas:
         color = colors.get(name) or colorpool.pop()
         plot_stat_names = stat_names[:]
@@ -107,7 +107,7 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
             axes.plot(xs, ys, color=color, **styles[stat_name])
 
     # legend
-    colorpool = reversed(defaultcolors)
+    colorpool = defaultcolors[::-1]
     legend = []
     for name in datas:
         color = colors.get(name) or colorpool.pop()
