@@ -32,7 +32,6 @@ class Viewer(QtGui.QMainWindow):
         self.metric_showing = "Gflops/s"
         self.reports = {}
         self.report_colors = {}
-        self.reports_showing = set()
         self.reportitem_selected = (None, None)
         self.colorpool = elaps.plot.default_colors[::-1]
 
@@ -51,6 +50,8 @@ class Viewer(QtGui.QMainWindow):
         # load reports
         for filename in filenames:
             self.report_load(filename)
+        self.reports_showing = set((reportid, None)
+                                   for reportid in self.reports)
 
         self.UI_setall()
 
@@ -319,8 +320,20 @@ class Viewer(QtGui.QMainWindow):
         for callid in sorted(report.callids):
             self.report_colors[reportid, callid] = self.colorpool.pop()
 
+        # add counters
+        for counter_name in report.experiment.papi_counters:
+            counter_info = self.papi_names[counter_name]
+            metric_name = counter_info["short"]
+            if metric_name in self.metrics:
+                continue
+            def metric(data, **kwargs):
+                return data.get(counter_name)
+            metric.name = metric_name
+            metric.__doc__ = counter_info["long"]
+            self.metrics[metric_name] = metric
+
         self.log("Loaded %r" % filename)
-        return
+        return reportid
 
     def report_reload(self, reportid):
         """Reload a report."""
@@ -401,7 +414,7 @@ class Viewer(QtGui.QMainWindow):
                                    QtCore.Qt.ItemIsEnabled)
                 UI_report.reportid = reportid
                 UI_report.callid = None
-                UI_report.calls = {None: UI_report}
+                UI_report.items = {None: UI_report}
 
                 self.UI_reports.addTopLevelItem(UI_report)
                 self.UI_reports.reports[reportid] = UI_report
@@ -429,13 +442,13 @@ class Viewer(QtGui.QMainWindow):
 
             # create new calls
             for callid in report.callids:
-                if callid not in UI_report.calls:
+                if callid not in UI_report.items:
                     UI_call = QtGui.QTreeWidgetItem(("",))
                     UI_call.reportid = reportid
                     UI_call.callid = callid
 
                     UI_report.addChild(UI_call)
-                    UI_report.calls[callid] = UI_call
+                    UI_report.items[callid] = UI_call
 
                     # showing
                     UI_showing = QtGui.QCheckBox(
@@ -454,15 +467,15 @@ class Viewer(QtGui.QMainWindow):
                     UI_call.color = UI_color
 
             # delete excess calls
-            for callid, UI_call in UI_report.calls.items():
+            for callid, UI_call in UI_report.items.items():
                 if callid not in report.callids:
                     UI_report.takeChild(UI_report.indexOfChild(UI_call))
-                    del UI_report.calls[callid]
+                    del UI_report.items[callid]
 
             # set values
             UI_report.setToolTip(3, ex.sampler["cpu_model"])
             for callid in report.callids:
-                UI_item = UI_report.calls[callid]
+                UI_item = UI_report.items[callid]
 
                 # values
                 if callid is None:
@@ -549,7 +562,7 @@ class Viewer(QtGui.QMainWindow):
             return
         self.stats_showing = [stat_name for stat_name, stat in self.UI_stats
                               if stat.isChecked()]
-        # TODO
+        self.UI_plot_set()
 
     @pyqtSlot(str)
     def on_metric_change(self, value):
@@ -557,7 +570,7 @@ class Viewer(QtGui.QMainWindow):
         if self.UI_setting:
             return
         self.metric_showing = str(value)
-        # TODO
+        self.UI_plot_set()
 
     @pyqtSlot()
     def on_report_load(self):
@@ -568,8 +581,34 @@ class Viewer(QtGui.QMainWindow):
         if not filename:
             return
         reportid = self.report_load(str(filename))
+        if reportid is None:
+            return
+        self.reports_showing.add((reportid, None))
+        self.UI_metric_set()
         self.UI_reports_set()
-        # TODO
+        self.UI_plot_set()
+
+    @pyqtSlot()
+    def on_report_reload(self):
+        """Event: reload Report."""
+        reportid = self.UI_report_contextmenu.reportid
+        self.report_reload(reportid)
+        self.UI_metric_set()
+        self.UI_reports_set()
+        if reportid == self.reportitem_selected[0]:
+            self.UI_info_set()
+            self.UI_table_set()
+        self.UI_plot_set()
+
+    @pyqtSlot()
+    def on_report_close(self):
+        """Event: close Report."""
+        self.report_close(self.UI_report_contextmenu.reportid)
+        self.UI_reports_set()
+        if self.reportitem_selected[0] is None:
+            self.UI_info_set()
+            self.UI_table_set()
+        self.UI_plot_set()
 
     def on_reports_dragenter(self, event):
         """Event: drag into report list."""
@@ -586,9 +625,14 @@ class Viewer(QtGui.QMainWindow):
         """Event: drop files in report list."""
         for url in Qevent.mimeData().urls():
             filename = str(url.toLocalFile())
-            if filename[-4:] == ".emr":
-                self.report_load(filename, True)
-        # TODO
+            if filename[-4:] != ".emr":
+                continue
+            reportid = self.report_load(filename, True)
+            if not reportid:
+                continue
+            self.reports_showing.add((reportid, None))
+        self.UI_reports_set()
+        self.UI_plot_set()
 
     @pyqtSlot(QtCore.QPoint)
     def on_report_contextmenu_show(self, pos):
@@ -599,24 +643,6 @@ class Viewer(QtGui.QMainWindow):
         globalpos = self.UI_reports.viewport().mapToGlobal(pos)
         self.UI_report_contextmenu.reportid = item.reportid
         self.UI_report_contextmenu.exec_(globalpos)
-
-    @pyqtSlot()
-    def on_report_reload(self):
-        """Event: reload Report."""
-        self.report_reload(self.UI_report_contextmenu.reportid)
-        self.UI_reports_set()
-        self.UI_info_set()
-        self.UI_table_set()
-        # TODO
-
-    @pyqtSlot()
-    def on_report_close(self):
-        """Event: close Report."""
-        self.report_close(self.UI_report_contextmenu.reportid)
-        self.UI_reports_set()
-        self.UI_info_set()
-        self.UI_table_set()
-        # TODO
 
     @pyqtSlot()
     def on_report_playmat_open(self):
@@ -650,7 +676,7 @@ class Viewer(QtGui.QMainWindow):
             self.reports_showing.add((item.reportid, item.callid))
         else:
             self.reports_showing.discard((item.reportid, item.callid))
-        # TODO
+        self.UI_plot_set()
 
     # @pyqtSlot()  # sender() pyqt bug
     def on_report_color_change(self):
@@ -662,4 +688,4 @@ class Viewer(QtGui.QMainWindow):
         if Qcolor.isValid():
             self.report_colors[item.reportid, item.callid] = str(Qcolor.name())
         self.UI_reports_set()
-        # TODO
+        self.UI_plot_set()
