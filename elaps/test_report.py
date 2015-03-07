@@ -81,7 +81,7 @@ class TestReport(unittest.TestCase):
     def test_sumrange(self):
         """Test for Experiment with sumrange."""
         lenrange = random.randint(1, 10)
-        range_vals = random.sample(range(lenrange))
+        range_vals = random.sample(range(1000), lenrange)
         vals = {range_val: random.randint(1, 1000) for range_val in range_vals}
 
         self.ex.call = Signature("name")()
