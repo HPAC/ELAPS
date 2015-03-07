@@ -203,7 +203,8 @@ def load_papinames():
 
 def load_report(filename):
     """Load a Report from a frile."""
-    # TODO: check for error file
+    if os.path.isfile(filename[:-4] + ".err"):
+        raise IOError("Roport %r generated errors." % filename)
     with open(filename) as fin:
         experiment = eval(fin.readline())
         rawdata = [map(eval, line.split()) for line in fin.readlines()]
