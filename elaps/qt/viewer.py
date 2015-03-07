@@ -305,6 +305,10 @@ class Viewer(QtGui.QMainWindow):
         filename = os.path.relpath(filename)
         reportid = os.path.abspath(filename)
 
+        if reportid in self.reports:
+            self.report_reload(reportid)
+            return
+
         # load report
         try:
             report = elaps.io.load_report(filename)
@@ -366,6 +370,12 @@ class Viewer(QtGui.QMainWindow):
         if self.reportitem_selected[0] == reportid:
             self.reportitem_selected = (None, None)
         del self.reports[reportid]
+
+    # playmat
+    def playmat_start(self, filename=None):
+        """Start the PlayMat."""
+        from playmat import PlayMat
+        PlayMat(app=self.Qapp, load=filename)
 
     # UI setters
     def UI_setall(self):
@@ -539,7 +549,7 @@ class Viewer(QtGui.QMainWindow):
         print("\r", end="")
         self.close()
         if self.Qapp.playmat:
-            self.Qapp.playmat.UI_window.close()
+            self.Qapp.playmat.close()
         self.Qapp.quit()
 
     def closeEvent(self, event):
@@ -553,7 +563,11 @@ class Viewer(QtGui.QMainWindow):
     @pyqtSlot()
     def on_playmat_start(self):
         """Event: start PlayMat."""
-        # TODO
+        if not self.Qapp.playmat:
+            self.playmat_start()
+            return
+        self.Qapp.playmat.show()
+        self.Qapp.playmat.raise_()
 
     @pyqtSlot(bool)
     def on_stat_toggle(self, checked):
@@ -571,6 +585,16 @@ class Viewer(QtGui.QMainWindow):
             return
         self.metric_showing = str(value)
         self.UI_plot_set()
+
+    @pyqtSlot(QtCore.QPoint)
+    def on_report_contextmenu_show(self, pos):
+        """Event: right click on reports."""
+        item = self.UI_reports.itemAt(pos)
+        if not item:
+            return
+        globalpos = self.UI_reports.viewport().mapToGlobal(pos)
+        self.UI_report_contextmenu.reportid = item.reportid
+        self.UI_report_contextmenu.exec_(globalpos)
 
     @pyqtSlot()
     def on_report_load(self):
@@ -610,6 +634,17 @@ class Viewer(QtGui.QMainWindow):
             self.UI_table_set()
         self.UI_plot_set()
 
+    @pyqtSlot()
+    def on_report_playmat_open(self):
+        """Event: open Report in PlayMat."""
+        filename = self.UI_report_contextmenu.reportid
+        if not self.Qapp.playmat:
+            self.playmat_start(filename)
+            return
+        self.Qapp.playmat.experiment_load(filename)
+        self.Qapp.playmat.UI_setall()
+        self.Qapp.playmat.show()
+
     def on_reports_dragenter(self, event):
         """Event: drag into report list."""
         for url in event.mimeData().urls():
@@ -633,21 +668,6 @@ class Viewer(QtGui.QMainWindow):
             self.reports_showing.add((reportid, None))
         self.UI_reports_set()
         self.UI_plot_set()
-
-    @pyqtSlot(QtCore.QPoint)
-    def on_report_contextmenu_show(self, pos):
-        """Event: right click on reports."""
-        item = self.UI_reports.itemAt(pos)
-        if not item:
-            return
-        globalpos = self.UI_reports.viewport().mapToGlobal(pos)
-        self.UI_report_contextmenu.reportid = item.reportid
-        self.UI_report_contextmenu.exec_(globalpos)
-
-    @pyqtSlot()
-    def on_report_playmat_open(self):
-        """Event: open Report in PlayMat."""
-        # TODO
 
     @pyqtSlot(QtGui.QTreeWidgetItem, QtGui.QTreeWidgetItem)
     def on_report_select(self, current, previous):

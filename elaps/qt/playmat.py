@@ -547,6 +547,12 @@ class PlayMat(QtGui.QMainWindow):
                 self.log("Can't load documentation for %r." % routine)
         return self.docs[routine]
 
+    # viewer
+    def viewer_start(self, *args):
+        """Start the Viewer."""
+        from viewer import Viewer
+        Viewer(*args, app=self.Qapp)
+
     # UI utility
     def UI_dialog(self, msgtype, title, text, callbacks=None):
         """Show a simple user dialog with multiple options."""
@@ -828,7 +834,7 @@ class PlayMat(QtGui.QMainWindow):
         print("\r", end="")
         self.close()
         if self.Qapp.viewer:
-            self.Qapp.viewer.UI_window.close()
+            self.Qapp.viewer.close()
         self.Qapp.quit()
 
     def closeEvent(self, event):
@@ -899,7 +905,9 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot()
     def on_viewer_start(self):
         """Event: start Viewer."""
-        # TODO
+        if not self.Qapp.viewer:
+            self.viewer_start()
+        self.Qapp.viewer.show()
 
     # @pyqtSlot(bool)  # sender() pyqt bug
     def on_hideargs_toggle(self, checked):
@@ -1344,4 +1352,10 @@ class PlayMat(QtGui.QMainWindow):
 
     def on_open_viewer(self, filename):
         """Event: open report in Viewer."""
-        # TODO
+        if not self.Qapp.viewer:
+            self.viewer_start(filename)
+            return
+        self.Qapp.viewer.report_load(filename, True)
+        self.Qapp.viewer.UI_setall()
+        self.Qapp.viewer.show()
+        self.Qapp.viewer.raise_()

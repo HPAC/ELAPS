@@ -36,6 +36,7 @@ class QJobProgress(QtGui.QDockWidget):
         self.setWidget(QtGui.QTreeWidget(
             selectionMode=QtGui.QListWidget.ExtendedSelection,
             contextMenuPolicy=QtCore.Qt.CustomContextMenu,
+            itemDoubleClicked=self.on_double_click,
             customContextMenuRequested=self.on_rightclick
         ))
         self.widget().setHeaderLabels(
@@ -118,11 +119,14 @@ class QJobProgress(QtGui.QDockWidget):
         self.resize_columns()
 
     @pyqtSlot(QtGui.QTreeWidgetItem, int)
-    def on_double_clic(self, item, col):
+    def on_double_click(self, item, col):
         """Event: double clicked on item."""
+        if not item:
+            return
         job = item.job
-        if job["stat"] == "DONE":
-            self.playmat.on_open_viewer(item["filebase"] + ".eer")
+        if job["stat"] != "DONE":
+            return
+        self.playmat.on_open_viewer(job["filebase"] + ".eer")
 
     @pyqtSlot(QtCore.QPoint)
     def on_rightclick(self, pos):
@@ -170,8 +174,8 @@ class QJobProgress(QtGui.QDockWidget):
     # @pyqtSlot()  # sender() pyqt bug
     def on_open(self):
         """Event: open job."""
-        item = self.playmat.Qapp.sender().job["item"]
-        self.playmat.on_open_viewer(item["filebase"] + ".eer")
+        job = self.playmat.Qapp.sender().job
+        self.playmat.on_open_viewer(job["filebase"] + ".eer")
 
     # @pyqtSlot()  # sender() pyqt bug
     def on_remove(self):
