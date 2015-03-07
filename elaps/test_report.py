@@ -49,7 +49,7 @@ class TestReport(unittest.TestCase):
     def test_range(self):
         """Test for Experiment with range."""
         lenrange = random.randint(1, 10)
-        range_vals = [random.randint(1, 1000) for _ in range(lenrange)]
+        range_vals = random.sample(range(1000), lenrange)
         vals = {range_val: random.randint(1, 1000) for range_val in range_vals}
 
         self.ex.call = Signature("name")()
