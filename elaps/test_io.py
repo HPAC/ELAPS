@@ -63,6 +63,7 @@ class TestLoaders(unittest.TestCase):
     def test_load_report(self):
         """Test for load_report()."""
         ex = Experiment(calls=[Signature("name")()], sampler={
+            "backend_name": "",
             "backend_header": "",
             "backend_prefix": "prefix{nt}",
             "backend_suffix": "",
