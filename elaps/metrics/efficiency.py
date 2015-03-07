@@ -17,7 +17,7 @@ def metric(data, experiment, nthreads, callid, **kwargs):
     # get datatype
     calls = experiment.calls
     if callid is not None:
-        calls = [callid[callid]]
+        calls = [calls[callid]]
     if any(not hasattr(call, "sig") for call in calls):
         return None
     datatypes = set(call.sig.datatype() for call in calls)

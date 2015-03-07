@@ -21,20 +21,14 @@ stat_funs = {
 
 def apply_stat(stat_name, data):
     """Apply a statistic to the data."""
-    if isinstance(data.values()[0], dict):
+    if stat_name not in stat_funs:
+        raise KeyError("unknown statistic %r" % stat_name)
+
+    if isinstance(data, dict):
         # list of callids:
-        return {callid: apply_stat(stat_name, values)
-                for callid, values in data.items()}
-
-    stat_fun = stat_funs[stat_name]
-
-    result = {}
-    for range_val, rep_data in data.items():
-        try:
-            result[range_val] = stat_fun(rep_data)
-        except:
-            pass
-    return result
+        return {key: apply_stat(stat_name, value)
+                for key, values in data.items()}
+    return stat_funs[stat_name](data)
 
 
 class Report(object):

@@ -4,6 +4,7 @@ from __future__ import division, print_function
 
 import elaps.io
 import elaps.plot
+from elaps.report import apply_stat
 
 import sys
 import os
@@ -310,7 +311,6 @@ class Viewer(QtGui.QMainWindow):
             return
 
         # load report
-        report = elaps.io.load_report(filename)
         try:
             report = elaps.io.load_report(filename)
         except:
@@ -526,6 +526,7 @@ class Viewer(QtGui.QMainWindow):
             self.UI_info.hide()
             self.UI_setting -= 1
             return
+
         self.UI_info.setWindowTitle("Report %s" % os.path.relpath(reportid))
         self.UI_info.widget().setText(
             str(self.reports[reportid].experiment)
@@ -539,7 +540,38 @@ class Viewer(QtGui.QMainWindow):
 
     def UI_table_set(self):
         """Set UI element: table."""
-        # TODO
+        self.UI_setting += 1
+        reportid, callid = self.reportitem_selected
+        if reportid is None:
+            self.UI_table.setRowCount(0)
+            self.UI_setting -= 1
+            return
+
+        # compute data
+        report = self.reports[reportid]
+        stat_names = ("min", "med", "max", "avg", "std")
+        table_data = {}
+        for metric_name, metric in self.metrics.items():
+            metric_data = report.apply_metric(metric, callid)
+            metric_values = [value for values in metric_data.values()
+                             for value in values if value is not None]
+            if not metric_values:
+                continue
+            table_data[metric_name] = {
+                stat_name: apply_stat(stat_name, metric_values)
+                for stat_name in stat_names
+            }
+
+        # display data
+        self.UI_table.setRowCount(len(table_data))
+        self.UI_table.setVerticalHeaderLabels(sorted(table_data))
+        for i, metric_name in enumerate(sorted(table_data)):
+            for j, stat_name in enumerate(stat_names):
+                self.UI_table.setItem(i, j, QtGui.QTableWidgetItem(
+                    str(table_data[metric_name][stat_name])
+                ))
+
+        self.UI_setting -= 1
 
     def UI_reports_resizecolumns(self):
         """Resize the columns in the report list."""
