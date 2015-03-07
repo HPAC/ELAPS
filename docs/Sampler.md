@@ -34,17 +34,17 @@ The most common parameters are the following:
   `PAPI_COUNTERS_MAX=0` disables PAPI support entirely.  [These can be
   determined by `gathercfg.sh`; see below.]
 
-* `BACKEND` and associated parameters tell ELAPS:Mat how ot submit sampler
-  jobs to remote machines through job systems (default: local execution)
+* `BACKEND` and associated parameters tell PlayMat how ot submit sampler jobs
+  to remote machines through job systems (default: local execution)
   * `BACKEND_PREFIX` is put right in front of the Sampler command.  It should
     set threading variables for the kernel implementations, such as
     `OPENMP_NUM_THREADS`, where the string `"{nt}"` is used as a placeholder
     for the number of threads.
 
 * `CPU_MODEL`, `NCORES`, `FREQUENCY_HZ`, and others contain further information
-  on the target machine, which mainly allow ELAPS:Viewer to compute derived
-  performance metrics, such as Gflops/s or efficiency.  [These can be determined
-  by `gathercfg.sh`; see below]
+  on the target machine, which mainly allow Viewer to compute derived
+  performance metrics, such as Gflops/s or efficiency.  [These can be
+  determined by `gathercfg.sh`; see below]
 
 ### Automatically collecting configuration parameters
 

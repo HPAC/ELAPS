@@ -28,6 +28,8 @@ Requirements
 Overview
 --------
 
+*This section is outdated.*
+
 The Framework consists for three parts:
 
 1. A collection of ELAPS:Samplers, 
@@ -71,8 +73,8 @@ For further details on ELAPS:Viewer, see [`docs/Viewer.md`](docs/Viewer.md).
 Installation
 ------------
 
-Installing ELAPS boils down to configuring and compiling ELAPS:Samplers; both
-ELAPS:Mat and ELAPS:Viewer should work "out of the box".
+Installing ELAPS boils down to configuring and compiling Samplers; both
+the PlayMat and the Viewer should work "out of the box".
 
 ### Notes on installing the prerequisites
 The required packages listed above can be installed in many ways, which depend

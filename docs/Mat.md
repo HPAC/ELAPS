@@ -1,6 +1,8 @@
 ELAPS:Mat
 =========
 
+*This document is outdated.*
+
 This file describes ELAPS:Mat, the GUI used to create and submit performance
 experiments. 
 
