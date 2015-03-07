@@ -29,7 +29,7 @@ class Viewer(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
 
         self.stats_showing = ["med"]
-        self.metric_showing = ["Gflops/s"]
+        self.metric_showing = "Gflops/s"
         self.reports = {}
         self.report_colors = {}
         self.reports_showing = set()
@@ -253,7 +253,7 @@ class Viewer(QtGui.QMainWindow):
         infoD = create_info()
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, reportsD)
         self.splitDockWidget(reportsD, plotD, QtCore.Qt.Horizontal)
-        self.splitDockWidget(plotD, infoD, QtCore.Qt.Vertical)
+        self.splitDockWidget(reportsD, infoD, QtCore.Qt.Vertical)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, tableD)
         self.tabifyDockWidget(plotD, tableD)
         plotD.raise_()
@@ -328,10 +328,7 @@ class Viewer(QtGui.QMainWindow):
         try:
             report = elaps.io.load_report(filename)
         except:
-            if UI_alert:
-                self.UI_alert("ERROR: Can't reload %r" % filename)
-            else:
-                self.alert("ERROR: Can't reload %r" % filename)
+            self.UI_alert("ERROR: Can't reload %r" % filename)
             return
 
         # set colors
@@ -343,6 +340,7 @@ class Viewer(QtGui.QMainWindow):
             if callid not in self.reports[reportid].callids:
                 self.report_colors[reportid, callid] = self.colorpool.pop()
 
+        self.log("Reloaded %r" % filename)
         self.reports[reportid] = report
 
     def report_close(self, reportid):
@@ -355,16 +353,32 @@ class Viewer(QtGui.QMainWindow):
         if self.reportitem_selected[0] == reportid:
             self.reportitem_selected = (None, None)
         del self.reports[reportid]
-        # TODO
 
     # UI setters
     def UI_setall(self):
         """Set all UI elements."""
+        self.UI_metric_set()
         self.UI_stats_set()
         self.UI_reports_set()
+        self.UI_plot_set()
         self.UI_table_set()
         self.UI_reports_resizecolumns()
-        # TODO
+
+    def UI_metric_set(self):
+        """Set UI element: metric."""
+        self.UI_setting += 1
+        if self.UI_metric.count() != len(self.metrics):
+            self.UI_metric.clear()
+            for i, metric_name in enumerate(sorted(self.metrics)):
+                self.UI_metric.addItem(metric_name)
+                self.UI_metric.setItemData(
+                    i, self.metrics[metric_name].__doc__.strip(),
+                    QtCore.Qt.ToolTipRole
+                )
+        self.UI_metric.setCurrentIndex(
+            self.UI_metric.findText(self.metric_showing)
+        )
+        self.UI_setting -= 1
 
     def UI_stats_set(self):
         """Set UI element: stats."""
@@ -374,7 +388,7 @@ class Viewer(QtGui.QMainWindow):
         self.UI_setting -= 1
 
     def UI_reports_set(self):
-        """Set UI elemnt: reports."""
+        """Set UI element: reports."""
         self.UI_setting += 1
         for reportid, report in self.reports.items():
             ex = report.experiment
@@ -491,6 +505,10 @@ class Viewer(QtGui.QMainWindow):
         )
         self.UI_setting -= 1
 
+    def UI_plot_set(self):
+        """Set UI element: plot."""
+        # TODO
+
     def UI_table_set(self):
         """Set UI element: table."""
         # TODO
@@ -536,6 +554,8 @@ class Viewer(QtGui.QMainWindow):
     @pyqtSlot(str)
     def on_metric_change(self, value):
         """Event: metric changed."""
+        if self.UI_setting:
+            return
         self.metric_showing = str(value)
         # TODO
 
