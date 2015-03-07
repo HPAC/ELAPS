@@ -8,7 +8,7 @@ import re
 from time import time
 from __builtin__ import intern  # fix for pyflake error
 
-buildversion= 1425604076
+buildversion = 1425731535
 
 
 def main():
@@ -107,7 +107,7 @@ def main():
         "name":  os.environ["NAME"],
         "system_name":  os.environ["SYSTEM_NAME"],
         "blas_name": os.environ["BLAS_NAME"],
-        "backend": os.environ["BACKEND"],
+        "backend_name": os.environ["BACKEND"],
         "backend_header": os.environ["BACKEND_HEADER"],
         "backend_prefix": os.environ["BACKEND_PREFIX"],
         "backend_suffix": os.environ["BACKEND_SUFFIX"],

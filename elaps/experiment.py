@@ -69,10 +69,13 @@ class Experiment(dict):
         changed = {key: value for key, value in self.items()
                    if value != empty[key]}
 
-        # remove unused sampler kernels
-        if "sampler" in changed and "kernels" in changed["sampler"]:
+        # remove kernels and backend
+        if "sampler" in changed:
             changed["sampler"] = self.sampler.copy()
-            del changed["sampler"]["kernels"]
+            if "kernels" in changed["sampler"]:
+                del changed["sampler"]["kernels"]
+            if "backend" in changed["sampler"]:
+                del changed["sampler"]["backend"]
         args = ["%s=%r" % keyval for keyval in changed.items()]
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
@@ -439,8 +442,8 @@ class Experiment(dict):
                                 (key, types))
 
         # sampler
-        for key in ("backend_header", "backend_prefix", "backend_suffix",
-                    "backend_footer", "nt_max", "exe"):
+        for key in ("backend_name", "backend_header", "backend_prefix",
+                    "backend_suffix", "backend_footer", "nt_max", "exe"):
             if key not in self.sampler:
                 raise KeyError("Sampler has not key %r" % key)
 
@@ -908,12 +911,13 @@ class Experiment(dict):
 
         return script
 
-    def submit(self, filebase, backend):
+    def submit(self, filebase):
         """Submit the experiment to a backend."""
         script = self.submit_prepare(filebase)
         nthreads = self.nthreads
         if self.range and self.range[0] == nthreads:
             nthreads = range.max()
+        backend = self.sampler["backend"]
         return(backend.submit(script, nt=nthreads, jobname=filebase))
 
     # primarily internal routines
@@ -1103,6 +1107,7 @@ class Experiment(dict):
 
     def nresults(self):
         """How many results the current experiment woudl produce."""
+        assert(self.check_sanity(True))
         assert(self.check_sanity())
         nresults = 0
         for range_val in self.range_vals():

@@ -17,6 +17,7 @@ class TestReport(unittest.TestCase):
     def setUp(self):
         """Set up Sampler for Experiment."""
         self.ex = Experiment(sampler={
+            "backend_name": "",
             "backend_header": "",
             "backend_prefix": "prefix{nt}",
             "backend_suffix": "",

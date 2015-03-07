@@ -19,6 +19,7 @@ class TestExperiment(unittest.TestCase):
     def setUp(self):
         """Set up an empty sampler."""
         self.sampler = {
+            "backend_name": "",
             "backend_header": "",
             "backend_prefix": "",
             "backend_suffix": "",
@@ -445,6 +446,7 @@ class TestExperimentSubmit(TestExperimentCmds):
         TestExperimentCmds.setUp(self)
         self.sampler_ntmax = random.randint(2, 10)
         self.ex.sampler = {
+            "backend_name": "",
             "backend_header": "",
             "backend_prefix": "prefix{nt}",
             "backend_suffix": "",

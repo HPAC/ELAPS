@@ -135,7 +135,12 @@ def load_all_docs():
 def load_sampler_file(filename):
     """Load a Sampler from a file."""
     with open(filename) as fin:
-        return eval(fin.read())
+        sampler = eval(fin.read())
+    try:
+        sampler["backend"] = load_backend(sampler["backend_name"])
+    except:
+        sampler["backend"] = None
+    return sampler
 
 
 def load_sampler(name):

@@ -32,7 +32,6 @@ class PlayMat(QtGui.QMainWindow):
             self.Qapp.viewer = None
         self.Qapp.playmat = self
         QtGui.QMainWindow.__init__(self)
-        self.backends = elaps.io.load_all_backends()
         self.samplers = elaps.io.load_all_samplers()
         self.docs = {}
         self.sigs = {}
@@ -505,25 +504,6 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_submit_setenabled()
         self.UI_calls_set()
 
-    # info string
-    def sampler_about_str(self):
-        """Generate an info string about the current sampler."""
-        sampler = self.experiment.sampler
-        info = "System:\t%s\n" % sampler["system_name"]
-        info += "BLAS:\t%s\n" % sampler["blas_name"]
-        if sampler["backend"] != "local":
-            info += "  (via %s)\n" % sampler["backend"]
-        info += "\n"
-        info += "CPU:\t%s\n" % sampler["cpu_model"]
-        info += "Mhz:\t%.2f\n" % (sampler["frequency"] / 1e6)
-        info += "Cores:\t%d\n" % sampler["nt_max"]
-        if "dflops/cycle" in sampler:
-            info += "Gflops/s:\t%.2f (peak)" % (
-                sampler["dflops/cycle"] * sampler["frequency"] *
-                sampler["nt_max"] / 1e9
-            )
-        return info
-
     # loaders
     def sig_get(self, routine):
         """(Try to) get the Signature for a routine."""
@@ -860,9 +840,9 @@ class PlayMat(QtGui.QMainWindow):
 
         ex = self.experiment
         backend = ex.sampler["backend"]
-        jobid = ex.submit(filebase, self.backends[backend])
-        self.UI_jobprogress.add_job(backend, jobid, filebase, ex)
-        self.log("Submitted job for %r to %r." % (str(filename), backend))
+        jobid = ex.submit(filebase)
+        self.UI_jobprogress.add_job(filebase, jobid, ex)
+        self.log("Submitted job for %r to %r." % (str(filename), backend.name))
 
     @pyqtSlot()
     def on_experiment_reset(self):
@@ -1342,13 +1322,6 @@ class PlayMat(QtGui.QMainWindow):
         ]
         self.experiment.papi_counters = [name for name in counternames if name]
         self.UI_counters_set()
-
-    def on_job_kill(self, backend, jobid):
-        """Event: kill a job."""
-        try:
-            self.backends[backend].kill(jobid)
-        except:
-            pass
 
     def on_open_viewer(self, filename):
         """Event: open report in Viewer."""

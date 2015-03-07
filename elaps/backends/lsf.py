@@ -10,6 +10,8 @@ class Backend(object):
 
     """Backend to run ELAPS:Mat jobs through an LSF scheduler."""
 
+    name = "lsf"
+
     def __init__(self, header="#!/bin/bash -l\n#BSUB -o /dev/null\n"):
         """Initialize the backend."""
         self.jobs = []

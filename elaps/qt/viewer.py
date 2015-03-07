@@ -138,7 +138,7 @@ class Viewer(QtGui.QMainWindow):
         def create_reports():
             """Create the reports list."""
             self.UI_reports = QtGui.QTreeWidget(
-                acceptDrops=True,
+                acceptDrops=True, minimumWidth=300,
                 contextMenuPolicy=QtCore.Qt.CustomContextMenu,
                 currentItemChanged=self.on_report_select,
                 itemExpanded=self.on_report_expand,
@@ -148,7 +148,6 @@ class Viewer(QtGui.QMainWindow):
             self.UI_reports.dragEnterEvent = self.on_reports_dragenter
             self.UI_reports.dragMoveEvent = self.on_reports_dragmove
             self.UI_reports.dropEvent = self.on_reports_drop
-            self.UI_reports.setFixedWidth(300)
             self.UI_reports.setHeaderLabels(
                 ("report", "", "color", "system", "blas")
             )
@@ -257,6 +256,7 @@ class Viewer(QtGui.QMainWindow):
         self.splitDockWidget(reportsD, infoD, QtCore.Qt.Vertical)
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, tableD)
         self.tabifyDockWidget(plotD, tableD)
+        infoD.hide()
         plotD.raise_()
 
         self.show()
@@ -310,6 +310,7 @@ class Viewer(QtGui.QMainWindow):
             return
 
         # load report
+        report = elaps.io.load_report(filename)
         try:
             report = elaps.io.load_report(filename)
         except:
@@ -330,6 +331,7 @@ class Viewer(QtGui.QMainWindow):
             metric_name = counter_info["short"]
             if metric_name in self.metrics:
                 continue
+
             def metric(data, **kwargs):
                 return data.get(counter_name)
             metric.name = metric_name
@@ -383,6 +385,7 @@ class Viewer(QtGui.QMainWindow):
         self.UI_metric_set()
         self.UI_stats_set()
         self.UI_reports_set()
+        self.UI_info_set()
         self.UI_plot_set()
         self.UI_table_set()
         self.UI_reports_resizecolumns()
@@ -520,12 +523,14 @@ class Viewer(QtGui.QMainWindow):
         self.UI_setting += 1
         reportid, callid = self.reportitem_selected
         if reportid is None:
+            self.UI_info.hide()
             self.UI_setting -= 1
             return
         self.UI_info.setWindowTitle("Report %s" % os.path.relpath(reportid))
         self.UI_info.widget().setText(
             str(self.reports[reportid].experiment)
         )
+        self.UI_info.show()
         self.UI_setting -= 1
 
     def UI_plot_set(self):
@@ -608,31 +613,20 @@ class Viewer(QtGui.QMainWindow):
         if reportid is None:
             return
         self.reports_showing.add((reportid, None))
-        self.UI_metric_set()
-        self.UI_reports_set()
-        self.UI_plot_set()
+        self.UI_setall()
 
     @pyqtSlot()
     def on_report_reload(self):
         """Event: reload Report."""
         reportid = self.UI_report_contextmenu.reportid
         self.report_reload(reportid)
-        self.UI_metric_set()
-        self.UI_reports_set()
-        if reportid == self.reportitem_selected[0]:
-            self.UI_info_set()
-            self.UI_table_set()
-        self.UI_plot_set()
+        self.UI_setall()
 
     @pyqtSlot()
     def on_report_close(self):
         """Event: close Report."""
         self.report_close(self.UI_report_contextmenu.reportid)
-        self.UI_reports_set()
-        if self.reportitem_selected[0] is None:
-            self.UI_info_set()
-            self.UI_table_set()
-        self.UI_plot_set()
+        self.UI_setall()
 
     @pyqtSlot()
     def on_report_playmat_open(self):

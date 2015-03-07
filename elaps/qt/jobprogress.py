@@ -48,10 +48,9 @@ class QJobProgress(QtGui.QDockWidget):
         for colid in range(3):
             self.widget().resizeColumnToContents(colid)
 
-    def add_job(self, backend, jobid, filebase, experiment):
+    def add_job(self, filebase, jobid, experiment):
         """Add a job to track."""
         job = {
-            "backend": backend,
             "jobid": jobid,
             "nresults": experiment.nresults(),
             "progress": 0,
@@ -168,7 +167,7 @@ class QJobProgress(QtGui.QDockWidget):
     def on_kill(self):
         """Event: kill job."""
         job = self.playmat.Qapp.sender().job
-        self.playmat.on_job_kill(job["backend"], job["jobid"])
+        job["experiment"]["backend"].kill(job["jobid"])
         self.on_remove()
 
     # @pyqtSlot()  # sender() pyqt bug

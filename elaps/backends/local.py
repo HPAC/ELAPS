@@ -10,6 +10,8 @@ class Backend(object):
 
     """Backend to run ELAPS:Mat jobs locally in the background."""
 
+    name = "local"
+
     def __init__(self):
         """Initialize the backend."""
         self.jobs = {}
