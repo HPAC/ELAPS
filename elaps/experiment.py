@@ -465,6 +465,9 @@ class Experiment(dict):
             ("papi_counters", list)
         ):
             if not isinstance(self[key], types):
+                if isinstance(types):
+                    raise TypeError("Attribute %r should be of type %s" %
+                                    (key, " or ".joinmap(str, types)))
                 raise TypeError("Attribute %r should be of type %s" %
                                 (key, types))
 
@@ -526,8 +529,12 @@ class Experiment(dict):
                                   len(call) - 1))
             for argid in range(len(call)):
                 if not self.check_arg_valid(callid, argid):
-                    raise ValueError("argument %d of call %d is invalid" %
-                                     (callid, argid))
+                    call = self.calls[callid]
+                    raise ValueError(
+                        "argument %d (%s=%s) of call %d (%s)is invalid" %
+                        (argid, call.sig[argid], call[argid], callid,
+                         call.sig[0])
+                    )
 
         # data
         needed = set(call[argid] for call in self.calls
