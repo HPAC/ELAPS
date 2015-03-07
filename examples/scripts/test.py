@@ -4,20 +4,19 @@ from __future__ import division, print_function
 
 import sys
 
-sys.path.append("../../elaps/")
+sys.path.append("../../")
 
-from experiment import Experiment
-from elapsio import load_sampler, load_signature, load_backend
+from elaps.experiment import Experiment
+from elaps.io import load_sampler, load_signature
 
 sampler = load_sampler("Mac_OpenBLAS")
 dgemm = load_signature("dgemm_")
-backend_local = load_backend("local")
 
 ex = Experiment(sampler=sampler)
-ex.range = ("i", range(100, 1000 + 1, 100))
+ex.range = ["i", range(100, 1000 + 1, 100)]
 ex.nreps = 10
-ex.call = ex.ranges_parse(dgemm("n", "n", "i", "i", "i", 1,
-                                "a", None, "b", None, 1, "c", None))
+ex.call = ex.ranges_parse(dgemm("N", "N", "i", "i", "i", 1,
+                                "A", None, "B", None, 1, "C", None))
 ex.infer_lds()
 
-ex.submit("test", backend_local)
+ex.submit("test")
