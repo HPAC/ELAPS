@@ -342,6 +342,33 @@ class Experiment(dict):
             offset = self.ranges_parse(offset)
             data["vary"] = {"with": with_, "along": along, "offset": offset}
 
+    def apply_sampler_restrictions(self):
+        """Make Experiment conform wiht Sampler limitations."""
+        if not self.sampler:
+            raise ValueError("Sampler is not set.")
+        if "kernels" not in self.sampler:
+            raise KeyError("Sampler has no kernels associaated.")
+
+        sampler = self.sampler
+
+        # limit thread numer
+        self.nthreads = min(self.nthreads, sampler["nt_max"])
+
+        # remove unavailable kernel calls
+        newcalls = []
+        for call in self.calls:
+            if call[0] in sampler["kernels"]:
+                newcalls.append(call)
+        self.calls = newcalls
+
+        # reduce counters
+        self.papi_counters = self.papi_counters[:sampler["papi_counters_max"]]
+
+        # ensure omp availability
+        self.sumrange_parallel = (self.sumrange_parallel and
+                                  sampler["omp_enabled"])
+        self.calls_parallel = self.calls_parallel and sampler["omp_enabled"]
+
     def check_arg_valid(self, callid, argid):
         """Check if call[callid][argid] is valid."""
         if callid >= len(self.calls):

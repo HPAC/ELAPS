@@ -54,10 +54,11 @@ class QCall(QtGui.QListWidgetItem):
         # spaces
         layout.setColumnStretch(100, 1)
 
+        # shortcuts
+
         # attributes
         self.UI_args = [routine]
         self.UI_arglabels = [routinelabel]
-        self.sig = None
 
     def update_size(self):
         """Update the size of the call item from its widget."""

@@ -336,18 +336,30 @@ class PlayMat(QtGui.QMainWindow):
 
             self.setCentralWidget(self.UI_calls)
 
+            # shortcuts
+            QtGui.QShortcut(QtGui.QKeySequence.New, self.UI_calls,
+                            activated=self.on_call_add)
+            QtGui.QShortcut(QtGui.QKeySequence.Close, self.UI_calls,
+                            activated=self.on_call_remove)
+
             # context menus
             self.UI_call_contextmenu = QtGui.QMenu()
             self.UI_calls_contextmenu = QtGui.QMenu()
 
             # add
-            add = QtGui.QAction("Add call", self, triggered=self.on_call_add)
+            add = QtGui.QAction(
+                "Add call", self, shortcut=QtGui.QKeySequence.New,
+                triggered=self.on_call_add
+
+            )
             self.UI_call_contextmenu.addAction(add)
             self.UI_calls_contextmenu.addAction(add)
 
             # remove
             self.UI_call_contextmenu.addAction(QtGui.QAction(
-                "Remove call", self, triggered=self.on_call_remove
+                "Remove call", self,
+                shortcut=QtGui.QKeySequence.Close,
+                triggered=self.on_call_remove
             ))
 
             # clone
@@ -474,6 +486,8 @@ class PlayMat(QtGui.QMainWindow):
             ex.sampler = self.samplers[min(self.samplers)]
         else:
             ex.sampler = self.samplers[ex.sampler["name"]]
+        ex.apply_sampler_restrictions()
+        ex.update_data()
         self.experiment = ex
         self.log("Loaded last Experiment")
 
@@ -484,6 +498,7 @@ class PlayMat(QtGui.QMainWindow):
             ex.sampler = self.samplers[min(self.samplers)]
         else:
             ex.sampler = self.samplers[ex.sampler["name"]]
+        ex.apply_sampler_restrictions()
         ex.update_data()
         self.experiment = ex
         self.log("Loaded Experiment from %r." % os.path.relpath(filename))
@@ -914,7 +929,9 @@ class PlayMat(QtGui.QMainWindow):
             return
         value = str(value)
         self.experiment.sampler = self.samplers[value]
-        # TODO: make experiment compliant
+        # TODO: warn
+        self.experiment.apply_sampler_restrictions()
+        self.UI_setall()
 
     @pyqtSlot(str)
     def on_nthreads_change(self, value):
@@ -1234,16 +1251,25 @@ class PlayMat(QtGui.QMainWindow):
         self.experiment.calls.append([""])
         self.UI_submit_setenabled()
         self.UI_calls_set()
-        self.UI_calls.item(
-            len(self.experiment.calls) - 1
-        ).UI_args[0].setFocus()
+        callid = len(self.experiment.calls) - 1
+        self.UI_calls.item(callid).UI_args[0].setFocus()
+        selected_callid = self.UI_calls.currentRow()
+        if selected_callid != -1:
+            self.UI_calls.setItemSelected(self.UI_calls.item(selected_callid),
+                                          False)
+            self.UI_calls.setCurrentRow(callid)
 
     @pyqtSlot()
     def on_call_remove(self):
         """Event: remove call."""
-        self.experiment.calls.pop(self.UI_call_contextmenu.item.callid)
+        callid = self.UI_calls.currentRow()
+        if callid == -1:
+            return
+        self.experiment.calls.pop(callid)
         self.UI_submit_setenabled()
         self.UI_calls_set()
+        if callid:
+            self.UI_calls.setCurrentRow(callid - 1)
 
     @pyqtSlot()
     def on_call_clone(self):
