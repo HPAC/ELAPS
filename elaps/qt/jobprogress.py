@@ -160,23 +160,23 @@ class QJobProgress(QtGui.QDockWidget):
 
         menu.exec_(globalpos)
 
-    @pyqtSlot()
+    # @pyqtSlot()  # sender() pyqt bug
     def on_kill(self):
         """Event: kill job."""
-        job = self.sender().job
+        job = self.playmat.Qapp.sender().job
         self.playmat.on_job_kill(job["backend"], job["jobid"])
         self.on_remove()
 
-    @pyqtSlot()
+    # @pyqtSlot()  # sender() pyqt bug
     def on_open(self):
         """Event: open job."""
-        item = self.sender().job["item"]
+        item = self.playmat.Qapp.sender().job["item"]
         self.playmat.on_open_viewer(item["filebase"] + ".eer")
 
-    @pyqtSlot()
+    # @pyqtSlot()  # sender() pyqt bug
     def on_remove(self):
         """Event: remove job."""
-        job = self.sender().job
+        job = self.playmat.Qapp.sender().job
         self.widget().takeTopLevelItem(
             self.widget().indexOfTopLevelItem(job["item"])
         )

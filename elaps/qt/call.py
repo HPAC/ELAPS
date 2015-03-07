@@ -188,7 +188,7 @@ class QCall(QtGui.QListWidgetItem):
         self.update_size()
 
     # event handlers
-    @pyqtSlot(str)
+    # @pyqtSlot(str)  # sender() pyqt bug
     def on_arg_change(self, value):
         """Event: Changed an argument."""
         sender = self.playmat.Qapp.sender()
@@ -211,7 +211,7 @@ class QCall(QtGui.QListWidgetItem):
             return
         self.playmat.on_arg_set(self.callid, argid, value)
 
-    @pyqtSlot(QtCore.QPoint)
+    # @pyqtSlot(QtCore.QPoint)  # sender() pyqt bug
     def on_arg_rightclick(self, pos):
         """Event: right click on arg."""
         if self.playmat.UI_setting:
@@ -244,7 +244,7 @@ class QCall(QtGui.QListWidgetItem):
                 menu.insertSeparator(actions[0])
         menu.exec_(globalpos)
 
-    @pyqtSlot()
+    # @pyqtSlot()  # sender() pyqt bug
     def on_inferld(self):
         """Event: infer ld."""
         if self.playmat.UI_setting:
@@ -253,7 +253,7 @@ class QCall(QtGui.QListWidgetItem):
         self.UI_args[argid].clearFocus()
         self.playmat.on_infer_ld(self.callid, argid)
 
-    @pyqtSlot()
+    # @pyqtSlot()  # sender() pyqt bug
     def on_inferlwork(self):
         """Event: infer ld."""
         if self.playmat.UI_setting:

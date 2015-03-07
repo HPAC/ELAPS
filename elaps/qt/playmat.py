@@ -901,7 +901,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: start Viewer."""
         # TODO
 
-    @pyqtSlot(bool)
+    # @pyqtSlot(bool)  # sender() pyqt bug
     def on_hideargs_toggle(self, checked):
         """Event: toggle showarg."""
         if self.UI_setting:
@@ -1279,7 +1279,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_submit_setenabled()
         self.UI_calls_set()
 
-    @pyqtSlot(bool)
+    # @pyqtSlot(bool)  # sender() pyqt bug
     def on_vary_with_toggle(self, checked):
         """Event: changed vary with."""
         sender = self.Qapp.sender()
@@ -1294,7 +1294,7 @@ class PlayMat(QtGui.QMainWindow):
             vary["with"].discard(sender.with_)
         self.experiment_infer_update_set()
 
-    @pyqtSlot(bool)
+    # @pyqtSlot(bool)  # sender() pyqt bug
     def on_vary_along_toggle(self, checked):
         """Event: changed vary along."""
         sender = self.Qapp.sender()
@@ -1303,7 +1303,7 @@ class PlayMat(QtGui.QMainWindow):
         vary["along"] = sender.along
         self.experiment_infer_update_set()
 
-    @pyqtSlot()
+    # @pyqtSlot()  # sender() pyqt bug
     def on_vary_offset(self):
         """Event: set vary offset."""
         sender = self.Qapp.sender()
