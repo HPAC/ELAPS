@@ -62,7 +62,7 @@ class PlayMat(QtGui.QMainWindow):
                 pass
         if not self.experiment:
             self.experiment_load(
-                os.path.join(elaps.io.setuppath, "default.ees")
+                os.path.join(elaps.io.experimentpath, "default.ees")
             )
         self.experiment_back = self.experiment.copy()
         self.experiment.update_data()
@@ -848,7 +848,7 @@ class PlayMat(QtGui.QMainWindow):
     def on_experiment_reset(self):
         """Event: reset experiment."""
         self.experiment_load(
-            os.path.join(elaps.io.setuppath, "default.ees")
+            os.path.join(elaps.io.experimentpath, "default.ees")
         )
         self.UI_setall()
 
@@ -857,7 +857,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: load experiment."""
         filename = QtGui.QFileDialog.getOpenFileName(
             self, "Load Experiment",
-            elaps.io.reportpath if report else elaps.io.setuppath,
+            elaps.io.reportpath if report else elaps.io.experimentpath,
             "*.eer *.ees"
         )
         if not filename:
@@ -876,7 +876,7 @@ class PlayMat(QtGui.QMainWindow):
         filename = QtGui.QFileDialog.getSaveFileName(
             self,
             "Save Setup",
-            elaps.io.setuppath,
+            elaps.io.experimentpath,
             "*.ees"
         )
         if filename:

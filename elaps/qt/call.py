@@ -54,8 +54,6 @@ class QCall(QtGui.QListWidgetItem):
         # spaces
         layout.setColumnStretch(100, 1)
 
-        # TODO: context menu
-
         # attributes
         self.UI_args = [routine]
         self.UI_arglabels = [routinelabel]
