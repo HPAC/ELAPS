@@ -174,6 +174,13 @@ class Viewer(QtGui.QMainWindow):
                 "Close", self, triggered=self.on_report_close
             ))
 
+            self.UI_report_contextmenu.addSeparator()
+
+            # context menu > open
+            self.UI_report_contextmenu.addAction(QtGui.QAction(
+                "Open in PlayMat", self, triggered=self.on_report_playmat_open
+            ))
+
             return reportsD
 
         def create_plot():
@@ -340,9 +347,15 @@ class Viewer(QtGui.QMainWindow):
 
     def report_close(self, reportid):
         """Close a report."""
+        report = self.reports[reportid]
         for callid in report.callids:
             self.colorpool.append(self.report_colors[reportid, callid])
             del self.report_colors[reportid, callid]
+            self.reports_showing.discard((reportid, callid))
+        if self.reportitem_selected[0] == reportid:
+            self.reportitem_selected = (None, None)
+        del self.reports[reportid]
+        # TODO
 
     # UI setters
     def UI_setall(self):
@@ -535,6 +548,7 @@ class Viewer(QtGui.QMainWindow):
         if not filename:
             return
         reportid = self.report_load(str(filename))
+        self.UI_reports_set()
         # TODO
 
     def on_reports_dragenter(self, event):
@@ -554,7 +568,7 @@ class Viewer(QtGui.QMainWindow):
             filename = str(url.toLocalFile())
             if filename[-4:] == ".emr":
                 self.report_load(filename, True)
-        # TODO update
+        # TODO
 
     @pyqtSlot(QtCore.QPoint)
     def on_report_contextmenu_show(self, pos):
@@ -569,11 +583,24 @@ class Viewer(QtGui.QMainWindow):
     @pyqtSlot()
     def on_report_reload(self):
         """Event: reload Report."""
+        self.report_reload(self.UI_report_contextmenu.reportid)
+        self.UI_reports_set()
+        self.UI_info_set()
+        self.UI_table_set()
         # TODO
 
     @pyqtSlot()
     def on_report_close(self):
         """Event: close Report."""
+        self.report_close(self.UI_report_contextmenu.reportid)
+        self.UI_reports_set()
+        self.UI_info_set()
+        self.UI_table_set()
+        # TODO
+
+    @pyqtSlot()
+    def on_report_playmat_open(self):
+        """Event: open Report in PlayMat."""
         # TODO
 
     @pyqtSlot(QtGui.QTreeWidgetItem, QtGui.QTreeWidgetItem)
