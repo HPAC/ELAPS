@@ -807,6 +807,7 @@ class PlayMat(QtGui.QMainWindow):
         """Set the "invlaid" property for the ranges."""
         ex = self.experiment
         if ex.range:
+            print(ex.range)
             self.UI_rangevar.setProperty("invalid", not ex.range[0])
             self.UI_rangevals.setProperty("invalid", not ex.range[1])
         if ex.sumrange:

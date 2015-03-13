@@ -504,11 +504,6 @@ class Range(object):
                     raise TypeError("Invalid value in range:%r" % (arg,))
             self.subranges.append(arg)
 
-    def __bool__(self):
-        if self.findsymbols():
-            return True
-        return bool(len(self.subranges))
-
     def substitute(self, **kwargs):
         """Substitute Symbols."""
         return type(self)(*[
@@ -599,7 +594,9 @@ class Range(object):
                     result += 1
             else:
                 # positive ore negative direction
-                result += 1 + (stop - start) // step
+                subrange_len = 1 + (stop - start) // step
+                if subrange_len > 0:
+                    result += 1 + (stop - start) // step
 
         return result
 
