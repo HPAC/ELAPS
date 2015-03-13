@@ -790,6 +790,7 @@ class PlayMat(QtGui.QMainWindow):
                 ))
             else:
                 counterW.setCurrentIndex(0)
+            counterW.setVisibility(counterid <= len(ex.papi_counters))
         # remove additional widgets
         while len(counterWs) > ex.sampler["papi_counters_max"]:
             counterWs[-1].deleteLater()
