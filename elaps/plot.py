@@ -32,12 +32,24 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     styles = default_styles.copy()
     styles.update(styles)
 
+    # set up figure
+    fig = figure or Figure()
+    axes = fig.gca()
+    axes.cla()
+    axes.set_axis_bgcolor("#f0f0f0")
+    if ylabel is not None:
+        axes.set_ylabel(ylabel)
+    axes.hold(True)
+
+    if not datas:
+        return fig
+
     range_min = min(min(data) for name, data in datas)
     range_max = max(max(data) for name, data in datas)
 
     if range_min == range_max:
         bar_datas = [(key, data.values()[0]) for key, data in datas]
-        return bar_plot(bar_datas, stat_names, colors, styles, ylabel, figure)
+        return bar_plot(bar_datas, stat_names, colors, styles, ylabel, fig)
     else:
         range_datas = []
         for key, data in datas:
@@ -49,7 +61,7 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
             else:
                 range_datas.append((key, data))
         return range_plot(range_datas, stat_names, colors, styles, xlabel,
-                          ylabel, figure)
+                          ylabel, fig)
 
 
 def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
@@ -62,14 +74,7 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
         stat_names.remove("min")
         stat_names.remove("max")
 
-    # set up figure
-    fig = figure or Figure()
     axes = fig.gca()
-    axes.cla()
-    axes.set_axis_bgcolor("#f0f0f0")
-    if ylabel is not None:
-        axes.set_ylabel(ylabel)
-    axes.hold(True)
 
     # plots
     colorpool = default_colors[::-1]
@@ -147,14 +152,7 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
         stat_names.remove("min")
         stat_names.remove("max")
 
-    # set up figure
-    fig = figure or Figure()
     axes = fig.gca()
-    axes.cla()
-    axes.set_axis_bgcolor("#f0f0f0")
-    if ylabel is not None:
-        axes.set_ylabel(ylabel)
-    axes.hold(True)
 
     width = .8 / len(datas)
 
