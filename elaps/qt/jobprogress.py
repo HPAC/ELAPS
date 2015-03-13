@@ -130,13 +130,17 @@ class QJobProgress(QtGui.QDockWidget):
     @pyqtSlot(QtCore.QPoint)
     def on_rightclick(self, pos):
         """Event: right click."""
+        globalpos = self.widget().viewport().mapToGlobal(pos)
+        menu = QtGui.QMenu()
+
         item = self.widget().itemAt(pos)
         if not item:
+            menu.addAction(QtGui.QAction(
+                "Clear all", menu, triggered=self.on_removeall
+            ))
+            menu.exec_(globalpos)
             return
-        globalpos = self.widget().viewport().mapToGlobal(pos)
         job = item.job
-
-        menu = QtGui.QMenu()
 
         # kill
         if job["stat"] in ("PEND", "RUN"):
@@ -154,12 +158,16 @@ class QJobProgress(QtGui.QDockWidget):
             open_.job = job
             menu.addAction(open_)
 
-        # remove
+        # clear
         remove = QtGui.QAction(
-            "Remove", menu, triggered=self.on_remove
+            "Clear", menu, triggered=self.on_remove
         )
         remove.job = job
         menu.addAction(remove)
+
+        menu.addAction(QtGui.QAction(
+            "Clear all", menu, triggered=self.on_removeall
+        ))
 
         menu.exec_(globalpos)
 
@@ -185,3 +193,9 @@ class QJobProgress(QtGui.QDockWidget):
         )
         if self.widget().topLevelItemCount() == 0:
             self.hide()
+
+    @pyqtSlot()
+    def on_removeall(self):
+        """Event: remove all jobs."""
+        self.widget().clear()
+        self.hide()

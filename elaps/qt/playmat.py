@@ -45,6 +45,7 @@ class PlayMat(QtGui.QMainWindow):
         if not reset:
             try:
                 self.UI_settings_load()
+                self.UI_jobprogress.hide()
             except:
                 pass
 
