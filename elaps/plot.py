@@ -34,6 +34,7 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
 
     # set up figure
     fig = figure or Figure()
+    fig.patch.set_facecolor("#ffffff")
     axes = fig.gca()
     axes.cla()
     axes.set_axis_bgcolor("#f0f0f0")
@@ -73,6 +74,8 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
         stat_names.insert(0, "min-max")
         stat_names.remove("min")
         stat_names.remove("max")
+
+    fig = figure
 
     axes = fig.gca()
 
@@ -151,6 +154,8 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
         stat_names.insert(0, "min-max")
         stat_names.remove("min")
         stat_names.remove("max")
+
+    fig = figure
 
     axes = fig.gca()
 
