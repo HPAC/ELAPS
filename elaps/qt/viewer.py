@@ -717,7 +717,10 @@ class Viewer(QtGui.QMainWindow):
     @pyqtSlot(QtGui.QTreeWidgetItem, QtGui.QTreeWidgetItem)
     def on_report_select(self, current, previous):
         """Event: select Report."""
-        self.reportitem_selected = (current.reportid, current.callid)
+        if current:
+            self.reportitem_selected = (current.reportid, current.callid)
+        else:
+            self.reportitem_selected = (None, None)
         self.UI_info_set()
         self.UI_table_set()
 
