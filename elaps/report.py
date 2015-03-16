@@ -7,6 +7,7 @@ from experiment import Experiment
 
 from math import sqrt
 from collections import Iterable
+from copy import deepcopy
 
 stat_funs = {
     "min": min,
@@ -41,23 +42,29 @@ class Report(object):
 
     """ELAPS:Report, result of an ELAPS:Experiment."""
 
-    def __init__(self, experiment, rawdata):
+    def __init__(self, experiment, rawdata=None, fulldata=None):
         """Initialize report."""
         if not isinstance(experiment, Experiment):
             raise TypeError("first argument must be Experiment (not %s)" %
                             type(experiment).__name__)
-        try:
-            len(rawdata)
-            isinstance(rawdata, Iterable)
-        except:
-            raise TypeError("second argument must be iterable")
         self.experiment = experiment
-        self.rawdata = tuple(map(tuple, rawdata))
+        if rawdata is not None:
+            try:
+                len(rawdata)
+                isinstance(rawdata, Iterable)
+            except:
+                raise TypeError("rawdata argument must be iterable")
+            self.rawdata = tuple(map(tuple, rawdata))
+            self.fulldata_fromraw()
+        elif fulldata is not None:
+            self.rawdata = None
+            self.fulldata = fulldata
+        else:
+            raise TypeError("neither rawdata nor fulldata given")
+        self.data_fromfull()
 
-        self.process_rawdata()
-
-    def process_rawdata(self):
-        """Initialize data."""
+    def fulldata_fromraw(self):
+        """Initialize fulldata from rawdata."""
         ex = self.experiment
         rawdata = list(self.rawdata)
         self.starttime = rawdata.pop(0)[0]
@@ -96,6 +103,10 @@ class Report(object):
             range_data[range_val] = tuple(rep_data)
         self.fulldata = range_data
 
+    def data_fromfull(self):
+        """Initialize data from fulldata."""
+        ex = self.experiment
+
         # reduced data
         range_data = {}
         for range_val in ex.range_vals():
@@ -125,8 +136,7 @@ class Report(object):
             # get repetition data
             data_keys = map(intern, ["rdtsc"] + ex.papi_counters)
             rep_data = []
-            for rep in range(ex.nreps):
-                sumrange_fulldata = rep_fulldata[rep]
+            for rep, sumrange_fulldata in enumerate(rep_fulldata):
                 if ex.sumrange_parallel:
                     # only one result per repetition
                     tuple_data = {None: sumrange_fulldata}
@@ -208,3 +218,14 @@ class Report(object):
             if rep_result:
                 result[range_val] = rep_result
         return result
+
+    def discard_first_repetitions(self):
+        """Discard the first repetitions."""
+        fulldata = deepcopy(self.fulldata)
+        nreps = self.experiment.nreps
+        if nreps > 1:
+            for range_val in fulldata:
+                if len(fulldata[range_val]) == nreps:
+                    # do not take away more than 1
+                    fulldata[range_val] = fulldata[range_val][1:]
+        return Report(self.experiment, fulldata=fulldata)

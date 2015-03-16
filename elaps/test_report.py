@@ -176,7 +176,7 @@ class TestReport(unittest.TestCase):
                          range_idx * sum(i for i in range(lensumrange)))
 
     def test_apply_metric(self):
-        """Test for simple Experiment."""
+        """Test for apply_metric()."""
         val = random.randint(1, 1000)
 
         self.ex.call = Signature("name")()
@@ -191,6 +191,22 @@ class TestReport(unittest.TestCase):
 
         metricdata = report.apply_metric(metric)
         self.assertEqual(len(metricdata), 2)
+
+    def test_discrard_frist_repetitions(self):
+        """Test discard_first_repetitions()."""
+        nreps = random.randint(2, 10)
+        vals = [random.randint(1, 1000) for _ in range(nreps)]
+
+        self.ex.call = Signature("name")()
+        self.ex.nreps = nreps
+        rawdata = [[0]] + [[val] for val in vals] + [[1]]
+
+        report = Report(self.ex, rawdata)
+
+        report2 = report.discard_first_repetitions()
+        self.assertEqual(report2.experiment, self.ex)
+        self.assertEqual(report2.rawdata, None)
+        self.assertEqual(len(report2.fulldata[None]), nreps - 1)
 
 if __name__ == "__main__":
     unittest.main()
