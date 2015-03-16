@@ -10,6 +10,7 @@ from itertools import chain
 import warnings
 import os
 from copy import deepcopy
+from numbers import Number
 
 
 class Experiment(dict):
@@ -1096,11 +1097,18 @@ class Experiment(dict):
 
     def data_maxdim(self):
         """Get maximum size along any data dimension."""
-        return max(self.ranges_eval_minmax(dim)[1]
-                   for data in self.data.values()
-                   if data["dims"] and not issubclass(data["type"],
-                                                      signature.Work)
-                   for dim in data["dims"])
+        maxdim = 0
+        for data in self.data.values():
+            if not data["dims"]:
+                return None
+            if issubclass(data["type"], signature.Work):
+                continue
+            for dim in data["dims"]:
+                max_ = self.ranges_eval_minmax(dim)[1]
+                if not isinstance(max_, Number):
+                    return None
+                maxdim = max(maxdim, max_)
+        return maxdim
 
     def get_connections(self):
         """Update the connections between arguments based on coincidng data."""

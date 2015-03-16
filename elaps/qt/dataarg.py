@@ -2,6 +2,8 @@
 """Representation of data arguments in QCalls in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
+from numbers import Number
+
 from PyQt4 import QtCore, QtGui
 
 
@@ -145,6 +147,15 @@ class QDataArg(QtGui.QLineEdit):
             dimmin.append(rangemin)
             dimmax.append(rangemax)
         if float("inf") in dimmin or -float("inf") in dimmax:
+            # something is not bounded
+            self.viz_none()
+            return
+        if not all(isinstance(dim, Number) for dim in dimmin + dimmax):
+            # something is not a number
+            self.viz_none()
+            return
+        if self.playmat.experiment.data_maxdim() is None:
+            # something with the range went wrong
             self.viz_none()
             return
         if "work" in call.properties(self.argid):
