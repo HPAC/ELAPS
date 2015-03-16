@@ -35,6 +35,7 @@ class Viewer(QtGui.QMainWindow):
         self.report_colors = {}
         self.reportitem_selected = (None, None)
         self.colorpool = elaps.plot.default_colors[::-1]
+        self.discard_firstrep = True
 
         # load some stuff
         self.papi_names = elaps.io.load_papinames()
@@ -135,6 +136,16 @@ class Viewer(QtGui.QMainWindow):
                 stat.stat_name = stat_name
                 statsT.addWidget(stat)
                 self.UI_stats.append((stat_name, stat))
+
+            # firstrep
+            firstrepT = self.addToolBar("First Repetitions")
+            firstrepT.pyqtConfigure(movable=False,
+                                    objectName="First Repetitions")
+            self.UI_discard_firstrep = QtGui.QCheckBox(
+                "Ignore first repetitions",
+                toggled=self.on_discard_firstrep_toggle
+            )
+            firstrepT.addWidget(self.UI_discard_firstrep)
 
         def create_reports():
             """Create the reports list."""
@@ -268,7 +279,7 @@ class Viewer(QtGui.QMainWindow):
         """Load Qt settings."""
         settings = QtCore.QSettings("HPAC", "ELAPS:Viewer")
         state = eval(str(settings.value("state", type=str)))
-        self.stats_showing, self.metric_showing = state
+        self.stats_showing, self.metric_showing, self.discard_firstrep = state
         self.UI_setting += 1
         self.restoreGeometry(settings.value("geometry",
                                             type=QtCore.QByteArray))
@@ -384,6 +395,7 @@ class Viewer(QtGui.QMainWindow):
         """Set all UI elements."""
         self.UI_metric_set()
         self.UI_stats_set()
+        self.UI_discard_firstrep_set()
         self.UI_reports_set()
         self.UI_info_set()
         self.UI_plot_set()
@@ -411,6 +423,12 @@ class Viewer(QtGui.QMainWindow):
         self.UI_setting += 1
         for stat_name, stat in self.UI_stats:
             stat.setChecked(stat_name in self.stats_showing)
+        self.UI_setting -= 1
+
+    def UI_discard_firstrep_set(self):
+        """Set UI element: discard_firstrep."""
+        self.UI_setting += 1
+        self.UI_discard_firstrep.setChecked(self.discard_firstrep)
         self.UI_setting -= 1
 
     def UI_reports_set(self):
@@ -543,6 +561,8 @@ class Viewer(QtGui.QMainWindow):
         metric = self.metrics[self.metric_showing]
         for reportid, callid in sorted(self.reportitems_shoing):
             report = self.reports[reportid]
+            if self.discard_firstrep:
+                report = report.discard_first_repetitions()
             name = os.path.basename(reportid)[:-4]
             if callid is not None:
                 name += "[%d] (%s)" % (callid,
@@ -613,7 +633,7 @@ class Viewer(QtGui.QMainWindow):
         settings = QtCore.QSettings("HPAC", "ELAPS:Viewer")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
-        state = self.stats_showing, self.metric_showing
+        state = self.stats_showing, self.metric_showing, self.discard_firstrep
         settings.setValue("state", repr(state))
 
     @pyqtSlot()
@@ -625,6 +645,14 @@ class Viewer(QtGui.QMainWindow):
         self.Qapp.playmat.show()
         self.Qapp.playmat.raise_()
 
+    @pyqtSlot(str)
+    def on_metric_change(self, value):
+        """Event: metric changed."""
+        if self.UI_setting:
+            return
+        self.metric_showing = str(value)
+        self.UI_plot_set()
+
     @pyqtSlot(bool)
     def on_stat_toggle(self, checked):
         """Event: stat toggled."""
@@ -634,12 +662,12 @@ class Viewer(QtGui.QMainWindow):
                               if stat.isChecked()]
         self.UI_plot_set()
 
-    @pyqtSlot(str)
-    def on_metric_change(self, value):
-        """Event: metric changed."""
+    @pyqtSlot(bool)
+    def on_discard_firstrep_toggle(self, checked):
+        """Event: discard_firstrep toggled."""
         if self.UI_setting:
             return
-        self.metric_showing = str(value)
+        self.discard_firstrep = checked
         self.UI_plot_set()
 
     @pyqtSlot(QtCore.QPoint)
