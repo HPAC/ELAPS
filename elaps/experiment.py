@@ -112,6 +112,19 @@ class Experiment(dict):
             result += indent + "in parallel :\n"
             indent += "    "
         for call in self.calls:
+            if not isinstance(call, signature.Call):
+                continue
+            call = call.copy()
+            for argid in call.sig.dataargs():
+                value = call[argid]
+                if value not in self.data:
+                    continue
+                with_ = list(self.data[value]["vary"]["with"])
+                if len(with_) == 1:
+                    value += "_" + with_[0]
+                elif len(with_) > 1:
+                    value += "_(%s)" + ",".join(with_)
+                call[argid] = value
             result += indent + str(call) + "\n"
         return result[:-1]
 
@@ -862,12 +875,12 @@ class Experiment(dict):
             while "%s%d" % (delim, i) in selfrepr:
                 i += 1
             delim = "%s%d" % (delim, i)
-        script += "cat > %s <<%s\n%s\n%s\n" % (
+        script += "cat > \"%s\" <<%s\n%s\n%s\n" % (
             reportfile, delim, selfrepr, delim
         )
 
         # timing
-        script += "date +%%s >> %s\n" % reportfile
+        script += "date +%%s >> \"%s\"\n" % reportfile
 
         # go over #threads range
         for nthreads in nthreads_vals:
@@ -912,31 +925,31 @@ class Experiment(dict):
                 script += "%s " % b_prefix.format(nt=nthreads)
             if ompthreads != 1:
                 script += "OMP_NUM_THREADS=%d " % ompthreads
-            script += "%(x)s < %(i)s >> %(o)s 2>> %(e)s" % {
+            script += "%(x)s < \"%(i)s\" >> \"%(o)s\" 2>> \"%(e)s\"" % {
                 "x": self.sampler["exe"],  # executable
                 "i": callfile,  # input
                 "o": reportfile,  # output
                 "e": errfile  # error
             }
-            script += " || echo \"ERROR $?\" >> %s" % errfile
+            script += " || echo \"ERROR $?\" >> \"%s\"" % errfile
             if b_suffix:
                 script += " %s" % b_suffix.format(nt=nthreads)
             script += "\n"
 
             # exit upon error
-            script += "[ -s %s ] && exit\n" % errfile
+            script += "[ -s \"%s\" ] && exit\n" % errfile
 
             # delete call file
-            script += "rm %s\n" % callfile
+            script += "rm \"%s\"\n" % callfile
 
         # timing
-        script += "date +%%s >> %s\n" % reportfile
+        script += "date +%%s >> \"%s\"\n" % reportfile
 
         # delete script file
-        script += "rm %s\n" % scriptfile
+        script += "rm \"%s\"\n" % scriptfile
 
         # delete errfile (it's empty if we got so far)
-        script += "rm %s" % errfile
+        script += "rm \"%s\"" % errfile
 
         if b_footer:
             script += "\n" + b_footer.format(nt=self.nt)

@@ -80,6 +80,7 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     fig = figure
 
     axes = fig.gca()
+    axes.set_xlabel(xlabel)
 
     # plots
     colorpool = default_colors[::-1]

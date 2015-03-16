@@ -132,7 +132,7 @@ class BasicCall(list):
         return type(self)(self.sig, *self[1:])
 
     def copy(self):
-        """Create a deep copy."""
+        """Create a copy."""
         return self.__copy__()
 
 
@@ -161,6 +161,10 @@ class Call(BasicCall):
                 self[i] = value
                 return
         list.__setattr__(self, name, value)
+
+    def copy(self):
+        """Create a copy."""
+        return type(self)(self.sig, *self[1:])
 
     def argdict(self):
         """Create a dictionary of the calls arguments."""
