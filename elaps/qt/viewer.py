@@ -52,8 +52,8 @@ class Viewer(QtGui.QMainWindow):
         # load reports
         for filename in filenames:
             self.report_load(filename)
-        self.reportitems_shoing = set((reportid, None)
-                                      for reportid in self.reports)
+        self.reportitems_showing = set((reportid, None)
+                                       for reportid in self.reports)
 
         self.UI_setall()
 
@@ -333,8 +333,13 @@ class Viewer(QtGui.QMainWindow):
         self.reports[reportid] = report
 
         # set colors
-        for callid in sorted(report.callids):
-            self.report_colors[reportid, callid] = self.colorpool.pop()
+        if len(report.callids) <= 2:
+            color = self.colorpool.pop()
+            for callid in sorted(report.callids):
+                self.report_colors[reportid, callid] = color
+        else:
+            for callid in sorted(report.callids):
+                self.report_colors[reportid, callid] = self.colorpool.pop()
 
         # add counters
         for counter_name in report.experiment.papi_counters:
@@ -377,9 +382,11 @@ class Viewer(QtGui.QMainWindow):
         """Close a report."""
         report = self.reports[reportid]
         for callid in report.callids:
-            self.colorpool.append(self.report_colors[reportid, callid])
+            color = self.report_colors[reportid, callid]
+            if color not in self.colorpool:
+                self.colorpool.append(color)
             del self.report_colors[reportid, callid]
-            self.reportitems_shoing.discard((reportid, callid))
+            self.reportitems_showing.discard((reportid, callid))
         if self.reportitem_selected[0] == reportid:
             self.reportitem_selected = (None, None)
         del self.reports[reportid]
@@ -519,7 +526,7 @@ class Viewer(QtGui.QMainWindow):
 
                 # widgets
                 UI_item.showing.setChecked(
-                    (reportid, callid) in self.reportitems_shoing
+                    (reportid, callid) in self.reportitems_showing
                 )
                 color = self.report_colors[reportid, callid]
                 UI_item.color.pyqtConfigure(
@@ -559,7 +566,7 @@ class Viewer(QtGui.QMainWindow):
         colors = {}
         range_vars = set()
         metric = self.metrics[self.metric_showing]
-        for reportid, callid in sorted(self.reportitems_shoing):
+        for reportid, callid in sorted(self.reportitems_showing):
             report = self.reports[reportid]
             if self.discard_firstrep:
                 report = report.discard_first_repetitions()
@@ -683,15 +690,16 @@ class Viewer(QtGui.QMainWindow):
     @pyqtSlot()
     def on_report_load(self):
         """Event: load Report."""
-        filename = QtGui.QFileDialog.getOpenFileName(
+        filenames = QtGui.QFileDialog.getOpenFileNames(
             self, "Load Experiment", elaps.io.reportpath, "*.eer"
         )
-        if not filename:
+        if not filenames:
             return
-        reportid = self.report_load(str(filename))
-        if reportid is None:
-            return
-        self.reportitems_shoing.add((reportid, None))
+        for filename in filenames:
+            reportid = self.report_load(str(filename))
+            if reportid is None:
+                continue
+            self.reportitems_showing.add((reportid, None))
         self.UI_setall()
 
     @pyqtSlot()
@@ -738,7 +746,7 @@ class Viewer(QtGui.QMainWindow):
             reportid = self.report_load(filename, True)
             if not reportid:
                 continue
-            self.reportitems_shoing.add((reportid, None))
+            self.reportitems_showing.add((reportid, None))
         self.UI_reports_set()
         self.UI_plot_set()
 
@@ -769,9 +777,9 @@ class Viewer(QtGui.QMainWindow):
             return
         item = self.Qapp.sender().item
         if checked:
-            self.reportitems_shoing.add((item.reportid, item.callid))
+            self.reportitems_showing.add((item.reportid, item.callid))
         else:
-            self.reportitems_shoing.discard((item.reportid, item.callid))
+            self.reportitems_showing.discard((item.reportid, item.callid))
         self.UI_plot_set()
 
     # @pyqtSlot()  # sender() pyqt bug

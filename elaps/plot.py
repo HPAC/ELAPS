@@ -10,7 +10,9 @@ from matplotlib.patches import Patch
 
 
 default_colors = [
-    "#004280", "#e6a500", "#bf0000", "#009999", "#5b59b2", "#969900",
+    "#ff0000", "#00ff00", "#0000ff",
+    # Paolo's colors
+    "#e6a500", "#bf0000", "#004280", "#009999", "#5b59b2", "#969900",
     "#bf0073", "#bf9239", "#004ee6", "#ff7a00"
 ]
 
@@ -178,6 +180,8 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
                 avg = apply_stat("avg", data)
                 std = apply_stat("std", data)
                 axes.bar(left, 2 * std, width, avg - std, color=color)
+                axes.plot([left, left + width], [avg, avg], linestyle="--",
+                          color="#000000")
             else:
                 # all other stats
                 value = apply_stat(stat_name, data)
