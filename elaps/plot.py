@@ -115,9 +115,16 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
                 ys = [stat_data[x] for x in xs]
                 axes.plot(xs, ys, color=color, **styles[stat_name])
 
-    # ymin = 0
-    limits = axes.axis()
-    axes.axis((limits[0], limits[1], 0, limits[3]))
+    # ymin = 0, space for xmin/xmax
+    limits = list(axes.axis())
+    limits[2] = 0  # ymin = 0
+    gap = (limits[1] - limits[0]) / 20
+    if limits[0] > 0:
+        limits[0] = max(0, limits[0] - gap)
+    else:
+        limits[0] -= gap
+    limits[1] += gap
+    axes.axis(limits)
 
     # legend
     colorpool = default_colors[::-1]

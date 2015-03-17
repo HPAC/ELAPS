@@ -966,7 +966,7 @@ class Experiment(dict):
         script = self.submit_prepare(filebase)
         nthreads = self.nthreads
         if self.range and self.range[0] == nthreads:
-            nthreads = range.max()
+            nthreads = symbolic.max(self.range[1])
         backend = self.sampler["backend"]
         return(backend.submit(script, nt=nthreads, jobname=filebase))
 

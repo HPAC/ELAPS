@@ -175,7 +175,7 @@ class QJobProgress(QtGui.QDockWidget):
     def on_kill(self):
         """Event: kill job."""
         job = self.playmat.Qapp.sender().job
-        job["experiment"]["backend"].kill(job["jobid"])
+        job["experiment"]["sampler"]["backend"].kill(job["jobid"])
         self.on_remove()
 
     # @pyqtSlot()  # sender() pyqt bug

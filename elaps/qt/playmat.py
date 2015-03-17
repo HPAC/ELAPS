@@ -964,9 +964,9 @@ class PlayMat(QtGui.QMainWindow):
             ex.substitute(**{ex.range[0]: max(ex.range[1])})
             ex.range = None
             ex.update_data()
-            self.UI_nthreads_set()
             self.UI_submit_setenabled()
             self.UI_calls_set()
+        self.UI_nthreads_set()
         self.UI_range_set()
 
     @pyqtSlot(str)
