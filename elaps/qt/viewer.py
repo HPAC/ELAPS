@@ -181,6 +181,11 @@ class Viewer(QtGui.QMainWindow):
                 "Reload", self, triggered=self.on_report_reload
             ))
 
+            # context menu > reload all
+            self.UI_report_contextmenu.addAction(QtGui.QAction(
+                "Reload all", self, triggered=self.on_report_reload_all
+            ))
+
             # context menu > close
             self.UI_report_contextmenu.addAction(QtGui.QAction(
                 "Close", self, triggered=self.on_report_close
@@ -707,6 +712,13 @@ class Viewer(QtGui.QMainWindow):
         """Event: reload Report."""
         reportid = self.UI_report_contextmenu.reportid
         self.report_reload(reportid)
+        self.UI_setall()
+
+    @pyqtSlot()
+    def on_report_reload_all(self):
+        """Event: reload all Reports."""
+        for reportid in self.reports:
+            self.report_reload(reportid)
         self.UI_setall()
 
     @pyqtSlot()
