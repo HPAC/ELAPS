@@ -22,6 +22,7 @@ PlayMat
 Viewer
 ------
 * legend placement
+* custom legend names
 
 * (hide unavailable metrics)
 * (memory metrics)
