@@ -191,6 +191,11 @@ class Viewer(QtGui.QMainWindow):
                 "Close", self, triggered=self.on_report_close
             ))
 
+            # context menu > close all
+            self.UI_report_contextmenu.addAction(QtGui.QAction(
+                "Close all", self, triggered=self.on_report_close_all
+            ))
+
             self.UI_report_contextmenu.addSeparator()
 
             # context menu > open
@@ -725,6 +730,13 @@ class Viewer(QtGui.QMainWindow):
     def on_report_close(self):
         """Event: close Report."""
         self.report_close(self.UI_report_contextmenu.reportid)
+        self.UI_setall()
+
+    @pyqtSlot()
+    def on_report_close_all(self):
+        """Event: close all Reports."""
+        for reportid in list(self.reports):
+            self.report_close(reportid)
         self.UI_setall()
 
     @pyqtSlot()
