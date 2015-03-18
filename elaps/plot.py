@@ -115,14 +115,17 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
                 ys = [stat_data[x] for x in xs]
                 axes.plot(xs, ys, color=color, **styles[stat_name])
 
-    # ymin = 0, space for xmin/xmax
+    # axis limits
     limits = list(axes.axis())
-    limits[2] = 0  # ymin = 0
+    # ymin
+    limits[2] = 0
     gap = (limits[1] - limits[0]) / 20
-    if limits[0] > 0:
-        limits[0] = max(0, limits[0] - gap)
+    # xmin
+    if limits[0] > 0 and limits[1] - limits[0] > 5 * limits[0]:
+        limits[0] = 0
     else:
         limits[0] -= gap
+    # xmax
     limits[1] += gap
     axes.axis(limits)
 
@@ -169,7 +172,8 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
 
     axes = fig.gca()
 
-    width = .8 / len(datas)
+    groupwidth = .8
+    width = groupwidth / len(datas)
 
     # plots
     for dataid, (name, data) in enumerate(datas):
@@ -195,13 +199,19 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
                 value = apply_stat(stat_name, data)
                 axes.bar(left, value, width, color=color)
 
-    # ymin = 0
-    limits = axes.axis()
-    axes.axis((limits[0], limits[1], 0, limits[3]))
-
     # xlabels
-    axes.set_xticks([i + .4 for i in range(len(stat_names))])
+    axes.set_xticks([i + groupwidth / 2 for i in range(len(stat_names))])
     axes.set_xticklabels(stat_names)
+
+    # axis limits
+    limits = list(axes.axis())
+    # ymin
+    limits[2] = 0
+    # xmin
+    limits[0] = -(1 - groupwidth)
+    # xmax
+    limits[1] = len(stat_names) - (1 - groupwidth)
+    axes.axis(limits)
 
     # legend
     legend = [(Patch(color=colors[name]), name) for name, data in datas]
