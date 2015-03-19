@@ -127,11 +127,12 @@ class QDataArg(QtGui.QLineEdit):
         vary = data["vary"]
         self.offsetstr = None
         if vary["with"]:
+            self.offsetstr = ""
             if len(dims) > 1:
                 if vary["along"] < 3:
-                    self.offsetstr = u"\u2193\u2192\u2197"[vary["along"]]
+                    self.offsetstr += u"\u2193\u2192\u2197"[vary["along"]]
                 else:
-                    self.offsetstr = str(vary["along"])
+                    self.offsetstr += str(vary["along"])
             self.offsetstr += " (%s)" % ", ".join(vary["with"])
             if vary["offset"]:
                 self.offsetstr += " + %s" % vary["offset"]

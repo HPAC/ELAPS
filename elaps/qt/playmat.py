@@ -1026,7 +1026,7 @@ class PlayMat(QtGui.QMainWindow):
             ex.sumrange = [var, range_]
         else:
             self.experiment_back.sumrange = ex.sumrange
-            sumrange_vals = self.sumrange[1]
+            sumrange_vals = ex.sumrange[1]
             if ex.range:
                 sumrange_vals = symbolic.simplify(
                     sumrange_vals, **{ex.range[0]: max(ex.range[1])}
