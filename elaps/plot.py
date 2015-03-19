@@ -210,7 +210,7 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
     # xmin
     limits[0] = -(1 - groupwidth)
     # xmax
-    limits[1] = len(stat_names) - (1 - groupwidth)
+    limits[1] = len(stat_names) + (1 - groupwidth)
     axes.axis(limits)
 
     # legend
