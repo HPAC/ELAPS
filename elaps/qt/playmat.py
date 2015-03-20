@@ -800,9 +800,16 @@ class PlayMat(QtGui.QMainWindow):
 
     def UI_submit_setenabled(self):
         """En/Disable the submit Action."""
-        enabled = self.experiment.check_sanity()
+        try:
+            self.experiment.check_sanity(True)
+            enabled = True
+            tooltip = "Run"
+        except Exception as e:
+            enabled = False
+            tooltip = str(e)
         self.UI_submitA.setEnabled(enabled)
         self.UI_submit.setEnabled(enabled)
+        self.UI_submit.setToolTip(tooltip)
 
     def UI_ranges_setvalid(self):
         """Set the "invlaid" property for the ranges."""
