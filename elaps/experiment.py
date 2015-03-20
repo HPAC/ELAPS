@@ -399,7 +399,7 @@ class Experiment(dict):
 
         value = call[argid]
 
-        if not value:
+        if value is None:
             return False
 
         arg = call.sig[argid]
@@ -547,7 +547,7 @@ class Experiment(dict):
                 if not self.check_arg_valid(callid, argid):
                     call = self.calls[callid]
                     raise ValueError(
-                        "argument %d (%s=%s) of call %d (%s)is invalid" %
+                        "argument %d (%s=%s) of call %d (%s) is invalid" %
                         (argid, call.sig[argid], call[argid], callid,
                          call.sig[0])
                     )

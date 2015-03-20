@@ -110,7 +110,7 @@ class QJobProgress(QtGui.QDockWidget):
                 item.setText(
                     2, "%d / %d results" % (job["progress"], job["nresults"])
                 )
-            elif job["stat"] == "ERROR":
+            elif job["stat"] == "FAIL":
                 item.setText(2, "error")
             elif job["stat"] == "DONE":
                 item.setText(2, "done")
