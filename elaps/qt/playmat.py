@@ -818,8 +818,8 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_rangevar.setProperty("invalid", not ex.range[0])
             self.UI_rangevals.setProperty("invalid", not ex.range[1])
         if ex.sumrange:
-            self.UI_sumrangevar.setProperty("invalid", not ex.sumrange[0])
-            self.UI_sumrangevals.setProperty("invalid", not ex.sumrange[1])
+            self.UI_sumrangevar.setProperty("invalid", ex.sumrange[0] is None)
+            self.UI_sumrangevals.setProperty("invalid", ex.sumrange[1] is None)
         if ex.range and ex.sumrange:
             if ex.range[0] == ex.sumrange[0]:
                 self.UI_rangevar.setProperty("invalid", True)
@@ -999,7 +999,7 @@ class PlayMat(QtGui.QMainWindow):
         try:
             self.experiment.range[1] = symbolic.Range(str(value))
         except:
-            self.experiment.range[1] = symbolic.Range()
+            self.experiment.range[1] = None
         self.experiment.update_data()
         self.UI_ranges_setvalid()
         self.UI_submit_setenabled()
@@ -1077,7 +1077,7 @@ class PlayMat(QtGui.QMainWindow):
         try:
             ex.sumrange[1] = symbolic.Range(str(value), **symdict)
         except:
-            ex.sumrange[1] = symbolic.Range()
+            ex.sumrange[1] = None
         ex.update_data()
         self.UI_ranges_setvalid()
         self.UI_submit_setenabled()

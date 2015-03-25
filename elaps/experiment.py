@@ -1065,7 +1065,7 @@ class Experiment(dict):
                     sumrange = symbolic.simplify(
                         sumrange, **{self.range[0]: range_val}
                     )
-                if not len(sumrange):
+                if not sumrange:
                     sumrange_vals = None,
                 else:
                     sumrange_vals = (symbolic.min(sumrange_vals),
