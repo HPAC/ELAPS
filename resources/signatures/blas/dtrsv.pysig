@@ -1,0 +1,13 @@
+# double precision traiangular matrix linear system solve product
+Signature(
+    "dtrsv",
+    Uplo(),
+    Trans(),
+    Diag(),
+    Dim("n"),
+    dData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    dData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    complexity = "n ** 2 + n"
+)

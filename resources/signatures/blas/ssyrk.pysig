@@ -1,0 +1,16 @@
+# single precision symmetrix rank k update
+Signature(
+    "ssyrk",
+    Uplo(),
+    Trans(),
+    Dim("n"),
+    Dim("k"),
+    sScalar(),
+    sData("A", "ldA * (k if trans == 'N' else n)"),
+    Ld("ldA", "n if trans == 'N' else k"),
+    sScalar("beta"),
+    sData("C", "ldC * n",
+          "symm, lower if uplo == 'L' else upper"),
+    Ld("ldC", "n"),
+    complexity="k * n ** 2"
+)

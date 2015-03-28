@@ -1,0 +1,16 @@
+# double precision matrix-vector product
+Signature(
+    "dgemv",
+    Trans(),
+    Dim("m"),
+    Dim("n"),
+    dScalar(),
+    dData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    dData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    dScalar("beta"),
+    dData("Y", "1 + (m - 1) * abs(incY)"),
+    Ld("incY"),
+    complexity = "2 * m * n"
+)

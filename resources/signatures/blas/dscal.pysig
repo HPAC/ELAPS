@@ -1,0 +1,9 @@
+# double precision vector scaling
+Signature(
+    "dscal",
+    Dim("n"),
+    dScalar(),
+    dData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    complexity = "n"
+)

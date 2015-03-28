@@ -1,0 +1,18 @@
+# double precision matrix-matrix product
+Signature(
+    "zgemm",
+    Trans("transA"),
+    Trans("transB"),
+    Dim("m"),
+    Dim("n"),
+    Dim("k"),
+    zScalar(),
+    zData("A", "ldA * (k if transA == 'N' else m)"),
+    Ld("ldA", "m if transA == 'N' else k"),
+    zData("B", "ldB * (n if transB == 'N' else k)"),
+    Ld("ldB", "k if transB == 'N' else n"),
+    zScalar("beta"),
+    zData("C", "ldC * n"),
+    Ld("ldC", "m"),
+    complexity = "4 * 2 * m * n * k"
+)

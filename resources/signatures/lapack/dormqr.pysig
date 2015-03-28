@@ -1,0 +1,17 @@
+# double precision multiply by Q from QR
+Signature(
+    "dormqr",
+    Side(),
+    Trans()
+    Dim("m"),
+    Dim("n"),
+    Dim("k"),
+    dData("A", "ldA * k"),
+    Ld("ldA", "m if side == 'L' else n"),
+    dData("tau", "k"),
+    dData("C", "ldc * n"),
+    Ld("ldC", "m"),
+    dData("Work", "lWork"),
+    Dim("lWork", "n if side == 'L' else m"),
+    Info()
+)

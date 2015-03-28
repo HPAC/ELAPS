@@ -1,0 +1,18 @@
+# single precision symmetrix matrix-matrix product
+Signature(
+    "ssymm",
+    Side(),
+    Uplo(),
+    Dim("m"),
+    Dim("n"),
+    sScalar(),
+    sData("A", "ldA * (m if side == 'L' else n)",
+          "symm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "m if side == 'L' else n"),
+    sData("B", "ldB * n"),
+    Ld("ldB", "m"),
+    sScalar("beta"),
+    sData("C", "ldC * n"),
+    Ld("ldC", "m"),
+    complexity="2 * m * n * (m if side == 'L' else n) "
+)

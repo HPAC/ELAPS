@@ -1,0 +1,15 @@
+# single precision symmetric matrix-vector product
+Signature(
+    "ssymv",
+    Uplo(),
+    Dim("n"),
+    sScalar(),
+    sData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    sData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    sScalar("beta"),
+    sData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("incY"),
+    complexity = "2 * n ** 2"
+)
