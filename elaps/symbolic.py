@@ -746,8 +746,8 @@ class Sum(Operation):
             return type(self)(arg, **{self.rangevar: range_})
 
         # range is not symbolic
-        if (not isinstance(arg, Expression)
-                or self.rangevar not in arg.findsymbols()):
+        if (not isinstance(arg, Expression) or
+                self.rangevar not in arg.findsymbols()):
             # argument doesn't depend on range
             return len(range_) * arg
 
