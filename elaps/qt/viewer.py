@@ -10,7 +10,7 @@ import sys
 import os
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot
-from matplotlib.backends.backend_qt4agg import (FigureCanvas,
+from matplotlib.backends.backend_qt4agg import (FigureCanvasQTAgg,
                                                 NavigationToolbar2QT)
 from matplotlib.figure import Figure
 
@@ -613,10 +613,10 @@ class Viewer(QtGui.QMainWindow):
                              for value in values if value is not None]
             if not metric_values:
                 continue
-            table_data[metric_name] = {
-                stat_name: apply_stat(stat_name, metric_values)
+            table_data[metric_name] = dict(
+                (stat_name, apply_stat(stat_name, metric_values))
                 for stat_name in stat_names
-            }
+            )
 
         # display data
         self.UI_table.setRowCount(len(table_data))

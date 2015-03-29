@@ -238,7 +238,8 @@ class PlayMat(QtGui.QMainWindow):
 
             # reps
             self.UI_nreps = QtGui.QLineEdit(textChanged=self.on_nreps_change)
-            self.UI_nreps.setValidator(QtGui.QIntValidator(bottom=1))
+            # self.UI_nreps.setValidator(QtGui.QIntValidator(bottom=1))
+            self.UI_nreps.setValidator(QtGui.QIntValidator(1, 1000000, self))
             self.UI_nreps.setFixedWidth(32)
 
             nrepsL = QtGui.QHBoxLayout(spacing=0)
