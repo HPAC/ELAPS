@@ -116,7 +116,7 @@ def main():
         "threads_per_core": int(os.environ["THREADS_PER_CORE"]),
         "nt_max": (int(os.environ["NCORES"]) *
                    int(os.environ["THREADS_PER_CORE"])),
-        "kernels": {sig[0]: sig for sig in kernelsigs},
+        "kernels": dict((sig[0], sig) for sig in kernelsigs),
         "papi_counters_max": papi_counters_max,
         "papi_enabled": papi_counters_max > 0,
         "omp_enabled": os.environ["OPENMP"] == "1",
