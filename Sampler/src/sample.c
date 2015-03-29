@@ -20,7 +20,7 @@
 } while(0)
 #elif defined(__powerpc__)
 #define rdtsc(var) { \
-    unsigned long int lower, uppper, tmp; \
+    unsigned long int lower, upper, tmp; \
     asm volatile( \
         "0:\n" \
         "\tmftbu   %0\n" \

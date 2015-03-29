@@ -19,12 +19,12 @@ class Backend(object):
 
     def submit(self, script, nt=1, jobname="", header="", **options):
         """Submit a job."""
-        p = subprocess.Popen(["llsubmit"], stdin=subprocess.PIPE,
+        p = subprocess.Popen(["llsubmit", "-"], stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         header = self.header + header
         header += "#@ job_name=\"%s\"\n" % jobname
         (out, err) = p.communicate(header + script)
-        match = re.search("llsubmit: The job \".+\" has been submitted.", out)
+        match = re.search("llsubmit: The job \"(.+)\" has been submitted.", out)
         if not match:
             raise IOError(err)
         jobid = match.groups()[0]
