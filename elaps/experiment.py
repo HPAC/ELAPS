@@ -67,8 +67,8 @@ class Experiment(dict):
         empty = Experiment()
 
         # Only print non-default attribute values
-        changed = {key: value for key, value in self.items()
-                   if value != empty[key]}
+        changed = dict((key, value) for key, value in self.items()
+                       if value != empty[key])
 
         # remove kernels and backend
         if "sampler" in changed:
@@ -180,7 +180,7 @@ class Experiment(dict):
         ldcall.complete()
         sizecall.complete()
 
-        argdict = {"." + arg.name: val for arg, val in zip(sig, call)}
+        argdict = dict(("." + arg.name, val) for arg, val in zip(sig, call))
 
         data = {
             "size": sizecall[name_argid],
@@ -1147,11 +1147,11 @@ class Experiment(dict):
                 ]
                 sizes[name].append(datasize)
         # initial connections
-        connections = {
-            (callid, argid): set([(callid, argid)])
+        connections = dict(
+            ((callid, argid), set([(callid, argid)]))
             for callid, call in enumerate(self.calls)
             for argid in range(len(call))
-        }
+        )
         connections[None] = set()
         # combine connections for each data item
         for datasize in sizes.values():
