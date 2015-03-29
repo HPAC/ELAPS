@@ -168,7 +168,7 @@ class Call(BasicCall):
 
     def argdict(self):
         """Create a dictionary of the calls arguments."""
-        return {arg.name: val for arg, val in zip(self.sig, self)}
+        return dict((arg.name, val) for arg, val in zip(self.sig, self))
 
     def complete_once(self):
         """Attempt to complete arguments with minimum expressions once."""

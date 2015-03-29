@@ -27,8 +27,8 @@ def apply_stat(stat_name, data):
 
     if isinstance(data, dict):
         # return a dict
-        return {key: apply_stat(stat_name, values)
-                for key, values in data.items()}
+        return dict((key, apply_stat(stat_name, values))
+                    for key, values in data.items())
 
     if isinstance(data, Iterable):
         # apply to list
@@ -130,7 +130,7 @@ class Report(object):
                 totalflops = None
             else:
                 totalflops = sum(flops)
-            flops = {key: val for key, val in enumerate(flops)}
+            flops = dict(enumerate(flops))
             flops[None] = totalflops
 
             # get repetition data
@@ -159,10 +159,10 @@ class Report(object):
                             for id_ in range(1 + len(ex.papi_counters)):
                                 sumrange_data[callid][id_] +=\
                                     call_fulldata[id_]
-                    tuple_data = {
-                        callid: tuple(sumrange_data[callid])
+                    tuple_data = dict(
+                        (callid, tuple(sumrange_data[callid]))
                         for callid in range(len(ex.calls))
-                    }
+                    )
                     tuple_data[None] = tuple(
                         sum(sumrange_data[callid][id_]
                             for callid in range(len(ex.calls)))
