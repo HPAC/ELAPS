@@ -12,11 +12,27 @@
 #endif
 
 // read time stamp counter (CPU register)
+#ifdef __x86_64__
 #define rdtsc(var) { \
-    unsigned int __a, __d; \
-    asm volatile("rdtsc" : "=a" (__a), "=d" (__d)); \
-    var = ((unsigned long) __a) | (((unsigned long) __d) << 32); \
+    unsigned long int lower, upper; \
+    asm volatile("rdtsc" : "=a" (lower), "=d" (upper)); \
+    var = ((unsigned long long) lower) | (((unsigned long long) upper) << 32); \
 } while(0)
+#elif defined(__powerpc__)
+#define rdtsc(var) { \
+    unsigned long int lower, uppper, tmp; \
+    asm volatile( \
+        "0:\n" \
+        "\tmftbu   %0\n" \
+        "\tmftb    %1\n" \
+        "\tmftbu   %2\n" \
+        "\tcmpw    %2,%0\n" \
+        "\tbne     0b\n" \
+        : "=r"(upper),"=r"(lower),"=r"(tmp) \
+    ); \
+    var = ((unsigned long long) lower) | (((unsigned long long) upper) << 32); \
+} while(0)
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // no PAPI                                                                    //
