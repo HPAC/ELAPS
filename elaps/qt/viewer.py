@@ -208,7 +208,7 @@ class Viewer(QtGui.QMainWindow):
         def create_plot():
             """Create the plot."""
             self.UI_figure = Figure()
-            self.UI_canvas = FigureCanvas(self.UI_figure)
+            self.UI_canvas = FigureCanvasQTAgg(self.UI_figure)
 
             # toolbar
             toolbar = NavigationToolbar2QT(self.UI_canvas, self)
