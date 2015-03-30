@@ -3,7 +3,7 @@ Experiment(
     nreps=10,
     calls=[
         Signature(
-            "dgemm_",
+            "dgemm",
             Trans("transA"), Trans("transB"),
             Dim("m"), Dim("n"), Dim("k"),
             dScalar(),
