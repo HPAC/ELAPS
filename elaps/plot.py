@@ -44,6 +44,8 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
         axes.set_ylabel(ylabel)
     axes.hold(True)
 
+    # filter empty data
+    datas = [(name, data) for name, data in datas if data]
     if not datas:
         return fig
 

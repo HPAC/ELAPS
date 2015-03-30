@@ -209,10 +209,12 @@ class Report(object):
             rep_result = []
             for rep in range(ex.nreps):
                 try:
-                    rep_result.append(metric(
+                    metric_val = metric(
                         self.data[range_val][rep][callid], experiment=ex,
                         callid=callid, nthreads=nthreads
-                    ))
+                    )
+                    if metric_val is not None:
+                        rep_result.append(metric_val)
                 except:
                     pass
             if rep_result:
