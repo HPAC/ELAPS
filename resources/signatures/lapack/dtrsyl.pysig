@@ -1,0 +1,17 @@
+# double precision sylvester solver
+Signature(
+    "dtrsyl",
+    Trans("transA"),
+    Trans("transB"),
+    iScalar("isgn"),
+    Dim("m"),
+    Dim("n"),
+    dData("A", "ldA * m", "upper"),
+    Ld("ldA", "m"),
+    dData("B", "ldB * n", "upper"),
+    Ld("ldB", "n"),
+    dData("C", "ldC * n"),
+    Ld("ldC", "m"),
+    dScalar("scale"),
+    Info()
+)
