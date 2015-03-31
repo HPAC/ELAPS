@@ -20,8 +20,8 @@ fi
 
 if hash papi_avail 2>/dev/null; then
     # PAPI
-    PAPI_COUNTERS_MAX=`papi_avail | sed -n "s/Number Hardware Counters\\s*: \(.*\)/\1/p"`
-    PAPI_COUNTERS_AVAIL=`papi_avail -a | sed -n "s/\(PAPI_.*\) 0x.*/\1/p" | tr "\n" " "`
+    PAPI_COUNTERS_MAX=`papi_avail 2>/dev/null | sed -n "s/Number Hardware Counters\\s*: \(.*\)/\1/p"`
+    PAPI_COUNTERS_AVAIL=`papi_avail -a 2>/dev/null | sed -n "s/\(PAPI_.*\) 0x.*/\1/p" | tr "\n" " "`
 else
     PAPI_COUNTERS_MAX=0
     PAPI_COUNTERS_AVAIL=""

@@ -61,15 +61,18 @@ def main():
                 print("Could not parse:", repr(line), file=sys.stderr)
                 continue
 
-            name, args = match.groups()
+            symbolname, args = match.groups()
             if args:
                 args = map(intern, args.split(","))
             else:
                 args = []
+            name = symbolname
+            if name[-1] == "_":
+                name = name[:-1]
             kernelsigs.append((name,) + tuple(arg for arg in args))
             enumargs = [argtypes[arg] for arg in args]
             argcmax = max(argcmax, len(enumargs) + 1)
-            print("{\"" + name + "\", (void *) " + name + ", { " +
+            print("{\"" + name + "\", (void *) " + symbolname + ", { " +
                   ", ".join(enumargs) + " } },", file=fout)
 
     # create calls.s.cin
@@ -136,11 +139,7 @@ def main():
         info["sflops/cycle"] = int(os.environ["SFLOPS_PER_CYCLE"])
     info = info
     with open(info_py, "w") as fout:
-        try:
-            import pprint
-            print(pprint.pformat(info, 4), file=fout)
-        except:
-            print(repr(info), file=fout)
+        print(repr(info), file=fout)
 
 if __name__ == "__main__":
     main()
