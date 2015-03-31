@@ -10,7 +10,7 @@ class Backend(object):
 
     """Backend to run ELAPS:Mat jobs through a LoadLeveler scheduler."""
 
-    name = "lsf"
+    name = "loadleveler"
 
     def __init__(self, header="#!/bin/bash\n#@ comment=\"ELAPS Experiment\"\n"):
         """Initialize the backend."""
