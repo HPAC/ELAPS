@@ -910,7 +910,7 @@ class Experiment(dict):
                     else:
                         sumrangelen = max(
                             len(symbolic.simplify(
-                                self.sumrange, **{self.range[0]: range_val}
+                                self.sumrange[1], **{self.range[0]: range_val}
                             )) for range_val in self.range[1]
                         )
                 else:
