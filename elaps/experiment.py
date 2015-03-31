@@ -922,10 +922,10 @@ class Experiment(dict):
             ompthreads = min(ompthreads, self.sampler["nt_max"])
 
             # sampler invocation
+            if ompthreads != 1:
+                script += "export OMP_NUM_THREADS=%d\n" % ompthreads
             if b_prefix:
                 script += "%s " % b_prefix.format(nt=nthreads)
-            if ompthreads != 1:
-                script += "OMP_NUM_THREADS=%d " % ompthreads
             script += "%(x)s < \"%(i)s\" >> \"%(o)s\" 2>> \"%(e)s\"" % {
                 "x": self.sampler["exe"],  # executable
                 "i": callfile,  # input
