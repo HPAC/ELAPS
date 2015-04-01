@@ -12,7 +12,6 @@ Experiment
 PlayMat
 -------
 * load experiment from jobprogress
-* fix job kill
 * script header
 * carry rangevar change to vary
 
