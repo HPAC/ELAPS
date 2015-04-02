@@ -1046,7 +1046,7 @@ class Experiment(dict):
         # range values
         range_vals = range_val_fixed,
         if range_val_fixed is None and self.range:
-            if not len(self.range[1]):
+            if not self.range[1]:
                 range_vals = None,
             else:
                 range_vals = (symbolic.min(self.range[1]),
@@ -1061,15 +1061,15 @@ class Experiment(dict):
             sumrange_vals = sumrange_val_fixed,
             if sumrange_val_fixed is None and self.sumrange:
                 sumrange = self.sumrange[1]
-                if self.range:
+                if self.range and range_val is not None:
                     sumrange = symbolic.simplify(
                         sumrange, **{self.range[0]: range_val}
                     )
-                if not sumrange:
+                if sumrange is None or sumrange.findsymbols() or not sumrange:
                     sumrange_vals = None,
                 else:
-                    sumrange_vals = (symbolic.min(sumrange_vals),
-                                     symbolic.max(sumrange_vals))
+                    sumrange_vals = (symbolic.min(sumrange),
+                                     symbolic.max(sumrange))
 
             # go over sumrange
             for sumrange_val in sumrange_vals:
