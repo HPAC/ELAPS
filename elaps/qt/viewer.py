@@ -364,6 +364,9 @@ class Viewer(QtGui.QMainWindow):
             metric.__doc__ = counter_info["long"]
             self.metrics[metric_name] = metric
 
+        # display
+        self.reportitems_showing.add((reportid, None))
+
         self.log("Loaded %r" % filename)
         return reportid
 

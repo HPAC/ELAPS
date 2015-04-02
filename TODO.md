@@ -12,10 +12,9 @@ Experiment
 PlayMat
 -------
 * load experiment from jobprogress
-* fix job kill
-* script header
-* carry rangevar change to vary
+* jobprogress: clear done, kill all
 
+* (script header)
 * (status tips)
 * (Report #thread range and multiple BLAS at once)
 * ("file" backend)

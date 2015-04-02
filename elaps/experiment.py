@@ -422,10 +422,14 @@ class Experiment(dict):
             # check minimum size
             databackup = self.data
             self.data = deepcopy(self.data)
-            if isinstance(arg, signature.Ld):
-                self.infer_ld(callid, argid)
-            else:
-                self.infer_lwork(callid, argid)
+            try:
+                if isinstance(arg, signature.Ld):
+                    self.infer_ld(callid, argid)
+                else:
+                    self.infer_lwork(callid, argid)
+            except:
+                self.data = databackup
+                return False
             minvalue = self.calls[callid][argid]
             self.calls[callid][argid] = value
             self.data = databackup
@@ -1046,7 +1050,7 @@ class Experiment(dict):
         # range values
         range_vals = range_val_fixed,
         if range_val_fixed is None and self.range:
-            if self.range[1] is None or not len(self.range[1]):
+            if not self.range[1]:
                 range_vals = None,
             else:
                 range_vals = (symbolic.min(self.range[1]),
@@ -1059,17 +1063,17 @@ class Experiment(dict):
 
             # sumrange values
             sumrange_vals = sumrange_val_fixed,
-            if (sumrange_val_fixed is None and self.sumrange):
-                if self.sumrange[1] is None or not len(self.sumrange[1]):
+            if sumrange_val_fixed is None and self.sumrange:
+                sumrange = self.sumrange[1]
+                if self.range and range_val is not None:
+                    sumrange = symbolic.simplify(
+                        sumrange, **{self.range[0]: range_val}
+                    )
+                if sumrange is None or sumrange.findsymbols() or not sumrange:
                     sumrange_vals = None,
                 else:
-                    sumrange = self.sumrange[1]
-                    if self.range:
-                        sumrange = symbolic.simplify(
-                            sumrange, **{self.range[0]: range_val}
-                        )
-                    sumrange_vals = (symbolic.min(sumrange_vals),
-                                     symbolic.max(sumrange_vals))
+                    sumrange_vals = (symbolic.min(sumrange),
+                                     symbolic.max(sumrange))
 
             # go over sumrange
             for sumrange_val in sumrange_vals:
@@ -1094,6 +1098,10 @@ class Experiment(dict):
         for data in self.data.values():
             data["vary"]["offset"] = symbolic.simplify(data["vary"]["offset"],
                                                        **kwargs)
+            for key, val in kwargs.items():
+                if key in data["vary"]["with"]:
+                    data["vary"]["with"].add(str(val))
+                    data["vary"]["with"].discard(key)
 
     def data_maxdim(self):
         """Get maximum size along any data dimension."""

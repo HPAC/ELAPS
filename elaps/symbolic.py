@@ -735,11 +735,15 @@ class Sum(Operation):
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
+        # simplify range
+        range_ = simplify(self.range_, **kwargs)
+
+        # don't substitute own rangevar in arg
+        if self.rangevar in kwargs:
+            del kwargs[self.rangevar]
+
         # simplify argument
         arg = simplify(self[1], **kwargs)
-
-        # simplify range
-        range_ = simplify(self.range_)
 
         if isinstance(range_, Range) and range_.findsymbols():
             # range is symbolic
