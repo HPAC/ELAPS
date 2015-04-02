@@ -12,8 +12,9 @@ Experiment
 PlayMat
 -------
 * load experiment from jobprogress
-* script header
+* jobprogress: clear done, kill all
 
+* (script header)
 * (status tips)
 * (Report #thread range and multiple BLAS at once)
 * ("file" backend)
