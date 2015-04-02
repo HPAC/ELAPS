@@ -422,10 +422,14 @@ class Experiment(dict):
             # check minimum size
             databackup = self.data
             self.data = deepcopy(self.data)
-            if isinstance(arg, signature.Ld):
-                self.infer_ld(callid, argid)
-            else:
-                self.infer_lwork(callid, argid)
+            try:
+                if isinstance(arg, signature.Ld):
+                    self.infer_ld(callid, argid)
+                else:
+                    self.infer_lwork(callid, argid)
+            except:
+                self.data = databackup
+                return False
             minvalue = self.calls[callid][argid]
             self.calls[callid][argid] = value
             self.data = databackup
