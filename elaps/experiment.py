@@ -1094,6 +1094,10 @@ class Experiment(dict):
         for data in self.data.values():
             data["vary"]["offset"] = symbolic.simplify(data["vary"]["offset"],
                                                        **kwargs)
+            for key, val in kwargs.items():
+                if key in data["vary"]["with"]:
+                    data["vary"]["with"].add(str(val))
+                    data["vary"]["with"].discard(key)
 
     def data_maxdim(self):
         """Get maximum size along any data dimension."""

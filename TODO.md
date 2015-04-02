@@ -13,7 +13,6 @@ PlayMat
 -------
 * load experiment from jobprogress
 * script header
-* carry rangevar change to vary
 
 * (status tips)
 * (Report #thread range and multiple BLAS at once)
