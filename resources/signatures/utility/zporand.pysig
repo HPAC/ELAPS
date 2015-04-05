@@ -1,9 +1,10 @@
-# double precision make maktrix SPD
+# double precision complex randomize HPD
 Signature(
-    "dmake_spd",
+    "zporand",
     Uplo(),
     Dim("n"),
     dData("A", "ldA * n",
           "lower if uplo == 'L' else upper, symm"),
-    Ld("ldA", "n")
+    Ld("ldA", "n"),
+    complexity="n * n + n"
 )

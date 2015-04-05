@@ -1,0 +1,10 @@
+# single precision complex randomize HPD
+Signature(
+    "cporand",
+    Uplo(),
+    Dim("n"),
+    cData("A", "ldA * n",
+          "lower if uplo == 'L' else upper, symm"),
+    Ld("ldA", "n"),
+    complexity="n * n + n"
+)

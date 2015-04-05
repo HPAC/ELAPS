@@ -1,0 +1,10 @@
+# double precision randomize SPD
+Signature(
+    "dporand",
+    Uplo(),
+    Dim("n"),
+    dData("A", "ldA * n",
+          "lower if uplo == 'L' else upper, symm"),
+    Ld("ldA", "n"),
+    complexity="n * n + n"
+)

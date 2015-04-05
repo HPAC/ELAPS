@@ -1,0 +1,9 @@
+# single precision randomize
+Signature(
+    "sgerand",
+    Dim("m"),
+    Dim("n"),
+    sData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    complexity="m * n"
+)
