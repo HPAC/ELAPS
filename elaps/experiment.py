@@ -646,6 +646,12 @@ class Experiment(dict):
                 signature.dData: "d",
                 signature.cData: "c",
                 signature.zData: "z",
+                signature.Work: "",
+                signature.iWork: "i",
+                signature.sWork: "s",
+                signature.dWork: "d",
+                signature.cWork: "c",
+                signature.zWork: "z",
             }
 
         # go over all operands
