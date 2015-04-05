@@ -33,7 +33,7 @@ class TestLoaders(unittest.TestCase):
 
     def test_load_signature(self):
         """Test for write/load_signature()."""
-        sig = load_signature("dtrsm_")
+        sig = load_signature("dtrsm")
         self.assertIsInstance(sig, Signature)
 
     def test_load_expeirment(self):
