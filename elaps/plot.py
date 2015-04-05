@@ -125,12 +125,14 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     limits[2] = 0
     gap = (limits[1] - limits[0]) / 20
     # xmin
-    if limits[0] > 0 and limits[1] - limits[0] > 5 * limits[0]:
+    range_min = min(min(data) for name, data in datas)
+    if range_min > 0 and range_min < gap:
         limits[0] = 0
     else:
-        limits[0] -= gap
+        limits[0] = range_min - gap
     # xmax
-    limits[1] += gap
+    range_max = max(max(data) for name, data in datas)
+    limits[1] = range_max + gap
     axes.axis(limits)
 
     # legend
