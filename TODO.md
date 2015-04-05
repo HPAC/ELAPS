@@ -13,6 +13,7 @@ PlayMat
 -------
 * load experiment from jobprogress
 * jobprogress: clear done, kill all
+* disable sumrange_parallel if no omp support
 
 * (script header)
 * (status tips)

@@ -1210,6 +1210,9 @@ class PlayMat(QtGui.QMainWindow):
                 sender.clearFocus()
                 self.experiment_infer_update_set()
                 sender.setFocus()
+        else:
+            call[argid] = value
+            self.experiment_infer_update_set()
 
     def on_arg_set(self, callid, argid, value):
         """Event: Set argument value."""
