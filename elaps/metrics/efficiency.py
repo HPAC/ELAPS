@@ -4,7 +4,7 @@ from __future__ import division, print_function
 
 
 def metric(data, experiment, nthreads, callid, **kwargs):
-    """Performance the operations relative to peak.
+    """Performance of the operations relative to peak.
 
     Comparing the flops/cycle to the system's peak.
     Not acocuting for Turbo Boost.
