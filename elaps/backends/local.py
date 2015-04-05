@@ -2,6 +2,7 @@
 """Backend for running ELAPS:Mat jobs locally."""
 from __future__ import division, print_function
 
+import os
 import subprocess
 import threading
 
@@ -23,13 +24,17 @@ class Backend(object):
         if waitid:
             self.jobs[waitid].wait()
         p = self.jobs[jobid]
+        if p.poll() is not None:
+            # job killed
+            return
         p.stdin.write(self.scripts[jobid])
         del self.scripts[jobid]
         p.stdin.close()
 
     def submit(self, script, nt=1, header="", **options):
         """Submit a job."""
-        p = subprocess.Popen(["bash"], stdin=subprocess.PIPE)
+        p = subprocess.Popen(["bash"], stdin=subprocess.PIPE,
+                             preexec_fn=os.setsid)
         jobid = p.pid
         self.jobs[jobid] = p
         self.scripts[jobid] = header + script
@@ -61,6 +66,6 @@ class Backend(object):
     def kill(self, jobid):
         """Kill a job."""
         try:
-            self.jobs[jobid].terminate()
+            os.killpg(os.getpgid(jobid), 15)
         except:
             pass

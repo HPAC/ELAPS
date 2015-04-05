@@ -29,13 +29,14 @@ class Viewer(QtGui.QMainWindow):
         self.Qapp.viewer = self
         QtGui.QMainWindow.__init__(self)
 
+        self.discard_firstrep = True
         self.stats_showing = ["med"]
         self.metric_showing = "Gflops/s"
+        self.colorpool = elaps.plot.default_colors[::-1]
         self.reports = {}
         self.report_colors = {}
         self.reportitem_selected = (None, None)
-        self.colorpool = elaps.plot.default_colors[::-1]
-        self.discard_firstrep = True
+        self.reportitems_showing = set()
 
         # load some stuff
         self.papi_names = elaps.io.load_papinames()
@@ -52,8 +53,6 @@ class Viewer(QtGui.QMainWindow):
         # load reports
         for filename in filenames:
             self.report_load(filename)
-        self.reportitems_showing = set((reportid, None)
-                                       for reportid in self.reports)
 
         self.UI_setall()
 
@@ -369,6 +368,9 @@ class Viewer(QtGui.QMainWindow):
             metric.name = metric_name
             metric.__doc__ = counter_info["long"]
             self.metrics[metric_name] = metric
+
+        # display
+        self.reportitems_showing.add((reportid, None))
 
         self.log("Loaded %r" % filename)
         return reportid

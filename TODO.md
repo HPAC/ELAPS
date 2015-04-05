@@ -12,10 +12,10 @@ Experiment
 PlayMat
 -------
 * load experiment from jobprogress
-* fix job kill
-* script header
-* carry rangevar change to vary
+* jobprogress: clear done, kill all
+* disable sumrange_parallel if no omp support
 
+* (script header)
 * (status tips)
 * (Report #thread range and multiple BLAS at once)
 * ("file" backend)
