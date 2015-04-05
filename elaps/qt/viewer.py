@@ -321,6 +321,12 @@ class Viewer(QtGui.QMainWindow):
         self.statusBar().showMessage(msg)
         print("\033[31m%s\033[0m" % msg, file=sys.stderr)
 
+    def UI_alert(self, *args, **kwargs):
+        """Alert a messagebox."""
+        msg = " ".join(map(str, args))
+        title = kwargs.get("title", "")
+        self.UI_dialog("information", title, msg)
+
     # report routines
     def report_load(self, filename, UI_alert=False):
         """Load a report."""

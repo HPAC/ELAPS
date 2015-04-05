@@ -32,7 +32,6 @@ class Backend(object):
         p = subprocess.Popen(["bash"], stdin=subprocess.PIPE)
         jobid = p.pid
         self.jobs[jobid] = p
-        header += "export OPM_NUM_THREADS=%d\n" % nt
         self.scripts[jobid] = header + script
         t = threading.Thread(target=self._run,
                              args=(jobid, self.lastsubmitted))
