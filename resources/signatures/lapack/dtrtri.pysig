@@ -1,0 +1,12 @@
+# double precision triangular inversion
+Signature(
+    "dtrtri",
+    Uplo(),
+    Diag(),
+    Dim("n"),
+    dData("A", "ldA * n",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    Info(),
+    complexity="n * (n + 1) * (2 * n + 1) / 6"
+)
