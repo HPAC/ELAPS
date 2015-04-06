@@ -31,7 +31,7 @@ class Viewer(QtGui.QMainWindow):
 
         self.discard_firstrep = True
         self.stats_showing = ["med"]
-        self.metric_showing = "Gflops/s"
+        self.metric_showing = None
         self.colorpool = elaps.plot.default_colors[::-1]
         self.reports = {}
         self.report_colors = {}
@@ -53,6 +53,9 @@ class Viewer(QtGui.QMainWindow):
         # load reports
         for filename in filenames:
             self.report_load(filename)
+
+        if self.metric_showing not in self.metrics:
+            self.metric_showing = "Gflops/s"
 
         self.UI_setall()
 
