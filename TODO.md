@@ -7,6 +7,7 @@ Sampler
 Experiment
 ----------
 * Script Examples
+* How to handle PAPI counter conflicts?
 
 Signatures
 ----------

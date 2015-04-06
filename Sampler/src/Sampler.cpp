@@ -50,6 +50,15 @@ void Sampler::set_counters(const vector<string> &tokens) {
             cerr << "Counter unknown: " << tokens[i + 1] << " (counter ignored)" << endl;
         else if (check == PAPI_ENOEVNT)
             cerr << "Counter unavailable: " << tokens[i + 1] << " (counter ignored)" << endl;
+
+        // check if combination is valid
+        if (PAPI_start_counters(&counters[0], counters.size()) == PAPI_OK) {
+            long long counts[counters.size()];
+            PAPI_stop_counters(counts, counters.size());
+        } else {
+            counters.pop_back();
+            cerr << "Could not add " << tokens[i + 1] << " (counter ignored)" << endl;
+        }
     }
 #else
     cerr << "PAPI support not enabled (command ignored)" << endl;
