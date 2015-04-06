@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-"""Efficiency metric."""
+"""Efficiency metric in %."""
 from __future__ import division, print_function
 
 
 def metric(data, experiment, nthreads, callid, **kwargs):
-    """Performance of the operations relative to peak.
+    """Performance of the operations relative to peak in %.
 
     Comparing the flops/cycle to the system's peak.
     Not acocuting for Turbo Boost.
@@ -34,6 +34,6 @@ def metric(data, experiment, nthreads, callid, **kwargs):
     else:
         return None
 
-    return nops / (rdtsc * ipc * nthreads)
+    return 100 * nops / (rdtsc * ipc * nthreads)
 
-name = "efficiency"
+name = "efficiency [%]"

@@ -201,14 +201,17 @@ def load_papinames():
         return eval(fin.read())
 
 
-def load_report(filename):
+def load_report(filename, discard_first_repetitions=False):
     """Load a Report from a frile."""
     if os.path.isfile(filename[:-4] + ".err"):
         raise IOError("Roport %r generated errors." % filename)
     with open(filename) as fin:
         experiment = eval(fin.readline())
         rawdata = [map(eval, line.split()) for line in fin.readlines()]
-        return Report(experiment, rawdata)
+    report = Report(experiment, rawdata)
+    if discard_first_repetitions:
+        return report.discard_first_repetitions()
+    return report
 
 
 def load_metric_file(filename):
