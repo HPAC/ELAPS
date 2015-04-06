@@ -7,6 +7,7 @@ Sampler
 Experiment
 ----------
 * Examples
+* How to handle PAPI counter conflicts?
 
 
 PlayMat
