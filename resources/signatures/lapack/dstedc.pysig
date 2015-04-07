@@ -2,14 +2,14 @@
 Signature(
     "dstedc",
     Flag("compz", ["V", "I", "N"]),
-    Dim("n")
+    Dim("n"),
     dData("D", "n"),
     dData("E", "n - 1"),
     dData("Z", "ldZ * n if compz != 'N' else 0"),
-    Ld("ldZ", "n if compz != 'N' else 1")
-    dData("Work", "lWork")
-    Dim("lWork", "1 if compz == 'N' else 1 + 3 * n + 2 * n * log(n) + 3 * n * n if compz == 'V' else 1 + 4 * n + n * n"),
-    dData("iWork", "liWork")
-    Dim("liWork", "1 if compz == 'N' else 6 + 6 * n + 5 * n * log(n) if compz == 'V' else 3 + 5 * n"),
+    Ld("ldZ", "n if compz != 'N' else 1"),
+    dWork("Work", "lWork"),
+    Lwork("lWork", "1 if compz == 'N' else 1 + 3 * n + 2 * n * ceil(log(n, 2)) + 4 * n * n if compz == 'V' else 1 + 4 * n + n * n"),
+    iWork("iWork", "liWork"),
+    Lwork("liWork", "1 if compz == 'N' else 6 + 6 * n + 5 * n * ceil(log(n, 2)) if compz == 'V' else 3 + 5 * n"),
     Info()
 )

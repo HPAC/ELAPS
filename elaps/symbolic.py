@@ -467,6 +467,85 @@ class Max(Operation):
         return type(self)(*newargs)
 
 
+class Log(Operation):
+
+    """log(Expression) (unary)."""
+
+    def __init__(self, expression, base=math.e):
+        """Initialize: Only one argument."""
+        Operation.__init__(self, expression, base)
+
+    def __str__(self):
+        """Format as human readable."""
+        return "log(" + str(self[1]) + ")"
+
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        arg, base = Operation.simplify(self, **kwargs)[1:]
+
+        if isinstance(arg, Number) and isinstance(base, Number):
+            if arg == 0:
+                return None
+            return math.log(arg, base)
+
+        return Log(arg, base)
+
+
+class Floor(Operation):
+
+    """floor(Expression) (unary)."""
+
+    def __init__(self, expression):
+        """Initialize: Only one argument."""
+        Operation.__init__(self, expression)
+
+    def __str__(self):
+        """Format as human readable."""
+        return "floor(" + str(self[1]) + ")"
+
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        arg = Operation.simplify(self, **kwargs)[1]
+
+        if isinstance(arg, Floor):
+            # redundand recursive floor
+            return arg
+
+        if isinstance(arg, Number):
+            return int(math.floor(arg))
+
+        return Floor(arg)
+
+
+class Ceil(Operation):
+
+    """ceil(Expression) (unary)."""
+
+    def __init__(self, expression):
+        """Initialize: Only one argument."""
+        Operation.__init__(self, expression)
+
+    def __str__(self):
+        """Format as human readable."""
+        return "ceil(" + str(self[1]) + ")"
+
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        arg = Operation.simplify(self, **kwargs)[1]
+
+        if isinstance(arg, Ceil):
+            # redundand recursive floor
+            return arg
+
+        if isinstance(arg, Number):
+            return int(math.ceil(arg))
+
+        return Ceil(arg)
+
+
 class Range(object):
 
     """Complex range object (possibly containing Expressions)."""
@@ -809,3 +888,24 @@ def max(*args, **kwargs):
     if any(isinstance(arg, Expression) for arg in args[0]):
         return Max(*args[0])
     return __builtin__.max(*args, **kwargs)
+
+
+def log(*args):
+    """Symbolic logarithm."""
+    if any(isinstance(arg, Expression) for arg in args):
+        return Log(*args)
+    return math.log(*args)
+
+
+def floor(arg):
+    """Symbolic ceiling."""
+    if isinstance(arg, Expression):
+        return Floor(arg)
+    return int(math.ceil(arg))
+
+
+def ceil(arg):
+    """Symbolic ceiling."""
+    if isinstance(arg, Expression):
+        return Ceil(arg)
+    return int(math.ceil(arg))
