@@ -1,0 +1,13 @@
+# double precision spd linear system solve
+Signature(
+    "dposv",
+    Uplo(),
+    Dim("n"),
+    Dim("nrhs"),
+    dData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    dData("B", "ldB * nrhs"),
+    Ld("ldB", "n"),
+    Info(),
+    complexity="n * (n + 1) * (2 * n + 1) / 6 + 2 * n * n * nrhs"
+)
