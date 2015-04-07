@@ -3,6 +3,7 @@
 from __future__ import division, print_function
 
 import numbers
+import symbolic
 
 
 named_attributes = ("lower", "upper", "symm", "herm", "work")
@@ -34,7 +35,7 @@ class Signature(list):
         for arg in self:
             arg.min = None
             if isinstance(arg, ArgWithMin) and arg.minstr:
-                arg.min = eval("lambda %s: %s" % (lambdaargs, arg.minstr))
+                arg.min = eval("lambda %s: %s" % (lambdaargs, arg.minstr), symbolic.__dict__)
             arg.properties = lambda *args: ()
             if arg.propertiesstr:
                 lambdarhs = arg.propertiesstr

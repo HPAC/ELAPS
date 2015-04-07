@@ -3,6 +3,7 @@
 from __future__ import division, print_function
 
 from numbers import Number
+import math
 from collections import Iterable
 import __builtin__
 from copy import deepcopy
@@ -205,7 +206,7 @@ class Abs(Operation):
 
         if isinstance(arg, Abs):
             # redundand recursive abs
-            return arg[1]
+            return arg
 
         return abs(arg)
 
@@ -221,7 +222,10 @@ class Plus(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        args = Operation.simplify(self, **kwargs)[1:]
+        op = Operation.simplify(self, **kwargs)
+        if op is None:
+            return None
+        args = op[1:]
 
         num = 0
         newargs = []

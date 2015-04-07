@@ -963,7 +963,7 @@ class Experiment(dict):
         script += "rm \"%s\"" % errfile
 
         if b_footer:
-            script += "\n" + b_footer.format(nt=self.nt)
+            script += "\n" + b_footer.format(nt=self.nthreads)
 
         # write script file
         with open(scriptfile, "w") as fout:
@@ -1152,7 +1152,7 @@ class Experiment(dict):
                     elif isinstance(datasize, symbolic.Prod):
                         datasize = datasize[1:]
                     else:
-                        raise Exception
+                        continue
                 else:
                     continue
                 datasize = [
