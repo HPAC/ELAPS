@@ -87,7 +87,7 @@ class TestAbs(TestSymbolic):
 
     def test_simplify(self):
         """Test for simplify()."""
-        self.assertEqual(abs(abs(self.A))(), self.A)
+        self.assertEqual(abs(abs(self.A))(), abs(self.A))
         self.assertEqual(abs(-self.A)(), abs(self.A))
 
         self.assertEqual(Abs(-self.n1)(), abs(self.n1))

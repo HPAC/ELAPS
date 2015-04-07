@@ -20,6 +20,8 @@ PlayMat
 * jobprogress: clear done, kill all
 * disable sumrange_parallel if no omp support
 * remove range from vary when disabled
+* unnecessary "incompatible sizes" alsert
+* load ntrange correctly from files
 
 * (script header)
 * (status tips)
