@@ -372,11 +372,96 @@ class Power(Operation):
             # base is a power
             return simplify(base[1] ** (base[2] * exponent))
 
+        if isinstance(exponent, Log) and exponent[2] == base:
+            # exponent is log with same base
+            return exponent[1]
+
         if isinstance(exponent, int):
             # expand for integer exponent
             return Prod(*(exponent * [base]))()
 
         return base ** exponent
+
+
+class Log(Operation):
+
+    """log(Expression) (unary)."""
+
+    def __init__(self, expression, base=math.e):
+        """Initialize: Only one argument."""
+        Operation.__init__(self, expression, base)
+
+    def __str__(self):
+        """Format as human readable."""
+        return "log(" + str(self[1]) + ")"
+
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        arg, base = Operation.simplify(self, **kwargs)[1:]
+
+        if arg == base:
+            return 1
+
+        if isinstance(arg, Power):
+            # argument is a power
+            return simplify(arg[2] * log(arg[1]))
+
+        return log(arg, base)
+
+
+class Floor(Operation):
+
+    """floor(Expression) (unary)."""
+
+    def __init__(self, expression):
+        """Initialize: Only one argument."""
+        Operation.__init__(self, expression)
+
+    def __str__(self):
+        """Format as human readable."""
+        return "floor(" + str(self[1]) + ")"
+
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        arg = Operation.simplify(self, **kwargs)[1]
+
+        if isinstance(arg, Floor):
+            # redundand recursive floor
+            return arg
+
+        if isinstance(arg, Number):
+            return int(math.floor(arg))
+
+        return floor(arg)
+
+
+class Ceil(Operation):
+
+    """ceil(Expression) (unary)."""
+
+    def __init__(self, expression):
+        """Initialize: Only one argument."""
+        Operation.__init__(self, expression)
+
+    def __str__(self):
+        """Format as human readable."""
+        return "ceil(" + str(self[1]) + ")"
+
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify arguments
+        arg = Operation.simplify(self, **kwargs)[1]
+
+        if isinstance(arg, Ceil):
+            # redundand recursive floor
+            return arg
+
+        if isinstance(arg, Number):
+            return int(math.ceil(arg))
+
+        return ceil(arg)
 
 
 class Min(Operation):
@@ -465,85 +550,6 @@ class Max(Operation):
             return newargs[0]
 
         return type(self)(*newargs)
-
-
-class Log(Operation):
-
-    """log(Expression) (unary)."""
-
-    def __init__(self, expression, base=math.e):
-        """Initialize: Only one argument."""
-        Operation.__init__(self, expression, base)
-
-    def __str__(self):
-        """Format as human readable."""
-        return "log(" + str(self[1]) + ")"
-
-    def simplify(self, **kwargs):
-        """(Substitute in and) Simplify the operation."""
-        # simplify arguments
-        arg, base = Operation.simplify(self, **kwargs)[1:]
-
-        if isinstance(arg, Number) and isinstance(base, Number):
-            if arg == 0:
-                return None
-            return math.log(arg, base)
-
-        return Log(arg, base)
-
-
-class Floor(Operation):
-
-    """floor(Expression) (unary)."""
-
-    def __init__(self, expression):
-        """Initialize: Only one argument."""
-        Operation.__init__(self, expression)
-
-    def __str__(self):
-        """Format as human readable."""
-        return "floor(" + str(self[1]) + ")"
-
-    def simplify(self, **kwargs):
-        """(Substitute in and) Simplify the operation."""
-        # simplify arguments
-        arg = Operation.simplify(self, **kwargs)[1]
-
-        if isinstance(arg, Floor):
-            # redundand recursive floor
-            return arg
-
-        if isinstance(arg, Number):
-            return int(math.floor(arg))
-
-        return Floor(arg)
-
-
-class Ceil(Operation):
-
-    """ceil(Expression) (unary)."""
-
-    def __init__(self, expression):
-        """Initialize: Only one argument."""
-        Operation.__init__(self, expression)
-
-    def __str__(self):
-        """Format as human readable."""
-        return "ceil(" + str(self[1]) + ")"
-
-    def simplify(self, **kwargs):
-        """(Substitute in and) Simplify the operation."""
-        # simplify arguments
-        arg = Operation.simplify(self, **kwargs)[1]
-
-        if isinstance(arg, Ceil):
-            # redundand recursive floor
-            return arg
-
-        if isinstance(arg, Number):
-            return int(math.ceil(arg))
-
-        return Ceil(arg)
 
 
 class Range(object):
@@ -894,6 +900,9 @@ def log(*args):
     """Symbolic logarithm."""
     if any(isinstance(arg, Expression) for arg in args):
         return Log(*args)
+    if args[0] == 0:
+        # return none instead of throwing an error
+        return None
     return math.log(*args)
 
 

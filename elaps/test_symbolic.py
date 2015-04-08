@@ -6,6 +6,8 @@ from symbolic import *
 
 import unittest
 import random
+import math
+import __builtin__
 
 
 class TestSymbolic(unittest.TestCase):
@@ -171,35 +173,95 @@ class TestPower(TestSymbolic):
                          self.A ** (self.B * self.C))
         self.assertEqual((self.A ** 2)(), self.A * self.A)
 
+        self.assertEqual((self.A ** log(self.B, self.A))(), self.B)
+
         self.assertEqual(Power(self.n1, self.n2)(), self.n1 ** self.n2)
+
+
+class TestLog(TestSymbolic):
+
+    """Tests for Log."""
+
+    def test_overload(self):
+        """Test for overloading."""
+        self.assertEqual(log(self.A, self.n1), Log(self.A, self.n1))
+
+    def test_simplify(self):
+        """Test for simplify()."""
+        self.assertEqual(log(self.A, self.A)(), 1)
+
+        self.assertEqual(log(self.A ** self.B)(), (self.B * log(self.A))())
+
+        self.assertEqual(Log(self.n1, self.n2)(), math.log(self.n1, self.n2))
+
+
+class TestFloor(TestSymbolic):
+
+    """Tests for Floor."""
+
+    def test_overload(self):
+        """Test for overloading."""
+        self.assertEqual(floor(self.A), Floor(self.A))
+
+    def test_simplify(self):
+        """Test for simplify()."""
+        self.assertEqual(floor(floor(self.A))(), floor(self.A))
+
+        self.assertEqual(Floor(self.n1)(), math.floor(self.n1))
+
+
+class TestCeil(TestSymbolic):
+
+    """Tests for Ceil."""
+
+    def test_overload(self):
+        """Test for overloading."""
+        self.assertEqual(ceil(self.A), Ceil(self.A))
+
+    def test_simplify(self):
+        """Test for simplify()."""
+        self.assertEqual(ceil(ceil(self.A))(), ceil(self.A))
+
+        self.assertEqual(Ceil(self.n1)(), math.ceil(self.n1))
 
 
 class TestMin(TestSymbolic):
 
     """Tests for Min."""
 
+    def test_overload(self):
+        """Test for overloading."""
+        self.assertEqual(min(self.A, self.B), Min(self.A, self.B))
+
     def test_simplify(self):
         """Test for simplify()."""
-        self.assertEqual(Min(Min(self.A, self.B), self.C)(),
-                         Min(self.A, Min(self.B, self.C))())
+        self.assertEqual(min(min(self.A, self.B), self.C)(),
+                         min(self.A, min(self.B, self.C))())
         self.assertEqual(Min(self.A)(), self.A)
 
         self.assertEqual(Min()(), float("-inf"))
-        self.assertEqual(Min(self.n1, self.n2)(), min(self.n1, self.n2))
+        self.assertEqual(Min(self.n1, self.n2)(),
+                         __builtin__.min(self.n1, self.n2))
 
 
 class TestMax(TestSymbolic):
 
     """Tests for Max."""
 
+    def test_overload(self):
+        """Test for overloading."""
+        self.assertEqual(max(self.A, self.B), Max(self.A, self.B))
+
+
     def test_simplify(self):
         """Test for simplify()."""
-        self.assertEqual(Max(Max(self.A, self.B), self.C)(),
-                         Max(self.A, Max(self.B, self.C))())
+        self.assertEqual(max(max(self.A, self.B), self.C)(),
+                         max(self.A, max(self.B, self.C))())
         self.assertEqual(Max(self.A)(), self.A)
 
         self.assertEqual(Max()(), float("inf"))
-        self.assertEqual(Max(self.n1, self.n2)(), max(self.n1, self.n2))
+        self.assertEqual(Max(self.n1, self.n2)(),
+                         __builtin__.max(self.n1, self.n2))
 
 
 class TestRange(TestSymbolic):
