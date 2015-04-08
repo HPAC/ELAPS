@@ -252,7 +252,6 @@ class TestMax(TestSymbolic):
         """Test for overloading."""
         self.assertEqual(max(self.A, self.B), Max(self.A, self.B))
 
-
     def test_simplify(self):
         """Test for simplify()."""
         self.assertEqual(max(max(self.A, self.B), self.C)(),
