@@ -19,7 +19,7 @@
 [ "$CXX" == "g++" ] && : ${CXXFLAGS:="-fopenmp"} || : ${CXXFLAGS:=""}
 : ${LINK_FLAGS:=""}
 : ${INCLUDE_FLAGS:=""}
-: ${KERNEL_HEADERS:=`echo ../resources/headers/{blas,lapack,utility}.h`}
+: ${KERNEL_HEADERS:=`echo ../resources/headers/{blas_,lapack_,utility}.h`}
 : ${OPENMP:=1}
 : ${PAPI_COUNTERS_MAX:=0}
 : ${PAPI_COUNTERS_AVAIL:=""}

@@ -13,5 +13,6 @@ Signature(
     dData("C", "ldC * n"),
     Ld("ldC", "m"),
     dScalar("scale"),
-    Info()
+    Info(),
+    complexity="m * n * (m + n + 4)"
 )

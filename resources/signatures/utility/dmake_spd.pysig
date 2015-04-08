@@ -1,9 +1,0 @@
-# double precision make maktrix SPD
-Signature(
-    "dmake_spd",
-    Uplo(),
-    Dim("n"),
-    dData("A", "ldA * n",
-          "lower if uplo == 'L' else upper, symm"),
-    Ld("ldA", "n")
-)

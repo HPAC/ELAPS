@@ -1,8 +1,0 @@
-# single precision vector 2-norm
-Signature(
-    "snrm2_",
-    Dim("n"),
-    sData("X", "1 + (n - 1) * abs(incX)"),
-    Inc("incX"),
-    complexity = "2 * n"
-)

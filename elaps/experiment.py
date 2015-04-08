@@ -646,6 +646,12 @@ class Experiment(dict):
                 signature.dData: "d",
                 signature.cData: "c",
                 signature.zData: "z",
+                signature.Work: "",
+                signature.iWork: "i",
+                signature.sWork: "s",
+                signature.dWork: "d",
+                signature.cWork: "c",
+                signature.zWork: "z",
             }
 
         # go over all operands
@@ -957,7 +963,7 @@ class Experiment(dict):
         script += "rm \"%s\"" % errfile
 
         if b_footer:
-            script += "\n" + b_footer.format(nt=self.nt)
+            script += "\n" + b_footer.format(nt=self.nthreads)
 
         # write script file
         with open(scriptfile, "w") as fout:
@@ -1146,7 +1152,7 @@ class Experiment(dict):
                     elif isinstance(datasize, symbolic.Prod):
                         datasize = datasize[1:]
                     else:
-                        raise Exception
+                        continue
                 else:
                     continue
                 datasize = [

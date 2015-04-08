@@ -1,9 +1,0 @@
-# single precision vector scaling
-Signature(
-    "sscal_",
-    Dim("n"),
-    sScalar(),
-    sData("X", "1 + (n - 1) * abs(incX)"),
-    Inc("incX"),
-    complexity = "n"
-)

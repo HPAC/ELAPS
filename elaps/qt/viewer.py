@@ -29,13 +29,14 @@ class Viewer(QtGui.QMainWindow):
         self.Qapp.viewer = self
         QtGui.QMainWindow.__init__(self)
 
+        self.discard_firstrep = True
         self.stats_showing = ["med"]
-        self.metric_showing = "Gflops/s"
+        self.metric_showing = None
+        self.colorpool = elaps.plot.default_colors[::-1]
         self.reports = {}
         self.report_colors = {}
         self.reportitem_selected = (None, None)
-        self.colorpool = elaps.plot.default_colors[::-1]
-        self.discard_firstrep = True
+        self.reportitems_showing = set()
 
         # load some stuff
         self.papi_names = elaps.io.load_papinames()
@@ -52,8 +53,9 @@ class Viewer(QtGui.QMainWindow):
         # load reports
         for filename in filenames:
             self.report_load(filename)
-        self.reportitems_showing = set((reportid, None)
-                                       for reportid in self.reports)
+
+        if self.metric_showing not in self.metrics:
+            self.metric_showing = "Gflops/s"
 
         self.UI_setall()
 
@@ -320,6 +322,12 @@ class Viewer(QtGui.QMainWindow):
         msg = " ".join(map(str, args))
         self.statusBar().showMessage(msg)
         print("\033[31m%s\033[0m" % msg, file=sys.stderr)
+
+    def UI_alert(self, *args, **kwargs):
+        """Alert a messagebox."""
+        msg = " ".join(map(str, args))
+        title = kwargs.get("title", "")
+        self.UI_dialog("information", title, msg)
 
     # report routines
     def report_load(self, filename, UI_alert=False):

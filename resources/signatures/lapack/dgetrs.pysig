@@ -1,0 +1,13 @@
+# double precision linear system solve after LU
+Signature(
+    "dgetrs",
+    Trans(),
+    Dim("n"),
+    Dim("nrhs"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "n"),
+    iData("ipiv", "min(n)"),
+    dData("B", "ldB * nrhs"),
+    Ld("ldB", "n"),
+    Info()
+)

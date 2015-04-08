@@ -777,7 +777,7 @@ class PlayMat(QtGui.QMainWindow):
                 for i, name in enumerate(ex.sampler["papi_counters_avail"]):
                     event = self.papi_names[name]
                     counterW.addItem(event["short"], QtCore.QVariant(name))
-                    counterW.setItemData(i, name + "\n" + event["long"],
+                    counterW.setItemData(i + 1, name + "\n" + event["long"],
                                          QtCore.Qt.ToolTipRole)
                 self.UI_countersD.widget().layout().insertWidget(counterid,
                                                                  counterW)
@@ -1210,6 +1210,9 @@ class PlayMat(QtGui.QMainWindow):
                 sender.clearFocus()
                 self.experiment_infer_update_set()
                 sender.setFocus()
+        else:
+            call[argid] = value
+            self.experiment_infer_update_set()
 
     def on_arg_set(self, callid, argid, value):
         """Event: Set argument value."""

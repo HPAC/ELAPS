@@ -4,7 +4,6 @@ from __future__ import division, print_function
 
 from report import Report, apply_stat
 
-from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
@@ -35,7 +34,10 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     styles.update(styles)
 
     # set up figure
-    fig = figure or Figure()
+    fig = figure
+    if not fig:
+        from matplotlib import pyplot
+        fig = pyplot.gcf()
     fig.patch.set_facecolor("#ffffff")
     axes = fig.gca()
     axes.cla()
@@ -123,12 +125,14 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     limits[2] = 0
     gap = (limits[1] - limits[0]) / 20
     # xmin
-    if limits[0] > 0 and limits[1] - limits[0] > 5 * limits[0]:
+    range_min = min(min(data) for name, data in datas)
+    if range_min > 0 and range_min < gap:
         limits[0] = 0
     else:
-        limits[0] -= gap
+        limits[0] = range_min - gap
     # xmax
-    limits[1] += gap
+    range_max = max(max(data) for name, data in datas)
+    limits[1] = range_max + gap
     axes.axis(limits)
 
     # legend
@@ -178,8 +182,9 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
     width = groupwidth / len(datas)
 
     # plots
+    colorpool = default_colors[::-1]
     for dataid, (name, data) in enumerate(datas):
-        color = colors[name]
+        color = colors.get(name) or colorpool.pop()
         for statid, stat_name in enumerate(stat_names):
             left = statid + dataid * width
             if stat_name == "all":
@@ -216,7 +221,11 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
     axes.axis(limits)
 
     # legend
-    legend = [(Patch(color=colors[name]), name) for name, data in datas]
+    colorpool = default_colors[::-1]
+    legend = []
+    for name, data in datas:
+        color = colors.get(name) or colorpool.pop()
+        legend.append((Patch(color=color), name))
     if legend:
         axes.legend(*zip(*legend), loc=0, numpoints=3)
 

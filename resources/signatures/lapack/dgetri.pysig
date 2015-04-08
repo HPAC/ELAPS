@@ -1,0 +1,11 @@
+# double precision matrix inversion after LU
+Signature(
+    "dgetri",
+    Dim("n"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "n"),
+    iData("ipiv", "min(n)"),
+    dWork("Work", "lWork"),
+    Lwork("lWork", "n")
+    Info()
+)

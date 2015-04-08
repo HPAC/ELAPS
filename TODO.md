@@ -6,13 +6,22 @@ Sampler
 
 Experiment
 ----------
-* Examples
+* Script Examples
+* How to handle PAPI counter conflicts?
+
+Signatures
+----------
+* uplo for ev sigs
 
 
 PlayMat
 -------
 * load experiment from jobprogress
 * jobprogress: clear done, kill all
+* disable sumrange_parallel if no omp support
+* remove range from vary when disabled
+* unnecessary "incompatible sizes" alsert
+* load ntrange correctly from files
 
 * (script header)
 * (status tips)
