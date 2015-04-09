@@ -288,6 +288,7 @@ void Sampler::add_signature(const Signature &signature) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void Sampler::start() {
+    // special commands
     map<string, void (Sampler:: *)(const vector<string> &)> commands;
     commands["go"] = &Sampler::go;
     commands["set_counters"] = &Sampler::set_counters;
