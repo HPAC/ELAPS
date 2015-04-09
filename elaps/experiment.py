@@ -28,6 +28,7 @@ class Experiment(dict):
             "nthreads": 1,
             "script_header": "",
             "range": None,
+            "range_randomize_data": False,
             "nreps": 1,
             "sumrange": None,
             "sumrange_parallel": False,
@@ -638,21 +639,24 @@ class Experiment(dict):
                 ["########################################"]
             ]
 
-            # datatype prefixes for malloc and offset commands
-            cmdprefixes = {
-                signature.Data: "",
-                signature.iData: "i",
-                signature.sData: "s",
-                signature.dData: "d",
-                signature.cData: "c",
-                signature.zData: "z",
-                signature.Work: "",
-                signature.iWork: "i",
-                signature.sWork: "s",
-                signature.dWork: "d",
-                signature.cWork: "c",
-                signature.zWork: "z",
-            }
+        # datatype prefixes for malloc and offset commands
+        cmdprefixes = {
+            signature.Data: "",
+            signature.iData: "i",
+            signature.sData: "s",
+            signature.dData: "d",
+            signature.cData: "c",
+            signature.zData: "z",
+            signature.Work: "",
+            signature.iWork: "i",
+            signature.sWork: "s",
+            signature.dWork: "d",
+            signature.cWork: "c",
+            signature.zWork: "z",
+        }
+
+        # collect data sizes for randomization
+        data_range_sizes = {}
 
         # go over all operands
         for name in sorted(self.data):
@@ -662,6 +666,9 @@ class Experiment(dict):
 
             # comment
             cmds += [[], ["#", name]]
+
+            # init data size collection
+            data_range_sizes[name] = {}
 
             vary = data["vary"]
             if not vary["with"]:
@@ -743,6 +750,9 @@ class Experiment(dict):
                             vary["offset"], range_val, sumrange_val
                         ))
 
+                # data size collection
+                data_range_sizes[name][range_val] = size_max
+
             # malloc with needed size before offsetting
             cmds.append([cmdprefix + "malloc", name,  size_max])
             cmds += offsetcmds
@@ -761,6 +771,13 @@ class Experiment(dict):
             if self.range and len(range_vals) > 1:
                 # comment
                 cmds += [[], ["#", self.range[0], "=", range_val]]
+
+            # randomize data
+            if self.range_randomize_data:
+                for name in sorted(self.data):
+                    cmdprefix = cmdprefixes[self.data[name]["type"]]
+                    size = data_range_sizes[name][range_val]
+                    cmds.append([cmdprefix + "gerand", size, 1, name, size])
 
             # set up sumrange values
             sumrange_vals = self.sumrange_vals(range_val)
@@ -1178,10 +1195,11 @@ class Experiment(dict):
 
     def nresults(self):
         """How many results the current experiment woudl produce."""
-        assert(self.check_sanity(True))
         assert(self.check_sanity())
         nresults = 0
         for range_val in self.range_vals():
+            if self.range_randomize_data:
+                nresults += len(self.data)
             for rep in range(self.nreps):
                 if self.sumrange and self.sumrange_parallel:
                     nresults += 1

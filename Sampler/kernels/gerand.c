@@ -2,6 +2,13 @@
 
 #include <stdlib.h>
 
+void igerand(int *m, int *n, int *A, int *ldA) {
+    int i, j;
+    for (j = 0; j < *n; j++)
+        for (i = 0; i < *m; i++)
+            A[i + j * *ldA] = rand() % (*m * *n);
+}
+
 void sgerand(int *m, int *n, float *A, int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)

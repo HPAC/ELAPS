@@ -38,7 +38,7 @@ CallParser::CallParser(const vector<string> &tokens, const Signature &signature,
 
 template <> int CallParser::read_static<int>(const char *str) const {
     // TODO: check for conversion errors
-    return atoi(str);
+    return atol(str);
 }
 
 template <> float CallParser::read_static<float>(const char *str) const {
@@ -118,7 +118,7 @@ template <typename T> void CallParser::register_dynamic(unsigned char i) {
 
     // register memory accordingly
     memtypes[i] = DYNAMIC;
-    const size_t size = atoi(val.c_str() + 1);
+    const size_t size = atol(val.c_str() + 1);
     ids[i] = mem->dynamic_register<T>(size);
 }
 

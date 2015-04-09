@@ -79,6 +79,11 @@ class Report(object):
         # full structured data
         range_data = {}
         for range_val in ex.range_vals():
+            # discard randomization results
+            if ex.range_randomize_data:
+                for name in ex.data:
+                    rawdata.pop(0)
+
             # results for each repetition
             rep_data = []
             for rep in range(ex.nreps):
