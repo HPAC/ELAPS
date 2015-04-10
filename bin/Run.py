@@ -10,6 +10,7 @@ rootpath = os.path.abspath(os.path.join(filepath, ".."))
 sys.path.append(rootpath)
 
 import elaps.io
+import elaps.defines as defines
 
 
 def main():
@@ -26,7 +27,8 @@ def main():
 
         # submit
         filebase = filename
-        if filename[-4:] in (".ees", ".eer"):
+        if (filename[-4] == "." and
+                filename[-3:] in defines.experiment_extensions):
             filebase = filename[:-4]
         try:
             jobid = ex.submit(filebase)

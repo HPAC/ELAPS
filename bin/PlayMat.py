@@ -10,6 +10,7 @@ rootpath = os.path.abspath(os.path.join(filepath, ".."))
 sys.path.append(rootpath)
 
 from elaps.qt import PlayMat
+import elaps.defines as defines
 
 
 def main():
@@ -19,7 +20,8 @@ def main():
         return
     if len(sys.argv) > 1:
         filename = sys.argv[1]
-        if filename[-4:] in (".ees", ".eer"):
+        if (filename[-4] == "." and
+                filename[-3:] in defines.experiment_extensions):
             PlayMat(load=filename).start()
             return
     PlayMat().start()
