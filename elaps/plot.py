@@ -9,14 +9,14 @@ from matplotlib.patches import Patch
 
 
 default_colors = [
-    "#ff0000", "#00ff00", "#0000ff",
-    # Paolo's colors
-    "#e6a500", "#bf0000", "#004280", "#009999", "#5b59b2", "#969900",
-    "#bf0073", "#bf9239", "#004ee6", "#ff7a00"
+    "#ff0000", "#00ff00", "#0000ff", "#c0c000", "#00c0c0", "#c000c0",  # light
+    "#800000", "#008000", "#000080", "#808000", "#008080", "#800080",  # dark
+    "#ff8000", "#00ff80", "#8000ff", "#80ff00", "#0080ff", "#ff0080",  # mixed
+    "#c04000", "#00c040", "#4000c0", "#40c000", "#0040c0", "#c00040",  # mdark
 ]
 
 default_styles = {
-    "legend": {"color": "#888888"},
+    "legend": {"color": "#808080"},
     "med": {"linestyle": "-"},
     "min": {"linestyle": "--"},
     "max": {"linestyle": ":", "linewidth": 2},
