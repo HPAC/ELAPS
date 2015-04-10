@@ -33,7 +33,8 @@ def metric(data, experiment, nthreads, callid, **kwargs):
         ipc = sampler["dflops/cycle"]
     else:
         return None
+    ncores = min(sampler["ncores"], nthreads)
 
-    return nops / (rdtsc * ipc * nthreads)
+    return nops / (rdtsc * ipc * ncores)
 
 name = "efficiency"
