@@ -30,7 +30,6 @@ PlayMat
 
 Viewer
 ------
-* open in PlayMat -> raise
 * custom legend names
 * order of barplots
 

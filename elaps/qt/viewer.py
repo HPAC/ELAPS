@@ -760,6 +760,7 @@ class Viewer(QtGui.QMainWindow):
         self.Qapp.playmat.experiment_load(filename)
         self.Qapp.playmat.UI_setall()
         self.Qapp.playmat.show()
+        self.Qapp.playmat.raise_()
 
     def on_reports_dragenter(self, event):
         """Event: drag into report list."""
