@@ -478,31 +478,43 @@ class PlayMat(QtGui.QMainWindow):
         print("\033[31m%s\033[0m" % msg, file=sys.stderr)
 
     # experiment routines
-    def experiment_qt_load(self):
-        """Load Experiment from Qt setting."""
-        ex = elaps.io.load_experiment_string(str(
-            QtCore.QSettings("HPAC", "ELAPS:PlayMat").value("Experiment",
-                                                            type=str)
-        ))
+    def experiment_insert_own(self):
+        """Insert own/new objects into loaded experiment."""
+        ex = self.experiment
+
+        # own Sampler
         if ex.sampler is None or ex.sampler["name"] not in self.samplers:
             ex.sampler = self.samplers[min(self.samplers)]
         else:
             ex.sampler = self.samplers[ex.sampler["name"]]
         ex.apply_sampler_restrictions()
+
+        # own Signatures
+        newcalls = []
+        for call in ex.calls:
+            sig = self.sig_get(call[0])
+            if sig:
+                newcalls.append(sig(*call[1:]))
+            else:
+                newcalls.append(call)
+        ex.calls = newcalls
+
+        # update
         ex.update_data()
-        self.experiment = ex
+
+    def experiment_qt_load(self):
+        """Load Experiment from Qt setting."""
+        self.experiment = elaps.io.load_experiment_string(str(
+            QtCore.QSettings("HPAC", "ELAPS:PlayMat").value("Experiment",
+                                                            type=str)
+        ))
+        self.experiment_insert_own()
         self.log("Loaded last Experiment")
 
     def experiment_load(self, filename):
         """Load Experiment from a file."""
-        ex = elaps.io.load_experiment(filename)
-        if ex.sampler is None or ex.sampler["name"] not in self.samplers:
-            ex.sampler = self.samplers[min(self.samplers)]
-        else:
-            ex.sampler = self.samplers[ex.sampler["name"]]
-        ex.apply_sampler_restrictions()
-        ex.update_data()
-        self.experiment = ex
+        self.experiment = elaps.io.load_experiment(filename)
+        self.experiment_insert_own()
         self.log("Loaded Experiment from %r." % os.path.relpath(filename))
 
     def experiment_write(self, filename):

@@ -369,7 +369,8 @@ class Experiment(dict):
         sampler = self.sampler
 
         # limit thread numer
-        self.nthreads = min(self.nthreads, sampler["nt_max"])
+        if isinstance(self.nthreads, int):
+            self.nthreads = min(self.nthreads, sampler["nt_max"])
 
         # remove unavailable kernel calls
         newcalls = []
