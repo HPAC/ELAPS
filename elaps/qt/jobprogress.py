@@ -48,6 +48,16 @@ class QJobProgress(QtGui.QDockWidget):
         for colid in range(3):
             self.widget().resizeColumnToContents(colid)
 
+    def jobs(self):
+        """Get all jobs."""
+        widget = self.widget()
+        return [widget.topLevelItem(i).job
+                for i in range(widget.topLevelItemCount())]
+
+    def selected_jobs(self):
+        """Get selected jobs."""
+        return [item.job for item in self.widget().selectedItems()]
+
     def add_job(self, filebase, jobid, experiment):
         """Add a job to track."""
         job = {
@@ -123,9 +133,8 @@ class QJobProgress(QtGui.QDockWidget):
         if not item:
             return
         job = item.job
-        if job["stat"] != "DONE":
-            return
-        self.playmat.on_open_viewer(job["filebase"] + ".eer")
+        if job["stat"] == "DONE":
+            self.playmat.on_open_viewer(job["filebase"] + ".eer")
 
     @pyqtSlot(QtCore.QPoint)
     def on_rightclick(self, pos):
@@ -133,69 +142,108 @@ class QJobProgress(QtGui.QDockWidget):
         globalpos = self.widget().viewport().mapToGlobal(pos)
         menu = QtGui.QMenu()
 
-        item = self.widget().itemAt(pos)
-        if not item:
+        alljobs = self.jobs()
+        if not alljobs:
+            return
+        jobs = self.selected_jobs()
+
+        if jobs:
+            # kill
+            if any(job["stat"] in ("PEND", "RUN") for job in jobs):
+                menu.addAction(QtGui.QAction(
+                    "Kill", menu, triggered=self.on_kill
+                ))
+
+            # clear
+            menu.addAction(QtGui.QAction(
+                "Clear", menu, triggered=self.on_remove
+            ))
+
+            # open in Viewer
+            if any(job["stat"] == "DONE" for job in jobs):
+                menu.addAction(QtGui.QAction(
+                    "Open in Viewer", menu, triggered=self.on_open_viewer
+                ))
+
+            # open in PlayMat
+            if len(jobs) == 1:
+                menu.addAction(QtGui.QAction(
+                    "Open in PlayMat", menu, triggered=self.on_open_playmat
+                ))
+
+            menu.addSeparator()
+
+        if sorted(jobs) != sorted(alljobs):
+            # kill all
+            if any(job["stat"] in ("PEND", "RUN") for job in alljobs):
+                menu.addAction(QtGui.QAction(
+                    "Kill all", menu, triggered=self.on_killall
+                ))
+
+            # clear all
             menu.addAction(QtGui.QAction(
                 "Clear all", menu, triggered=self.on_removeall
             ))
-            menu.exec_(globalpos)
-            return
-        job = item.job
 
-        # kill
-        if job["stat"] in ("PEND", "RUN"):
-            kill = QtGui.QAction(
-                "Kill", menu, triggered=self.on_kill
-            )
-            kill.job = job
-            menu.addAction(kill)
-
-        # open
-        elif job["stat"] == "DONE":
-            open_ = QtGui.QAction(
-                "Open in Viewer", menu, triggered=self.on_open
-            )
-            open_.job = job
-            menu.addAction(open_)
-
-        # clear
-        remove = QtGui.QAction(
-            "Clear", menu, triggered=self.on_remove
-        )
-        remove.job = job
-        menu.addAction(remove)
-
-        menu.addAction(QtGui.QAction(
-            "Clear all", menu, triggered=self.on_removeall
-        ))
+            # open all in Viewer
+            if any(job["stat"] == "DONE" for job in alljobs):
+                menu.addAction(QtGui.QAction(
+                    "Open all in Viewer", menu, triggered=self.on_openall_viewer
+                ))
 
         menu.exec_(globalpos)
 
-    # @pyqtSlot()  # sender() pyqt bug
+    @pyqtSlot()
     def on_kill(self):
-        """Event: kill job."""
-        job = self.playmat.Qapp.sender().job
-        job["experiment"]["sampler"]["backend"].kill(job["jobid"])
+        """Event: kill job(s)."""
+        for job in self.selected_jobs():
+            if job["stat"] in ("PEND", "RUN"):
+                job["experiment"]["sampler"]["backend"].kill(job["jobid"])
         self.on_remove()
 
-    # @pyqtSlot()  # sender() pyqt bug
-    def on_open(self):
-        """Event: open job."""
-        job = self.playmat.Qapp.sender().job
-        self.playmat.on_open_viewer(job["filebase"] + ".eer")
+    @pyqtSlot()
+    def on_killall(self):
+        """Event: kill all jobs."""
+        for job in self.jobs():
+            if job["stat"] in ("PEND", "RUN"):
+                job["experiment"]["sampler"]["backend"].kill(job["jobid"])
+        self.on_removeall()
 
-    # @pyqtSlot()  # sender() pyqt bug
+    @pyqtSlot()
     def on_remove(self):
-        """Event: remove job."""
-        job = self.playmat.Qapp.sender().job
-        self.widget().takeTopLevelItem(
-            self.widget().indexOfTopLevelItem(job["item"])
-        )
+        """Event: remove job(s)."""
+        for job in self.selected_jobs():
+            self.widget().takeTopLevelItem(
+                self.widget().indexOfTopLevelItem(job["item"])
+            )
         if self.widget().topLevelItemCount() == 0:
             self.hide()
 
     @pyqtSlot()
     def on_removeall(self):
         """Event: remove all jobs."""
-        self.widget().clear()
+        for job in self.jobs():
+            self.widget().takeTopLevelItem(
+                self.widget().indexOfTopLevelItem(job["item"])
+            )
         self.hide()
+
+    @pyqtSlot()
+    def on_open_viewer(self):
+        """Event: open job(s) in Viewer."""
+        for job in self.selected_jobs():
+            if job["stat"] == "DONE":
+                self.playmat.on_open_viewer(job["filebase"] + ".eer")
+
+    @pyqtSlot()
+    def on_openall_viewer(self):
+        """Event: open all jobs in Viewer."""
+        for job in self.jobs():
+            if job["stat"] == "DONE":
+                self.playmat.on_open_viewer(job["filebase"] + ".eer")
+
+    @pyqtSlot()
+    def on_open_playmat(self):
+        """Event: open job(s) in PlayMat."""
+        for job in self.selected_jobs():
+            self.playmat.experiment_set(job["experiment"])
