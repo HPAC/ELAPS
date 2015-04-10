@@ -10,7 +10,8 @@ from report import Report
 import os
 import imp
 
-rootpath = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+filepath = os.path.dirname(os.path.realpath(__file__))
+rootpath = os.path.abspath(os.path.join(filepath, ".."))
 
 sigpath = os.path.join(rootpath, "resources", "signatures")
 docpath = os.path.join(rootpath, "resources", "kerneldocs")
