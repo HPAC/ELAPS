@@ -2,6 +2,7 @@
 """GUI for Reports."""
 from __future__ import division, print_function
 
+import elaps.defines as defines
 import elaps.io
 import elaps.plot
 from elaps.report import apply_stat

@@ -251,3 +251,4 @@ class QJobProgress(QtGui.QDockWidget):
         """Event: open job(s) in PlayMat."""
         for job in self.selected_jobs():
             self.playmat.experiment_set(job["experiment"])
+        self.playmat.UI_setall()
