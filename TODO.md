@@ -19,7 +19,6 @@ Signatures
 PlayMat
 -------
 * disable sumrange_parallel if no omp support
-* remove range from vary when disabled
 * unnecessary "incompatible sizes" alert
 
 * (script header)

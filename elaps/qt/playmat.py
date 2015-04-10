@@ -990,6 +990,7 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_calls_set()
         self.UI_nthreads_set()
         self.UI_range_set()
+        self.UI_calls_set()
 
     @pyqtSlot(str)
     def on_rangevar_change(self, value):
@@ -1047,6 +1048,8 @@ class PlayMat(QtGui.QMainWindow):
                 var = "j" if ex.range[0] == "i" else "i"
             ex.sumrange = [var, range_]
         else:
+            for data in ex.data.values():
+                data["vary"]["with"].discard(ex.sumrange[0])
             self.experiment_back.sumrange = ex.sumrange
             sumrange_vals = ex.sumrange[1]
             if ex.range:
@@ -1056,6 +1059,7 @@ class PlayMat(QtGui.QMainWindow):
             ex.substitute(**{ex.sumrange[0]: sumrange_vals})
             ex.sumrange = None
         self.UI_sumrange_set()
+        self.UI_calls_set()
 
     @pyqtSlot(int)
     def on_sumrange_parallel_change(self, value):
