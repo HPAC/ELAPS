@@ -712,7 +712,8 @@ class Viewer(QtGui.QMainWindow):
     def on_report_load(self):
         """Event: load Report."""
         filenames = QtGui.QFileDialog.getOpenFileNames(
-            self, "Load Experiment", elaps.io.reportpath, "*.eer"
+            self, "Load Experiment", elaps.io.reportpath,
+            " ".join("*." + ext for ext in defines.report_extensions)
         )
         if not filenames:
             return
@@ -765,7 +766,9 @@ class Viewer(QtGui.QMainWindow):
     def on_reports_dragenter(self, event):
         """Event: drag into report list."""
         for url in event.mimeData().urls():
-            if str(url.toLocalFile())[-4:] == ".eer":
+            filename = str(url.toLocalFile())
+            if (filename[-4] == "." and
+                    filename[-3:] in defines.report_extensions):
                 event.acceptProposedAction()
                 return
 

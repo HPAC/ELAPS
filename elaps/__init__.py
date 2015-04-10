@@ -2,6 +2,7 @@
 """ELAPS python packag."""
 from __future__ import division, print_function
 
+import defines
 import signature
 import experiment
 import report

@@ -2,6 +2,7 @@
 """Central ELAPS:Experiment."""
 from __future__ import division, print_function
 
+import defines
 import symbolic
 import signature
 
@@ -867,9 +868,9 @@ class Experiment(dict):
         """Create all files needed to run the experiment."""
         self.update_data()
         assert(self.check_sanity())
-        scriptfile = filebase + ".sh"
-        reportfile = filebase + ".eer"
-        errfile = filebase + ".err"
+        scriptfile = "%s.%s" % (filebase, defines.script_extension)
+        reportfile = "%s.%s" % (filebase, defines.report_extension)
+        errfile = "%s.%s" % (filebase, defines.error_extension)
 
         # emptly output files
         if os.path.isfile(reportfile):
@@ -915,9 +916,10 @@ class Experiment(dict):
         # go over #threads range
         for nthreads in nthreads_vals:
             # filename for commands
-            callfile = "%s.calls" % filebase
+            callfile = "%s.%s" % (filebase, defines.calls_extension)
             if len(nthreads_vals) > 1:
-                callfile = "%s.%d.calls" % (filebase, nthreads)
+                callfile = "%s.%d.%s" % (filebase, nthreads,
+                                         defines.calls_extension)
 
             # generate commands file
             if len(nthreads_vals) > 1:

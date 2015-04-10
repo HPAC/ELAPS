@@ -2,6 +2,7 @@
 """GUI for Experiments."""
 from __future__ import division, print_function
 
+import elaps.defines as defines
 import elaps.io
 import elaps.symbolic as symbolic
 import elaps.signature as signature
@@ -867,12 +868,13 @@ class PlayMat(QtGui.QMainWindow):
     def on_submit(self):
         """Event: submit."""
         filename = QtGui.QFileDialog.getSaveFileName(
-            self, "Generate Report", elaps.io.reportpath, "*.eer"
+            self, "Generate Report", elaps.io.reportpath,
+            "*." + defines.report_extension
         )
         if not filename:
             return
         filebase = str(filename)
-        if filebase[-4:] == ".eer":
+        if filebase[-4:] == "." + defines.report_extension:
             filebase = filebase[:-4]
 
         ex = self.experiment
@@ -895,7 +897,7 @@ class PlayMat(QtGui.QMainWindow):
         filename = QtGui.QFileDialog.getOpenFileName(
             self, "Load Experiment",
             elaps.io.reportpath if report else elaps.io.experimentpath,
-            "*.eer *.ees"
+            " ".join("*." + ext for ext in defines.experiment_extensions)
         )
         if not filename:
             return

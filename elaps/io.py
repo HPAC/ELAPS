@@ -6,21 +6,10 @@ from signature import *
 from symbolic import *
 from experiment import Experiment
 from report import Report
+from defines import *
 
 import os
 import imp
-
-filepath = os.path.dirname(os.path.realpath(__file__))
-rootpath = os.path.abspath(os.path.join(filepath, ".."))
-
-sigpath = os.path.join(rootpath, "resources", "signatures")
-docpath = os.path.join(rootpath, "resources", "kerneldocs")
-samplerpath = os.path.join(rootpath, "Sampler", "build")
-backendpath = os.path.join(rootpath, "elaps", "backends")
-experimentpath = os.path.join(rootpath, "experiments")
-reportpath = os.path.join(rootpath, "reports")
-metricpath = os.path.join(rootpath, "elaps", "metrics")
-papinamespath = os.path.join(rootpath, "resources", "papinames.py")
 
 
 def write_signature(sig, filename):
