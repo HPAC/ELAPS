@@ -173,7 +173,7 @@ class QJobProgress(QtGui.QDockWidget):
 
             menu.addSeparator()
 
-        if sorted(jobs) != sorted(alljobs):
+        if len(jobs) != len(alljobs):
             # kill all
             if any(job["stat"] in ("PEND", "RUN") for job in alljobs):
                 menu.addAction(QtGui.QAction(
