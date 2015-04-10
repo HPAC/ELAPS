@@ -2,6 +2,8 @@
 """Job progress tracker in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
+from elaps import defines
+
 import os
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import pyqtSlot
@@ -65,6 +67,8 @@ class QJobProgress(QtGui.QDockWidget):
             "nresults": experiment.nresults(),
             "progress": 0,
             "filebase": filebase,
+            "reportfile": "%s.%s" % (filebase, defines.report_extension),
+            "errorfile": "%s.%s" % (filebase, defines.error_extension),
             "experiment": experiment.copy(),
             "stat": "PEND",
         }
@@ -98,17 +102,17 @@ class QJobProgress(QtGui.QDockWidget):
             if job["stat"] in ("ERROR", "DONE"):
                 # job is done
                 continue
-            if not os.path.isfile(job["filebase"] + ".eer"):
+            if not os.path.isfile(job["reportfile"]):
                 # job is pending
                 continue
-            with open(job["filebase"] + ".eer") as fin:
+            with open(job["reportfile"]) as fin:
                 job["progress"] = len(fin.readlines()) - 2
             if job["progress"] >= 0:
                 job["stat"] = "RUN"
             if job["progress"] >= job["nresults"]:
                 job["stat"] = "DONE"
-            if os.path.isfile(job["filebase"] + ".err"):
-                if os.path.getsize(job["filebase"] + ".err"):
+            if os.path.isfile(job["errorfile"]):
+                if os.path.getsize(job["errorfile"]):
                     job["stat"] = "ERROR"
 
         for itemid in range(self.widget().topLevelItemCount()):
@@ -134,7 +138,7 @@ class QJobProgress(QtGui.QDockWidget):
             return
         job = item.job
         if job["stat"] == "DONE":
-            self.playmat.on_open_viewer(job["filebase"] + ".eer")
+            self.playmat.on_open_viewer(job["reportfile"])
 
     @pyqtSlot(QtCore.QPoint)
     def on_rightclick(self, pos):
@@ -233,14 +237,14 @@ class QJobProgress(QtGui.QDockWidget):
         """Event: open job(s) in Viewer."""
         for job in self.selected_jobs():
             if job["stat"] == "DONE":
-                self.playmat.on_open_viewer(job["filebase"] + ".eer")
+                self.playmat.on_open_viewer(job["reportfile"])
 
     @pyqtSlot()
     def on_openall_viewer(self):
         """Event: open all jobs in Viewer."""
         for job in self.jobs():
             if job["stat"] == "DONE":
-                self.playmat.on_open_viewer(job["filebase"] + ".eer")
+                self.playmat.on_open_viewer(job["reportfile"])
 
     @pyqtSlot()
     def on_open_playmat(self):
