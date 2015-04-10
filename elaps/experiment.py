@@ -676,6 +676,7 @@ class Experiment(dict):
                 # argumnet doesn't vary
                 size = max(self.ranges_eval(data["size"], range_val))
                 cmds.append([cmdprefix + "malloc", name, size])
+                data_range_sizes[name][range_val] = size
                 continue
             # operand varies
 
