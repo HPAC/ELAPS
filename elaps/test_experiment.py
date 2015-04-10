@@ -470,7 +470,7 @@ class TestExperimentSubmit(TestExperimentCmds):
 
         self.assertTrue(os.path.isfile(self.filebase + ".sh"))
         self.assertTrue(os.path.isfile(self.filebase + ".calls"))
-        self.assertFalse(os.path.isfile(self.filebase + ".eer"))
+        self.assertFalse(os.path.isfile(self.filebase + ".elr"))
         self.assertFalse(os.path.isfile(self.filebase + ".err"))
 
     def test_threadrange(self):
