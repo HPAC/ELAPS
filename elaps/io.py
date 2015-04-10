@@ -84,6 +84,11 @@ def load_experiment_string(string):
     ex = eval(string)
     if not isinstance(ex, Experiment):
         raise TypeError("not an Experiment")
+    try:
+        ex.sampler["backend"] = None
+        ex.sampler["backend"] = load_backend(ex.sampler["backend_name"])
+    except:
+        pass
     return ex
 
 
@@ -91,8 +96,8 @@ def load_experiment(filename):
     """Load an Experiment."""
     with open(filename) as fin:
         if filename[-4:] == ".ees":
-            return eval(fin.read())
-        return eval(fin.readline())
+            return load_experiment_string(fin.read())
+        return load_experiment_string(fin.readline())
 
 
 def load_doc_file(filename):
