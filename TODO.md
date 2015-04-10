@@ -6,22 +6,21 @@ Sampler
 
 Experiment
 ----------
-* Script Examples
-* How to handle PAPI counter conflicts?
+* Test randomization
+
+* (Script Examples)
+* (How to handle PAPI counter conflicts?)
 
 Signatures
 ----------
-* uplo for ev sigs
+* uplo for syev sigs
 
 
 PlayMat
 -------
-* load experiment from jobprogress
-* jobprogress: clear done, kill all
 * disable sumrange_parallel if no omp support
 * remove range from vary when disabled
-* unnecessary "incompatible sizes" alsert
-* load ntrange correctly from files
+* unnecessary "incompatible sizes" alert
 
 * (script header)
 * (status tips)
@@ -32,10 +31,10 @@ PlayMat
 Viewer
 ------
 * open in PlayMat -> raise
-* legend placement
 * custom legend names
 * order of barplots
 
+* (legend placement)
 * (hide unavailable metrics)
 * (memory metrics)
 * (status tips)

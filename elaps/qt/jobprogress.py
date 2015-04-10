@@ -109,7 +109,7 @@ class QJobProgress(QtGui.QDockWidget):
                 job["stat"] = "DONE"
             if os.path.isfile(job["filebase"] + ".err"):
                 if os.path.getsize(job["filebase"] + ".err"):
-                    job["stat"] = "FAIL"
+                    job["stat"] = "ERROR"
 
         for itemid in range(self.widget().topLevelItemCount()):
             item = self.widget().topLevelItem(itemid)
@@ -120,7 +120,7 @@ class QJobProgress(QtGui.QDockWidget):
                 item.setText(
                     2, "%d / %d results" % (job["progress"], job["nresults"])
                 )
-            elif job["stat"] == "FAIL":
+            elif job["stat"] == "ERROR":
                 item.setText(2, "error")
             elif job["stat"] == "DONE":
                 item.setText(2, "done")
