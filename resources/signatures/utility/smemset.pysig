@@ -1,0 +1,10 @@
+# single precision memset
+Signature(
+    "smemset",
+    Dim("m"),
+    Dim("n"),
+    sScalar(),
+    sData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    complexity="0"
+)

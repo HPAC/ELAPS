@@ -1,0 +1,10 @@
+# single precision complex memset
+Signature(
+    "cmemset",
+    Dim("m"),
+    Dim("n"),
+    cScalar(),
+    cData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    complexity="0"
+)
