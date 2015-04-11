@@ -61,7 +61,7 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
         range_datas = []
         for key, data in datas:
             if min(data) == max(data):
-                values = data.values[0]
+                values = data.values()[0]
                 range_datas.append(
                     (key, {range_min: values, range_max: values})
                 )
