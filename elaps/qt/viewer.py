@@ -500,8 +500,12 @@ class Viewer(QtGui.QMainWindow):
             else:
                 UI_report = self.UI_reports.reports[reportid]
 
+            callids = []
+            if len(report.callids) > 2:
+                callids = sorted(report.callids)
+
             # create new calls
-            for callid in report.callids:
+            for callid in callids:
                 if callid not in UI_report.items:
                     UI_call = QtGui.QTreeWidgetItem(("",))
                     UI_call.reportid = reportid
@@ -528,13 +532,13 @@ class Viewer(QtGui.QMainWindow):
 
             # delete excess calls
             for callid, UI_call in UI_report.items.items():
-                if callid not in report.callids:
+                if callid not in callids:
                     UI_report.takeChild(UI_report.indexOfChild(UI_call))
                     del UI_report.items[callid]
 
             # set values
             UI_report.setToolTip(3, ex.sampler["cpu_model"])
-            for callid in report.callids:
+            for callid in callids:
                 UI_item = UI_report.items[callid]
 
                 # values
@@ -556,7 +560,7 @@ class Viewer(QtGui.QMainWindow):
                     toolTip=color
                 )
 
-        # delete excess calls
+        # delete excess reports
         for reportid, UI_report in self.UI_reports.reports.items():
             if reportid not in self.reports:
                 self.UI_reports.takeTopLevelItem(
