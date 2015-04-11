@@ -51,20 +51,19 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     if not datas:
         return fig
 
-    range_min = min(min(data) for name, data in datas)
-    range_max = max(max(data) for name, data in datas)
-
-    if range_min == range_max:
-        bar_datas = [(key, data.values()[0]) for key, data in datas]
+    range_vals = [val for name, data in datas for val in data
+                  if val is not None]
+    if not range_vals:
+        bar_datas = [(key, data[None]) for key, data in datas]
         return bar_plot(bar_datas, stat_names, colors, styles, ylabel, fig)
     else:
         range_datas = []
         for key, data in datas:
-            if min(data) == max(data):
-                values = data.values()[0]
-                range_datas.append(
-                    (key, {range_min: values, range_max: values})
-                )
+            if None in data:
+                range_datas.append((key, {
+                    min(range_vals): data[None],
+                    max(range_vals): data[None]
+                }))
             else:
                 range_datas.append((key, data))
         return range_plot(range_datas, stat_names, colors, styles, xlabel,
@@ -120,18 +119,20 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
                 axes.plot(xs, ys, color=color, **styles[stat_name])
 
     # axis limits
+    range_vals = [val for name, data in datas for val in data
+                  if val is not None]
     limits = list(axes.axis())
     # ymin
     limits[2] = 0
     gap = (limits[1] - limits[0]) / 20
     # xmin
-    range_min = min(min(data) for name, data in datas)
+    range_min = min(range_vals)
     if range_min > 0 and range_min < gap:
         limits[0] = 0
     else:
         limits[0] = range_min - gap
     # xmax
-    range_max = max(max(data) for name, data in datas)
+    range_max = max(range_vals)
     limits[1] = range_max + gap
     axes.axis(limits)
 
