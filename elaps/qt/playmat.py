@@ -63,9 +63,7 @@ class PlayMat(QtGui.QMainWindow):
             except:
                 pass
         if not self.experiment:
-            self.experiment_load(
-                os.path.join(elaps.io.experimentpath, "default.ees")
-            )
+            self.experiment_reset()
         self.experiment_back = self.experiment.copy()
         self.experiment.update_data()
 
@@ -503,6 +501,13 @@ class PlayMat(QtGui.QMainWindow):
 
         self.experiment = ex
 
+    def experiment_reset(self):
+        """Reset experiment to default."""
+        self.experiment_load(
+            os.path.join(elaps.io.experimentpath, 
+                         "default." + defines.experiment_extension)
+        )
+
     def experiment_qt_load(self):
         """Load Experiment from Qt setting."""
         ex = elaps.io.load_experiment_string(str(
@@ -886,9 +891,7 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot()
     def on_experiment_reset(self):
         """Event: reset experiment."""
-        self.experiment_load(
-            os.path.join(elaps.io.experimentpath, "default.ees")
-        )
+        self.experiment_reset()
         self.UI_setall()
 
     @pyqtSlot()
@@ -916,7 +919,7 @@ class PlayMat(QtGui.QMainWindow):
             self,
             "Save Setup",
             elaps.io.experimentpath,
-            "*.ees"
+            "*." + defines.experiment_extension
         )
         if filename:
             elaps.io.write_experiment(self.experiment, filename)
