@@ -126,7 +126,7 @@ class Experiment(dict):
                 if len(with_) == 1:
                     value += "_" + with_[0]
                 elif len(with_) > 1:
-                    value += "_(%s)" + ",".join(with_)
+                    value += "_(%s)" % ",".join(with_)
                 call[argid] = value
             result += indent + str(call) + "\n"
         return result[:-1]
