@@ -84,7 +84,7 @@ def load_experiment_string(string):
 def load_experiment(filename):
     """Load an Experiment."""
     with open(filename) as fin:
-        if filename[-4:] == ".ees":
+        if filename[-4:] == "." + experiment_extension:
             return load_experiment_string(fin.read())
         return load_experiment_string(fin.readline())
 
@@ -198,7 +198,8 @@ def load_papinames():
 
 def load_report(filename, discard_first_repetitions=False):
     """Load a Report from a frile."""
-    if os.path.isfile(filename[:-4] + ".err"):
+    errfile = "%s.%s" % (filename[:-4], error_extension)
+    if os.path.isfile(errfile) and os.path.getsize(errfile):
         raise IOError("Roport %r generated errors." % filename)
     with open(filename) as fin:
         experiment = eval(fin.readline())
