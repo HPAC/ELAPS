@@ -500,9 +500,9 @@ class Viewer(QtGui.QMainWindow):
             else:
                 UI_report = self.UI_reports.reports[reportid]
 
-            callids = []
-            if len(report.callids) > 2:
-                callids = sorted(report.callids)
+            callids = sorted(report.callids)
+            if len(callids) == 2:
+                callids = [None]
 
             # create new calls
             for callid in callids:
