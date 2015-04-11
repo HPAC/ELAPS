@@ -174,7 +174,7 @@ class Minus(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        arg = Operation.simplify(self, **kwargs)[1]
+        arg = simplify(self[1], **kwargs)
 
         if isinstance(arg, Minus):
             # double negation
@@ -198,7 +198,7 @@ class Abs(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        arg = Operation.simplify(self, **kwargs)[1]
+        arg = simplify(self[1], **kwargs)
 
         if isinstance(arg, Minus):
             # redundand -
@@ -222,10 +222,7 @@ class Plus(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        op = Operation.simplify(self, **kwargs)
-        if op is None:
-            return None
-        args = op[1:]
+        args = simplify(self[1:], **kwargs)
 
         num = 0
         newargs = []
@@ -276,7 +273,7 @@ class Prod(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        args = Operation.simplify(self, **kwargs)[1:]
+        args = simplify(self[1:], **kwargs)
 
         num = 1
         newargs = []
@@ -329,7 +326,7 @@ class Div(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        nominator, denominator = Operation.simplify(self, **kwargs)[1:]
+        nominator, denominator = simplify(self[1:], **kwargs)
 
         if isinstance(nominator, Div):
             # top is a fraction
@@ -366,7 +363,7 @@ class Power(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        base, exponent = Operation.simplify(self, **kwargs)[1:]
+        base, exponent = simplify(self[1:], **kwargs)
 
         if isinstance(base, Power):
             # base is a power
@@ -398,7 +395,7 @@ class Log(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        arg, base = Operation.simplify(self, **kwargs)[1:]
+        arg, base = simplify(self[1:], **kwargs)
 
         if arg == base:
             return 1
@@ -425,7 +422,7 @@ class Floor(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        arg = Operation.simplify(self, **kwargs)[1]
+        arg = simplify(self[1], **kwargs)
 
         if isinstance(arg, Floor):
             # redundand recursive floor
@@ -452,7 +449,7 @@ class Ceil(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        arg = Operation.simplify(self, **kwargs)[1]
+        arg = simplify(self[1], **kwargs)
 
         if isinstance(arg, Ceil):
             # redundand recursive floor
@@ -475,7 +472,7 @@ class Min(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        args = Operation.simplify(self, **kwargs)[1:]
+        args = simplify(self[1:], **kwargs)
 
         num = float("inf")
         newargs = []
@@ -519,7 +516,7 @@ class Max(Operation):
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
         # simplify arguments
-        args = Operation.simplify(self, **kwargs)[1:]
+        args = simplify(self[1:], **kwargs)
 
         num = float("-inf")
         newargs = []
@@ -861,6 +858,8 @@ def simplify(expr, **kwargs):
     """(Substitute and) simplify if Expression."""
     if isinstance(expr, (Expression, Range)):
         return expr.simplify(**kwargs)
+    if isinstance(expr, (list, tuple)):
+        return type(expr)(simplify(e, **kwargs) for e in expr)
     return expr
 
 
@@ -872,6 +871,8 @@ def findsymbols(expr):
         return set().union(*map(findsymbols, expr))
     return set()
 
+
+# math overloads
 
 def min(*args, **kwargs):
     """Symbolic minimum."""
