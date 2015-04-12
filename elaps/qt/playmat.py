@@ -504,7 +504,7 @@ class PlayMat(QtGui.QMainWindow):
     def experiment_reset(self):
         """Reset experiment to default."""
         self.experiment_load(
-            os.path.join(elaps.io.experimentpath, 
+            os.path.join(elaps.io.experimentpath,
                          "default." + defines.experiment_extension)
         )
 
