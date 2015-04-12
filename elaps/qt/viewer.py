@@ -33,7 +33,7 @@ class Viewer(QtGui.QMainWindow):
         self.discard_firstrep = True
         self.stats_showing = ["med"]
         self.metric_showing = None
-        self.colorpool = elaps.plot.default_colors[::-1]
+        self.colorpool = defines.colors[::-1]
         self.reports = {}
         self.report_colors = {}
         self.reportitem_selected = (None, None)

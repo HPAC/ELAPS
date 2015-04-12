@@ -2,6 +2,8 @@
 """Representation of data arguments in QCalls in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
+import elaps.defines as defines
+
 from numbers import Number
 
 from PyQt4 import QtCore, QtGui
@@ -190,7 +192,7 @@ class QDataArg(QtGui.QLineEdit):
 
     def viz_matrix(self, dimmin, dimmax):
         """Visualize a matrix."""
-        scale = (self.playmat.datascale /
+        scale = (defines.viz_scale /
                  max(1, self.playmat.experiment.data_maxdim()))
         dimmin = [int(round(scale * dim)) for dim in dimmin]
         dimmax = [int(round(scale * dim)) for dim in dimmax]

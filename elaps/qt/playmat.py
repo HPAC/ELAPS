@@ -21,9 +21,6 @@ class PlayMat(QtGui.QMainWindow):
 
     """GUI for Experiment."""
 
-    datascale = 100
-    defaultdim = 1000
-
     def __init__(self, app=None, load=None, reset=False):
         """Initilialize the PlayMat."""
         if app:
@@ -1165,7 +1162,7 @@ class PlayMat(QtGui.QMainWindow):
             names = list(ex.data)
             for argid, arg in enumerate(sig):
                 if isinstance(arg, signature.Dim):
-                    call[argid] = self.defaultdim
+                    call[argid] = defines.default_dim
                     continue
                 if not isinstance(arg, signature.Data):
                     continue

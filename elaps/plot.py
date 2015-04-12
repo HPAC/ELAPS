@@ -2,35 +2,17 @@
 """Plotting routines for reports."""
 from __future__ import division, print_function
 
+import defines
 from report import Report, apply_stat
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
 
-default_colors = [
-    "#ff0000", "#00ff00", "#0000ff", "#c0c000", "#00c0c0", "#c000c0",  # light
-    "#800000", "#008000", "#000080", "#808000", "#008080", "#800080",  # dark
-    "#ff8000", "#00ff80", "#8000ff", "#80ff00", "#0080ff", "#ff0080",  # mixed
-    "#c04000", "#00c040", "#4000c0", "#40c000", "#0040c0", "#c00040",  # mdark
-]
-
-default_styles = {
-    "legend": {"color": "#808080"},
-    "med": {"linestyle": "-"},
-    "min": {"linestyle": "--"},
-    "max": {"linestyle": ":", "linewidth": 2},
-    "avg": {"linestyle": "-."},
-    "min-max": {"hatch": "...", "facecolor": (0, 0, 0, 0)},
-    "std": {"alpha": .25},
-    "all": {"linestyle": "None", "marker": "."},
-}
-
-
 def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
          ylabel=None, figure=None):
     """Plot a series of data sets."""
-    styles = default_styles.copy()
+    styles = defines.plot_styles.copy()
     styles.update(styles)
 
     # set up figure
@@ -38,10 +20,10 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     if not fig:
         from matplotlib import pyplot
         fig = pyplot.gcf()
-    fig.patch.set_facecolor("#ffffff")
+    fig.patch.set_facecolor(defines.face_color)
     axes = fig.gca()
     axes.cla()
-    axes.set_axis_bgcolor("#f0f0f0")
+    axes.set_axis_bgcolor(defines.background_color)
     if ylabel is not None:
         axes.set_ylabel(ylabel)
     axes.hold(True)
@@ -86,7 +68,7 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     axes.set_xlabel(xlabel)
 
     # plots
-    colorpool = default_colors[::-1]
+    colorpool = defines.colors[::-1]
     for name, data in datas:
         color = colors.get(name) or colorpool.pop()
         for stat_name in stat_names:
@@ -137,7 +119,7 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     axes.axis(limits)
 
     # legend
-    colorpool = default_colors[::-1]
+    colorpool = defines.colors[::-1]
     legend = []
     legend_style = styles["legend"].copy()
     for name, values in datas:
@@ -183,7 +165,7 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
     width = groupwidth / len(datas)
 
     # plots
-    colorpool = default_colors[::-1]
+    colorpool = defines.colors[::-1]
     for dataid, (name, data) in enumerate(datas):
         color = colors.get(name) or colorpool.pop()
         for statid, stat_name in enumerate(stat_names):
@@ -222,7 +204,7 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
     axes.axis(limits)
 
     # legend
-    colorpool = default_colors[::-1]
+    colorpool = defines.colors[::-1]
     legend = []
     for name, data in datas:
         color = colors.get(name) or colorpool.pop()
