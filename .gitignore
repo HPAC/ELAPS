@@ -1,4 +1,2 @@
 reports/*
-!reports/.gitignore
 experiments/*
-!experiments/default.ems
