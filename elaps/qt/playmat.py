@@ -1025,10 +1025,8 @@ class PlayMat(QtGui.QMainWindow):
             self.experiment.range[1] = symbolic.Range(str(value))
         except:
             self.experiment.range[1] = None
-        self.experiment.update_data()
         self.UI_ranges_setvalid()
-        self.UI_submit_setenabled()
-        self.UI_calls_set()
+        self.experiment_infer_update_set()
 
     @pyqtSlot(str)
     def on_nreps_change(self, value):
@@ -1041,6 +1039,7 @@ class PlayMat(QtGui.QMainWindow):
         else:
             self.experiment.nreps = 0
         self.UI_ranges_setvalid()
+        self.experiment_infer_update_set()
 
     @pyqtSlot(bool)
     def on_usesumrange_toggle(self, checked):
@@ -1106,10 +1105,8 @@ class PlayMat(QtGui.QMainWindow):
             ex.sumrange[1] = symbolic.Range(str(value), **symdict)
         except:
             ex.sumrange[1] = None
-        ex.update_data()
         self.UI_ranges_setvalid()
-        self.UI_submit_setenabled()
-        self.UI_calls_set()
+        self.experiment_infer_update_set()
 
     @pyqtSlot(bool)
     def on_calls_parallel_toggle(self, value):
