@@ -103,16 +103,19 @@ class Experiment(dict):
             indent += "    "
         if not isinstance(self.nthreads, int):
             result += indent + "#threads = %s\n" % self.nthreads
-        result += indent + "repeat %s times :\n" % self.nreps
+        result += indent + "repeat %s times:\n" % self.nreps
         indent += "    "
         if self.sumrange:
-            result += indent + "sum over %s = %s" % tuple(self.sumrange)
+            result += indent
             if self.sumrange_parallel:
-                result += " in parallel"
-            result += " :\n"
+                result += "in parallel"
+            else:
+                result += "sum over"
+            result += " %s = %s" % tuple(self.sumrange)
+            result += ":\n"
             indent += "    "
         if self.calls_parallel:
-            result += indent + "in parallel :\n"
+            result += indent + "in parallel:\n"
             indent += "    "
         for call in self.calls:
             if not isinstance(call, signature.Call):
