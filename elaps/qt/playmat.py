@@ -308,7 +308,7 @@ class PlayMat(QtGui.QMainWindow):
 
         def create_note():
             """Create the note input."""
-            noteW = QtGui.QTextEdit(
+            self.UI_note = QtGui.QTextEdit(
                 textChanged=self.on_note_change
             )
 
@@ -317,7 +317,7 @@ class PlayMat(QtGui.QMainWindow):
                 features=(QtGui.QDockWidget.DockWidgetVerticalTitleBar |
                           QtGui.QDockWidget.DockWidgetMovable)
             )
-            noteD.setWidget(noteW)
+            noteD.setWidget(self.UI_note)
 
             self.addDockWidget(QtCore.Qt.TopDockWidgetArea, noteD)
 
@@ -675,8 +675,9 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_sumrange_set()
         self.UI_calls_parallel_set()
         self.UI_submit_setenabled()
-        self.UI_calls_set()
+        self.UI_note_set()
         self.UI_counters_set()
+        self.UI_calls_set()
 
     def UI_hideargs_set(self):
         """Set UI element: hideargs options."""
@@ -769,6 +770,12 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_calls.item(callid).setall()
         while self.UI_calls.count() > len(self.experiment.calls):
             self.UI_calls.takeItem(len(self.experiment.calls))
+        self.UI_setting -= 1
+
+    def UI_note_set(self):
+        """Set UI element: note."""
+        self.UI_setting += 1
+        self.UI_note.setPlainText(self.experiment.note or "")
         self.UI_setting -= 1
 
     def UI_counters_set(self):
@@ -942,9 +949,11 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_calls_set()
 
     @pyqtSlot(str)
-    def on_note_change(self, value):
+    def on_note_change(self):
         """Event: changed note."""
-        self.experiment.note = str(value)
+        if self.UI_setting:
+            return
+        self.experiment.note = self.UI_note.toPlainText()
 
     @pyqtSlot(str)
     def on_sampler_change(self, value):
