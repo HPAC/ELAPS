@@ -2,6 +2,7 @@
 """Backend for running Experiments through LoadLeveler."""
 from __future__ import division, print_function
 
+import os
 import subprocess
 import re
 
@@ -33,7 +34,8 @@ class Backend(object):
 
     def poll(self, jobid):
         """Poll a job's status."""
-        out = subprocess.check_output(["llq", "-j", str(jobid)])
+        out = subprocess.Popen(["llq", "-j", str(jobid)],
+                               stdout=subprocess.PIPE).communicate()[0]
         if "1 waiting" in out:
             return "PEND"
         if "1 pending" in out:
@@ -44,4 +46,5 @@ class Backend(object):
 
     def kill(self, jobid):
         """Kill a job."""
-        subprocess.check_output(["llcancel", str(jobid)])
+        with open(os.devnull, "wb") as devnull:
+            subprocess.call(["llcancel", str(jobid)], stdout=devnull)
