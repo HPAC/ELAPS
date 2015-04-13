@@ -953,7 +953,8 @@ class Experiment(dict):
             elif self.calls_parallel:
                 ompthreads = len(self.calls)
             # limit threads to #cores * #hyperthreads/core
-            ompthreads = min(ompthreads, self.sampler["nt_max"])
+            while ompthreads * nthreads > self.sampler["nt_max"]:
+                ompthreads = ompthreads - 1
 
             # sampler invocation
             if ompthreads != 1:

@@ -86,7 +86,7 @@ class QCall(QtGui.QListWidgetItem):
         hideargs = tuple(self.playmat.hideargs) + (type(None),)
         for argid, value in enumerate(self.call):
             # set value
-            value = value or ""
+            value = value if value is not None else ""
             UI_arg = self.UI_args[argid]
             UI_arglabel = self.UI_arglabels[argid]
             if not UI_arg.hasFocus():
