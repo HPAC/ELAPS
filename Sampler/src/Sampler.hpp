@@ -29,7 +29,7 @@ class Sampler {
         template <typename T> void named_malloc(const std::vector<std::string> &tokens);
         template <typename T> void named_offset(const std::vector<std::string> &tokens);
         void named_free(const std::vector<std::string> &tokens);
-        void add_call(const std::vector<std::string> &tokens);
+        void add_call(const std::vector<std::string> &tokens, bool hidden);
         void go(const std::vector<std::string> &tokens);
 
         void info(const std::vector<std::string> &tokens);
