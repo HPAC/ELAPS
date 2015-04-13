@@ -93,7 +93,7 @@ void Sampler::omp_end(const vector<string>&tokens) {
     }
     omp_active = false;
     if (!callparsers.empty())
-        callparsers.back().set_omp_active(false);
+        callparsers.back().omp_active = true;
 #else
     cerr << "OpenMP support not enabled (command ignored)" << endl;
 #endif
@@ -205,7 +205,7 @@ void Sampler::named_free(const vector<string> &tokens) {
 // Command: Add a call                                                        //
 ////////////////////////////////////////////////////////////////////////////////
 
-void Sampler::add_call(const vector<string> &tokens) {
+void Sampler::add_call(const vector<string> &tokens, bool hidden) {
     const string &routine = tokens[0];
 
     // catch unknown routines
@@ -218,8 +218,9 @@ void Sampler::add_call(const vector<string> &tokens) {
     const Signature &signature = signatures[routine];
     try {
         CallParser callparser(tokens, signature, mem);
+        callparser.hidden = hidden;
 #ifdef OPENMP_ENABLED
-        callparser.set_omp_active(omp_active);
+        callparser.omp_active = omp_active;
 #endif 
         callparsers.push_back(callparser);
     } catch (CallParserException &e) {
@@ -257,15 +258,26 @@ void Sampler::go(const vector<string> &tokens) {
 
     // print results
     for (size_t i = 0; i < ncalls; i++) {
+        CallParser &callparser = callparsers[i];
+        if (callparser.hidden)
+            // output hiding set
+            continue;
+
 #ifdef OPENMP_ENABLED
-        if (calls[i].parallel)
+        if (callparser.omp_active)
+            // part of a parallel region
             continue;
 #endif
-        cout << calls[i].rdtsc;
+
+        // cycle counter
+        cout << calls[i].cycles;
+
 #ifdef PAPI_ENABLED
+        // papi counters
         for (size_t j = 0; j < counters.size(); j++)
             cout << "\t" << calls[i].counters[j];
 #endif
+
         cout << endl;
     }
 
@@ -328,6 +340,7 @@ void Sampler::start() {
             continue;
 
         // remove leading spaces
+        bool hidden = isspace(line[0]);
         line = line.substr(line.find_first_not_of(" \t\n\v\f\r"));
 
         // ignore empty lines
@@ -344,7 +357,7 @@ void Sampler::start() {
         if (command != commands.end())
             (this->*(command->second))(tokens);
         else
-            add_call(tokens);
+            add_call(tokens, hidden);
     }
 
     // process remaining calls

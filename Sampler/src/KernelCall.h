@@ -13,7 +13,7 @@ typedef struct {
 #ifdef OPENMP_ENABLED
     char parallel;
 #endif
-    unsigned long rdtsc;
+    unsigned long cycles;
 #ifdef PAPI_ENABLED
     long long counters[MAX_COUNTERS];
 #endif

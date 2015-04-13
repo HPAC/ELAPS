@@ -13,13 +13,13 @@
 
 // read time stamp counter (CPU register)
 #ifdef __x86_64__
-#define rdtsc(var) { \
+#define get_cycles(var) { \
     unsigned long int lower, upper; \
     asm volatile("rdtsc" : "=a" (lower), "=d" (upper)); \
     var = ((unsigned long long) lower) | (((unsigned long long) upper) << 32); \
 } while(0)
 #elif defined(__powerpc__)
-#define rdtsc(var) { \
+#define get_cycles(var) { \
     unsigned long int lower, upper, tmp; \
     asm volatile( \
         "0:\n" \
@@ -38,8 +38,8 @@
 // no PAPI                                                                    //
 ////////////////////////////////////////////////////////////////////////////////
 
-#define COUNTERS_START0 rdtsc(ticks0);
-#define COUNTERS_END0   rdtsc(ticks1);
+#define COUNTERS_START0 get_cycles(ticks0);
+#define COUNTERS_END0   get_cycles(ticks1);
 
 void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
     // for each call
@@ -59,8 +59,8 @@ void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
 #include CALLS_C_INC
         }
 
-        // compute rdtsc dfference (time)
-        calls[i].rdtsc = ticks1 - ticks0;
+        // compute cycle count dfference (time)
+        calls[i].cycles = ticks1 - ticks0;
 
         // clean macros
 #undef COUNTERS_START
@@ -104,8 +104,8 @@ void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 #include CALLS_C_INC
                         }
 
-                        // compute rdtsc dfference (time)
-                        calls[i].rdtsc = ticks1 - ticks0;
+                        // compute cycle count dfference (time)
+                        calls[i].cycles = ticks1 - ticks0;
 
                         // clean macros
 #undef COUNTERS_START
@@ -135,8 +135,8 @@ void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 #include CALLS_C_INC
                         }
 
-                        // compute rdtsc dfference (time)
-                        calls[i].rdtsc = ticks1 - ticks0;
+                        // compute cycle count dfference (time)
+                        calls[i].cycles = ticks1 - ticks0;
 
                         // clean macros
 #undef COUNTERS_START
@@ -158,8 +158,8 @@ void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 // PAPI                                                                       //
 ////////////////////////////////////////////////////////////////////////////////
 //
-#define COUNTERS_START0 PAPI_start_counters(counters, ncounters); rdtsc(ticks0);
-#define COUNTERS_END0   rdtsc(ticks1); PAPI_stop_counters(calls[i].counters, ncounters);
+#define COUNTERS_START0 PAPI_start_counters(counters, ncounters); get_cycles(ticks0);
+#define COUNTERS_END0   get_cycles(ticks1); PAPI_stop_counters(calls[i].counters, ncounters);
 
 #ifdef PAPI_ENABLED
 void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, int ncounters) {
@@ -180,8 +180,8 @@ void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, int ncou
 #include CALLS_C_INC
         }
 
-        // compute rdtsc dfference (time)
-        calls[i].rdtsc = ticks1 - ticks0;
+        // compute cycle count dfference (time)
+        calls[i].cycles = ticks1 - ticks0;
 
         // clean macros
 #undef COUNTERS_START
@@ -229,8 +229,8 @@ void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, int ncount
 #include CALLS_C_INC
                         }
 
-                        // compute rdtsc dfference (time)
-                        calls[i].rdtsc = ticks1 - ticks0;
+                        // compute cycle count dfference (time)
+                        calls[i].cycles = ticks1 - ticks0;
 
                         // clean macros
 #undef COUNTERS_START
@@ -260,8 +260,8 @@ void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, int ncount
 #include CALLS_C_INC
                         }
 
-                        // compute rdtsc dfference (time)
-                        calls[i].rdtsc = ticks1 - ticks0;
+                        // compute cycle count dfference (time)
+                        calls[i].cycles = ticks1 - ticks0;
 
                         // clean macros
 #undef COUNTERS_START
