@@ -10,7 +10,7 @@ from matplotlib.patches import Patch
 
 
 def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
-         ylabel=None, figure=None):
+         ylabel=None, legendargs={}, figure=None):
     """Plot a series of data sets."""
     styles = defines.plot_styles.copy()
     styles.update(styles)
@@ -37,7 +37,8 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
                   if val is not None]
     if not range_vals:
         bar_datas = [(key, data[None]) for key, data in datas]
-        return bar_plot(bar_datas, stat_names, colors, styles, ylabel, fig)
+        return bar_plot(bar_datas, stat_names, colors, styles, ylabel,
+                        legendargs, fig)
     else:
         range_datas = []
         for key, data in datas:
@@ -49,11 +50,11 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
             else:
                 range_datas.append((key, data))
         return range_plot(range_datas, stat_names, colors, styles, xlabel,
-                          ylabel, fig)
+                          ylabel, legendargs, fig)
 
 
 def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
-               ylabel=None, figure=None):
+               ylabel=None, legendargs={}, figure=None):
     """Plot with range on the x axis."""
     # min-max stat
     stat_names = stat_names[:]
@@ -142,13 +143,15 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
             legend_elem = Line2D([], [], color=color, **styles[stat_name])
         legend.append((legend_elem, stat_name))
     if legend:
-        axes.legend(*zip(*legend), loc=0, numpoints=3)
+        args = {"loc": 0, "numpoints": 3}
+        args.update(legendargs)
+        axes.legend(*zip(*legend), **args)
 
     return fig
 
 
 def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
-             figure=None):
+             legendargs={}, figure=None):
     """Barplot."""
     # min-max stat
     stat_names = stat_names[:]
@@ -210,6 +213,8 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
         color = colors.get(name) or colorpool.pop()
         legend.append((Patch(color=color), name))
     if legend:
-        axes.legend(*zip(*legend), loc=0, numpoints=3)
+        args = {"loc": 0, "numpoints": 3}
+        args.update(legendargs)
+        axes.legend(*zip(*legend), **args)
 
     return fig

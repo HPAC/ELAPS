@@ -606,7 +606,7 @@ class Viewer(QtGui.QMainWindow):
                 range_vars.add(report.experiment.range[0])
         xlabel = " = ".join(sorted(range_vars))
         elaps.plot.plot(plot_data, self.stats_showing, colors, {}, xlabel,
-                        metric.name, self.UI_figure)
+                        metric.name, {}, self.UI_figure)
         self.UI_canvas.draw()
         self.UI_setting -= 1
 
