@@ -53,7 +53,8 @@ class Viewer(QtGui.QMainWindow):
 
         # load reports
         for filename in filenames:
-            self.report_load(filename)
+            reportid = self.report_load(filename)
+            self.UI_report_add(reportid)
 
         if self.metric_showing not in self.metrics:
             self.metric_showing = "Gflops/s"
@@ -460,6 +461,39 @@ class Viewer(QtGui.QMainWindow):
         self.UI_discard_firstrep.setChecked(self.discard_firstrep)
         self.UI_setting -= 1
 
+    def UI_report_add(self, reportid):
+        """Add a report to the UI list."""
+        UI_report = QtGui.QTreeWidgetItem(
+            (os.path.basename(reportid)[:-4], "", "", "", ""),
+        )
+        UI_report.setFlags(QtCore.Qt.ItemIsSelectable |
+                           QtCore.Qt.ItemIsEnabled)
+        UI_report.reportid = reportid
+        UI_report.callid = None
+        UI_report.items = {None: UI_report}
+
+        self.UI_reports.addTopLevelItem(UI_report)
+        self.UI_reports.reports[reportid] = UI_report
+
+        # tooltip
+        UI_report.setToolTip(0, os.path.relpath(reportid))
+
+        # showing
+        UI_showing = QtGui.QCheckBox(
+            toggled=self.on_report_showing_change
+        )
+        UI_showing.item = UI_report
+        self.UI_reports.setItemWidget(UI_report, 1, UI_showing)
+        UI_report.showing = UI_showing
+
+        # color
+        UI_color = QtGui.QPushButton(
+            clicked=self.on_report_color_change
+        )
+        UI_color.item = UI_report
+        self.UI_reports.setItemWidget(UI_report, 2, UI_color)
+        UI_report.color = UI_color
+
     def UI_reports_set(self):
         """Set UI element: reports."""
         self.UI_setting += 1
@@ -467,38 +501,8 @@ class Viewer(QtGui.QMainWindow):
             ex = report.experiment
             # create or get the report item
             if reportid not in self.UI_reports.reports:
-                UI_report = QtGui.QTreeWidgetItem(
-                    (os.path.basename(reportid)[:-4], "", "", "", ""),
-                )
-                UI_report.setFlags(QtCore.Qt.ItemIsSelectable |
-                                   QtCore.Qt.ItemIsEnabled)
-                UI_report.reportid = reportid
-                UI_report.callid = None
-                UI_report.items = {None: UI_report}
-
-                self.UI_reports.addTopLevelItem(UI_report)
-                self.UI_reports.reports[reportid] = UI_report
-
-                # tooltip
-                UI_report.setToolTip(0, os.path.relpath(reportid))
-
-                # showing
-                UI_showing = QtGui.QCheckBox(
-                    toggled=self.on_report_showing_change
-                )
-                UI_showing.item = UI_report
-                self.UI_reports.setItemWidget(UI_report, 1, UI_showing)
-                UI_report.showing = UI_showing
-
-                # color
-                UI_color = QtGui.QPushButton(
-                    clicked=self.on_report_color_change
-                )
-                UI_color.item = UI_report
-                self.UI_reports.setItemWidget(UI_report, 2, UI_color)
-                UI_report.color = UI_color
-            else:
-                UI_report = self.UI_reports.reports[reportid]
+                self.UI_report_add(reportid)
+            UI_report = self.UI_reports.reports[reportid]
 
             callids = sorted(report.callids)
             if len(callids) == 2:
