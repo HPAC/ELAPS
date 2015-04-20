@@ -46,6 +46,8 @@ def load_signature(name):
 
 def load_all_signatures():
     """Load all Signatures."""
+    if not os.path.isdir(sigpath):
+        return {}
     sigs = {}
     for dirname in os.listdir(sigpath):
         dirpath = os.path.join(sigpath, dirname)
@@ -109,6 +111,8 @@ def load_doc(name):
 
 def load_all_docs():
     """Load all documenations."""
+    if not os.path.isdir(docpath):
+        return {}
     docs = {}
     for dirname in os.listdir(docpath):
         dirpath = os.path.join(docpath, dirname)
@@ -148,6 +152,8 @@ def load_sampler(name):
 
 def load_all_samplers():
     """Load all Samplers."""
+    if not os.path.isdir(samplerpath):
+        return {}
     samplers = {}
     for dirname in os.listdir(samplerpath):
         filename = os.path.join(samplerpath, dirname, "info.py")
@@ -176,6 +182,8 @@ def load_backend(name):
 
 def load_all_backends():
     """Load all backends."""
+    if not os.path.isdir(backendpath):
+        return {}
     backends = {}
     for filename in os.listdir(backendpath):
         if filename[-3:] != ".py":
@@ -229,6 +237,8 @@ def load_metric(name):
 
 def load_all_metrics():
     """Load all metrics."""
+    if not os.path.isdir(metricpath):
+        return {}
     metrics = {}
     for filename in os.listdir(metricpath):
         if filename[-3:] != ".py":

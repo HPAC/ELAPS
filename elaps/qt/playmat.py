@@ -31,6 +31,9 @@ class PlayMat(QtGui.QMainWindow):
         self.Qapp.playmat = self
         QtGui.QMainWindow.__init__(self)
         self.samplers = elaps.io.load_all_samplers()
+        if not self.samplers:
+            self.alert("ERROR: No Samplers found!")
+            sys.exit()
         self.docs = {}
         self.sigs = {}
         self.papi_names = elaps.io.load_papinames()
