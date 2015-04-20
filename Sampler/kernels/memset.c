@@ -1,5 +1,12 @@
 #include "memset.h"
 
+void imemset(int *m, int *n, int *alpha, int *A, int *ldA) {
+    int i, j;
+    for (j = 0; j < *n; j++)
+        for (i = 0; i < *m; i++)
+            A[i + j * *ldA] = *alpha;
+}
+
 void smemset(int *m, int *n, float *alpha, float *A, int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
