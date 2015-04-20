@@ -92,6 +92,11 @@ class QJobProgress(QtGui.QDockWidget):
         self.show()
         self.timer.start()
 
+    def autohide(self):
+        """Hide if empty."""
+        if self.widget().topLevelItemCount() == 0:
+            self.hide()
+
     # events
     @pyqtSlot()
     def on_timer(self):
@@ -183,6 +188,10 @@ class QJobProgress(QtGui.QDockWidget):
                 menu.addAction(QtGui.QAction(
                     "Kill all", menu, triggered=self.on_killall
                 ))
+            if any(job["stat"] not in ("PEND", "RUN") for job in alljobs):
+                menu.addAction(QtGui.QAction(
+                    "Clear done", menu, triggered=self.on_removedone
+                ))
 
             # clear all
             menu.addAction(QtGui.QAction(
@@ -220,8 +229,7 @@ class QJobProgress(QtGui.QDockWidget):
             self.widget().takeTopLevelItem(
                 self.widget().indexOfTopLevelItem(job["item"])
             )
-        if self.widget().topLevelItemCount() == 0:
-            self.hide()
+        self.autohide()
 
     @pyqtSlot()
     def on_removeall(self):
@@ -230,7 +238,18 @@ class QJobProgress(QtGui.QDockWidget):
             self.widget().takeTopLevelItem(
                 self.widget().indexOfTopLevelItem(job["item"])
             )
-        self.hide()
+        """Event: remove all jobs."""
+        self.autohide()
+
+    @pyqtSlot()
+    def on_removedone(self):
+        """Event: remove all jobs."""
+        for job in self.jobs():
+            if job["stat"] not in ("PEND", "RUN"):
+                self.widget().takeTopLevelItem(
+                    self.widget().indexOfTopLevelItem(job["item"])
+                )
+        self.autohide()
 
     @pyqtSlot()
     def on_open_viewer(self):
