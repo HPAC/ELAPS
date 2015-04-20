@@ -898,7 +898,7 @@ class PlayMat(QtGui.QMainWindow):
         reportpath = elaps.io.reportpath
         if self.last_filebase:
             reportpath = "%s.%s" % (self.last_filebase,
-                                    elaps.io.report_extension)
+                                    defines.report_extension)
         filename = QtGui.QFileDialog.getSaveFileName(
             self, "Generate Report", reportpath,
             "*." + defines.report_extension
@@ -951,8 +951,13 @@ class PlayMat(QtGui.QMainWindow):
             elaps.io.experimentpath,
             "*." + defines.experiment_extension
         )
-        if filename:
-            elaps.io.write_experiment(self.experiment, filename)
+        if not filename:
+            return
+        filebase = str(filename)
+        if filebase[-4:] == "." + defines.experiment_extension:
+            filebase = filebase[:-4]
+        filename = "%s.%s" % (filebase, defines.experiment_extension)
+        elaps.io.write_experiment(self.experiment, filename)
 
     @pyqtSlot()
     def on_viewer_start(self):
