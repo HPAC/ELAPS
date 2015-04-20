@@ -72,11 +72,9 @@ class PlayMat(QtGui.QMainWindow):
 
         # window
         self.pyqtConfigure(
-            windowTitle="ELAPS:PlayMat",
-            unifiedTitleAndToolBarOnMac=True
+            windowTitle="ELAPS:PlayMat", unifiedTitleAndToolBarOnMac=True
         )
-        self.setCorner(QtCore.Qt.TopRightCorner,
-                       QtCore.Qt.TopDockWidgetArea)
+        self.setCorner(QtCore.Qt.TopRightCorner, QtCore.Qt.TopDockWidgetArea)
         self.statusBar()
 
         # DEBUG: print experiment
@@ -93,14 +91,14 @@ class PlayMat(QtGui.QMainWindow):
 
             # file > submit
             self.UI_submitA = QtGui.QAction(
-                "Run", self,
-                shortcut=QtGui.QKeySequence("Ctrl+R"), triggered=self.on_submit
+                "Run", self, shortcut=QtGui.QKeySequence("Ctrl+R"),
+                triggered=self.on_submit
             )
+            fileM.addAction(self.UI_submitA)
 
             # submit last shortcut
             QtGui.QShortcut(
-                QtGui.QKeySequence("Ctrl+Shift+R"),
-                self, self.on_submit_last
+                QtGui.QKeySequence("Ctrl+Shift+R"), self, self.on_submit_last
             )
 
             # file
@@ -120,8 +118,8 @@ class PlayMat(QtGui.QMainWindow):
 
             # load report shortcut
             QtGui.QShortcut(
-                QtGui.QKeySequence("Ctrl+Shift+O"),
-                self, self.on_experiment_load_report
+                QtGui.QKeySequence("Ctrl+Shift+O"), self,
+                self.on_experiment_load_report
             )
 
             # fie > save
@@ -222,8 +220,7 @@ class PlayMat(QtGui.QMainWindow):
             ))
             self.UI_rangevar.setFixedWidth(32)
             self.UI_rangevals = QtGui.QLineEdit(
-                textChanged=self.on_rangevals_change,
-                minimumWidth=32
+                minimumWidth=32, textChanged=self.on_rangevals_change
             )
 
             rangeL = QtGui.QHBoxLayout(spacing=0)
@@ -266,8 +263,7 @@ class PlayMat(QtGui.QMainWindow):
             ))
             self.UI_sumrangevar.setFixedWidth(32)
             self.UI_sumrangevals = QtGui.QLineEdit(
-                textChanged=self.on_sumrangevals_change,
-                minimumWidth=32
+                minimumWidth=32, textChanged=self.on_sumrangevals_change
             )
 
             sumrangeL = QtGui.QHBoxLayout(spacing=0)
@@ -340,10 +336,14 @@ class PlayMat(QtGui.QMainWindow):
             self.setCentralWidget(self.UI_calls)
 
             # shortcuts
-            QtGui.QShortcut(QtGui.QKeySequence.New, self.UI_calls,
-                            activated=self.on_call_add)
-            QtGui.QShortcut(QtGui.QKeySequence.Close, self.UI_calls,
-                            activated=self.on_call_remove)
+            QtGui.QShortcut(
+                QtGui.QKeySequence.New, self.UI_calls,
+                activated=self.on_call_add
+            )
+            QtGui.QShortcut(
+                QtGui.QKeySequence.Close, self.UI_calls,
+                activated=self.on_call_remove
+            )
 
             # context menus
             self.UI_call_contextmenu = QtGui.QMenu()
@@ -895,8 +895,12 @@ class PlayMat(QtGui.QMainWindow):
                 self.on_submit_last()
                 return
 
+        reportpath = elaps.io.reportpath
+        if self.last_filebase:
+            reportpath = "%s.%s" % (self.last_filebase,
+                                    elaps.io.report_extension)
         filename = QtGui.QFileDialog.getSaveFileName(
-            self, "Generate Report", elaps.io.reportpath,
+            self, "Generate Report", reportpath,
             "*." + defines.report_extension
         )
         if not filename:
