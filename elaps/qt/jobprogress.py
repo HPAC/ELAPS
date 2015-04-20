@@ -64,6 +64,7 @@ class QJobProgress(QtGui.QDockWidget):
         """Add a job to track."""
         job = {
             "jobid": jobid,
+            "name": os.path.basename(filebase),
             "nresults": experiment.nresults(),
             "progress": 0,
             "filebase": filebase,
@@ -75,7 +76,7 @@ class QJobProgress(QtGui.QDockWidget):
 
         # item
         item = QtGui.QTreeWidgetItem(
-            (os.path.basename(filebase), "", "pending")
+            (job["name"], "", "pending")
         )
         self.widget().addTopLevelItem(item)
 
@@ -84,7 +85,7 @@ class QJobProgress(QtGui.QDockWidget):
 
         # progress bar
         job["progressbar"] = QtGui.QProgressBar(
-            maximum=job["nresults"]
+            maximum=job["nresults"], value=0
         )
         self.widget().setItemWidget(item, 1, job["progressbar"])
 
@@ -217,6 +218,16 @@ class QJobProgress(QtGui.QDockWidget):
     @pyqtSlot()
     def on_killall(self):
         """Event: kill all jobs."""
+        names = [repr(job["name"]) for job in self.jobs()
+                 if job["stat"] in ("PEND", "RUN")]
+        self.playmat.UI_dialog(
+            "question", "Confirm job termination",
+            "I will kill the following jobs: " + " ".join(names),
+            {"Ok": (self.on_killall_confirmed, ()), "Cancel": None}
+        )
+
+    def on_killall_confirmed(self):
+        """Event: kill all jobs confirmed."""
         for job in self.jobs():
             if job["stat"] in ("PEND", "RUN"):
                 job["experiment"]["sampler"]["backend"].kill(job["jobid"])
