@@ -1003,7 +1003,8 @@ class Experiment(dict):
         if self.range and self.range[0] == nthreads:
             nthreads = symbolic.max(self.range[1])
         backend = self.sampler["backend"]
-        return(backend.submit(script, nt=nthreads, jobname=filebase))
+        jobname = os.path.basename(filebase)
+        return(backend.submit(script, nt=nthreads, jobname=jobname))
 
     # primarily internal routines
     def range_vals(self):
