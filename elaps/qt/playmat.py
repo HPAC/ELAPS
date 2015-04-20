@@ -33,8 +33,8 @@ class PlayMat(QtGui.QMainWindow):
         self.samplers = elaps.io.load_all_samplers()
         self.docs = {}
         self.sigs = {}
-        self.jobs = {}
         self.papi_names = elaps.io.load_papinames()
+        self.last_filebase = None
 
         # set up UI
         self.UI_init()
@@ -96,7 +96,12 @@ class PlayMat(QtGui.QMainWindow):
                 "Run", self,
                 shortcut=QtGui.QKeySequence("Ctrl+R"), triggered=self.on_submit
             )
-            fileM.addAction(self.UI_submitA)
+
+            # submit last shortcut
+            QtGui.QShortcut(
+                QtGui.QKeySequence("Ctrl+Shift+R"),
+                self, self.on_submit_last
+            )
 
             # file
             fileM.addSeparator()
@@ -536,6 +541,15 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_submit_setenabled()
         self.UI_calls_set()
 
+    def experiment_submit(self, filebase):
+        """Submit a job."""
+        ex = self.experiment
+        backend = ex.sampler["backend"]
+        jobid = ex.submit(filebase)
+        self.last_filebase = filebase
+        self.UI_jobprogress.add_job(filebase, jobid, ex)
+        self.log("Submitted job for %r to %r." % (filebase, backend.name))
+
     # loaders
     def sig_get(self, routine):
         """(Try to) get the Signature for a routine."""
@@ -876,6 +890,11 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot()
     def on_submit(self):
         """Event: submit."""
+        if self.Qapp.keyboardModifiers() & QtCore.Qt.ShiftModifier:
+            if self.last_filebase:
+                self.on_submit_last()
+                return
+
         filename = QtGui.QFileDialog.getSaveFileName(
             self, "Generate Report", elaps.io.reportpath,
             "*." + defines.report_extension
@@ -885,12 +904,15 @@ class PlayMat(QtGui.QMainWindow):
         filebase = str(filename)
         if filebase[-4:] == "." + defines.report_extension:
             filebase = filebase[:-4]
+        self.experiment_submit(filebase)
 
-        ex = self.experiment
-        backend = ex.sampler["backend"]
-        jobid = ex.submit(filebase)
-        self.UI_jobprogress.add_job(filebase, jobid, ex)
-        self.log("Submitted job for %r to %r." % (str(filename), backend.name))
+    @pyqtSlot()
+    def on_submit_last(self):
+        """Event: resubmit last job."""
+        if not self.last_filebase:
+            self.on_submit()
+            return
+        self.experiment_submit(self.last_filebase)
 
     @pyqtSlot()
     def on_experiment_reset(self):
