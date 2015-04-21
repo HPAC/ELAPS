@@ -9,7 +9,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
 
-def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
+def plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
          ylabel=None, legendargs={}, figure=None):
     """Plot a series of data sets."""
     styles = defines.plot_styles.copy()
@@ -53,7 +53,7 @@ def plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
                           ylabel, legendargs, fig)
 
 
-def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
+def range_plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
                ylabel=None, legendargs={}, figure=None):
     """Plot with range on the x axis."""
     # min-max stat
@@ -69,9 +69,9 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     axes.set_xlabel(xlabel)
 
     # plots
-    colorpool = defines.colors[::-1]
+    colorpool = (colors + defines.colors)[::-1]
     for name, data in datas:
-        color = colors.get(name) or colorpool.pop()
+        color = colorpool.pop()
         for stat_name in stat_names:
             if stat_name == "all":
                 xs, ys = zip(*((key, value)
@@ -120,11 +120,11 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     axes.axis(limits)
 
     # legend
-    colorpool = defines.colors[::-1]
+    colorpool = (colors + defines.colors)[::-1]
     legend = []
     legend_style = styles["legend"].copy()
     for name, values in datas:
-        color = colors.get(name) or colorpool.pop()
+        color = colorpool.pop()
         legend_style["color"] = color
         legend.append((Line2D([], [], **legend_style), name))
     legend_stat_names = stat_names[:]
@@ -150,7 +150,7 @@ def range_plot(datas, stat_names=["med"], colors={}, styles={}, xlabel=None,
     return fig
 
 
-def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
+def bar_plot(datas, stat_names=["med"], colors=[], styles={}, ylabel=None,
              legendargs={}, figure=None):
     """Barplot."""
     # min-max stat
@@ -168,9 +168,9 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
     width = groupwidth / len(datas)
 
     # plots
-    colorpool = defines.colors[::-1]
+    colorpool = (colors + defines.colors)[::-1]
     for dataid, (name, data) in enumerate(datas):
-        color = colors.get(name) or colorpool.pop()
+        color = colorpool.pop()
         for statid, stat_name in enumerate(stat_names):
             left = statid + dataid * width
             if stat_name == "all":
@@ -207,10 +207,10 @@ def bar_plot(datas, stat_names=["med"], colors={}, styles={}, ylabel=None,
     axes.axis(limits)
 
     # legend
-    colorpool = defines.colors[::-1]
+    colorpool = (colors + defines.colors)[::-1]
     legend = []
     for name, data in datas:
-        color = colors.get(name) or colorpool.pop()
+        color = colorpool.pop()
         legend.append((Patch(color=color), name))
     if legend:
         args = {"loc": 0, "numpoints": 3}
