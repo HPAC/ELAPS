@@ -4,16 +4,23 @@ Sampler
 * (about command)
 
 
+Signature
+----------
+* uplo for syev sigs
+
+
 Experiment
 ----------
 * Test randomization
+* Hide output option
 
 * (Script Examples)
 * (How to handle PAPI counter conflicts?)
 
-Signatures
-----------
-* uplo for syev sigs
+
+Report
+------
+* Allow loading incomplete/corrupted reports
 
 
 PlayMat
@@ -29,8 +36,6 @@ PlayMat
 
 Viewer
 ------
-* custom legend names
-* order of barplots
 
 * (legend placement)
 * (hide unavailable metrics)
