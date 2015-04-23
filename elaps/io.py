@@ -206,15 +206,20 @@ def load_papinames():
 
 def load_report(filename, discard_first_repetitions=False):
     """Load a Report from a frile."""
-    errfile = "%s.%s" % (filename[:-4], error_extension)
-    if os.path.isfile(errfile) and os.path.getsize(errfile):
-        raise IOError("Roport %r generated errors." % filename)
+    def try_eval(expr, *args):
+        try:
+            return eval(expr, *args)
+        except:
+            return expr
     with open(filename) as fin:
         experiment = eval(fin.readline())
-        rawdata = [map(eval, line.split()) for line in fin.readlines()]
+        rawdata = [map(try_eval, line.split()) for line in fin.readlines()]
     report = Report(experiment, rawdata)
     if discard_first_repetitions:
         return report.discard_first_repetitions()
+    errfile = "%s.%s" % (filename[:-4], error_extension)
+    if os.path.isfile(errfile) and os.path.getsize(errfile):
+        report.error = True
     return report
 
 

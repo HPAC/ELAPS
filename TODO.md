@@ -18,11 +18,6 @@ Experiment
 * (How to handle PAPI counter conflicts?)
 
 
-Report
-------
-* Allow loading incomplete/corrupted reports
-
-
 PlayMat
 -------
 * disable sumrange_parallel if no omp support

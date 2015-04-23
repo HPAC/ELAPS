@@ -42,39 +42,44 @@ class Report(object):
 
     """ELAPS:Report, result of an ELAPS:Experiment."""
 
-    def __init__(self, experiment, rawdata=None, fulldata=None):
+    def __init__(self, experiment, rawdata):
         """Initialize report."""
         if not isinstance(experiment, Experiment):
             raise TypeError("first argument must be Experiment (not %s)" %
                             type(experiment).__name__)
         self.experiment = experiment
-        if rawdata is not None:
-            try:
-                len(rawdata)
-                isinstance(rawdata, Iterable)
-            except:
-                raise TypeError("rawdata argument must be iterable")
+        try:
             self.rawdata = tuple(map(tuple, rawdata))
-            self.fulldata_fromraw()
-        elif fulldata is not None:
-            self.rawdata = None
-            self.fulldata = fulldata
-        else:
-            raise TypeError("neither rawdata nor fulldata given")
+        except:
+            raise TypeError("invalid rawdata format")
+        self.fulldata_fromraw()
         self.data_fromfull()
 
     def fulldata_fromraw(self):
         """Initialize fulldata from rawdata."""
+        self.error = False
+        self.truncated = True
         ex = self.experiment
         rawdata = list(self.rawdata)
-        self.starttime = rawdata.pop(0)[0]
-        self.endtime = rawdata.pop()[0]
 
-        if len(rawdata) != self.experiment.nresults():
-            raise ValueError("Unexpected #results: %d (expecting %d)" %
-                             (len(rawdata), self.experiment.nresults()))
-        for i, rawentry in enumerate(rawdata):
-            len(rawentry)
+        def getints(data, count=1):
+            try:
+                values = data.pop(0)
+                if all(isinstance(value, int) for value in values):
+                    if len(values) == count:
+                        return tuple(values)
+                self.error = True
+                return getints(data, count)
+            except:
+                self.truncated = False
+                return None
+
+        self.starttime = None
+        values = getints(rawdata, 1)
+        if values is not None:
+            self.starttime = values[0]
+
+        nvalues = len(ex.papi_counters) + 1
 
         # full structured data
         range_data = {}
@@ -82,31 +87,45 @@ class Report(object):
             # discard randomization results
             if ex.range_randomize_data:
                 for name in ex.data:
-                    rawdata.pop(0)
+                    getints(data, 1)
 
             # results for each repetition
             rep_data = []
             for rep in range(ex.nreps):
                 if ex.sumrange_parallel:
                     # only one result per repetition
-                    rep_data.append(tuple(rawdata.pop(0)))
+                    values = getints(rawdata, nvalues)
+                    if values:
+                        rep_data.append(values)
                     continue
                 # results for each sumrange iteration
                 sumrange_data = {}
                 for sumrange_val in ex.sumrange_vals(range_val):
                     if ex.calls_parallel:
                         # only one result per sumrange
-                        sumrange_data[sumrange_val] = tuple(rawdata.pop(0))
+                        values = getints(rawdata, nvalues)
+                        if values:
+                            sumrange_data[sumrange_val] = values
                         continue
                     # results for each call
                     call_data = []
                     for call in ex.calls:
                         # one result per call
-                        call_data.append(rawdata.pop(0))
-                    sumrange_data[sumrange_val] = tuple(call_data)
-                rep_data.append(sumrange_data)
-            range_data[range_val] = tuple(rep_data)
+                        values = getints(rawdata, nvalues)
+                        if values:
+                            call_data.append(values)
+                    if call_data:
+                        sumrange_data[sumrange_val] = tuple(call_data)
+                if sumrange_data:
+                    rep_data.append(sumrange_data)
+            if rep_data:
+                range_data[range_val] = tuple(rep_data)
         self.fulldata = range_data
+
+        self.endtime = None
+        values = getints(rawdata, 1)
+        if values is not None:
+            self.endtime = values[0]
 
     def data_fromfull(self):
         """Initialize data from fulldata."""
@@ -115,7 +134,12 @@ class Report(object):
         # reduced data
         range_data = {}
         for range_val in ex.range_vals():
-            rep_fulldata = self.fulldata[range_val]
+
+            if range_val not in self.fulldata:
+                # missing full range_val data
+                continue
+            rep_fdata = self.fulldata[range_val]
+
             # results for each repetition
             # complextiy evaluation
             flops = len(ex.calls) * [0]
@@ -140,30 +164,27 @@ class Report(object):
 
             # get repetition data
             data_keys = map(intern, ["rdtsc"] + ex.papi_counters)
+            nvalues = len(data_keys)
             rep_data = []
-            for rep, sumrange_fulldata in enumerate(rep_fulldata):
+            for rep, sumrange_fdata in enumerate(rep_fdata):
                 if ex.sumrange_parallel:
                     # only one result per repetition
-                    tuple_data = {None: sumrange_fulldata}
+                    tuple_data = {None: sumrange_fdata}
                 elif ex.calls_parallel:
                     # only one result per sumrange iteration
-                    sumrange_data = (1 + len(ex.papi_counters)) * [0]
-                    for sumrange_val in ex.sumrange_vals(range_val):
-                        calls_fulldata = sumrange_fulldata[sumrange_val]
-                        for id_ in range(1 + len(ex.papi_counters)):
-                            sumrange_data[id_] += calls_fulldata[id_]
+                    sumrange_data = nvalues * [0]
+                    for sumrange_val, calls_fdata in sumrange_fdata.items():
+                        for id_ in range(nvalues):
+                            sumrange_data[id_] += calls_fdata[id_]
                     tuple_data = {None: tuple(sumrange_data)}
                 else:
                     # one result for each call
-                    sumrange_data = [(1 + len(ex.papi_counters)) * [0]
-                                     for call in ex.calls]
-                    for sumrange_val in ex.sumrange_vals(range_val):
-                        calls_fulldata = sumrange_fulldata[sumrange_val]
-                        for callid in range(len(ex.calls)):
-                            call_fulldata = calls_fulldata[callid]
-                            for id_ in range(1 + len(ex.papi_counters)):
+                    sumrange_data = [nvalues * [0] for call in ex.calls]
+                    for sumrange_val, calls_fdata in sumrange_fdata.items():
+                        for callid, call_fdata in enumerate(calls_fdata):
+                            for id_ in range(nvalues):
                                 sumrange_data[callid][id_] +=\
-                                    call_fulldata[id_]
+                                    call_fdata[id_]
                     tuple_data = dict(
                         (callid, tuple(sumrange_data[callid]))
                         for callid in range(len(ex.calls))
@@ -171,7 +192,7 @@ class Report(object):
                     tuple_data[None] = tuple(
                         sum(sumrange_data[callid][id_]
                             for callid in range(len(ex.calls)))
-                        for id_ in range(1 + len(ex.papi_counters))
+                        for id_ in range(nvalues)
                     )
                 dict_data = {}
                 for callid in tuple_data:
@@ -190,6 +211,13 @@ class Report(object):
         """Python parsable representation."""
         return "%s(%r, %r)" % (type(self).__name__, self.experiment,
                                self.rawdata)
+
+    def copy(self):
+        """Generate a copy."""
+        report = Report(self.experiment.copy(), deepcopy(self.rawdata))
+        report.fulldata = deepcopy(self.fulldata)
+        report.data = deepcopy(self.data)
+        return report
 
     def apply_metric(self, metric, callid=-1):
         """Evaluate data with respect to a metric."""
@@ -228,11 +256,13 @@ class Report(object):
 
     def discard_first_repetitions(self):
         """Discard the first repetitions."""
-        fulldata = deepcopy(self.fulldata)
+        report = self.copy()
+        fulldata = report.fulldata
         nreps = self.experiment.nreps
         if nreps > 1:
             for range_val in fulldata:
                 if len(fulldata[range_val]) == nreps:
                     # do not take away more than 1
                     fulldata[range_val] = fulldata[range_val][1:]
-        return Report(self.experiment, fulldata=fulldata)
+        report.data_fromfull()
+        return report
