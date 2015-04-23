@@ -27,6 +27,7 @@ PlayMat
 -------
 * disable sumrange_parallel if no omp support
 * unnecessary "incompatible sizes" alert
+* load docs (compress?)
 
 * (script header)
 * (status tips)
