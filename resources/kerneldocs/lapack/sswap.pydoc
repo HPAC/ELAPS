@@ -1,0 +1,1 @@
+(('sswap', 'interchanges two vectors.\nuses unrolled loops for increments equal to 1.'),)

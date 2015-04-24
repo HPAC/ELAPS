@@ -1,0 +1,1 @@
+(('ilauplo', 'This subroutine translated from a character string specifying a\nupper- or lower-triangular matrix to the relevant BLAST-specified\ninteger constant.\n\nILAUPLO returns an INTEGER.  If ILAUPLO < 0, then the input is not\na character indicating an upper- or lower-triangular matrix.\nOtherwise ILAUPLO returns the constant value corresponding to UPLO.'),)

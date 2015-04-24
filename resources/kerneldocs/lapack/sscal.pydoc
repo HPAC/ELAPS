@@ -1,0 +1,1 @@
+(('sscal', 'scales a vector by a constant.\nuses unrolled loops for increment equal to 1.'),)

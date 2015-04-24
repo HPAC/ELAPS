@@ -1,0 +1,1 @@
+(('iladiag', 'This subroutine translated from a character string specifying if a\nmatrix has unit diagonal or not to the relevant BLAST-specified\ninteger constant.\n\nILADIAG returns an INTEGER.  If ILADIAG < 0, then the input is not a\ncharacter indicating a unit or non-unit diagonal.  Otherwise ILADIAG\nreturns the constant value corresponding to DIAG.'),)

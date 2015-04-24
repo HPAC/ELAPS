@@ -1,0 +1,1 @@
+(('lsame', 'LSAME returns .TRUE. if CA is the same letter as CB regardless of\ncase.'), ('CA', 'CA is CHARACTER*1'), ('CB', 'CB is CHARACTER*1\nCA and CB specify the single characters to be compared.'))

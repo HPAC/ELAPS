@@ -1,0 +1,1 @@
+(('ilaclr', 'ILACLR scans A for its last non-zero row.'), ('M', 'M is INTEGER\nThe number of rows of the matrix A.'), ('N', 'N is INTEGER\nThe number of columns of the matrix A.'), ('A', 'A is array, dimension (LDA,N)\nThe m by n matrix A.'), ('LDA', 'LDA is INTEGER\nThe leading dimension of the array A. LDA >= max(1,M).'))

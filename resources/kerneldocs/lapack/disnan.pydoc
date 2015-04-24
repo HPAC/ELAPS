@@ -1,0 +1,1 @@
+(('disnan', 'DISNAN returns .TRUE. if its argument is NaN, and .FALSE.\notherwise.  To be replaced by the Fortran 2003 intrinsic in the\nfuture.'), ('DIN', 'DIN is DOUBLE PRECISION\nInput to test for NaN.'))

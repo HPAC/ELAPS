@@ -1,0 +1,1 @@
+(('sisnan', 'SISNAN returns .TRUE. if its argument is NaN, and .FALSE.\notherwise.  To be replaced by the Fortran 2003 intrinsic in the\nfuture.'), ('SIN', 'SIN is REAL\nInput to test for NaN.'))

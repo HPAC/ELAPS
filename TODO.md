@@ -22,7 +22,6 @@ PlayMat
 -------
 * disable sumrange_parallel if no omp support
 * unnecessary "incompatible sizes" alert
-* load docs (compress?)
 
 * (script header)
 * (status tips)
@@ -32,6 +31,7 @@ PlayMat
 
 Viewer
 ------
+* periodical reload of truncated reports
 
 * (legend placement)
 * (hide unavailable metrics)

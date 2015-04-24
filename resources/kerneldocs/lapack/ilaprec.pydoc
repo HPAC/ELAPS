@@ -1,0 +1,1 @@
+(('ilaprec', 'This subroutine translated from a character string specifying an\nintermediate precision to the relevant BLAST-specified integer\nconstant.\n\nILAPREC returns an INTEGER.  If ILAPREC < 0, then the input is not a\ncharacter indicating a supported intermediate precision.  Otherwise\nILAPREC returns the constant value corresponding to PREC.'),)

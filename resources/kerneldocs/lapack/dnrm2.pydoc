@@ -1,0 +1,1 @@
+(('dnrm2', "DNRM2 returns the euclidean norm of a vector via the function\nname, so that\n\n   DNRM2 := sqrt( x'*x )"),)

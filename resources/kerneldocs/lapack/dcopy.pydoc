@@ -1,0 +1,1 @@
+(('dcopy', 'DCOPY copies a vector, x, to a vector, y.\nuses unrolled loops for increments equal to one.'),)

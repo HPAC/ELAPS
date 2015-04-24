@@ -1,0 +1,1 @@
+(('dlapy2', 'DLAPY2 returns sqrt(x**2+y**2), taking care not to cause unnecessary\noverflow.'), ('X', 'X is DOUBLE PRECISION'), ('Y', 'Y is DOUBLE PRECISION\nX and Y specify the values x and y.'))

@@ -1,0 +1,1 @@
+(('clacgv', 'CLACGV conjugates a complex vector of length N.'), ('N', 'N is INTEGER\nThe length of the vector X.  N >= 0.'), ('X', 'X is COMPLEX array, dimension\n               (1+(N-1)*abs(INCX))\nOn entry, the vector of length N to be conjugated.\nOn exit, X is overwritten with conjg(X).'), ('INCX', 'INCX is INTEGER\nThe spacing between successive elements of X.'))

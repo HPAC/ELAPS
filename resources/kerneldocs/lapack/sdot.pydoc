@@ -1,0 +1,1 @@
+(('sdot', 'SDOT forms the dot product of two vectors.\nuses unrolled loops for increments equal to one.'),)

@@ -569,7 +569,7 @@ class PlayMat(QtGui.QMainWindow):
         """(Try to) get the documentation for a routine."""
         if routine not in self.docs:
             try:
-                self.docs[routine] = elaps.io.load_docs(routine)
+                self.docs[routine] = elaps.io.load_doc(routine)
                 self.log("Loaded documentation for %r." % routine)
             except:
                 self.docs[routine] = None

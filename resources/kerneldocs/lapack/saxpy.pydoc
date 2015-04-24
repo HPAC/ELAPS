@@ -1,0 +1,1 @@
+(('saxpy', 'SAXPY constant times a vector plus a vector.\nuses unrolled loops for increments equal to one.'),)

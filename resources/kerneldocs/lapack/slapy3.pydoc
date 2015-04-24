@@ -1,0 +1,1 @@
+(('slapy3', 'SLAPY3 returns sqrt(x**2+y**2+z**2), taking care not to cause\nunnecessary overflow.'), ('X', 'X is REAL'), ('Y', 'Y is REAL'), ('Z', 'Z is REAL\nX, Y and Z specify the values x, y and z.'))

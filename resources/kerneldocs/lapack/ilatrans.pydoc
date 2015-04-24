@@ -1,0 +1,1 @@
+(('ilatrans', 'This subroutine translates from a character string specifying a\ntransposition operation to the relevant BLAST-specified integer\nconstant.\n\nILATRANS returns an INTEGER.  If ILATRANS < 0, then the input is not\na character indicating a transposition operator.  Otherwise ILATRANS\nreturns the constant value corresponding to TRANS.'),)

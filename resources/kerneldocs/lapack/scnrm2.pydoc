@@ -1,0 +1,1 @@
+(('scnrm2', 'SCNRM2 returns the euclidean norm of a vector via the function\nname, so that\n\n   SCNRM2 := sqrt( x**H*x )'),)
