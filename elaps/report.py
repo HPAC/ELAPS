@@ -58,21 +58,24 @@ class Report(object):
     def fulldata_fromraw(self):
         """Initialize fulldata from rawdata."""
         self.error = False
-        self.truncated = True
+        self.truncated = False
         ex = self.experiment
         rawdata = list(self.rawdata)
 
         def getints(data, count=1):
             try:
                 values = data.pop(0)
+            except:
+                self.truncated = True
+                return None
+            try:
                 if all(isinstance(value, int) for value in values):
                     if len(values) == count:
                         return tuple(values)
-                self.error = True
-                return getints(data, count)
             except:
-                self.truncated = False
-                return None
+                pass
+            self.error = True
+            return getints(data, count)
 
         self.starttime = None
         values = getints(rawdata, 1)

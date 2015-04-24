@@ -43,8 +43,9 @@ class TestReport(unittest.TestCase):
         self.assertEqual(report.data, {None: ({None: {"rdtsc": val},
                                                0: {"rdtsc": val}},)})
 
-        rawdata = [[0], [1], [2], [3]]
-        self.assertRaises(ValueError, Report, self.ex, rawdata)
+        rawdata = [[0], [1]]
+        report = Report(self.ex, rawdata)
+        self.assertTrue(report.truncated)
 
     def test_range(self):
         """Test for Experiment with range."""
@@ -205,7 +206,7 @@ class TestReport(unittest.TestCase):
 
         report2 = report.discard_first_repetitions()
         self.assertEqual(report2.experiment, self.ex)
-        self.assertEqual(report2.rawdata, None)
+        self.assertEqual(report2.rawdata, report.rawdata)
         self.assertEqual(len(report2.fulldata[None]), nreps - 1)
 
 if __name__ == "__main__":
