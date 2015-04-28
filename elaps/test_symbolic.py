@@ -192,7 +192,8 @@ class TestLog(TestSymbolic):
 
         self.assertEqual(log(self.A ** self.B)(), (self.B * log(self.A))())
 
-        self.assertEqual(Log(self.n1, self.n2)(), math.log(self.n1, self.n2))
+        self.assertEqual(Log(self.n1, self.n2 + 1)(),
+                         math.log(self.n1, self.n2 + 1))
 
 
 class TestFloor(TestSymbolic):
