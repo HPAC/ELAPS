@@ -146,7 +146,7 @@ class Experiment(dict):
                     "backend_suffix", "backend_footer", "threads_per_core",
                     "ncores", "nt_max", "exe", "kernels", "omp_enabled",
                     "papi_enabled"):
-            if key not in self.sampler:
+            if key not in sampler:
                 raise KeyError("Sampler is missing %r" % key)
 
         # PAPI
@@ -169,8 +169,8 @@ class Experiment(dict):
             if len(self.papi_counters):
                 if not force:
                     raise ValueError("Sampler doesn't support PAPI")
-                papi_counters = []
-        self.papi_counters = pap_counters
+            papi_counters = []
+        self.papi_counters = papi_counters
 
         # thread count
         nthreads = self.nthreads
@@ -290,14 +290,14 @@ class Experiment(dict):
                 if not force:
                     raise ValueError("Invalid range variable: %r" % range_var)
                 range_var = "i"
-            range_var = symbolic.Range(range_var)
+            range_var = symbolic.Symbol(range_var)
         # check type
         if not isinstance(range_var, symbolic.Symbol):
             if not force:
                 raise ValueError("Invalid range variable: %r" % range_var)
             range_var = symbolic.Symbol("i")
         # check conflict with sumrange
-        if self.sumrange and range_var == self.rumrange[0]:
+        if self.sumrange and range_var == self.sumrange[0]:
             if not force:
                 raise ValueError(
                     "Cannot use same variable for range and sumrange"
@@ -321,16 +321,28 @@ class Experiment(dict):
         """Set range values."""
         # parse string
         if isinstance(range_vals, str):
+            if not range_vals:
+                if not force:
+                    raise ValueError("Empty range")
+                range_vals = "1"
             range_vals = symbolic.Range(range_vals)
+
         # check for type
         if not isinstance(range_vals, (list, tuple, symbolic.Range)):
             if not force:
                 raise ValueError("Invalid range: %r" % range_vals)
             range_vals = symbolic.Range("1")
+
         # check for unknown symbols
         if symbolic.findsymbols(range_vals):
             if not force:
                 raise ValueError("Unknown symbols in range: %s" % range_vals)
+            range_vals = symbolic.Range("1")
+
+        # check for length
+        if len(range_vals) == 0:
+            if not force:
+                raise ValueError("Empty range: %s" % range_vals)
             range_vals = symbolic.Range("1")
 
         if check_only:
@@ -340,7 +352,7 @@ class Experiment(dict):
         if not self.range:
             if not force:
                 raise ValueError("Range is not enabled.")
-            self.set_range_var("i")
+            self.set_range_var("i", force=True)
 
         # set new value
         self.range[1] = range_vals
@@ -357,7 +369,6 @@ class Experiment(dict):
                 self.substitute(**self.ranges_valdict(range_val))
                 self.range = None
                 self.update_data()
-            self.range = None
             return
 
         range_var, range_vals = range_
@@ -376,7 +387,22 @@ class Experiment(dict):
 
     def set_nreps(self, nreps):
         """Set repetition count."""
-        if not isinstance(nreps, int) or nreps <= 0:
+        # parse string
+        if isinstance(nreps, str):
+            if not nreps:
+                if not force:
+                    raise ValueError("Invalid repetition count: %r" % int)
+                nreps = "1"
+            nreps = int(nreps)
+
+        # check type
+        if not isinstance(nreps, int):
+            if not force:
+                raise ValueError("Invalid repetition count: %r" % int)
+            nreps = 1
+
+        # ensure > 0
+        if nreps <= 0:
             if not force:
                 raise ValueError("Invalid repetition count: %r" % int)
             nreps = 1
@@ -388,53 +414,81 @@ class Experiment(dict):
         # turn str to symbol
         if isinstance(sumrange_var, str):
             if not sumrange_var:
-                raise ValueError("Invalid range variable: %r" % sumrange_var)
-            sumrange_var = symbolic.Range(sumrange_var)
+                if not force:
+                    raise ValueError("Invalid range variable: %r" %
+                                     sumrange_var)
+                sumrange_var = "j"
+            sumrange_var = symbolic.Symbol(sumrange_var)
+
         # check type
         if not isinstance(sumrange_var, symbolic.Symbol):
-            raise ValueError("Invalid range variable: %r" % sumrange_var)
+            if not force:
+                raise ValueError("Invalid range variable: %r" % sumrange_var)
+            range_var = symbolic.Symbol("j")
+
         # check conflict with range
         if self.range and sumrange_var == self.range[0]:
-            raise ValueError("Cannot use same variable for range and sumrange")
+            if not force:
+                raise ValueError(
+                    "Cannot use same variable for range and sumrange"
+                )
+            range_var = symbolic.Symbol("i" if sumrange_var == "j" else "i")
 
         if check_only:
             return
 
         # range must exist to actually set it
         if not self.sumrange:
-            raise ValueError("Sumrange is not enabled.")
-
-        # set new value
-        self.substitute(**self.ranges_valdict(None, sumrange_var))
-        self.sumrange[0] = sumrange_var
+            if not force:
+                raise ValueError("Sumrange is not enabled.")
+            self.sumrange = [sumrange_var, symbolic.Range("1")]
+        else:
+            # set new value
+            self.substitute(**self.ranges_valdict(None, sumrange_var))
+            self.sumrange[0] = sumrange_var
 
     def set_sumrange_vals(self, sumrange_vals, force=False, check_only=False):
         """Set sumrange values."""
         # parse string
         if isinstance(sumrange_vals, str):
+            if not sumrange_vals:
+                if not force:
+                    raise ValueError("Empty range")
+                sumrange_vals = "1"
             sumrange_vals = symbolic.Range(
                 sumrange_vals, **self.ranges_vardict(dosumrange=False)
             )
+
         # check for type
         if not isinstance(sumrange_vals, (list, tuple, symbolic.Range)):
-            raise ValueError("Invalid range: %r" % sumrange_vals)
+            if not force:
+                raise ValueError("Invalid range: %r" % sumrange_vals)
+            sumrange_vals = symbolic.Range("1")
+
         # check for unknown symbols
         symbols = symbolic.findsymbols(sumrange_vals)
         if symbols:
-            if range:
-                if len(symbols) > 1 or range[0] not in symbols:
+            if (not self.range or len(symbols) > 1 or
+                    (len(symbols) == 1 and self.range[0] not in symbols)):
+                if not force:
                     raise ValueError("Unknown symbols in range: %s" %
                                      sumrange_vals)
-            else:
-                raise ValueError("Unknown symbols in range: %s" %
-                                 sumrange_vals)
+                sumrange_vals = symbolic.Range("1")
+        else:
+            # check for length
+            if len(sumrange_vals) == 0:
+                if not force:
+                    raise ValueError("Empty range: %s" % sumrange_vals)
+                sumrange_vals = symbolic.Range("1")
 
         if check_only:
             return
 
         # sumrange must exist to actually set it
         if not self.sumrange:
-            raise ValueError("Sumrange is not enabled.")
+            if not force:
+                raise ValueError("Sumrange is not enabled.")
+            self.set_sumrange_var("j", force=True)
 
         # set new value
         self.sumrange[1] = sumrange_vals
@@ -449,16 +503,15 @@ class Experiment(dict):
                     data["vary"]["with"].discard(self.sumrange[0])
                 sumrange_val = self.sumrange_vals(self.range_vals()[-1])[-1]
                 self.substitute(**self.ranges_valdict(None, sumrange_val))
-                self.range = None
+                self.sumrange = None
                 self.update_data()
-            self.sumrange = None
             return
 
-        sumrange_var, sumrange_val = sumrange
+        sumrange_var, sumrange_vals = sumrange
 
         # checks
         self.set_sumrange_var(sumrange_var, force=force, check_only=True)
-        self.set_sumrnage_vals(sumrange_vals, force=force, check_only=True)
+        self.set_sumrange_vals(sumrange_vals, force=force, check_only=True)
 
         if check_only:
             return
@@ -466,12 +519,12 @@ class Experiment(dict):
         # set new values
         self.sumrange = [sumrange_var, sumrange_vals]
         self.set_sumrange_var(sumrange_var, force=force)
-        self.set_sumrnage_vals(sumrange_vals, force=force)
+        self.set_sumrange_vals(sumrange_vals, force=force)
 
     def set_sumrange_parallel(self, sumrange_parallel, force=False,
                               check_only=False):
         """Set the parllalel sumrange option."""
-        sumrange_parallel = bool(sumrnage_parallel)
+        sumrange_parallel = bool(sumrange_parallel)
         if sumrange_parallel and not self.sampler["omp_enabled"]:
             if not force:
                 raise ValueError("Sampler doesn't support OpenMP")

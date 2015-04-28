@@ -3,7 +3,7 @@
 from __future__ import division, print_function
 
 from elaps import signature
-from dataarg import QDataArg
+from elaps.qt import QDataArg, widget_setinvalid
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import pyqtSlot
@@ -97,10 +97,7 @@ class QCall(QtGui.QListWidgetItem):
 
             # set validity
             valid = self.playmat.experiment.check_arg_valid(self.callid, argid)
-            UI_arg.setProperty("invalid", not valid)
-            UI_arg.style().unpolish(UI_arg)
-            UI_arg.style().polish(UI_arg)
-            UI_arg.update()
+            widget_setinvalid(UI_arg, not valid)
 
             # apply hideargs
             if isinstance(self.call, signature.Call):
