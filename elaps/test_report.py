@@ -164,11 +164,12 @@ class TestReport(unittest.TestCase):
         lenrange = random.randint(1, 10)
         lensumrange = random.randint(1, 10)
 
-        self.ex.range = ["i", range(lenrange)]
-        self.ex.sumrange = ["j", range(lensumrange)]
+        i = symbolic.Symbol("i")
+        j = symbolic.Symbol("j")
+        self.ex.range = [i, range(lenrange)]
+        self.ex.sumrange = [j, range(lensumrange)]
         sig = Signature("name", Dim("m"), Dim("n"), complexity="m * n")
-        self.ex.call = sig(self.ex.ranges_parse("i"),
-                           self.ex.ranges_parse("j"))
+        self.ex.call = sig(i, j)
         rawdata = [[0]] + lenrange * lensumrange * [[0]] + [[1]]
 
         report = Report(self.ex, rawdata)

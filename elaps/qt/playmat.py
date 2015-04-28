@@ -64,7 +64,6 @@ class PlayMat(QtGui.QMainWindow):
                 pass
         if not self.experiment:
             self.experiment_reset()
-        self.experiment_back = self.experiment.copy()
         self.experiment.update_data()
 
         self.UI_setall()
@@ -486,10 +485,10 @@ class PlayMat(QtGui.QMainWindow):
         """Insert own/new objects into loaded experiment."""
         # own Sampler
         if ex.sampler is None or ex.sampler["name"] not in self.samplers:
-            ex.sampler = self.samplers[min(self.samplers)]
+            sampler = self.samplers[min(self.samplers)]
         else:
-            ex.sampler = self.samplers[ex.sampler["name"]]
-        ex.apply_sampler_restrictions()
+            sampler = self.samplers[ex.sampler["name"]]
+        ex.set_sampler(sampler, force=True)
 
         # own Signatures
         newcalls = []
@@ -728,44 +727,39 @@ class PlayMat(QtGui.QMainWindow):
     def UI_range_set(self):
         """Set UI element: range."""
         self.UI_setting += 1
-        userange = bool(self.experiment.range)
+        ex = self.experiment
+        userange = bool(ex.range)
         self.UI_userange.setChecked(userange)
         self.UI_rangeW.setEnabled(userange)
-        if self.experiment.range:
-            range_ = self.experiment.range
-        elif self.experiment_back.range:
-            range_ = self.experiment_back.range
-        else:
-            range_ = ["", ""]
-        if range_[0] is None:
-            range_[0] = ""
-        self.UI_rangevar.setText(range_[0])
-        self.UI_rangevals.setText(str(range_[1]))
+        if userange:
+            self.UI_rangevar.setText(str(ex.range[0]))
+            self.UI_rangevar.setProperty("invalid", False)
+            self.UI_rangevals.setText(str(ex.range[1]))
+            self.UI_rangevals.setProperty("invalid", False)
         self.UI_setting -= 1
 
     def UI_nreps_set(self):
         """Set UI element: nreps."""
         self.UI_setting += 1
         self.UI_nreps.setText(str(self.experiment.nreps))
+        self.UI_nreps.setProperty("invalid", False)
         self.UI_setting -= 1
 
     def UI_sumrange_set(self):
         """Set UI element: sumrange."""
         self.UI_setting += 1
-        usesumrange = bool(self.experiment.sumrange)
+        ex = self.experiment
+        usesumrange = bool(ex.sumrange)
         self.UI_usesumrange.setChecked(usesumrange)
         self.UI_sumrangeW.setEnabled(usesumrange)
         self.UI_sumrange_parallel.setCurrentIndex(
-            1 if self.experiment.sumrange_parallel else 0
+            1 if ex.sumrange_parallel else 0
         )
         if usesumrange:
-            sumrange = self.experiment.sumrange
-        elif self.experiment_back.sumrange:
-            sumrange = self.experiment_back.sumrange
-        else:
-            sumrange = ["", ""]
-        self.UI_sumrangevar.setText(sumrange[0])
-        self.UI_sumrangevals.setText(str(sumrange[1]))
+            self.UI_sumrangevar.setText(str(ex.sumrange[0]))
+            self.UI_sumrangevar.setProperty("invalid", False)
+            self.UI_sumrangevals.setText(str(ex.sumrange[1]))
+            self.UI_sumrangevar.setProperty("invalid", False)
         self.UI_setting -= 1
 
     def UI_calls_parallel_set(self):
@@ -851,6 +845,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_submit.setEnabled(enabled)
         self.UI_submit.setToolTip(tooltip)
 
+    # TODO: look at this
     def UI_ranges_setvalid(self):
         """Set the "invlaid" property for the ranges."""
         ex = self.experiment
@@ -990,25 +985,28 @@ class PlayMat(QtGui.QMainWindow):
         self.experiment.note = self.UI_note.toPlainText()
 
     @pyqtSlot(str)
-    def on_sampler_change(self, value):
+    def on_sampler_change(self, value, force=False):
         """Event: change sampler."""
         if self.UI_setting:
             return
-        value = str(value)
-        self.experiment.sampler = self.samplers[value]
-        # TODO: warn
-        self.experiment.apply_sampler_restrictions()
-        self.UI_setall()
+        try:
+            sampler = self.samplers[str(value)]
+            self.experiment.set_sampler(samplers, force=force)
+            self.UI_setall()
+        except Exception as e:
+            self.UI_dialog(
+                "question", "Incompatible sampler",
+                "Sampler %r is not compatible with the current experiment\n"
+                "(%s)\nAdjust the experiment?",
+                {"Ok": (self.on_sampler_change, (value, True)), "Cancel": None}
+            )
 
     @pyqtSlot(str)
     def on_nthreads_change(self, value):
         """Event: change #threads."""
         if self.UI_setting:
             return
-        value = str(value)
-        if not self.experiment.range or value != self.experiment.range[0]:
-            value = int(value)
-        self.experiment.nthreads = value
+        self.experiment.set_nthreads(str(value), force=True)
 
     @pyqtSlot(bool)
     def on_userange_toggle(self, checked):
@@ -1017,38 +1015,30 @@ class PlayMat(QtGui.QMainWindow):
             return
         ex = self.experiment
         if checked:
-            if self.experiment_back.range:
-                var, range_ = self.experiment_back.range
-            else:
-                var, range_ = "i", symbolic.Range((1, 1, 1,))
-            if ex.sumrange and ex.sumrange[0] == var:
-                var = "j" if ex.sumrange[0] == "i" else "i"
-            ex.range = [var, range_]
+            range_var = str(self.UI_rangevar.text())
+            range_vals = str(self.UI_rangevals.text())
+            ex.set_range((range_var, range_vals), force=True)
         else:
-            self.experiment_back.range = ex.range
-            ex.substitute(**{ex.range[0]: max(ex.range[1])})
-            ex.range = None
-            ex.update_data()
-            self.UI_submit_setenabled()
-            self.UI_calls_set()
-        self.UI_nthreads_set()
+            ex.set_range(None)
+            self.UI_nthreads_set()
         self.UI_range_set()
         self.UI_calls_set()
+        self.UI_submit_setenabled()
 
     @pyqtSlot(str)
     def on_rangevar_change(self, value):
         """Event: change range variable."""
         if self.UI_setting:
             return
-        value = str(value)
-        ex = self.experiment
-        ex.substitute(**{ex.range[0]: symbolic.Symbol(value)})
-        ex.range[0] = value
-        ex.update_data()
-        self.UI_ranges_setvalid()
-        self.UI_nthreads_set()
-        self.UI_submit_setenabled()
-        self.UI_calls_set()
+        try:
+            self.experiment.set_range_var(str(value))
+            self.UI_rangevar.setProperty("invalid", False)
+            self.UI_nthreads_set()
+            self.UI_sumrange_set()
+            self.UI_calls_set()
+            self.UI_submit_setenabled()
+        except:
+            self.UI_rangevar.setProperty("invalid", True)
 
     @pyqtSlot(str)
     def on_rangevals_change(self, value):
@@ -1056,24 +1046,23 @@ class PlayMat(QtGui.QMainWindow):
         if self.UI_setting:
             return
         try:
-            self.experiment.range[1] = symbolic.Range(str(value))
+            self.experiment.set_range_vals(str(value))
+            self.UI_rangevals.setProperty("invalid", False)
+            self.experiment_infer_update_set()
         except:
-            self.experiment.range[1] = None
-        self.UI_ranges_setvalid()
-        self.experiment_infer_update_set()
+            self.UI_rangevals.setProperty("invalid", True)
 
     @pyqtSlot(str)
     def on_nreps_change(self, value):
         """Event: change #repetitions."""
         if self.UI_setting:
             return
-        value = str(value)
-        if value:
-            self.experiment.nreps = int(value)
-        else:
-            self.experiment.nreps = 0
-        self.UI_ranges_setvalid()
-        self.experiment_infer_update_set()
+        try:
+            self.experiemnt.set_nreps(str(value))
+            self.UI_nreps.setProperty("invalid", False)
+            self.experiment_infer_update_set()
+        except:
+            self.UI_nreps.setProperty("invalid", True)
 
     @pyqtSlot(bool)
     def on_usesumrange_toggle(self, checked):
@@ -1082,64 +1071,47 @@ class PlayMat(QtGui.QMainWindow):
             return
         ex = self.experiment
         if checked:
-            if self.experiment_back.sumrange:
-                var, range_ = self.experiment_back.sumrange
-            else:
-                var, range_ = "j", symbolic.Range((1, 1, 1))
-            if ex.range and ex.range[0] == var:
-                var = "j" if ex.range[0] == "i" else "i"
-            ex.sumrange = [var, range_]
+            sumrange_var = str(self.UI_sumrangevar.text())
+            sumrange_vals = str(self.UI_sumrangevals.text())
+            ex.set_sumrange((sumrange_var, sumrange_vals), force=True)
         else:
-            for data in ex.data.values():
-                data["vary"]["with"].discard(ex.sumrange[0])
-            self.experiment_back.sumrange = ex.sumrange
-            sumrange_vals = ex.sumrange[1]
-            if ex.range:
-                sumrange_vals = symbolic.simplify(
-                    sumrange_vals, **{ex.range[0]: max(ex.range[1])}
-                )
-            ex.substitute(**{ex.sumrange[0]: sumrange_vals})
-            ex.sumrange = None
+            ex.set_sumrange(None)
         self.UI_sumrange_set()
         self.UI_calls_set()
+        self.UI_submit_setenabled()
 
     @pyqtSlot(int)
     def on_sumrange_parallel_change(self, value):
         """Event: change if sumrange is in parallel."""
         if self.UI_setting:
             return
-        value = bool(value)
-        self.experiment.sumrange_parallel = value
+        self.experiment.set_sumrange_parallel(bool(value))
+        self.UI_sumrange_set()
 
     @pyqtSlot(str)
     def on_sumrangevar_change(self, value):
         """Event: change sumrange variable."""
         if self.UI_setting:
             return
-        value = str(value)
-        ex = self.experiment
-        ex.substitute(**{ex.sumrange[0]: symbolic.Symbol(value)})
-        ex.sumrange[0] = value
-        ex.update_data()
-        self.UI_ranges_setvalid()
-        self.UI_submit_setenabled()
-        self.UI_calls_set()
+        try:
+            self.experiment.set_sumrange_var(str(value))
+            self.UI_sumrangevar.setProperty("invalid", False)
+            self.UI_calls_set()
+            self.UI_submit_setenabled()
+        except:
+            self.UI_sumrangevar.setProperty("invalid", True)
 
     @pyqtSlot(str)
     def on_sumrangevals_change(self, value):
         """Event: change sumrange."""
         if self.UI_setting:
             return
-        ex = self.experiment
-        symdict = {}
-        range_ = ex.range
-        if range_:
-            symdict[range_[0]] = symbolic.Symbol(range_[0])
         try:
-            ex.sumrange[1] = symbolic.Range(str(value), **symdict)
+            self.experiment.set_sumrange_vals(str(value))
+            self.UI_rangevals.setProperty("invalid", False)
+            self.experiment_infer_update_set()
         except:
-            ex.sumrange[1] = None
-        self.UI_ranges_setvalid()
+            self.UI_rangevals.setProperty("invalid", True)
         self.experiment_infer_update_set()
 
     @pyqtSlot(bool)
@@ -1147,7 +1119,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: change if calls are in parallel."""
         if self.UI_setting:
             return
-        self.experiment.calls_parallel = bool(value)
+        self.experiment.set_calls_parallel(bool(value))
         self.UI_calls_parallel_set()
 
     @pyqtSlot()
