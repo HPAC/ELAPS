@@ -199,7 +199,7 @@ class Experiment(dict):
                     raise KeyError("Sampler doesn't support kernel %r" %
                                    call[0])
                 continue
-            sig = sampler["kernels"]
+            sig = sampler["kernels"][call[0]]
             if len(sig) != len(call):
                 if not force:
                     raise ValueError("Incompatible kernel: %r" % call[0])
@@ -533,6 +533,7 @@ class Experiment(dict):
         if check_only:
             return
 
+        # set new value
         self.sumrange_parallel = sumrange_parallel
 
     def set_calls_parallel(self, calls_parallel, force=False,
@@ -1591,7 +1592,7 @@ class Experiment(dict):
                 for id_ in connected:
                     connections[id_] = connected
         del connections[None]
-        return connections
+        return map(sorted, connections)
 
     def nresults(self):
         """How many results the current experiment woudl produce."""
