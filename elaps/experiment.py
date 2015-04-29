@@ -548,7 +548,209 @@ class Experiment(dict):
         if check_only:
             return
 
+        # set new value
         self.calls_parallel = calls_parallel
+
+    def set_arg(self, callid, argid, value, force=False, check_only=False):
+        """Set a call argument."""
+        # check callid
+        if not (0 <= callid < len(self.calls)):
+            raise IndexError("Invalid callid: %s" % callid)
+
+        call = self.calls[callid]
+
+        # check argid
+        if argid == 0:
+            raise IndexError("Cannot set routine name (argument 0)")
+            # TODO: create BasicCall?
+
+        arg = sig[argid]
+
+        if isinstance(arg, signature.Arg):
+            if isinstance(arg, signature.Flag):
+                # check if flag is known
+                if value not in arg.flags:
+                    if not force:
+                        raise ValueError("Unkonwn flag: %s" % value)
+                    value = arg.flags[0]
+
+                # TODO: check for chagnes?
+
+                if check_only:
+                    return
+
+                # set new value
+                call[argid] = value
+
+                # apply connections
+                connection = self.get_connections()
+                self.apply_connections_to(callid, connections=connections)
+                self.apply_connections_from(callid, connections=connections)
+
+                # update data info
+                self.update_data()
+
+                return
+
+            if isinstance(arg, signature.Data):
+                # ensure value is str
+                if not isinstance(value, str):
+                    if not force:
+                        raise ValueError("Data arguments must be strings.")
+                    value = str(value)
+                if not value:
+                    raise ValueError("Empty data argument.")
+
+                if value not in self.data:
+                    # no conflics
+                    if check_only:
+                        return
+
+                    call[argid] = value
+                    self.update_data()
+
+                data = ex.data[value]
+                olddata = ex.data[call[callid]]
+
+                # check type
+                if data["type"] != type(arg):
+                    raise TypeError("Incompatible data types: %r and %r" %
+                                    (vdata["type"].typename,
+                                     type(arg).typename))
+
+                # check compatibility
+                if oddata != data:
+                    if not force:
+                        raise ValueError("Incompatible data sizes.")
+
+                if check_only:
+                    return
+
+                # set new value
+                call[argid] = value
+
+                # apply connections
+                connection = self.get_connections()
+                self.apply_connections_to(callid, connections=connections)
+                self.apply_connections_from(callid, connections=connections)
+
+                # update data info
+                self.update_data()
+
+                return
+
+            # parse string
+            if isinstance(value, str):
+                value = self.ranges_parse(value)
+
+            # check type
+            if not isinstance(value, (int, symbolix.Expression)):
+                raise ValueError("Invalid argument type: %s" % value)
+
+            # check min
+            if isinstance(value, int) and arg.min and value < arg.min(call):
+                if not force:
+                    raise ValueError("Value doesn't satisfy min")
+                value = arg.min(call)
+
+            if check_only:
+                return
+
+            # set new value
+            call[argid] = value
+
+            # apply connections
+            self.apply_connections_from(callid, argid)
+
+            # update data info
+            self.update_data()
+
+            return
+
+        # don't have a Signature
+        if arg == "char*":
+            if not isinstance(value, str):
+                if not force:
+                    raise ValueError("char* value must be str")
+                value = str(value)
+        else:
+            try:
+                value = self.ranges_parse(value)
+            except:
+                pass
+
+        if check_only:
+            return
+
+        # set new value
+        call[argid] = value
+
+    def set_call(self, callid, call, force=False, check_only=False):
+        """Set a call."""
+        # check callid
+        if not (0 <= callid <= len(self.calls)):
+            if not force:
+                raise KeyError("Invalid callid: %s" % callid)
+            callid = max(0, min(callid, len(self.calls)))
+
+        # None => remove call
+        if call is None:
+            if check_only:
+                return
+            if callid < len(self.calls):
+                self.calls.pop(callid)
+            return
+
+        # check if kernel is available
+        routine = call[0]
+        if routine not in self.sampler["kernels"]:
+            if not force:
+                raise ValueError("Sampler doesn't support the kernel.")
+            if check_only:
+                return
+            if callid < len(self.calls):
+                self.calls.pop(callid)
+            return
+
+        # generate BasicCall
+        if isinstance(call, (tuple, list)):
+            minsig = self.sampler["kernels"][routine]
+            call = BasicCall(minsig, call[1:])
+
+        # check type
+        if not isinstance(call, signature.BasicCall):
+            if not force:
+                raise ValueError("Invalid call: %s" % call)
+            if check_only:
+                return
+            if callid < len(self.calls):
+                self.calls.pop(callid)
+            return
+
+        # TODO: check arguments and data
+
+        if check_only:
+            return
+
+        # set new call
+        if callid < len(self.calls):
+            self.calls[callid] = call
+        else:
+            self.calls.append(call)
+
+    def set_calls(self, calls, force=False, check_only=True):
+        """Set all calls."""
+        # check individual calls
+        for call in calls:
+            self.set_call(0, call, force=force, check_only=True)
+
+        if check_only:
+            return
+
+        # TODO: internal consistency checks
+
+        # set new calls
+        self.calls = calls
 
     # inference
     def update_data(self, name=None):
@@ -764,6 +966,28 @@ class Experiment(dict):
         value = self.calls[callid][argid]
         for callid2, argid2 in self.get_connections()[callid, argid]:
             self.calls[callid2][argid2] = value
+
+    def apply_connections_from(self, callid, argid=None, connections=None):
+        """Apply data-connections from this call."""
+        connections = connections or self.get_connections()
+        call = self.calls[callid]
+        argids = argid,
+        if argid is None:
+            argids = range(len(call))
+        for argid in argids:
+            for con_callid, con_argid in connections[callid, argid]:
+                self.calls[con_callid][con_argid] = call[argid]
+
+    def apply_connections_to(self, callid, connections=None):
+        """Apply data-connections from this call."""
+        connections = connections or self.get_connections()
+        call = self.calls[callid]
+        argids = argid,
+        if argid is None:
+            argids = range(len(call))
+        for argid in argids:
+            for con_callid, con_argid in reversed(connections[callid, argid]):
+                self.calls[con_callid][con_argid] = call[argid]
 
     def vary_set(self, name, with_=None, along=None, offset=0):
         """Set the vary specs of a variable."""
@@ -1592,7 +1816,7 @@ class Experiment(dict):
                 for id_ in connected:
                     connections[id_] = connected
         del connections[None]
-        return map(sorted, connections)
+        return {key: sorted(val) for key, val in connections.items()}
 
     def nresults(self):
         """How many results the current experiment woudl produce."""
