@@ -564,7 +564,7 @@ class Experiment(dict):
             raise IndexError("Cannot set routine name (argument 0)")
             # TODO: create BasicCall?
 
-        arg = sig[argid]
+        arg = call.sig[argid]
 
         if isinstance(arg, signature.Arg):
             if isinstance(arg, signature.Flag):
@@ -608,18 +608,20 @@ class Experiment(dict):
 
                     call[argid] = value
                     self.update_data()
+                    return
 
-                data = ex.data[value]
-                olddata = ex.data[call[callid]]
+
+                data = self.data[value]
+                olddata = self.data[call[argid]]
 
                 # check type
                 if data["type"] != type(arg):
                     raise TypeError("Incompatible data types: %r and %r" %
-                                    (vdata["type"].typename,
+                                    (data["type"].typename,
                                      type(arg).typename))
 
                 # check compatibility
-                if oddata != data:
+                if olddata != data:
                     if not force:
                         raise ValueError("Incompatible data sizes.")
 
@@ -630,7 +632,7 @@ class Experiment(dict):
                 call[argid] = value
 
                 # apply connections
-                connection = self.get_connections()
+                connections = self.get_connections()
                 self.apply_connections_to(callid, connections=connections)
                 self.apply_connections_from(callid, connections=connections)
 
@@ -644,7 +646,7 @@ class Experiment(dict):
                 value = self.ranges_parse(value)
 
             # check type
-            if not isinstance(value, (int, symbolix.Expression)):
+            if not isinstance(value, (int, symbolic.Expression)):
                 raise ValueError("Invalid argument type: %s" % value)
 
             # check min
@@ -978,7 +980,7 @@ class Experiment(dict):
             for con_callid, con_argid in connections[callid, argid]:
                 self.calls[con_callid][con_argid] = call[argid]
 
-    def apply_connections_to(self, callid, connections=None):
+    def apply_connections_to(self, callid, argid=None, connections=None):
         """Apply data-connections from this call."""
         connections = connections or self.get_connections()
         call = self.calls[callid]
