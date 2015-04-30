@@ -610,7 +610,6 @@ class Experiment(dict):
                     self.update_data()
                     return
 
-
                 data = self.data[value]
                 olddata = self.data[call[argid]]
 

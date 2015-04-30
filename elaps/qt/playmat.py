@@ -7,7 +7,7 @@ import elaps.io
 import elaps.symbolic as symbolic
 import elaps.signature as signature
 
-from elaps.qt import QCall, QJobProgress, widget_setinvalid
+from elaps.qt import QCall, QJobProgress
 
 import sys
 import os
@@ -489,6 +489,13 @@ class PlayMat(QtGui.QMainWindow):
         self.statusBar().showMessage(msg)
         print("\033[31m%s\033[0m" % msg, file=sys.stderr)
 
+    def UI_set_invalid(self, widget, state=True):
+        """Set a widget's "invalid" property."""
+        widget.setProperty("invalid", state)
+        widget.style().unpolish(widget)
+        widget.style().polish(widget)
+        widget.update()
+
     # experiment routines
     def experiment_set(self, ex):
         """Insert own/new objects into loaded experiment."""
@@ -743,9 +750,9 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_rangeW.setEnabled(userange)
         if userange:
             self.UI_rangevar.setText(str(ex.range[0]))
-            widget_setinvalid(self.UI_rangevar, False)
+            self.UI_set_invalid(self.UI_rangevar, False)
             self.UI_rangevals.setText(str(ex.range[1]))
-            widget_setinvalid(self.UI_rangevals, False)
+            self.UI_set_invalid(self.UI_rangevals, False)
         self.UI_setting -= 1
 
     @pyqtSlot()
@@ -753,7 +760,7 @@ class PlayMat(QtGui.QMainWindow):
         """Set UI element: nreps."""
         self.UI_setting += 1
         self.UI_nreps.setText(str(self.experiment.nreps))
-        widget_setinvalid(self.UI_nreps, False)
+        self.UI_set_invalid(self.UI_nreps, False)
         self.UI_setting -= 1
 
     @pyqtSlot()
@@ -769,9 +776,9 @@ class PlayMat(QtGui.QMainWindow):
         )
         if usesumrange:
             self.UI_sumrangevar.setText(str(ex.sumrange[0]))
-            widget_setinvalid(self.UI_sumrangevar, False)
+            self.UI_set_invalid(self.UI_sumrangevar, False)
             self.UI_sumrangevals.setText(str(ex.sumrange[1]))
-            widget_setinvalid(self.UI_sumrangevals, False)
+            self.UI_set_invalid(self.UI_sumrangevals, False)
         self.UI_setting -= 1
 
     def UI_calls_parallel_set(self):
@@ -1021,33 +1028,33 @@ class PlayMat(QtGui.QMainWindow):
         """Event: change range variable."""
         try:
             self.experiment.set_range_var(str(value))
-            widget_setinvalid(self.UI_rangevar, False)
+            self.UI_set_invalid(self.UI_rangevar, False)
             self.UI_nthreads_set()
             self.UI_sumrange_set()
             self.UI_calls_set()
             self.UI_submit_setenabled()
         except:
-            widget_setinvalid(self.UI_rangevar)
+            self.UI_set_invalid(self.UI_rangevar)
 
     @pyqtSlot(str)
     def on_rangevals_change(self, value):
         """Event: change range."""
         try:
             self.experiment.set_range_vals(str(value))
-            widget_setinvalid(self.UI_rangevals, False)
+            self.UI_set_invalid(self.UI_rangevals, False)
             self.experiment_infer_update_set()
         except:
-            widget_setinvalid(self.UI_rangevals)
+            self.UI_set_invalid(self.UI_rangevals)
 
     @pyqtSlot(str)
     def on_nreps_change(self, value):
         """Event: change #repetitions."""
         try:
             self.experiment.set_nreps(str(value))
-            widget_setinvalid(self.UI_nreps, False)
+            self.UI_set_invalid(self.UI_nreps, False)
             self.experiment_infer_update_set()
         except:
-            widget_setinvalid(self.UI_nreps)
+            self.UI_set_invalid(self.UI_nreps)
 
     @pyqtSlot(bool)
     def on_usesumrange_toggle(self, checked):
@@ -1078,22 +1085,21 @@ class PlayMat(QtGui.QMainWindow):
         """Event: change sumrange variable."""
         try:
             self.experiment.set_sumrange_var(str(value))
-            widget_setinvalid(self.UI_sumrangevar, False)
+            self.UI_set_invalid(self.UI_sumrangevar, False)
             self.UI_calls_set()
             self.UI_submit_setenabled()
         except:
-            widget_setinvalid(self.UI_sumrangevar)
+            self.UI_set_invalid(self.UI_sumrangevar)
 
     @pyqtSlot(str)
     def on_sumrangevals_change(self, value):
         """Event: change sumrange."""
         try:
             self.experiment.set_sumrange_vals(str(value))
-            widget_setinvalid(self.UI_sumrangevals, False)
+            self.UI_set_invalid(self.UI_sumrangevals, False)
             self.experiment_infer_update_set()
         except:
-            widget_setinvalid(self.UI_sumrangevals)
-        self.experiment_infer_update_set()
+            self.UI_set_invalid(self.UI_sumrangevals)
 
     @pyqtSlot(bool)
     def on_calls_parallel_toggle(self, value):
@@ -1179,52 +1185,6 @@ class PlayMat(QtGui.QMainWindow):
             pass
         self.experiment_infer_update_set()
 
-    def on_dataarg_set(self, callid, argid, value):
-        """Event Set data argument value."""
-        ex = self.experiment
-        call = ex.calls[callid]
-        if value not in ex.data:
-            call[argid] = value
-            self.experiment_infer_update_set()
-            return
-        # data already existst
-        data = ex.data[value]
-        arg = call.sig[argid]
-        sender = self.Qapp.sender()
-        if data["type"] != type(arg):
-            self.UI_alert("Incompatible data types for %r: %r and %r." %
-                          (value, data["type"].typename, type(arg).typename))
-            sender.clearFocus()
-            self.experiment_infer_update_set()
-            sender.setFocus()
-        # try and check if data changes:
-        oldvalue = call[argid]
-        call[argid] = value
-        connections = ex.get_connections()
-        call[argid] = oldvalue
-        if any(
-            ex.calls[callid][argid] != ex.calls[callid2][argid2]
-            for (callid, argid), connections2 in connections.items()
-            for callid2, argid2 in connections2
-        ):
-            ret = QtGui.QMessageBox.warning(
-                self, "Incompatible sizes for %s" % value,
-                "Dimensions will be adjusted automatically.",
-                QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
-            )
-            if ret == QtGui.QMessageBox.Ok:
-                call[argid] = value
-                for argid in range(len(call)):
-                    ex.apply_connections(callid, argid)
-                self.experiment_infer_update_set()
-            else:
-                sender.clearFocus()
-                self.experiment_infer_update_set()
-                sender.setFocus()
-        else:
-            call[argid] = value
-            self.experiment_infer_update_set()
-
     def on_arg_set(self, callid, argid, value):
         """Event: Set argument value."""
         if self.UI_setting:
@@ -1232,31 +1192,27 @@ class PlayMat(QtGui.QMainWindow):
         if argid == 0:
             self.on_routine_set(callid, value)
             return
-        ex = self.experiment
-        call = ex.calls[callid]
-        arg = call.sig[argid]
-        parsed = None
         try:
-            parsed = ex.ranges_parse(value)
-        except:
-            pass
-        if isinstance(arg, signature.Flag):
-            call[argid] = value
-        elif isinstance(arg, signature.Dim):
-            call[argid] = parsed
-            ex.apply_connections(callid, argid)
-        elif isinstance(arg, signature.Data):
-            self.on_dataarg_set(callid, argid, value)
-            return
-        elif isinstance(arg, signature.Arg):
-            call[argid] = parsed
-        else:
-            if arg != "char*":
-                try:
-                    call[argid] = ex.ranges_parse(value)
-                except:
-                    pass
-        self.experiment_infer_update_set()
+            self.experiment.set_arg(callid, argid, value)
+            self.UI_set_invalid(self.UI_calls.item(callid).UI_args[argid],
+                                False)
+            self.experiment_infer_update_set()
+        except Exception as e:
+            if "Incompatible data sizes" in str(e):
+                ret = QtGui.QMessageBox.question(
+                    self, str(e), "Adjust dimensions automatically?",
+                    QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
+                )
+                if ret == QtGui.QMessageBox.Ok:
+                    self.experiment.set_arg(callid, argid, value, force=True)
+                    self.UI_set_invalid(
+                        self.UI_calls.item(callid).UI_args[argid], False
+                    )
+                    self.experiment_infer_update_set()
+                return
+            self.UI_set_invalid(self.UI_calls.item(callid).UI_args[argid])
+            if "Incompatible data types:" in str(e):
+                self.UI_alert(e)
 
     @pyqtSlot(QtCore.QPoint)
     def on_calls_rightclick(self, pos):

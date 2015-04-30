@@ -3,7 +3,7 @@
 from __future__ import division, print_function
 
 from elaps import signature
-from elaps.qt import QDataArg, widget_setinvalid
+from elaps.qt import QDataArg
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import pyqtSlot
@@ -70,6 +70,35 @@ class QCall(QtGui.QListWidgetItem):
                 pass
         QtCore.QTimer.singleShot(0, update)
 
+    def UI_arg_set(self, argid=None, force=False):
+        """Set an argument."""
+        if argid is None:
+            for argid in range(len(self.call)):
+                self.UI_arg_set(argid, force)
+            return
+
+        value = self.call[argid]
+        UI_arg = self.UI_args[argid]
+        UI_arglabel = self.UI_arglabels[argid]
+        if force or not UI_arg.hasFocus():
+            if isinstance(UI_arg, QtGui.QLineEdit):
+                UI_arg.setText(str(value))
+            elif isinstance(UI_arg, QtGui.QComboBox):
+                UI_arg.setCurrentIndex(UI_arg.findText(str(value)))
+
+        # apply hideargs
+        if isinstance(self.call, signature.Call):
+            show = not isinstance(
+                self.sig[argid], tuple(self.playmat.hideargs) + (type(None),)
+            )
+            UI_arg.setVisible(show)
+            UI_arglabel.setVisible(show)
+
+        # viz
+        if isinstance(self.sig[argid], signature.Data):
+            UI_arg.viz()
+            self.update_size()
+
     def setall(self):
         """Set all UI elements."""
         self.playmat.UI_setting += 1
@@ -83,30 +112,7 @@ class QCall(QtGui.QListWidgetItem):
             if self.sig:
                 self.args_clear()
                 self.sig = None
-        hideargs = tuple(self.playmat.hideargs) + (type(None),)
-        for argid, value in enumerate(self.call):
-            # set value
-            value = value if value is not None else ""
-            UI_arg = self.UI_args[argid]
-            UI_arglabel = self.UI_arglabels[argid]
-            if not UI_arg.hasFocus():
-                if isinstance(UI_arg, QtGui.QLineEdit):
-                    UI_arg.setText(str(value))
-                elif isinstance(UI_arg, QtGui.QComboBox):
-                    UI_arg.setCurrentIndex(UI_arg.findText(str(value)))
-
-            # set validity
-            valid = self.playmat.experiment.check_arg_valid(self.callid, argid)
-            widget_setinvalid(UI_arg, not valid)
-
-            # apply hideargs
-            if isinstance(self.call, signature.Call):
-                show = not isinstance(self.sig[argid], hideargs)
-                UI_arg.setVisible(show)
-                UI_arglabel.setVisible(show)
-
-        self.viz()
-        self.update_size()
+        self.UI_arg_set()
         self.playmat.UI_setting -= 1
 
     def args_init(self):
@@ -150,14 +156,21 @@ class QCall(QtGui.QListWidgetItem):
                     UI_arg.addItems(arg.flags)
                     UI_arg.currentIndexChanged[str].connect(self.on_arg_change)
                 elif isinstance(arg, signature.Data):
-                    UI_arg = QDataArg(self, textChanged=self.on_arg_change)
+                    UI_arg = QDataArg(
+                        self,
+                        textChanged=self.on_arg_change,
+                        editingFinished=self.on_arg_focusout
+                    )
                 else:
-                    UI_arg = QtGui.QLineEdit(textChanged=self.on_arg_change)
+                    UI_arg = QtGui.QLineEdit(
+                        textChanged=self.on_arg_change,
+                        editingFinished=self.on_arg_focusout
+                    )
             else:
                 UI_arg = QtGui.QLineEdit("", textChanged=self.on_arg_change)
             UI_arg.pyqtConfigure(
-                contextMenuPolicy=QtCore.Qt.CustomContextMenu,
                 toolTip=tooltip,
+                contextMenuPolicy=QtCore.Qt.CustomContextMenu,
                 customContextMenuRequested=self.on_arg_rightclick
             )
             UI_arg.argid = argid
@@ -257,3 +270,10 @@ class QCall(QtGui.QListWidgetItem):
         argid = self.playmat.Qapp.sender().argid
         self.UI_args[argid].clearFocus()
         self.playmat.on_infer_lwork(self.callid, argid)
+
+    # @pyqtSlot()  # sender() pyqt bug
+    def on_arg_focusout(self):
+        """Argument looses focus."""
+        if self.playmat.UI_setting:
+            return
+        self.UI_arg_set(self.playmat.Qapp.sender().argid)
