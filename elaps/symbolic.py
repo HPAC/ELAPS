@@ -217,7 +217,17 @@ class Plus(Operation):
 
     def __str__(self):
         """Format as human readable."""
-        return " + ".join(map(str, self[1:]))
+        if len(self) == 1:
+            return ""
+        result = str(self[1])
+        for expr in self[2:]:
+            if isinstance(expr, Minus):
+                result += " - %s" % expr[1]
+            elif isinstance(expr, Number) and expr < 0:
+                result += " - %s" % (-expr)
+            else:
+                result += " + %s" % expr
+        return result
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
