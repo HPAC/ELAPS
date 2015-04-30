@@ -689,6 +689,9 @@ class Experiment(dict):
     def set_call(self, callid, call, force=False, check_only=False):
         """Set a call."""
         # check callid
+        if callid == -1:
+            # wrap -1 to append a call
+            callid = len(self.calls)
         if not (0 <= callid <= len(self.calls)):
             if not force:
                 raise KeyError("Invalid callid: %s" % callid)
@@ -733,6 +736,7 @@ class Experiment(dict):
             self.calls[callid] = oldcall
             if oldcall is None:
                 self.calls = self.call[:-1]
+            self.data_update()
 
         if check_only:
             return
@@ -741,20 +745,32 @@ class Experiment(dict):
         if callid == len(self.calls):
             self.calls.append(None)
         self.calls[callid] = call
+        for argid in range(1, len(call)):
+            self.set_arg(callid, argid, call[argid], force=force)
 
     def set_calls(self, calls, force=False, check_only=True):
         """Set all calls."""
-        # check individual calls
-        for call in calls:
-            self.set_call(0, call, force=force, check_only=True)
+        # check type
+        if not isinstance(calls, list):
+            raise TypeError("calls must be list (not %s)" % type(calls))
+
+        # check consistency
+        oldcalls = self.calls
+        self.calls = []
+        try:
+            for call in calls:
+                self.set_call(-1, call, force=force)
+        finally:
+            self.calls = oldcalls
+            self.data_update()
 
         if check_only:
             return
 
-        # TODO: internal consistency checks
-
         # set new calls
-        self.calls = calls
+        self.calls = []
+        for call in calls:
+            self.set_call(-1, call, force=force)
 
     # inference
     def update_data(self, name=None):
