@@ -574,7 +574,7 @@ class Experiment(dict):
                         raise ValueError("Unkonwn flag: %s" % value)
                     value = arg.flags[0]
 
-                # TODO: check for chagnes?
+                # TODO: check for changes?
 
                 if check_only:
                     return
@@ -583,7 +583,7 @@ class Experiment(dict):
                 call[argid] = value
 
                 # apply connections
-                connection = self.get_connections()
+                connections = self.get_connections()
                 self.apply_connections_to(callid, connections=connections)
                 self.apply_connections_from(callid, connections=connections)
 
@@ -649,7 +649,7 @@ class Experiment(dict):
                 raise ValueError("Invalid argument type: %s" % value)
 
             # check min
-            if isinstance(value, int) and arg.min and value < arg.min(call):
+            if isinstance(value, int) and arg.min and value < arg.min(*call):
                 if not force:
                     raise ValueError("Value doesn't satisfy min")
                 value = arg.min(call)
@@ -713,31 +713,34 @@ class Experiment(dict):
                 self.calls.pop(callid)
             return
 
-        # generate BasicCall
-        if isinstance(call, (tuple, list)):
-            minsig = self.sampler["kernels"][routine]
-            call = BasicCall(minsig, call[1:])
-
         # check type
         if not isinstance(call, signature.BasicCall):
-            if not force:
+            if isinstance(call, (tuple, list)):
+                # generate BasicCall
+                minsig = self.sampler["kernels"][routine]
+                call = signature.BasicCall(minsig, *call[1:])
+            else:
                 raise ValueError("Invalid call: %s" % call)
-            if check_only:
-                return
-            if callid < len(self.calls):
-                self.calls.pop(callid)
-            return
 
-        # TODO: check arguments and data
+        if callid == len(self.calls):
+            self.calls.append(None)
+        oldcall = self.calls[callid]
+        self.calls[callid] = call
+        try:
+            for argid in range(1, len(call)):
+                self.set_arg(callid, argid, call[argid], force=force)
+        finally:
+            self.calls[callid] = oldcall
+            if oldcall is None:
+                self.calls = self.call[:-1]
 
         if check_only:
             return
 
         # set new call
-        if callid < len(self.calls):
-            self.calls[callid] = call
-        else:
-            self.calls.append(call)
+        if callid == len(self.calls):
+            self.calls.append(None)
+        self.calls[callid] = call
 
     def set_calls(self, calls, force=False, check_only=True):
         """Set all calls."""

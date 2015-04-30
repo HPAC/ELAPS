@@ -40,8 +40,6 @@ class QDataArg(QtGui.QLineEdit):
             QtCore.QRegExp("[a-zA-Z][a-zA-Z0-9_]*"), self
         ))
 
-        # self.setsize(0, 0)
-
         # style
         self.setStyleSheet("""
             [invalid="true"] {
@@ -135,7 +133,7 @@ class QDataArg(QtGui.QLineEdit):
                     self.offsetstr += u"\u2193\u2192\u2197"[vary["along"]]
                 else:
                     self.offsetstr += str(vary["along"])
-            self.offsetstr += ",".join(vary["with"])
+            self.offsetstr += ",".join(map(str, vary["with"]))
             if vary["offset"]:
                 self.offsetstr += " + %s" % vary["offset"]
 

@@ -115,6 +115,8 @@ class BasicCall(list):
 
     def __init__(self, sig, *args):
         """Initialize from arguments."""
+        if not args:
+            args = tuple("" if arg == "char*" else 0 for arg in sig[1:])
         if len(sig) != 1 + len(args):
             raise TypeError("%s takes %d arguments (%d given)" %
                             (sig[0], len(sig) - 1, len(args)))

@@ -573,7 +573,9 @@ class PlayMat(QtGui.QMainWindow):
         """(Try to) get the Signature for a routine."""
         if routine not in self.sigs:
             try:
-                self.sigs[routine] = elaps.io.load_signature(routine)
+                sig = elaps.io.load_signature(routine)
+                sig()  # try the signature
+                self.sigs[routine] = sig
                 self.log("Loaded Signature for %r." % routine)
             except:
                 self.sigs[routine] = None
@@ -1123,67 +1125,45 @@ class PlayMat(QtGui.QMainWindow):
     def on_routine_set(self, callid, value):
         """Event: Set routine value."""
         ex = self.experiment
-        try:
-            if value not in ex.sampler["kernels"]:
-                # not a kernel
-                ex.calls[callid] = [value]
-                raise Exception
-
-            minsig = ex.sampler["kernels"][value]
-            ex.calls[callid] = signature.BasicCall(
-                minsig, *((len(minsig) - 1) * [None])
-            )
-            sig = self.sig_get(value)
-            if not sig:
-                # no Signature
-                raise Exception
-
-            if len(sig) != len(minsig):
-                # wrong Signature
-                self.UI_alert(
-                    ("Kernel %r of Sampler %r has %d arguments,\n"
-                        "but Signature '%s' requires %d.\n"
-                        "Signature ignored.")
-                    % (value, ex.sampler["name"], len(minsig) - 1, sig,
-                       len(sig) - 1)
-                )
-                raise Exception
-
+        if value not in ex.sampler["kernels"]:
+            self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
+            return
+        sig = self.sig_get(value)
+        if not sig:
             try:
-                call = sig()
+                # prepare call
+                call = [value]
+
+                # set call
+                ex.set_call(callid, call)
+                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0],
+                                    False)
+                self.experiment_infer_update_set()
             except:
-                # Signature not working
-                self.UI_alert(
-                    "Can't use Signature %r\nSignature Ignored" % sig
-                )
-                raise Exception
+                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
+        else:
+            try:
+                # prepare call
+                call = sig()
+                varnames = [name for name in string.ascii_uppercase
+                            if name not in ex.data]
+                for argid, arg in enumerate(sig):
+                    if isinstance(arg, (signature.Dim, signature.Ld)):
+                        call[argid] = defines.default_dim
+                    if isinstance(arg, signature.Data):
+                        call[argid] = varnames.pop(0)
 
-            names = list(ex.data)
-            for argid, arg in enumerate(sig):
-                if isinstance(arg, signature.Dim):
-                    call[argid] = defines.default_dim
-                    continue
-                if not isinstance(arg, signature.Data):
-                    continue
-                try:
-                    name = next(n for n in string.ascii_uppercase
-                                if n not in names)
-                except:
-                    name = next(
-                        n for n in (
-                            "%s%s" % (l, d) for d in itertools.count(1)
-                            for l in string.ascii_uppercasei
-                        ) if n not in names
-                    )
-                call[argid] = name
-                names.append(name)
-
-            ex.calls[callid] = call
-            ex.infer_lds(callid)
-            ex.infer_lworks(callid)
-        except:
-            pass
-        self.experiment_infer_update_set()
+                # set call
+                ex.set_call(callid, call)
+                ex.infer_lds(callid)
+                ex.infer_lworks(callid)
+                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0],
+                                    False)
+                self.experiment_infer_update_set()
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
 
     def on_arg_set(self, callid, argid, value):
         """Event: Set argument value."""

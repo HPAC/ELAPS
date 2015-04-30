@@ -86,18 +86,21 @@ class QCall(QtGui.QListWidgetItem):
             elif isinstance(UI_arg, QtGui.QComboBox):
                 UI_arg.setCurrentIndex(UI_arg.findText(str(value)))
 
-        # apply hideargs
+        if isinstance(self.call, signature.BasicCall):
+            self.playmat.UI_set_invalid(UI_arg, False)
+
         if isinstance(self.call, signature.Call):
+            # apply hideargs
             show = not isinstance(
                 self.sig[argid], tuple(self.playmat.hideargs) + (type(None),)
             )
             UI_arg.setVisible(show)
             UI_arglabel.setVisible(show)
 
-        # viz
-        if isinstance(self.sig[argid], signature.Data):
-            UI_arg.viz()
-            self.update_size()
+            # viz
+            if isinstance(self.sig[argid], signature.Data):
+                UI_arg.viz()
+        self.update_size()
 
     def setall(self):
         """Set all UI elements."""
@@ -275,5 +278,7 @@ class QCall(QtGui.QListWidgetItem):
     def on_arg_focusout(self):
         """Argument looses focus."""
         if self.playmat.UI_setting:
+            return
+        if self.playmat.Qapp.activeModalWidget():
             return
         self.UI_arg_set(self.playmat.Qapp.sender().argid)
