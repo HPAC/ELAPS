@@ -132,43 +132,52 @@ class TestCall(unittest.TestCase):
 
     def test_init(self):
         """Test for __init__()."""
+        sig = self.sig
+
         self.assertRaises(TypeError, Call, "name", 1234)
 
-        self.assertRaises(TypeError, self.sig, 1234)
+        self.assertRaises(TypeError, sig, 1234)
 
-        self.assertEqual(self.sig(1234, "X", 5), Call(self.sig, 1234, "X", 5))
-        self.assertEqual(self.sig(), self.sig(1, None, None))
+        self.assertEqual(sig(1234, "X", 5), Call(sig, 1234, "X", 5))
+        self.assertEqual(sig(), sig(1, None, None))
 
     def test_attr(self):
         """Test for __get/setattr__()."""
-        self.assertEqual(self.sig().A, None)
+        sig = self.sig
 
-        call = self.sig()
+        self.assertEqual(sig().A, None)
+
+        call = sig()
         call.A = 2
-        self.assertEqual(call, self.sig(1, 2, None))
+        self.assertEqual(call, sig(1, 2, None))
 
     def test_argdict(self):
         """Test for argdict()."""
-        self.assertEqual(self.sig(2, 3, 4).argdict(),
+        sig = self.sig
+
+        self.assertEqual(sig(2, 3, 4).argdict(),
                          {"name": "name", "n": 2, "A": 3, "ldA": 4})
 
     def test_complete(self):
         """Test for completing mechanism."""
-        call = self.sig()
+        sig = self.sig
+
+        call = sig()
         call[1] = 1234
 
         call2 = call.copy()
         call2.complete_once()
-        self.assertEqual(call2, self.sig(1234, None, 1234 + 3))
+        self.assertEqual(call2, sig(1234, None, 1234 + 3))
 
         call2 = call.copy()
         call2.complete()
-        self.assertEqual(call2,
-                         self.sig(1234, (1234 + 3) * 1234 + 5, 1234 + 3))
+        self.assertEqual(call2, sig(1234, (1234 + 3) * 1234 + 5, 1234 + 3))
 
     def test_complexity(self):
         """Test for complexity()."""
-        call = self.sig()
+        sig = self.sig
+
+        call = sig()
         call.n = 1234
         self.assertEqual(call.complexity(), 1234 ** 4)
 
