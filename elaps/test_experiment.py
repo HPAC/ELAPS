@@ -399,6 +399,401 @@ class TestExperimentSetters(TestExperiment):
         ex.set_nthreads(1, check_only=True)
         self.assertEqual(ex.nthreads, nt_max)
 
+    def test_set_range_var(self):
+        """Test for set_range_var()."""
+        ex, i, j = self.ex, self.i, self.j
+
+        # working
+        ex.set_range_var("j")
+        self.assertEqual(ex.range[0], j)
+
+        # string
+        self.assertRaises(ValueError, ex.set_range_var, "")
+        ex.set_range_var("", force=True)
+        self.assertEqual(ex.range[0], i)
+
+        # type
+        self.assertRaises(TypeError, ex.set_range_var, 1)
+        ex.set_range_var(1, force=True)
+        self.assertEqual(ex.range[0], i)
+
+        # conflict
+        ex.sumrange = [j, [1]]
+        self.assertRaises(ValueError, ex.set_range_var, "j")
+        ex.set_range_var("j", force=True)
+        self.assertEqual(ex.range[0], i)
+        ex.sumrange = None
+
+        # range not set
+        ex.range = None
+        self.assertRaises(ValueError, ex.set_range_var, "i")
+        ex.set_range_var("i", force=True)
+        self.assertEqual(ex.range[0], i)
+
+        # check_only
+        ex.set_range_var("j", check_only=True)
+        self.assertEqual(ex.range[0], i)
+
+    def test_set_range_vals(self):
+        """Test for set_range_vals()."""
+        ex = self.ex
+        defrange = symbolic.Range("100:100:2000")
+        onerange = symbolic.Range("1")
+
+        # working
+        ex.set_range_vals(defrange)
+        self.assertEqual(ex.range[1], defrange)
+        ex.set_range_vals("100:100:2000")
+        self.assertEqual(ex.range[1], defrange)
+
+        # empty
+        self.assertRaises(ValueError, ex.set_range_vals, "")
+        ex.set_range_vals("", force=True)
+        self.assertEqual(ex.range[1], onerange)
+
+        # type
+        self.assertRaises(TypeError, ex.set_range_vals, 1234)
+        ex.set_range_vals(1234, force=True)
+        self.assertEqual(ex.range[1], onerange)
+
+        # length > 0
+        self.assertRaises(ValueError, ex.set_range_vals, [])
+        ex.set_range_vals([], force=True)
+        self.assertEqual(ex.range[1], onerange)
+
+        # range not set
+        ex.range = None
+        self.assertRaises(ValueError, ex.set_range_vals, defrange)
+        ex.set_range_vals(defrange, force=True)
+        self.assertEqual(ex.range[1], defrange)
+
+        # check_only
+        ex.set_range_vals(onerange, check_only=True)
+        self.assertEqual(ex.range[1], defrange)
+
+    def test_set_range(self):
+        """Test for set_range()."""
+        ex = self.ex
+
+        # working
+        ex.set_range(["i", "100:100:2000"])
+
+        # disabling
+        ex.set_range(None)
+        self.assertEqual(ex.calls[0].m, 2000)
+
+        # check_only
+        ex.set_range(["i", "100:100:2000"], check_only=True)
+        self.assertEqual(ex.range, None)
+
+    def test_set_nreps(self):
+        """Test for set_nreps()."""
+        ex = self.ex
+
+        # working
+        ex.set_nreps(10)
+        self.assertEqual(ex.nreps, 10)
+        ex.set_nreps("20")
+        self.assertEqual(ex.nreps, 20)
+
+        # empty
+        self.assertRaises(ValueError, ex.set_nreps, "")
+        ex.set_nreps("", force=True)
+        self.assertEqual(ex.nreps, 1)
+
+        # type
+        self.assertRaises(TypeError, ex.set_nreps, None)
+        ex.set_nreps(None, force=True)
+        self.assertEqual(ex.nreps, 1)
+
+        # > 0
+        self.assertRaises(ValueError, ex.set_nreps, 0)
+        ex.set_nreps(0, force=True)
+        self.assertEqual(ex.nreps, 1)
+
+        # check_only
+        ex.set_nreps(10, check_only=True)
+        self.assertEqual(ex.nreps, 1)
+
+    def test_set_sumrange_var(self):
+        """Test for set_sumrange_var()."""
+        ex, j = self.ex, self.j
+        ex.set_sumrange(["j", "1:100"])
+
+        # working
+        ex.set_sumrange_var("j")
+        self.assertEqual(ex.sumrange[0], j)
+
+        # string
+        self.assertRaises(ValueError, ex.set_sumrange_var, "")
+        ex.set_sumrange_var("", force=True)
+        self.assertEqual(ex.sumrange[0], j)
+
+        # type
+        self.assertRaises(TypeError, ex.set_sumrange_var, 1)
+        ex.set_sumrange_var(1, force=True)
+        self.assertEqual(ex.sumrange[0], j)
+
+        # conflict
+        self.assertRaises(ValueError, ex.set_sumrange_var, "i")
+        ex.set_sumrange_var("i", force=True)
+        self.assertEqual(ex.sumrange[0], j)
+        ex.sumrange = None
+
+        # range not set
+        ex.sumrange = None
+        self.assertRaises(ValueError, ex.set_sumrange_var, "j")
+        ex.set_sumrange_var("j", force=True)
+        self.assertEqual(ex.sumrange[0], j)
+
+        # check_only
+        ex.set_sumrange_var("k", check_only=True)
+        self.assertEqual(ex.sumrange[0], j)
+
+    def test_set_sumrange_vals(self):
+        """Test for set_sumrange_vals()."""
+        ex = self.ex
+        defrange = symbolic.Range("1:100")
+        onerange = symbolic.Range("1")
+        ex.set_sumrange(["j", "1:100"])
+
+        # working
+        ex.set_sumrange_vals(defrange)
+        self.assertEqual(ex.sumrange[1], defrange)
+        ex.set_sumrange_vals("1:100")
+        self.assertEqual(ex.sumrange[1], defrange)
+
+        # empty
+        self.assertRaises(ValueError, ex.set_sumrange_vals, "")
+        ex.set_sumrange_vals("", force=True)
+        self.assertEqual(ex.sumrange[1], onerange)
+
+        # type
+        self.assertRaises(TypeError, ex.set_sumrange_vals, 1234)
+        ex.set_sumrange_vals(1234, force=True)
+        self.assertEqual(ex.sumrange[1], onerange)
+
+        # length > 0
+        self.assertRaises(ValueError, ex.set_sumrange_vals, [])
+        ex.set_sumrange_vals([], force=True)
+        self.assertEqual(ex.sumrange[1], onerange)
+
+        # sumrange not set
+        ex.sumrange = None
+        self.assertRaises(ValueError, ex.set_sumrange_vals, defrange)
+        ex.set_sumrange_vals(defrange, force=True)
+        self.assertEqual(ex.sumrange[1], defrange)
+
+        # check_only
+        ex.set_sumrange_vals(onerange, check_only=True)
+        self.assertEqual(ex.sumrange[1], defrange)
+
+    def test_set_sumrange(self):
+        """Test for set_sumrange()."""
+        ex, j = self.ex, self.j
+
+        # working
+        ex.set_sumrange(["j", "1:100"])
+
+        # disabling
+        ex.set_arg(0, "m", "j + 100")
+        ex.data["A"]["vary"]["with"].add(j)
+        ex.set_sumrange(None)
+        self.assertEqual(ex.calls[0].m, 200)
+        self.assertEqual(ex.data["A"]["vary"]["with"], set())
+
+        # check_only
+        ex.set_range(["j", "1:100"], check_only=True)
+        self.assertEqual(ex.sumrange, None)
+
+    def test_set_sumrange_parallel(self):
+        """Test for set_sumrange_parallel()."""
+        ex = self.ex
+
+        # working
+        ex.set_sumrange_parallel()
+        self.assertTrue(ex.sumrange_parallel)
+
+        # availability
+        ex.set_sumrange_parallel(False)
+        ex.sampler["omp_enabled"] = False
+        self.assertRaises(ValueError, ex.set_sumrange_parallel)
+        ex.set_sumrange_parallel(force=True)
+        self.assertFalse(ex.sumrange_parallel)
+        ex.sampler["omp_enabled"] = True
+
+        # check only
+        ex.set_sumrange_parallel(check_only=True)
+        self.assertFalse(ex.sumrange_parallel)
+
+    def test_set_calls_parallel(self):
+        """Test for set_calls_parallel()."""
+        ex = self.ex
+
+        # working
+        ex.set_calls_parallel()
+        self.assertTrue(ex.calls_parallel)
+
+        # availability
+        ex.set_calls_parallel(False)
+        ex.sampler["omp_enabled"] = False
+        self.assertRaises(ValueError, ex.set_calls_parallel)
+        ex.set_calls_parallel(force=True)
+        self.assertFalse(ex.calls_parallel)
+        ex.sampler["omp_enabled"] = True
+
+        # check only
+        ex.set_calls_parallel(check_only=True)
+        self.assertFalse(ex.calls_parallel)
+
+    def test_set_arg(self):
+        """Test for set_arg()."""
+        ex, i = self.ex, self.i
+
+        # working
+        ex.set_arg(0, 5, 1000)
+        self.assertEqual(ex.calls[0][5], 1000)
+        ex.set_arg(0, "m", "7 * i")
+        self.assertEqual(ex.calls[0].m, 7 * i)
+
+        # wrong callid
+        self.assertRaises(IndexError, ex.set_arg, 1, 5, 100)
+
+        # arg 0
+        self.assertRaises(IndexError, ex.set_arg, 0, 0, "name")
+
+        # flag
+        self.assertRaises(ValueError, ex.set_arg, 0, 1, "C")
+        ex.set_arg(0, 1, "C", force=True)
+        self.assertEqual(ex.calls[0][1], "N")
+
+        # data: working
+        ex.set_arg(0, "A", "D")
+        self.assertTrue("D" in ex.data)
+
+        # data: type
+        self.assertRaises(TypeError, ex.set_arg, 0, "A", "C")
+        self.assertRaises(TypeError, ex.set_arg, 0, "A", 1234)
+
+        # sizes
+        ex.set_arg(0, "m", 100)
+        ex.set_arg(0, "n", 100)
+        ex.set_arg(0, "k", 200)
+        self.assertRaises(ValueError, ex.set_arg, 0, "A", "B")
+        ex.set_arg(0, "k", 100)
+        ex.set_arg(0, "A", "B")
+
+        # type
+        self.assertRaises(TypeError, ex.set_arg, 0, "ldA", None)
+
+        # min
+        self.assertRaises(ValueError, ex.set_arg, 0, "ldA", 10)
+        ex.set_arg(0, "ldA", 10, force=True)
+        self.assertEqual(ex.calls[0].ldA, 100)
+
+        # minsig
+        ex.set_call(1, ("dgemm", "N", "N", 10, 10, 10, 1, "[100]", 10, "[100]",
+                        10, 1, "[100]", 10))
+        self.assertRaises(TypeError, ex.set_arg, 1, 1, 100)
+
+    def test_set_call(self):
+        """Test for set_call()."""
+        ex = self.ex
+        ex.sampler["kernels"]["name"] = ("name",)
+        call = Signature("name")()
+
+        # working (no sig)
+        ex.set_call(1, call)
+        self.assertEqual(ex.calls[1], call)
+        ex.remove_call(1)
+
+        # callid
+        self.assertRaises(IndexError, ex.set_call, 10, call)
+        ex.set_call(10, call, force=True)
+        self.assertEqual(ex.calls[1], call)
+
+        # None
+        ex.set_call(1, None)
+        self.assertEqual(len(ex.calls), 1)
+
+        # available
+        self.assertRaises(ValueError, ex.set_call, 1, Signature("name2")())
+        ex.set_call(1, Signature("name2")(), force=True)
+        self.assertEqual(len(ex.calls), 1)
+
+        # type
+        self.assertRaises(TypeError, ex.set_call, 1, 100)
+        ex.set_call(1, ("name",))
+        self.assertEqual(ex.calls[1], BasicCall(("name",)))
+
+        # argument error
+        call = ex.calls[0].sig()
+        self.assertRaises(TypeError, ex.set_call, 1, call)
+        self.assertEqual(ex.calls[1], BasicCall(("name",)))
+
+        # check_only
+        ex.set_call(1, ex.calls[0], check_only=True)
+        self.assertEqual(ex.calls[1], BasicCall(("name",)))
+
+    def test_add_call(self):
+        """Test for add_call()."""
+        ex = self.ex
+        ex.sampler["kernels"]["name"] = ("name",)
+
+        # working
+        ex.add_call(Signature("name")())
+        self.assertEqual(ex.calls[1], BasicCall(("name",)))
+
+    def test_remove_call(self):
+        """Test for remove_call()."""
+        ex = self.ex
+        call = ex.calls[0]
+
+        # working
+        ex.remove_call(0)
+        self.assertEqual(ex.calls, [])
+        ex.add_call(call)
+
+        # index
+        self.assertRaises(IndexError, ex.remove_call, 10)
+        ex.remove_call(10, force=True)
+        self.assertEqual(ex.calls, [])
+        ex.add_call(call)
+
+        # check_only
+        ex.remove_call(0, check_only=True)
+        self.assertEqual(len(ex.calls), 1)
+
+    def test_set_calls(self):
+        """Test for set_calls()."""
+        ex = self.ex
+        calls = ex.calls[:]
+
+        # working
+        ex.set_calls(calls)
+
+        # type
+        self.assertRaises(TypeError, ex.set_calls, "asdf")
+
+        # check_only
+        ex.set_calls([], check_only=True)
+        self.assertEquals(ex.calls, calls)
+
+    def test_set_vary(self):
+        """Test for set_vary()."""
+        # TODO
+        i = self.i
+
+        sig = Signature("name", Dim("m"), Dim("n"),
+                        iData("A", "m * n"), iData("B", "n * n"))
+        ex = Experiment()
+        ex.call = sig(10, 20, "X", "Y")
+        ex.range = [i, range(random.randint(1, 10))]
+        ex.update_data()
+        ex.set_vary("X", offset="10 * i")
+
+        self.assertEqual(ex.data["X"]["vary"]["offset"], 10 * i)
+
 
 class TestExperimentCmds(unittest.TestCase):
 
