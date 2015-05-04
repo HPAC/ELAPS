@@ -127,45 +127,28 @@ class TestExperiment(unittest.TestCase):
 
         self.assertEqual(ex.call.lWork, 100 * 1000)
 
-    def test_apply_connections(self):
-        """Test for apply_connections()."""
+    def test_apply_connections_from(self):
+        """Test for apply_connections_from()."""
         sig = Signature("name", Dim("m"), Dim("n"),
                         iData("A", "m * n"), iData("B", "n * n"))
         call = sig(10, 20, "X", "Y")
         ex = Experiment(calls=[call.copy()])
 
-        ex.apply_connections(0, 1)
+        ex.apply_connections_from(0, 1)
         self.assertEqual(call, ex.calls[0])
 
         ex.calls[0].B = "X"
-        ex.apply_connections(0, 2)
+        ex.apply_connections_from(0, 2)
         self.assertNotEqual(call, ex.calls[0])
         self.assertEqual(ex.calls[0][1], 20)
 
         # two calls
         ex.calls = [sig(10, 20, "X", "Y"), sig(30, 40, "Z", "X")]
 
-        ex.apply_connections(1, 2)
+        ex.apply_connections_from(1, 2)
 
         self.assertEqual(ex.calls[0].m, ex.calls[1][2])
         self.assertEqual(ex.calls[0].n, ex.calls[1][2])
-
-    def test_check_arg_value(self):
-        """test for check_arg_value()."""
-        ex = Experiment(
-            sampler=self.sampler,
-            calls=[Signature("name", Dim("m"))(5)]
-        )
-        ex.call[0] = "name2"
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.call[0] = "name"
-        ex.call.append(6)
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.call.pop()
-        ex.call[-1] = None
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.call[-1] = 100
-        ex.check_sanity(True)
 
     def test_check_sanity(self):
         """test for check_sanity()."""
@@ -175,83 +158,16 @@ class TestExperiment(unittest.TestCase):
 
         ex = Experiment(
             sampler=self.sampler,
-            calls=[Signature("name", Dim("m"))(5)]
+            calls=[("dgemm", "N", "N", 1, 1, 1, 1, "A", 1, "B", 1, 1, "C", 1)]
         )
         ex.update_data()
-        ex.check_sanity(True)
-        self.assertTrue(ex.check_sanity())
 
-        # instance checking
-        ex.note = 1
+        # working
+        ex.check_sanity(True)
+
+        # error
+        ex.sampler = None
         self.assertRaises(TypeError, ex.check_sanity, True)
-        self.assertFalse(ex.check_sanity())
-        ex.note = ""
-
-        # sampler
-        del self.sampler["exe"]
-        self.assertRaises(KeyError, ex.check_sanity, True)
-        self.sampler["exe"] = "x"
-
-        # ranges
-        ex.range = [i, [1, 2], 3]
-        self.assertRaises(TypeError, ex.check_sanity, True)
-        ex.range = [1, [1, 2]]
-        self.assertRaises(TypeError, ex.check_sanity, True)
-        ex.range = None
-        ex.range = [i, 1]
-        self.assertRaises(TypeError, ex.check_sanity, True)
-        ex.range = [j, range(random.randint(1, 10))]
-        ex.sumrange = [j, [1, 2]]
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.range = [i, [1, 2, 3]]
-        ex.sumrange = [j, [k, 2]]
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.sumrange = [j, [i, 2]]
-        ex.check_sanity(True)
-        ex.sumrange = None
-
-        # threads
-        ex.nthreads = ex.sampler["nt_max"] + random.randint(1, 10)
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.nthreads = k
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.range = [k, [1, 2]]
-        ex.check_sanity(True)
-
-        # calls
-        ex.calls = []
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.call = ["name", 5]
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.call = BasicCall(("name", "int *"), 5)
-        self.assertTrue(ex.check_sanity(True))
-
-        # symbols
-        ex.call[1] = symbolic.Symbol("a")
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.call[1] = k
-        ex.check_sanity(True)
-
-        # data
-        sig = Signature("name", Dim("m"), Dim("n"),
-                        sData("A", "ldA * n"), Ld("ldA", "m"),
-                        dData("B", "ldB * m"), Ld("ldB", "m"),
-                        cData("C", "ldC * n"), Ld("ldC", "n"))
-        ex.call = sig(2, 3, "X", 4, "Y", 5, "Z", 6)
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.update_data()
-        ex.check_sanity(True)
-
-        # vary
-        ex.data["X"]["vary"]["with"].add(symbolic.Symbol("a"))
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.data["X"]["vary"]["with"] = set((k,))
-        ex.data["X"]["vary"]["along"] = 2
-        self.assertRaises(IndexError, ex.check_sanity, True)
-        ex.data["X"]["vary"]["along"] = 1
-        ex.data["X"]["vary"]["offset"] = symbolic.Symbol("a")
-        self.assertRaises(ValueError, ex.check_sanity, True)
-        ex.data["X"]["vary"]["offset"] = 10
 
 
 class TestExperimentSetters(TestExperiment):

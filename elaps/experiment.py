@@ -1165,12 +1165,6 @@ class Experiment(dict):
             if isinstance(arg, signature.Lwork):
                 self.infer_lwork(callid, argid)
 
-    def apply_connections(self, callid, argid):
-        """Apply data-connections from this starging point."""
-        value = self.calls[callid][argid]
-        for callid2, argid2 in self.get_connections()[callid, argid]:
-            self.calls[callid2][argid2] = value
-
     def apply_connections_from(self, callid, argid=None, connections=None):
         """Apply data-connections from this call."""
         connections = connections or self.get_connections()
@@ -1193,81 +1187,6 @@ class Experiment(dict):
             for con_callid, con_argid in reversed(connections[callid, argid]):
                 self.calls[con_callid][con_argid] = call[argid]
 
-    def check_arg_valid(self, callid, argid):
-        """Check if call[callid][argid] is valid."""
-        if callid >= len(self.calls):
-            raise IndexError("no call #%d" % callid)
-        call = self.calls[callid]
-        if argid >= len(call):
-            raise IndexError("call[%d] has no arg %d" % (callid, argid))
-
-        if not isinstance(call, signature.BasicCall):
-            # not a Call
-            return False
-
-        value = call[argid]
-
-        if value is None:
-            return False
-
-        arg = call.sig[argid]
-
-        if isinstance(arg, signature.Name):
-            return value == arg.name
-        if isinstance(arg, signature.Flag):
-            return value in arg.flags
-
-        symbols = set(self.ranges_valdict(1, 1))
-        if isinstance(arg, (signature.Dim, signature.Ld, signature.Inc,
-                            signature.Lwork)):
-            if not isinstance(value, (int, symbolic.Expression)):
-                # invalid type
-                return False
-            if not symbolic.findsymbols(value) <= symbols:
-                # unknown symbol
-                return False
-        if isinstance(arg, (signature.Ld, signature.Lwork)):
-            # check minimum size
-            databackup = self.data
-            self.data = deepcopy(self.data)
-            try:
-                if isinstance(arg, signature.Ld):
-                    self.infer_ld(callid, argid)
-                else:
-                    self.infer_lwork(callid, argid)
-            except:
-                self.data = databackup
-                return False
-            minvalue = self.calls[callid][argid]
-            self.calls[callid][argid] = value
-            self.data = databackup
-            range_val = 2
-            sumrange_val = 3
-            minval = next(self.ranges_eval(minvalue, range_val, sumrange_val))
-            tmpval = next(self.ranges_eval(value, range_val, sumrange_val))
-            if minval > tmpval:
-                return False
-        if isinstance(arg, signature.Data):
-            return value in self.data
-        if isinstance(call, signature.BasicCall):
-            if argid == 0:
-                return value == arg
-            if arg == "char*":
-                return isinstance(arg, str)
-            if isinstance(arg, str) and arg[0] == "[" and arg[-1] == "]":
-                try:
-                    self.ranges_parse(arg[1:-1])
-                except:
-                    return False
-                try:
-                    self.ranges_parse(arg)
-                except:
-                    return False
-            if not symbolic.findsymbols(value) <= symbols:
-                # unknown symbol
-                return False
-        return True
-
     def check_sanity(self, raise_=False):
         """Check if the experiment is self-consistent."""
         if not raise_:
@@ -1277,105 +1196,24 @@ class Experiment(dict):
             except:
                 return False
 
-        # instance checking
-        for key, types in (
-            ("note", str),
-            ("sampler", dict),
-            ("nthreads", (int, symbolic.Symbol)),
-            ("script_header", str),
-            ("range", (type(None), list)),
-            ("nreps", int),
-            ("sumrange", (type(None), list)),
-            ("sumrange_parallel", bool),
-            ("calls_parallel", bool),
-            ("calls", list),
-            ("data", dict),
-            ("papi_counters", list)
-        ):
-            if not isinstance(self[key], types):
-                if isinstance(types, tuple):
-                    raise TypeError("Attribute %r should be of type %s" %
-                                    (key, " or ".join(map(str, types))))
-                raise TypeError("Attribute %r should be of type %s" %
-                                (key, types))
+        self.set_sampler(self.sampler, check_only=True)
+        self.set_papi_counters(self.papi_counters, check_only=True)
+        self.set_nthreads(self.nthreads, check_only=True)
+        self.set_range(self.range, check_only=True)
+        self.set_nreps(self.nreps, check_only=True)
+        self.set_sumrange(self.sumrange, check_only=True)
+        self.set_sumrange_parallel(self.sumrange_parallel, check_only=True)
+        self.set_calls_parallel(self.calls_parallel, check_only=True)
+        self.set_calls(self.calls, check_only=True)
 
-        # sampler
-        for key in ("backend_name", "backend_header", "backend_prefix",
-                    "backend_suffix", "backend_footer", "nt_max", "exe"):
-            if key not in self.sampler:
-                raise KeyError("Sampler has not key %r" % key)
+        # vary
+        for name, data in self.data:
+            vary = data["vary"]
+            self.set_vary_with(name, vary["with"], check_only=True)
+            self.set_vary_along(name, vary["along"], check_only=True)
+            self.set_vary_offset(name, vary["offset"], check_only=True)
 
-        # ranges
-        if self.range:
-            if len(self.range) != 2:
-                raise TypeError("range must have length 2: str, iterator")
-            if not isinstance(self.range[0], symbolic.Symbol):
-                raise TypeError("range[0] must be Symbol (not %s)" %
-                                type(self.range[0]))
-            if not isinstance(self.range[1], Iterable):
-                raise TypeError("range[1] must be iterable")
-        if self.sumrange:
-            if len(self.sumrange) != 2:
-                raise TypeError("sumrange must have length 2: str, iterator")
-            if not isinstance(self.sumrange[0], symbolic.Symbol):
-                raise TypeError("sumrange[0] must be Symbol (not %s)" %
-                                type(self.sumrange[0]))
-            if not isinstance(self.sumrange[1], Iterable):
-                raise TypeError("sumrange[1] must be iterable")
-            dependson = symbolic.findsymbols(self.sumrange[1])
-            if self.range:
-                dependson.discard(self.range[0])
-            if dependson:
-                raise ValueError("unknown symbol %r in sumrange" %
-                                 dependson.pop())
-        if self.range and self.sumrange:
-            if self.sumrange[0] == self.range[0]:
-                raise ValueError("range and sumrange use the same symbol")
-
-        # threads
-        if isinstance(self.nthreads, int):
-            if self.nthreads > self.sampler["nt_max"]:
-                raise ValueError("nthreads must be <= sampler[\"nt_max\"]")
-        else:
-            if not self.range or self.nthreads != self.range[0]:
-                raise ValueError("nthreads int or range[0]")
-
-        # calls
-        symbols = set()
-        if self.range:
-            symbols.add(self.range[0])
-        if self.sumrange:
-            symbols.add(self.sumrange[0])
-        if len(self.calls) == 0:
-            raise ValueError("calls are empty")
-        for callid, call in enumerate(self.calls):
-            if not isinstance(call, signature.BasicCall):
-                raise ValueError("call[%d] must be Call or BasicCall" % callid)
-            if len(call) != len(call.sig):
-                raise ValueError("%s takes %d arguments but call[%d] has %d" %
-                                 (call.sig[0], len(call.sig) - 1, callid,
-                                  len(call) - 1))
-            for argid in range(len(call)):
-                if not self.check_arg_valid(callid, argid):
-                    call = self.calls[callid]
-                    raise ValueError(
-                        "argument %d (%s=%s) of call %d (%s) is invalid" %
-                        (argid, call.sig[argid], call[argid], callid,
-                         call.sig[0])
-                    )
-
-        # data
-        needed = set(call[argid] for call in self.calls
-                     if isinstance(call, signature.Call)
-                     for argid in call.sig.dataargs())
-        excess = needed - set(self.data)
-        if excess:
-            raise KeyError("%r not in data" % excess.pop())
-        withoptions = set(["rep"])
-        if self.range:
-            withoptions.add(self.range[0])
-        if self.sumrange:
-            withoptions.add(self.sumrange[0])
+        # data updated?
         databackup = self.data
         self.data = deepcopy(self.data)
         self.update_data()
@@ -1383,24 +1221,6 @@ class Experiment(dict):
         self.data = databackup
         if newdata != databackup:
             raise Exception("Data is not up to date")
-
-        # vary
-        for name, data in self.data.items():
-            self.data = databackup
-            excess = data["vary"]["with"] - withoptions
-            if excess:
-                raise ValueError("data[%s] varies with unknown %s" %
-                                 (name, excess.pop()))
-            if data["vary"]["along"] >= len(data["dims"]):
-                raise IndexError("data[%s] has %d dims but varies with dim %d"
-                                 % (name, len(data["dims"]),
-                                    data["vary"]["along"]))
-            excess = symbolic.findsymbols(data["vary"]["offset"]) - symbols
-            if excess:
-                raise ValueError("unknown symbol %r in offset for data[%s]" %
-                                 (excess.pop(), name))
-
-        return True
 
     def generate_cmds(self, range_val=None):
         """Generate commands for the Sampler."""
@@ -1671,8 +1491,7 @@ class Experiment(dict):
 
     def submit_prepare(self, filebase):
         """Create all files needed to run the experiment."""
-        self.update_data()
-        assert(self.check_sanity())
+        self.check_sanity()
         scriptfile = "%s.%s" % (filebase, defines.script_extension)
         reportfile = "%s.%s" % (filebase, defines.report_extension)
         errfile = "%s.%s" % (filebase, defines.error_extension)
