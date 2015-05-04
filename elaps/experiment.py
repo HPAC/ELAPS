@@ -782,7 +782,7 @@ class Experiment(dict):
         self.calls.pop(callid)
         self.update_data()
 
-    def set_calls(self, calls, force=False, check_only=True):
+    def set_calls(self, calls, force=False, check_only=False):
         """Set all calls."""
         # check type
         if not isinstance(calls, list):
@@ -806,17 +806,155 @@ class Experiment(dict):
         for call in calls:
             self.set_call(-1, call, force=force)
 
-    def set_vary(self, name, with_=None, along=None, offset=0):
-        """Set the vary specs of a variable."""
-        # TODO
+    def set_vary_with(self, name, with_, force=False, check_only=False):
+        """Set the vary with option of a variable."""
+        # data existence
+        if name not in self.data:
+            raise IndexError("Unknown variable: %s" % name)
+
+        # type conversion
+        if isinstance(with_, (list, tuple)):
+            with_ = set(with_)
+
+        # type check
+        if not isinstance(with_, set):
+            raise TypeError("Invalid vary with type: %s" % with_)
+
+        with2 = set()
+        for with_var in with_:
+            if with_var == "rep":
+                with2.add(with_var)
+                continue
+            if self.sumrange and with_var == self.sumrange[0]:
+                with2.add(with_var)
+                continue
+            if not force:
+                raise ValueError("Invlaid vary with entry: %s" % with_var)
+        with_ = with2
+
+        if check_only:
+            return
+
+        # set new value
+        self.data[name]["vary"]["with"] = with_
+        self.update_data()
+
+    def add_vary_with(self, name, with_var, force=False, check_only=False):
+        """Add a variable to the vary with option."""
+        # data existence
+        if name not in self.data:
+            raise IndexError("Unknown variable: %s" % name)
+
+        # value/type check
+        if with_var != "rep":
+            if isinstance(with_var, str):
+                with_var = self.ranges_parse(with_var, dorange=False)
+            if not self.sumrange or with_var != self.sumrange[0]:
+                raise ValueError("Invalid vary with entry: %s" % with_var)
+
+        if check_only:
+            return
+
+        self.data[name]["vary"]["with"].add(with_var)
+        self.update_data()
+
+    def remove_vary_with(self, name, with_var, force=False, check_only=False):
+        """Add a variable to the vary with option."""
+        # data existence
+        if name not in self.data:
+            raise IndexError("Unknown variable: %s" % name)
+
+        # value/type check
+        if with_var != "rep":
+            if isinstance(with_var, str):
+                with_var = self.ranges_parse(with_var, dorange=False)
+            if not self.sumrange or with_var != self.sumrange[0]:
+                raise ValueError("Invalid vary with entry: %s" % with_var)
+
+        if check_only:
+            return
+
+        self.data[name]["vary"]["with"].discard(with_var)
+        self.update_data()
+
+    def set_vary_along(self, name, along, force=False, check_only=False):
+        """Set the vary along option of a variable."""
+        # data existence
+        if name not in self.data:
+            raise IndexError("Unknown variable: %s" % name)
         data = self.data[name]
-        if with_ is None:
-            with_ = set()
-        if along is None:
-            along = len(data["dims"]) - 1
+
+        # parse string
+        if isinstance(along, str):
+            along = eval(along)
+
+        # type check
+        if not isinstance(along, int):
+            raise TypeError("Invalid vary along type: %s" % along)
+
+        # value
+        if not (0 < along < len(data["dims"])):
+            if not force:
+                raise IndexError("Invalid vary along value: %s" % along)
+            along = max(0, min(along, len(data["dims"]) - 1))
+
+        if check_only:
+            return
+
+        data["vary"]["along"] = along
+
+    def set_vary_offset(self, name, offset, force=False, check_only=False):
+        """Set the vary offset option of a variable."""
+        # data existence
+        if name not in self.data:
+            raise IndexError("Unknown variable: %s" % name)
+        data = self.data[name]
+
+        # parse string
         if isinstance(offset, str):
             offset = self.ranges_parse(offset)
-            data["vary"] = {"with": with_, "along": along, "offset": offset}
+
+        # type
+        if not isinstance(offset, (int, symbolic.Expression)):
+            raise TypeError("Invalid offset: %s" % offset)
+
+        # check for symbols
+        known_symbols = list(self.ranges_vardict())
+        if not all(symbol in known_symbols
+                   for symbol in symbolic.findsymbols(offset)):
+            raise ValueError("offset contains unknown symbols: %s" % offset)
+
+        if check_only:
+            return
+
+        # set new values
+        data["vary"]["offset"] = offset
+
+    def set_vary(self, name, with_=None, along=None, offset=None, force=False,
+                 check_only=False):
+        """Set the vary specs of a variable."""
+        # data existence
+        if name not in self.data:
+            raise IndexError("Unknown variable: %s" % name)
+        data = self.data[name]
+
+        if with_ is not None:
+            self.set_vary_with(name, with_, force=force, check_only=True)
+        if along is not None:
+            self.set_vary_along(name, along, force=force, check_only=True)
+        if offset is not None:
+            self.set_vary_offset(name, offset, force=force, check_only=True)
+
+        if check_only:
+            return
+
+        # set new values
+        if with_ is not None:
+            self.set_vary_with(name, with_, force=force)
+        if along is not None:
+            self.set_vary_along(name, along, force=force)
+        if offset is not None:
+            self.set_vary_offset(name, offset, force=force)
 
     # inference
     def update_data(self, name=None):

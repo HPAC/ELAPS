@@ -282,6 +282,7 @@ class TestExperimentSetters(TestExperiment):
                 )("N", "N", i, i, i, 1, "A", i, "B", i, 1, "C", i)
             ]
         )
+        self.ex.update_data()
 
     def test_set_sampler(self):
         """Test for set_sampler()."""
@@ -779,20 +780,131 @@ class TestExperimentSetters(TestExperiment):
         ex.set_calls([], check_only=True)
         self.assertEquals(ex.calls, calls)
 
+    def test_set_vary_with(self):
+        """Test for set_vary_with()."""
+        ex, j = self.ex, self.j
+        ex.set_sumrange([j, "1:100"])
+
+        # working:
+        ex.set_vary_with("A", ["rep"])
+        self.assertEqual(ex.data["A"]["vary"]["with"], set(["rep"]))
+
+        # index
+        self.assertRaises(IndexError, ex.set_vary_with, "X", ["rep"])
+
+        # type
+        self.assertRaises(TypeError, ex.set_vary_with, "A", 100)
+
+        # values
+        self.assertRaises(ValueError, ex.set_vary_with, "A", [j, "a"])
+        ex.set_vary_with("A", [j, "a"], force=True)
+        self.assertEqual(ex.data["A"]["vary"]["with"], set([j]))
+
+        # check_only
+        ex.set_vary_with("A", [], check_only=True)
+        self.assertEqual(ex.data["A"]["vary"]["with"], set([j]))
+
+    def test_add_vary_with(self):
+        """Test for add_vary_with()."""
+        ex = self.ex
+
+        # working
+        ex.add_vary_with("A", "rep")
+        self.assertEqual(ex.data["A"]["vary"]["with"], set(["rep"]))
+
+        # index
+        self.assertRaises(IndexError, ex.add_vary_with, "X", "rep")
+
+        # type
+        self.assertRaises(ValueError, ex.add_vary_with, "A", 10)
+
+        # check_only
+        ex.set_sumrange(["j", "1:100"])
+        ex.add_vary_with("A", "j", check_only=True)
+        self.assertEqual(ex.data["A"]["vary"]["with"], set(["rep"]))
+
+    def test_remove_vary_with(self):
+        """Test for remove_vary_with()."""
+        ex, j = self.ex, self.j
+
+        # working
+        ex.add_vary_with("A", "rep")
+        ex.remove_vary_with("A", "rep")
+        self.assertEqual(ex.data["A"]["vary"]["with"], set())
+
+        # index
+        self.assertRaises(IndexError, ex.remove_vary_with, "X", "rep")
+
+        # type
+        self.assertRaises(ValueError, ex.remove_vary_with, "A", 10)
+
+        # check_only
+        ex.set_sumrange(["j", "1:100"])
+        ex.add_vary_with("A", "j")
+        ex.remove_vary_with("A", "j", check_only=True)
+        self.assertEqual(ex.data["A"]["vary"]["with"], set([j]))
+
+    def test_set_vary_along(self):
+        """Test for set_vary_with()."""
+        ex, j = self.ex, self.j
+        ex.set_sumrange([j, "1:100"])
+
+        # working:
+        ex.set_vary_with("A", ["rep"])
+        self.assertEqual(ex.data["A"]["vary"]["with"], set(["rep"]))
+
+        # index
+        self.assertRaises(IndexError, ex.set_vary_with, "X", ["rep"])
+
+        # type
+        self.assertRaises(TypeError, ex.set_vary_with, "A", 100)
+
+        # values
+        self.assertRaises(ValueError, ex.set_vary_with, "A", [j, "a"])
+        ex.set_vary_with("A", [j, "a"], force=True)
+        self.assertEqual(ex.data["A"]["vary"]["with"], set([j]))
+
+        # check_only
+        ex.set_vary_with("A", [], check_only=True)
+        self.assertEqual(ex.data["A"]["vary"]["with"], set([j]))
+
+    def test_set_vary_offset(self):
+        """Test for set_vary_offset()."""
+        ex, i, j = self.ex, self.i, self.j
+
+        # working
+        ex.set_vary_offset("B", 1000)
+        self.assertEqual(ex.data["B"]["vary"]["offset"], 1000)
+        ex.set_vary_offset("B", "10 * i")
+        self.assertEqual(ex.data["B"]["vary"]["offset"], 10 * i)
+
+        # index
+        self.assertRaises(IndexError, ex.set_vary_offset, "X", 10)
+
+        # type
+        self.assertRaises(TypeError, ex.set_vary_offset, "B", None)
+
+        # symbols
+        self.assertRaises(ValueError, ex.set_vary_offset, "B", j + 100)
+
+        # check_only
+        ex.set_vary_offset("B", 100, check_only=True)
+        self.assertEqual(ex.data["B"]["vary"]["offset"], 10 * i)
+
     def test_set_vary(self):
         """Test for set_vary()."""
-        # TODO
-        i = self.i
+        ex = self.ex
 
-        sig = Signature("name", Dim("m"), Dim("n"),
-                        iData("A", "m * n"), iData("B", "n * n"))
-        ex = Experiment()
-        ex.call = sig(10, 20, "X", "Y")
-        ex.range = [i, range(random.randint(1, 10))]
-        ex.update_data()
-        ex.set_vary("X", offset="10 * i")
+        # working
+        ex.set_vary("C", offset=1000)
+        self.assertEqual(ex.data["C"]["vary"]["offset"], 1000)
 
-        self.assertEqual(ex.data["X"]["vary"]["offset"], 10 * i)
+        # index
+        self.assertRaises(IndexError, ex.set_vary, "X")
+
+        # check_only
+        ex.set_vary("A", offset=100, check_only=True)
+        self.assertEqual(ex.data["A"]["vary"]["offset"], 0)
 
 
 class TestExperimentCmds(unittest.TestCase):
