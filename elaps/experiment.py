@@ -164,7 +164,7 @@ class Experiment(dict):
                 if not force:
                     raise ValueError("Sampler only supports %d counters" %
                                      sampler["papi_counters_max"])
-                papi_counters = counters[:sampler["papi_counters_max"]]
+                papi_counters = papi_counters[:sampler["papi_counters_max"]]
         else:
             if len(self.papi_counters):
                 if not force:
@@ -219,15 +219,17 @@ class Experiment(dict):
 
     def set_papi_counters(self, papi_counters, force=False, check_only=False):
         """Set PAPI counters."""
+        sampler = self.sampler
+
         if papi_counters is None:
             papi_counters = []
 
         # type check
         if not isinstance(papi_counters, (list, tuple)):
-            raise ValueError("Expecting a list of counters.")
+            raise TypeError("Expecting a list of counters.")
 
         # counters enabled?
-        if not self.sampler["papi_enabled"]:
+        if not sampler["papi_enabled"]:
             if len(papi_counters):
                 if not force:
                     raise ValueError("Sampler doesn't support PAPI")
@@ -236,7 +238,7 @@ class Experiment(dict):
             # availablility
             papi_counters2 = []
             for counter in papi_counters:
-                if counter not in self.sampler["papi_counters_avail"]:
+                if counter not in sampler["papi_counters_avail"]:
                     if not force:
                         raise ValueError(
                             "Sampler doesn't support PAPI counter %r" % counter
@@ -246,11 +248,11 @@ class Experiment(dict):
             papi_counters = papi_counters2
 
             # length
-            if len(papi_counters) > self.sampler["papi_counters_max"]:
+            if len(papi_counters) > sampler["papi_counters_max"]:
                 if not force:
                     raise ValueError("Sampler only supports %s PAPI counters" %
-                                     self.sampler["papi_counters_max"])
-            papi_counters = papi_counters[:self.sampler["papi_countes_max"]]
+                                     sampler["papi_counters_max"])
+                papi_counters = papi_counters[:sampler["papi_counters_max"]]
 
         if check_only:
             return
@@ -272,9 +274,9 @@ class Experiment(dict):
         elif isinstance(nthreads, symbolic.Symbol):
             # check if == range_var
             if not self.range or nthreads != self.range[0]:
-                raise ValueError("Invalid thread count: %s" % nthreads)
+                raise NameError("Invalid thread count: %s" % nthreads)
         else:
-            raise ValueError("Invalid thread count: %s" % nthreads)
+            raise TypeError("Invalid thread count: %s" % nthreads)
 
         if check_only:
             return
@@ -294,7 +296,7 @@ class Experiment(dict):
         # check type
         if not isinstance(range_var, symbolic.Symbol):
             if not force:
-                raise ValueError("Invalid range variable: %r" % range_var)
+                raise TypeError("Invalid range variable: %r" % range_var)
             range_var = symbolic.Symbol("i")
         # check conflict with sumrange
         if self.sumrange and range_var == self.sumrange[0]:
@@ -330,7 +332,7 @@ class Experiment(dict):
         # check for type
         if not isinstance(range_vals, (list, tuple, symbolic.Range)):
             if not force:
-                raise ValueError("Invalid range: %r" % range_vals)
+                raise TypeError("Invalid range: %r" % range_vals)
             range_vals = symbolic.Range("1")
 
         # check for unknown symbols
@@ -357,7 +359,7 @@ class Experiment(dict):
         # set new value
         self.range[1] = range_vals
 
-    def set_range(self, range_, force=True, check_only=False):
+    def set_range(self, range_, force=False, check_only=False):
         """Set the range."""
         if range_ is None:
             # disabling range
@@ -385,7 +387,7 @@ class Experiment(dict):
         self.set_range_var(range_var, force=force)
         self.set_range_vals(range_vals, force=force)
 
-    def set_nreps(self, nreps):
+    def set_nreps(self, nreps, force=False, check_only=False):
         """Set repetition count."""
         # parse string
         if isinstance(nreps, str):
@@ -398,7 +400,7 @@ class Experiment(dict):
         # check type
         if not isinstance(nreps, int):
             if not force:
-                raise ValueError("Invalid repetition count: %r" % int)
+                raise TypeError("Invalid repetition count: %r" % int)
             nreps = 1
 
         # ensure > 0
@@ -406,6 +408,9 @@ class Experiment(dict):
             if not force:
                 raise ValueError("Invalid repetition count: %r" % int)
             nreps = 1
+
+        if check_only:
+            return
 
         self.nreps = nreps
 
@@ -423,8 +428,8 @@ class Experiment(dict):
         # check type
         if not isinstance(sumrange_var, symbolic.Symbol):
             if not force:
-                raise ValueError("Invalid range variable: %r" % sumrange_var)
-            range_var = symbolic.Symbol("j")
+                raise TypeError("Invalid range variable: %r" % sumrange_var)
+            sumrange_var = symbolic.Symbol("j")
 
         # check conflict with range
         if self.range and sumrange_var == self.range[0]:
@@ -432,7 +437,7 @@ class Experiment(dict):
                 raise ValueError(
                     "Cannot use same variable for range and sumrange"
                 )
-            range_var = symbolic.Symbol("i" if sumrange_var == "j" else "i")
+            sumrange_var = symbolic.Symbol("i" if sumrange_var == "j" else "j")
 
         if check_only:
             return
@@ -462,7 +467,7 @@ class Experiment(dict):
         # check for type
         if not isinstance(sumrange_vals, (list, tuple, symbolic.Range)):
             if not force:
-                raise ValueError("Invalid range: %r" % sumrange_vals)
+                raise TypeError("Invalid range: %r" % sumrange_vals)
             sumrange_vals = symbolic.Range("1")
 
         # check for unknown symbols
@@ -521,10 +526,13 @@ class Experiment(dict):
         self.set_sumrange_var(sumrange_var, force=force)
         self.set_sumrange_vals(sumrange_vals, force=force)
 
-    def set_sumrange_parallel(self, sumrange_parallel, force=False,
+    def set_sumrange_parallel(self, sumrange_parallel=True, force=False,
                               check_only=False):
         """Set the parllalel sumrange option."""
+        # convert to bool
         sumrange_parallel = bool(sumrange_parallel)
+
+        # check availability
         if sumrange_parallel and not self.sampler["omp_enabled"]:
             if not force:
                 raise ValueError("Sampler doesn't support OpenMP")
@@ -536,10 +544,13 @@ class Experiment(dict):
         # set new value
         self.sumrange_parallel = sumrange_parallel
 
-    def set_calls_parallel(self, calls_parallel, force=False,
+    def set_calls_parallel(self, calls_parallel=True, force=False,
                            check_only=False):
         """Set the parllalel sumrange option."""
+        # convert to bool
         calls_parallel = bool(calls_parallel)
+
+        # check availability
         if calls_parallel and not self.sampler["omp_enabled"]:
             if not force:
                 raise ValueError("Sampler doesn't support OpenMP")
@@ -558,6 +569,13 @@ class Experiment(dict):
             raise IndexError("Invalid callid: %s" % callid)
 
         call = self.calls[callid]
+
+        # parse argname to argid
+        if isinstance(argid, str) and isinstance(call, signature.Call):
+            argname = argid
+            argid = call.sig.argpos(argname)
+            if argid is None:
+                raise IndexError("Unknown argument name: %s" % argname)
 
         # check argid
         if argid == 0:
@@ -596,7 +614,7 @@ class Experiment(dict):
                 # ensure value is str
                 if not isinstance(value, str):
                     if not force:
-                        raise ValueError("Data arguments must be strings.")
+                        raise TypeError("Data arguments must be strings.")
                     value = str(value)
                 if not value:
                     raise ValueError("Empty data argument.")
@@ -646,13 +664,13 @@ class Experiment(dict):
 
             # check type
             if not isinstance(value, (int, symbolic.Expression)):
-                raise ValueError("Invalid argument type: %s" % value)
+                raise TypeError("Invalid argument type: %s" % value)
 
             # check min
             if isinstance(value, int) and arg.min and value < arg.min(*call):
                 if not force:
                     raise ValueError("Value doesn't satisfy min")
-                value = arg.min(call)
+                value = arg.min(*call)
 
             if check_only:
                 return
@@ -672,7 +690,7 @@ class Experiment(dict):
         if arg == "char*":
             if not isinstance(value, str):
                 if not force:
-                    raise ValueError("char* value must be str")
+                    raise TypeError("char* value must be str")
                 value = str(value)
         else:
             try:
@@ -694,15 +712,12 @@ class Experiment(dict):
             callid = len(self.calls)
         if not (0 <= callid <= len(self.calls)):
             if not force:
-                raise KeyError("Invalid callid: %s" % callid)
+                raise IndexError("Invalid callid: %s" % callid)
             callid = max(0, min(callid, len(self.calls)))
 
         # None => remove call
         if call is None:
-            if check_only:
-                return
-            if callid < len(self.calls):
-                self.calls.pop(callid)
+            self.remove_call(callid, check_only)
             return
 
         # check if kernel is available
@@ -723,8 +738,9 @@ class Experiment(dict):
                 minsig = self.sampler["kernels"][routine]
                 call = signature.BasicCall(minsig, *call[1:])
             else:
-                raise ValueError("Invalid call: %s" % call)
+                raise TypeError("Invalid call: %s" % call)
 
+        # check arguments
         if callid == len(self.calls):
             self.calls.append(None)
         oldcall = self.calls[callid]
@@ -735,8 +751,8 @@ class Experiment(dict):
         finally:
             self.calls[callid] = oldcall
             if oldcall is None:
-                self.calls = self.call[:-1]
-            self.data_update()
+                self.calls = self.calls[:-1]
+            self.update_data()
 
         if check_only:
             return
@@ -747,6 +763,24 @@ class Experiment(dict):
         self.calls[callid] = call
         for argid in range(1, len(call)):
             self.set_arg(callid, argid, call[argid], force=force)
+
+    def add_call(self, call, force=False, check_only=False):
+        """Add a call."""
+        self.set_call(-1, call, force, check_only)
+
+    def remove_call(self, callid, force=False, check_only=False):
+        """Remove a call."""
+        # check callid
+        if not (0 <= callid < len(self.calls)):
+            if not force:
+                raise IndexError("Invalid callid: %s" % callid)
+            callid = max(0, min(callid, len(self.calls) - 1))
+
+        if check_only:
+            return
+
+        self.calls.pop(callid)
+        self.update_data()
 
     def set_calls(self, calls, force=False, check_only=True):
         """Set all calls."""
@@ -762,7 +796,7 @@ class Experiment(dict):
                 self.set_call(-1, call, force=force)
         finally:
             self.calls = oldcalls
-            self.data_update()
+            self.update_data()
 
         if check_only:
             return
@@ -771,6 +805,18 @@ class Experiment(dict):
         self.calls = []
         for call in calls:
             self.set_call(-1, call, force=force)
+
+    def set_vary(self, name, with_=None, along=None, offset=0):
+        """Set the vary specs of a variable."""
+        # TODO
+        data = self.data[name]
+        if with_ is None:
+            with_ = set()
+        if along is None:
+            along = len(data["dims"]) - 1
+        if isinstance(offset, str):
+            offset = self.ranges_parse(offset)
+            data["vary"] = {"with": with_, "along": along, "offset": offset}
 
     # inference
     def update_data(self, name=None):
@@ -1008,17 +1054,6 @@ class Experiment(dict):
         for argid in argids:
             for con_callid, con_argid in reversed(connections[callid, argid]):
                 self.calls[con_callid][con_argid] = call[argid]
-
-    def vary_set(self, name, with_=None, along=None, offset=0):
-        """Set the vary specs of a variable."""
-        data = self.data[name]
-        if with_ is None:
-            with_ = set()
-        if along is None:
-            along = len(data["dims"]) - 1
-        if isinstance(offset, str):
-            offset = self.ranges_parse(offset)
-            data["vary"] = {"with": with_, "along": along, "offset": offset}
 
     def check_arg_valid(self, callid, argid):
         """Check if call[callid][argid] is valid."""

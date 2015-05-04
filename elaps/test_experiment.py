@@ -35,7 +35,7 @@ class TestExperiment(unittest.TestCase):
             "papi_counters_avail": ("C1", "C2", "C3"),
             "kernels": {"dgemm": (
                 'dgemm', 'char*', 'char*', 'int*', 'int*', 'int*', 'double*',
-                'double*', 'int*', 'double*', 'int*', 'double*', 'double*',
+                'double*', 'int*', 'double*', 'int*', 'double*', 'float*',
                 'int*'
             )},
             "nt_max": random.randint(1, 10),
@@ -149,20 +149,6 @@ class TestExperiment(unittest.TestCase):
 
         self.assertEqual(ex.calls[0].m, ex.calls[1][2])
         self.assertEqual(ex.calls[0].n, ex.calls[1][2])
-
-    def test_vary_set(self):
-        """Test for vary_set()."""
-        i = self.i
-
-        sig = Signature("name", Dim("m"), Dim("n"),
-                        iData("A", "m * n"), iData("B", "n * n"))
-        ex = Experiment()
-        ex.call = sig(10, 20, "X", "Y")
-        ex.range = [i, range(random.randint(1, 10))]
-        ex.update_data()
-        ex.vary_set("X", offset="10 * i")
-
-        self.assertEqual(ex.data["X"]["vary"]["offset"], 10 * i)
 
     def test_check_arg_value(self):
         """test for check_arg_value()."""
@@ -291,7 +277,7 @@ class TestExperimentSetters(TestExperiment):
                     dData("B", "ldB * (n if transB == 'N' else k)"),
                     Ld("ldB", "k if transB == 'N' else n"),
                     dScalar("beta"),
-                    dData("C", "ldC * n"), Ld("ldC", "m"),
+                    sData("C", "ldC * n"), Ld("ldC", "m"),
                     complexity="2 * m * n * k"
                 )("N", "N", i, i, i, 1, "A", i, "B", i, 1, "C", i)
             ]
@@ -387,16 +373,16 @@ class TestExperimentSetters(TestExperiment):
 
     def test_set_nthreads(self):
         """Test for set_nthreads()."""
-        ex = self.ex
+        ex, i = self.ex, self.i
         nt_max = ex.sampler["nt_max"]
 
         # working
-        ex.set_nthreads(2)
-        self.assertEqual(ex.nthreads, 2)
+        ex.set_nthreads(nt_max)
+        self.assertEqual(ex.nthreads, nt_max)
         ex.set_nthreads("1")
         self.assertEqual(ex.nthreads, 1)
         ex.set_nthreads("i")
-        self.assertEqual(ex.nthreads, symbolic.Symbol("i"))
+        self.assertEqual(ex.nthreads, i)
 
         # type
         self.assertRaises(TypeError, ex.set_nthreads, None)
