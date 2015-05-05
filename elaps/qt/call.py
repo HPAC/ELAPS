@@ -70,13 +70,13 @@ class QCall(QtGui.QListWidgetItem):
                 pass
         QtCore.QTimer.singleShot(0, update)
 
+    def UI_args_set(self, force=False):
+        """Set all arguments."""
+        for argid in range(len(self.call)):
+            self.UI_arg_set(argid, force)
+
     def UI_arg_set(self, argid=None, force=False):
         """Set an argument."""
-        if argid is None:
-            for argid in range(len(self.call)):
-                self.UI_arg_set(argid, force)
-            return
-
         value = self.call[argid]
         UI_arg = self.UI_args[argid]
         UI_arglabel = self.UI_arglabels[argid]
@@ -100,6 +100,15 @@ class QCall(QtGui.QListWidgetItem):
             # viz
             if isinstance(self.sig[argid], signature.Data):
                 UI_arg.viz()
+
+        # validity
+        if argid > 0:
+            try:
+                self.playmat.experiment.set_arg(self.callid, argid, value,
+                                                check_only=True)
+                self.playmat.UI_set_invalid(UI_arg, False)
+            except:
+                self.playmat.UI_set_invalid(UI_arg)
         self.update_size()
 
     def setall(self):
@@ -115,7 +124,7 @@ class QCall(QtGui.QListWidgetItem):
             if self.sig:
                 self.args_clear()
                 self.sig = None
-        self.UI_arg_set()
+        self.UI_args_set()
         self.playmat.UI_setting -= 1
 
     def args_init(self):
@@ -274,11 +283,11 @@ class QCall(QtGui.QListWidgetItem):
         self.UI_args[argid].clearFocus()
         self.playmat.on_infer_lwork(self.callid, argid)
 
-    # @pyqtSlot()  # sender() pyqt bug
+    @pyqtSlot()
     def on_arg_focusout(self):
         """Argument looses focus."""
         if self.playmat.UI_setting:
             return
         if self.playmat.Qapp.activeModalWidget():
             return
-        self.UI_arg_set(self.playmat.Qapp.sender().argid)
+        self.playmat.UI_calls_set()

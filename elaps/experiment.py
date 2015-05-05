@@ -1207,7 +1207,7 @@ class Experiment(dict):
         self.set_calls(self.calls, check_only=True)
 
         # vary
-        for name, data in self.data:
+        for name, data in self.data.items():
             vary = data["vary"]
             self.set_vary_with(name, vary["with"], check_only=True)
             self.set_vary_along(name, vary["along"], check_only=True)
