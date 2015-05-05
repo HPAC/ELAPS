@@ -13,6 +13,7 @@ Experiment
 ----------
 * Test randomization
 * Hide output option
+* allow symbolic in BasicCall
 
 * (Script Examples)
 * (How to handle PAPI counter conflicts?)
