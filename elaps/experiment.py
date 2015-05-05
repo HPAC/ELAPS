@@ -667,10 +667,21 @@ class Experiment(dict):
                 raise TypeError("Invalid argument type: %s" % value)
 
             # check min
-            if isinstance(value, int) and arg.min and value < arg.min(*call):
-                if not force:
-                    raise ValueError("Value doesn't satisfy min")
-                value = arg.min(*call)
+            if arg.min:
+                argmin = arg.min(*call)
+                for range_val in self.range_vals():
+                    if value == argmin:
+                        break
+                    for sumrange_val in self.sumrange_vals(range_val):
+                        if value == argmin:
+                            break
+                        valdict = self.ranges_valdict(range_val, sumrange_val)
+                        value_val = symbolic.simplify(value, **valdict)
+                        argmin_val = symbolic.simplify(argmin, **valdict)
+                        if value_val < argmin_val:
+                            if not force:
+                                raise ValueError("Value doesn't satisfy min")
+                            value = argmin
 
             if check_only:
                 return
