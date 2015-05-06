@@ -1257,43 +1257,41 @@ class PlayMat(QtGui.QMainWindow):
     def on_vary_with_toggle(self, checked):
         """Event: changed vary with."""
         sender = self.Qapp.sender()
-        vary = self.experiment.vary[sender.name]
+        ex = self.experiment
+        name = sender.name
+        with_ = sender.with_
         if checked:
-            if not vary["with"]:
-                vary["offset"] = 0
-                vary["along"] = len(data["dims"]) - 1
-            vary["with"].add(sender.with_)
+            ex.add_vary_with(name, with_)
         else:
-            vary["with"].discard(sender.with_)
+            ex.remove_vary_with(name, with_)
         self.experiment_infer_update_set()
 
     # @pyqtSlot(bool)  # sender() pyqt bug
     def on_vary_along_toggle(self, checked):
         """Event: changed vary along."""
         sender = self.Qapp.sender()
-        vary = self.experiment.vary[sender.name]
-        vary["along"] = sender.along
+        self.experiment.set_vary_along(sender.name, sender.along)
         self.experiment_infer_update_set()
 
     # @pyqtSlot()  # sender() pyqt bug
     def on_vary_offset(self):
         """Event: set vary offset."""
         sender = self.Qapp.sender()
+        ex = self.experiment
         name = sender.name
-        vary = self.experiment.vary[name]
+        offset = ex.vary[name]["offset"]
         value, ok = QtGui.QInputDialog.getText(
             self, "Vary offset for %s" % name,
-            "Vary offset for %s:" % name, text=str(vary["offset"])
+            "Vary offset for %s:" % name, text=str(offset)
         )
         if not ok:
             return
-        value = value or "0"
+        value = str(value) or "0"
         try:
-            value = self.experiment.ranges_parse(str(value))
+            ex.set_vary_offset(name, value)
+            self.experiment_infer_update_set()
         except:
             self.UI_alert("Invalid offset:\n%s" % value)
-        vary["offset"] = value
-        self.experiment_infer_update_set()
 
     @pyqtSlot()
     def on_counter_change(self):

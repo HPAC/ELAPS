@@ -106,7 +106,7 @@ class Experiment(object):
                     continue
                 with_ = list(self.vary[value]["with"])
                 if len(with_) == 1:
-                    value += "_" + with_[0]
+                    value += "_" + str(with_[0])
                 elif len(with_) > 1:
                     value += "_(%s)" % ",".join(with_)
                 call[argid] = value
@@ -843,13 +843,15 @@ class Experiment(object):
 
         # check consistency
         oldcalls = self.calls
+        olddata = self.data
         self.calls = []
+        self.data = []
         try:
             for call in calls:
                 self.set_call(-1, call, force=force)
         finally:
             self.calls = oldcalls
-            self.update_data()
+            self.data = olddata
 
         if check_only:
             return
@@ -946,7 +948,7 @@ class Experiment(object):
             raise TypeError("Invalid vary along type: %s" % along)
 
         # value
-        if not (0 < along < len(data["dims"])):
+        if not (0 <= along < len(data["dims"])):
             if not force:
                 raise IndexError("Invalid vary along value: %s" % along)
             along = max(0, min(along, len(data["dims"]) - 1))

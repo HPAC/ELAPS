@@ -121,10 +121,10 @@ class QDataArg(QtGui.QLineEdit):
             self.viz_none()
             return
         data = ex.data[value]
+        vary = ex.vary[value]
+        dims = data["dims"]
 
         # vary
-        dims = data["dims"]
-        vary = data["vary"]
         self.offsetstr = None
         if vary["with"]:
             self.offsetstr = ""
