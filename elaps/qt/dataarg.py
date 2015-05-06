@@ -117,10 +117,10 @@ class QDataArg(QtGui.QLineEdit):
         call = self.call
         value = call[self.argid]
         ex = self.playmat.experiment
-        if value not in ex.data:
+        if value not in ex.operands:
             self.viz_none()
             return
-        data = ex.data[value]
+        data = ex.get_operand(value)
         vary = ex.vary[value]
         dims = data["dims"]
 
@@ -155,13 +155,13 @@ class QDataArg(QtGui.QLineEdit):
             # something is not a number
             self.viz_none()
             return
-        if self.playmat.experiment.data_maxdim() is None:
+        if ex.operands_maxdim() is None:
             # something with the range went wrong
             self.viz_none()
             return
         if "work" in call.properties(self.argid):
             # maximum height for work
-            maxdim = max(1, ex.data_maxdim())
+            maxdim = max(1, ex.operands_maxdim())
             if dimmax[0] > maxdim:
                 dims = [0, 0]
                 dimmin = [maxdim, dimmin[0] // maxdim]
@@ -190,11 +190,11 @@ class QDataArg(QtGui.QLineEdit):
 
     def viz_matrix(self, dimmin, dimmax):
         """Visualize a matrix."""
-        scale = (defines.viz_scale /
-                 max(1, self.playmat.experiment.data_maxdim()))
+        ex = self.playmat.experiment
+        scale = (defines.viz_scale / max(1, ex.operands_maxdim()))
         dimmin = [int(round(scale * dim)) for dim in dimmin]
         dimmax = [int(round(scale * dim)) for dim in dimmax]
-        call = self.playmat.experiment.calls[self.UI_call.callid]
+        call = ex.calls[self.UI_call.callid]
         properties = call.properties(self.argid)
         for prop in properties:
             if prop in ("lower", "upper"):

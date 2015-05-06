@@ -89,7 +89,7 @@ class Report(object):
         for range_val in ex.range_vals():
             # discard randomization results
             if ex.range_randomize_data:
-                for name in ex.data:
+                for name in ex.operands:
                     getints(data, 1)
 
             # results for each repetition

@@ -64,7 +64,6 @@ class PlayMat(QtGui.QMainWindow):
                 pass
         if not self.experiment:
             self.experiment_reset()
-        self.experiment.update_data()
 
         self.UI_setall()
 
@@ -517,9 +516,6 @@ class PlayMat(QtGui.QMainWindow):
                 newcalls.append(call)
         ex.calls = newcalls
 
-        # update
-        ex.update_data()
-
         self.experiment = ex
 
     def experiment_reset(self):
@@ -550,13 +546,12 @@ class PlayMat(QtGui.QMainWindow):
         self.log("Written Experiment to %r." % os.path.relpath(filename))
 
     def experiment_infer_update_set(self, callid=None):
-        """Infer Ld and Lwork (if not showing) and update_data()."""
+        """Infer Ld and Lwork (if not showing)."""
         ex = self.experiment
         if signature.Ld in self.hideargs:
             ex.infer_lds(callid)
         if signature.Lwork in self.hideargs:
             ex.infer_lworks(callid)
-        ex.update_data()
         self.UI_submit_setenabled()
         self.UI_calls_set()
 
@@ -635,7 +630,7 @@ class PlayMat(QtGui.QMainWindow):
     def UI_varyactions(self, name):
         """Generate vary menu for Operand."""
         ex = self.experiment
-        data = ex.data[name]
+        data = ex.get_operand(name)
         vary = ex.vary[name]
 
         actions = []
@@ -1146,8 +1141,9 @@ class PlayMat(QtGui.QMainWindow):
             try:
                 # prepare call
                 call = sig()
+                operands = ex.operands
                 varnames = [name for name in string.ascii_uppercase
-                            if name not in ex.data]
+                            if name not in operands]
                 for argid, arg in enumerate(sig):
                     if isinstance(arg, (signature.Dim, signature.Ld)):
                         call[argid] = defines.default_dim
@@ -1179,7 +1175,7 @@ class PlayMat(QtGui.QMainWindow):
                                 False)
             self.experiment_infer_update_set()
         except Exception as e:
-            if "Incompatible data sizes" in str(e):
+            if "Incompatible operend sizes" in str(e):
                 ret = QtGui.QMessageBox.question(
                     self, str(e), "Adjust dimensions automatically?",
                     QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
@@ -1192,7 +1188,7 @@ class PlayMat(QtGui.QMainWindow):
                     self.experiment_infer_update_set()
                 return
             self.UI_set_invalid(self.UI_calls.item(callid).UI_args[argid])
-            if "Incompatible data types:" in str(e):
+            if "Incompatible operand types:" in str(e):
                 self.UI_alert(e)
 
     @pyqtSlot(QtCore.QPoint)

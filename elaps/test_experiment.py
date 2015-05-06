@@ -55,37 +55,6 @@ class TestExperiment(unittest.TestCase):
         ex = Experiment(note="1234", range=("i", range(10)))
         self.assertEqual(eval(repr(ex)), ex)
 
-    def test_update_data(self):
-        """Test for update_data()."""
-        sig = Signature("name", Dim("m"), Dim("n"),
-                        cData("A", "ldA * n"), Ld("ldA", "m"))
-        ex = Experiment(calls=[sig(100, 1000, "X", 2000)])
-
-        self.assertRaises(KeyError, ex.update_data, "B")
-
-        ex.update_data()
-
-        self.assertDictContainsSubset({
-            "size": 2000 * 1000,
-            "type": cData,
-            "dims": [100, 1000],
-            "lds": [2000, 1000]
-        }, ex.data["X"])
-
-        # initial vary setup
-        self.assertEqual(ex.vary["X"],
-                         {"with": set(), "along": 1, "offset": 0})
-
-        # vary is not touched
-        ex.vary["X"]["with"].add("rep")
-        ex.call.m = 500
-        ex.update_data("X")
-
-        self.assertIn("rep", ex.vary["X"]["with"])
-
-        ex.call.A = None
-        ex.update_data()
-
     def test_infer_lds(self):
         """Test for infer_ld[s]()."""
         sig = Signature("name", Dim("m"), Dim("n"),
@@ -106,7 +75,7 @@ class TestExperiment(unittest.TestCase):
         ex.infer_lds()
 
         self.assertEqual(ex.call.ldA, 8 * 100)
-        self.assertEqual(ex.data["X"]["lds"], [8 * 100, 1000])
+        self.assertEqual(ex.get_operand("X")["lds"], [8 * 100, 1000])
 
         # range
         ex.sumrange = ["i", range(10)]
@@ -159,7 +128,6 @@ class TestExperiment(unittest.TestCase):
             sampler=self.sampler,
             calls=[("dgemm", "N", "N", 1, 1, 1, 1, "A", 1, "B", 1, 1, "C", 1)]
         )
-        ex.update_data()
 
         # working
         ex.check_sanity(True)
@@ -197,7 +165,6 @@ class TestExperimentSetters(TestExperiment):
                 )("N", "N", i, i, i, 1, "A", i, "B", i, 1, "C", i)
             ]
         )
-        self.ex.update_data()
 
     def test_set_sampler(self):
         """Test for set_sampler()."""
@@ -585,7 +552,7 @@ class TestExperimentSetters(TestExperiment):
 
         # data: working
         ex.set_arg(0, "A", "D")
-        self.assertTrue("D" in ex.data)
+        self.assertTrue("D" in ex.operands)
 
         # data: type
         self.assertRaises(TypeError, ex.set_arg, 0, "A", "C")
@@ -837,7 +804,6 @@ class TestExperimentCmds(unittest.TestCase):
         self.ex = ex = Experiment()
         ex.calls = [sig(m, n, "X", None, "Y", None, "Z", None)]
         ex.infer_lds()
-        ex.update_data()
         self.i = symbolic.Symbol("i")
         self.j = symbolic.Symbol("j")
 
@@ -1028,7 +994,6 @@ class TestExperimentCmds(unittest.TestCase):
 
         sig = ("name", "char*", "int*", "double*", "double*")
         ex.call = BasicCall(sig, "N", "100", "1.5", "[10000]")
-        ex.update_data()
         cmds = ex.generate_cmds()
         self.assertIn(["name", "N", 100, 1.5, "[10000]"], cmds)
 

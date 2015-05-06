@@ -33,7 +33,6 @@ class Experiment(object):
         self.sumrange_parallel = False
         self.calls_parallel = False
         self.calls = []
-        self.data = {}
         self.vary = {}
 
         # initialize from argument
@@ -44,10 +43,12 @@ class Experiment(object):
                 warnings.warn("%s doesn't support the key %r" %
                               (type(self).__name__, key), Warning)
 
-        self.update_data()
+        self.update_vary()
 
     def __repr__(self):
         """Python parsable representation."""
+        self.update_vary()
+
         empty = Experiment()
 
         # Only print non-default attribute values
@@ -57,22 +58,33 @@ class Experiment(object):
         # remove kernels and backend
         if "sampler" in changed:
             changed["sampler"] = self.sampler.copy()
-            if "kernels" in changed["sampler"]:
-                del changed["sampler"]["kernels"]
-            if "backend" in changed["sampler"]:
-                del changed["sampler"]["backend"]
-            if "papi_counters_avail" in changed["sampler"]:
-                del changed["sampler"]["papi_counters_avail"]
+            for key in ("kernels", "backend", "papi_counters_avail"):
+                if key in changed["sampler"]:
+                    del changed["sampler"][key]
 
-        # remove data section
-        if "data" in changed:
-            del changed["data"]
+        # simplify vary
+        if "vary" in changed:
+            changedvary = {}
+            for name, vary in changed["vary"].items():
+                vary = vary.copy()
+                if not vary["with"]:
+                    del vary["with"]
+                if vary["along"] == len(self.get_operand(name)["dims"]) - 1:
+                    del vary["along"]
+                if vary["offset"] == 0:
+                    del vary["offset"]
+                if vary:
+                    changedvary[name] = vary
+            del changed["vary"]
+            if changedvary:
+                changed["vary"] = changedvary
 
         args = ["%s=%r" % keyval for keyval in changed.items()]
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __str__(self):
         """Readable string representation."""
+        self.update_vary()
         result = ""
         if self.note:
             result += "Note:\t%s\n" % self.note
@@ -106,18 +118,18 @@ class Experiment(object):
             indent += "    "
         for call in self.calls:
             if not isinstance(call, signature.Call):
+                result += str(call) + "\n"
                 continue
             call = call.copy()
             for argid in call.sig.dataargs():
-                value = call[argid]
-                if value not in self.data:
-                    continue
-                with_ = list(self.vary[value]["with"])
+                name = call[argid]
+                self.update_vary(name)
+                with_ = list(self.vary[name]["with"])
                 if len(with_) == 1:
-                    value += "_" + str(with_[0])
+                    name += "_" + str(with_[0])
                 elif len(with_) > 1:
-                    value += "_(%s)" % ",".join(with_)
-                call[argid] = value
+                    name += "_(%s)" % ",".join(with_)
+                call[argid] = name
             result += indent + str(call) + "\n"
         return result[:-1]
 
@@ -145,6 +157,17 @@ class Experiment(object):
     def call(self, call):
         """Set a single call."""
         self.calls = [call]
+
+    @property
+    def operands(self):
+        """List of all operands."""
+        return tuple(set([
+            call[argid]
+            for call in self.calls
+            if isinstance(call, signature.Call)
+            for argid in call.sig.dataargs()
+            if isinstance(call[argid], str)
+        ]))
 
     # setters
     def set_sampler(self, sampler, force=False, check_only=False):
@@ -224,6 +247,8 @@ class Experiment(object):
         self.calls_parallel = calls_parallel
         self.sumrange_parallel = sumrange_parallel
         self.calls = calls
+
+        self.update_vary()
 
     def set_papi_counters(self, papi_counters, force=False, check_only=False):
         """Set PAPI counters."""
@@ -378,7 +403,6 @@ class Experiment(object):
                 range_val = self.range_vals()[-1]
                 self.substitute(**self.ranges_valdict(range_val))
                 self.range = None
-                self.update_data()
             return
 
         range_var, range_vals = range_
@@ -512,12 +536,12 @@ class Experiment(object):
             if check_only:
                 return
             if self.sumrange:
+                self.update_vary()
                 for vary in self.vary.values():
                     vary["with"].discard(self.sumrange[0])
                 sumrange_val = self.sumrange_vals(self.range_vals()[-1])[-1]
                 self.substitute(**self.ranges_valdict(None, sumrange_val))
                 self.sumrange = None
-                self.update_data()
             return
 
         sumrange_var, sumrange_vals = sumrange
@@ -613,42 +637,38 @@ class Experiment(object):
                 self.apply_connections_to(callid, connections=connections)
                 self.apply_connections_from(callid, connections=connections)
 
-                # update data info
-                self.update_data()
-
                 return
 
             if isinstance(arg, signature.Data):
                 # ensure value is str
                 if not isinstance(value, str):
                     if not force:
-                        raise TypeError("Data arguments must be strings.")
+                        raise TypeError("Operand arguments must be strings.")
                     value = str(value)
                 if not value:
-                    raise ValueError("Empty data argument.")
+                    raise ValueError("Empty operand argument.")
 
-                if value not in self.data:
+                if value not in self.operands:
                     # no conflics
                     if check_only:
                         return
 
                     call[argid] = value
-                    self.update_data()
                     return
 
-                data = self.data[value]
-                olddata = self.data[call[argid]]
+                operand = self.get_operand(value)
+                oldoperand = self.get_operand(call[argid])
 
                 # check type
-                if data["type"] != type(arg):
-                    raise TypeError("Incompatible data types: %r and %r" %
-                                    (data["type"].typename,
+                if operand["type"] != type(arg):
+                    raise TypeError("Incompatible operand types: %r and %r" %
+                                    (operand["type"].typename,
                                      type(arg).typename))
 
                 # check compatibility
-                if olddata != data:
+                if oldoperand != operand:
                     if not force:
-                        raise ValueError("Incompatible data sizes.")
+                        raise ValueError("Incompatible operand sizes.")
 
                 if check_only:
                     return
@@ -661,9 +681,7 @@ class Experiment(object):
                 self.apply_connections_to(callid, connections=connections)
                 self.apply_connections_from(callid, connections=connections)
 
-                # update data info
-                self.update_data()
-
+                self.update_vary()
                 return
 
             # parse string
@@ -699,9 +717,6 @@ class Experiment(object):
 
             # apply connections
             self.apply_connections_from(callid, argid)
-
-            # update data info
-            self.update_data()
 
             return
 
@@ -771,7 +786,6 @@ class Experiment(object):
             self.calls[callid] = oldcall
             if oldcall is None:
                 self.calls = self.calls[:-1]
-            self.update_data()
 
         if check_only:
             return
@@ -799,7 +813,6 @@ class Experiment(object):
             return
 
         self.calls.pop(callid)
-        self.update_data()
 
     def set_calls(self, calls, force=False, check_only=False):
         """Set all calls."""
@@ -809,15 +822,15 @@ class Experiment(object):
 
         # check consistency
         oldcalls = self.calls
-        olddata = self.data
+        oldvary = self.vary
         self.calls = []
-        self.data = {}
+        self.vary = {}
         try:
             for call in calls:
                 self.set_call(-1, call, force=force)
         finally:
             self.calls = oldcalls
-            self.data = olddata
+            self.vary = oldvary
 
         if check_only:
             return
@@ -828,10 +841,12 @@ class Experiment(object):
             self.set_call(-1, call, force=force)
 
     def set_vary_with(self, name, with_, force=False, check_only=False):
-        """Set the vary with option of a variable."""
-        # data existence
-        if name not in self.data:
-            raise IndexError("Unknown variable: %s" % name)
+        """Set the vary with option of an operand."""
+        # operand existence
+        if name not in self.operands:
+            raise IndexError("Unknown operand: %s" % name)
+
+        self.update_vary(name)
 
         # type conversion
         if isinstance(with_, (list, tuple)):
@@ -858,13 +873,14 @@ class Experiment(object):
 
         # set new value
         self.vary[name]["with"] = with_
-        self.update_data()
 
     def add_vary_with(self, name, with_var, force=False, check_only=False):
         """Add a variable to the vary with option."""
-        # data existence
-        if name not in self.data:
-            raise IndexError("Unknown variable: %s" % name)
+        # operand existence
+        if name not in self.operands:
+            raise IndexError("Unknown operand: %s" % name)
+
+        self.update_vary(name)
 
         # value/type check
         if with_var != "rep":
@@ -877,13 +893,14 @@ class Experiment(object):
             return
 
         self.vary[name]["with"].add(with_var)
-        self.update_data()
 
     def remove_vary_with(self, name, with_var, force=False, check_only=False):
         """Add a variable to the vary with option."""
-        # data existence
-        if name not in self.data:
-            raise IndexError("Unknown variable: %s" % name)
+        # operand existence
+        if name not in self.operands:
+            raise IndexError("Unknown operand: %s" % name)
+
+        self.update_vary(name)
 
         # value/type check
         if with_var != "rep":
@@ -896,14 +913,15 @@ class Experiment(object):
             return
 
         self.vary[name]["with"].discard(with_var)
-        self.update_data()
 
     def set_vary_along(self, name, along, force=False, check_only=False):
         """Set the vary along option of a variable."""
-        # data existence
-        if name not in self.data:
-            raise IndexError("Unknown variable: %s" % name)
-        data = self.data[name]
+        # operand existence
+        if name not in self.operands:
+            raise IndexError("Unknown operand: %s" % name)
+        operand = self.get_operand(name)
+
+        self.update_vary(name)
 
         # parse string
         if isinstance(along, str):
@@ -914,10 +932,10 @@ class Experiment(object):
             raise TypeError("Invalid vary along type: %s" % along)
 
         # value
-        if not (0 <= along < len(data["dims"])):
+        if not (0 <= along < len(operand["dims"])):
             if not force:
                 raise IndexError("Invalid vary along value: %s" % along)
-            along = max(0, min(along, len(data["dims"]) - 1))
+            along = max(0, min(along, len(operand["dims"]) - 1))
 
         if check_only:
             return
@@ -926,10 +944,12 @@ class Experiment(object):
 
     def set_vary_offset(self, name, offset, force=False, check_only=False):
         """Set the vary offset option of a variable."""
-        # data existence
-        if name not in self.data:
-            raise IndexError("Unknown variable: %s" % name)
-        data = self.data[name]
+        # operand existence
+        if name not in self.operands:
+            raise IndexError("Unknown operand: %s" % name)
+        operand = self.get_operand(name)
+
+        self.update_vary(name)
 
         # parse string
         if isinstance(offset, str):
@@ -954,10 +974,11 @@ class Experiment(object):
     def set_vary(self, name, with_=None, along=None, offset=None, force=False,
                  check_only=False):
         """Set the vary specs of a variable."""
-        # data existence
-        if name not in self.data:
-            raise IndexError("Unknown variable: %s" % name)
-        data = self.data[name]
+        # operand existence
+        if name not in self.operands:
+            raise IndexError("Unknown operand: %s" % name)
+
+        self.update_vary()
 
         if with_ is not None:
             self.set_vary_with(name, with_, force=force, check_only=True)
@@ -978,22 +999,8 @@ class Experiment(object):
             self.set_vary_offset(name, offset, force=force)
 
     # inference
-    def update_data(self, name=None):
-        """Update the data from the calls."""
-        if name is None:
-            names = set([
-                call[argid]
-                for call in self.calls
-                if isinstance(call, signature.Call)
-                for argid in call.sig.dataargs()
-                if isinstance(call[argid], str)
-            ])
-            for name in set(self.data) - names:
-                del self.data[name]
-            for name in names:
-                self.update_data(name)
-            return
-
+    def get_operand(self, name):
+        """Get an operand information dict."""
         # get any call that contains name
         try:
             call, name_argid = next(
@@ -1004,7 +1011,7 @@ class Experiment(object):
                 if call[argid] == name
             )
         except:
-            raise KeyError("no Data argument named %r" % name)
+            raise KeyError("no operand argument named %r" % name)
         sig = call.sig
 
         dimcall = call.copy()
@@ -1027,7 +1034,7 @@ class Experiment(object):
 
         argdict = dict(("." + arg.name, val) for arg, val in zip(sig, call))
 
-        data = {
+        operand = {
             "size": sizecall[name_argid],
             "type": type(sig[name_argid])
         }
@@ -1042,7 +1049,7 @@ class Experiment(object):
         if isinstance(sig[name_argid], signature.Work):
             # Workspace is 1D
             dims = [symbolic.simplify(symbolic.Prod(*dims))]
-        data["dims"] = dims
+        operand["dims"] = dims
 
         # leading dimension
         lds = ldcall[name_argid]
@@ -1051,36 +1058,36 @@ class Experiment(object):
         else:
             lds = [lds]
         lds = [symbolic.simplify(ld, **argdict) for ld in lds]
-        data["lds"] = lds
+        operand["lds"] = lds
 
-        self.data[name] = data
-
-        self.update_vary(name)
+        return operand
 
     def update_vary(self, name=None):
         """Update the vary attributes."""
         if name is None:
-            names = set(self.data)
-            for name in set(self.vary) - names:
-                del self.vary[name]
-            for name in names:
+            operands = self.operands
+            for name in list(self.vary):
+                if name not in operands:
+                    del self.vary[name]
+            for name in operands:
                 self.update_vary(name)
             return
 
+        vary = {
+            "with": set(),
+            "along": len(self.get_operand(name)["dims"]) - 1,
+            "offset": 0
+        }
         if name in self.vary:
-            vary = self.vary[name]
-        else:
-            vary = {
-                "with": set(),
-                "along": len(self.data[name]["dims"]) - 1,
-                "offset": 0
-            }
+            for key, value in self.vary[name].items():
+                if key in vary:
+                    vary[key] = value
 
         self.vary[name] = vary
 
     def infer_ld(self, callid, ldargid):
         """Infer one leading dimension."""
-        self.update_data()
+        self.update_vary()
 
         call = self.calls[callid]
 
@@ -1100,7 +1107,7 @@ class Experiment(object):
 
         ldname = sig[ldargid].name
 
-        # data dimensions in terms of lds
+        # operand dimensions in terms of lds
         ldcall = call.copy()
         for argid, arg in enumerate(sig):
             if isinstance(arg, signature.Data):
@@ -1110,7 +1117,7 @@ class Experiment(object):
                 ldcall[argid] = symbolic.Symbol("." + arg.name)
         ldcall.complete()
 
-        # search for ld in all data args
+        # search for ld in all operand args
         for dataargid in sig.dataargs():
             dims = ldcall[dataargid]
             if isinstance(dims, symbolic.Prod):
@@ -1126,13 +1133,13 @@ class Experiment(object):
             return
 
         # extract stuff
-        dataname = call[dataargid]
+        opname = call[dataargid]
         dimidx = dims.index("." + ldname)
-        data = self.data[dataname]
-        vary = self.vary[dataname]
+        operand = self.get_operand(opname)
+        vary = self.vary[opname]
 
-        # initial: required by data
-        ld = data["dims"][dimidx]
+        # initial: required by operand
+        ld = operand["dims"][dimidx]
 
         # varying along this dimension
         if vary["along"] == dimidx:
@@ -1142,8 +1149,6 @@ class Experiment(object):
                 ld *= self.nreps
 
         call[ldargid] = symbolic.simplify(ld)
-
-        self.update_data()
 
     def infer_lds(self, callid=None):
         """Infer all leading dimensions."""
@@ -1163,6 +1168,8 @@ class Experiment(object):
 
     def infer_lwork(self, callid, argid):
         """Infer one leading dimension."""
+        self.update_vary()
+
         call = self.calls[callid]
 
         if not isinstance(call, signature.Call):
@@ -1179,8 +1186,6 @@ class Experiment(object):
 
         call[argid] = None
         call.complete()
-
-        self.update_data()
 
     def infer_lworks(self, callid=None):
         """Infer all leading dimensions."""
@@ -1199,7 +1204,7 @@ class Experiment(object):
                 self.infer_lwork(callid, argid)
 
     def apply_connections_from(self, callid, argid=None, connections=None):
-        """Apply data-connections from this call."""
+        """Apply operand-connections from this call."""
         connections = connections or self.get_connections()
         call = self.calls[callid]
         argids = argid,
@@ -1210,7 +1215,7 @@ class Experiment(object):
                 self.calls[con_callid][con_argid] = call[argid]
 
     def apply_connections_to(self, callid, argid=None, connections=None):
-        """Apply data-connections from this call."""
+        """Apply operand-connections from this call."""
         connections = connections or self.get_connections()
         call = self.calls[callid]
         argids = argid,
@@ -1229,6 +1234,8 @@ class Experiment(object):
             except:
                 return False
 
+        self.update_vary()
+
         self.set_sampler(self.sampler, check_only=True)
         self.set_papi_counters(self.papi_counters, check_only=True)
         self.set_nthreads(self.nthreads, check_only=True)
@@ -1244,15 +1251,6 @@ class Experiment(object):
             self.set_vary_with(name, vary["with"], check_only=True)
             self.set_vary_along(name, vary["along"], check_only=True)
             self.set_vary_offset(name, vary["offset"], check_only=True)
-
-        # data updated?
-        databackup = self.data
-        self.data = deepcopy(self.data)
-        self.update_data()
-        newdata = self.data
-        self.data = databackup
-        if newdata != databackup:
-            raise Exception("Data is not up to date")
 
     # job generation
     def generate_cmds(self, range_val=None):
@@ -1274,7 +1272,7 @@ class Experiment(object):
                 parts.append(sumrange_val)
             return "_".join(map(str, parts))
 
-        self.update_data()
+        self.update_vary()
 
         cmds = []
 
@@ -1292,10 +1290,10 @@ class Experiment(object):
                 [], []
             ]
 
-        if len(self.data):
+        if len(self.operands):
             cmds += [
                 ["########################################"],
-                ["# data                                 #"],
+                ["# operands                             #"],
                 ["########################################"]
             ]
 
@@ -1316,26 +1314,26 @@ class Experiment(object):
         }
 
         # collect data sizes for randomization
-        data_range_sizes = {}
+        operand_range_sizes = {}
 
         # go over all operands
-        for name in sorted(self.data):
+        for name in sorted(self.operands):
             # TODO: merge this whole thing into call generation
-            data = self.data[name]
+            operand = self.get_operand(name)
             vary = self.vary[name]
-            cmdprefix = cmdprefixes[data["type"]]
+            cmdprefix = cmdprefixes[operand["type"]]
 
             # comment
             cmds += [[], ["#", name]]
 
-            # init data size collection
-            data_range_sizes[name] = {}
+            # init operand size collection
+            operand_range_sizes[name] = {}
 
             if not vary["with"]:
                 # argumnet doesn't vary
-                size = max(self.ranges_eval(data["size"], range_val))
+                size = max(self.ranges_eval(operand["size"], range_val))
                 cmds.append([cmdprefix + "malloc", name, size])
-                data_range_sizes[name][range_val] = size
+                operand_range_sizes[name][range_val] = size
                 continue
             # operand varies
 
@@ -1390,7 +1388,7 @@ class Experiment(object):
                             offset = offset_rep
                         # compute current needed size
                         size = next(self.ranges_eval(
-                            data["size"], range_val, sumrange_val
+                            operand["size"], range_val, sumrange_val
                         ))
                         size_max = max(size_max, offset + size)
                         # compute next offset
@@ -1398,12 +1396,12 @@ class Experiment(object):
                         for idx in range(vary["along"]):
                             # multiply leading dimensions for skipped dims
                             dim *= next(self.ranges_eval(
-                                data["lds"][idx], range_val, sumrange_val
+                                operand["lds"][idx], range_val, sumrange_val
                             ))
                         # dimension for traversed dim
-                        if vary["along"] < len(data["dims"]):
+                        if vary["along"] < len(operand["dims"]):
                             dim *= next(self.ranges_eval(
-                                data["dims"][vary["along"]], range_val,
+                                operand["dims"][vary["along"]], range_val,
                                 sumrange_val
                             ))
                         # add custom offset
@@ -1411,14 +1409,14 @@ class Experiment(object):
                             vary["offset"], range_val, sumrange_val
                         ))
 
-                # data size collection
-                data_range_sizes[name][range_val] = size_max
+                # operand size collection
+                operand_range_sizes[name][range_val] = size_max
 
             # malloc with needed size before offsetting
             cmds.append([cmdprefix + "malloc", name,  size_max])
             cmds += offsetcmds
 
-        if len(self.data):
+        if len(self.operands):
             cmds += [[], []]
 
         cmds += [
@@ -1433,11 +1431,11 @@ class Experiment(object):
                 # comment
                 cmds += [[], ["#", str(self.range[0]), "=", range_val]]
 
-            # randomize data
+            # randomize operand
             if self.range_randomize_data:
-                for name in sorted(self.data):
-                    cmdprefix = cmdprefixes[self.data[name]["type"]]
-                    size = data_range_sizes[name][range_val]
+                for name in sorted(self.operands):
+                    cmdprefix = cmdprefixes[self.get_operand(name)["type"]]
+                    size = operand_range_sizes[name][range_val]
                     cmds.append([cmdprefix + "gerand", size, 1, name, size])
 
             # set up sumrange values
@@ -1788,6 +1786,7 @@ class Experiment(object):
         for call in self.calls:
             for argid, value in enumerate(call):
                 call[argid] = symbolic.simplify(value, **kwargs)
+        self.update_vary()
         for vary in self.vary.values():
             vary["offset"] = symbolic.simplify(vary["offset"], **kwargs)
             for key, val in kwargs.items():
@@ -1795,15 +1794,16 @@ class Experiment(object):
                     vary["with"].add(str(val))
                     vary["with"].discard(key)
 
-    def data_maxdim(self):
-        """Get maximum size along any data dimension."""
+    def operands_maxdim(self):
+        """Get maximum size along any operand dimension."""
         maxdim = 0
-        for data in self.data.values():
-            if not data["dims"]:
+        for name in self.operands:
+            operand = self.get_operand(name)
+            if not operand["dims"]:
                 return None
-            if issubclass(data["type"], signature.Work):
+            if issubclass(operand["type"], signature.Work):
                 continue
-            for dim in data["dims"]:
+            for dim in operand["dims"]:
                 max_ = self.ranges_eval_minmax(dim)[1]
                 if not isinstance(max_, Number):
                     return None
@@ -1811,7 +1811,7 @@ class Experiment(object):
         return maxdim
 
     def get_connections(self):
-        """Update the connections between arguments based on coincidng data."""
+        """Update connections between arguments based on coinciding operand."""
         sizes = defaultdict(list)
         for callid, call in enumerate(self.calls):
             if not isinstance(call, signature.Call):
@@ -1825,27 +1825,27 @@ class Experiment(object):
             symcall.complete()
             for argid in call.sig.dataargs():
                 name = call[argid]
-                datasize = symcall[argid]
-                if isinstance(datasize, symbolic.Symbol):
-                    datasize = [datasize]
-                elif isinstance(datasize, symbolic.Prod):
-                    datasize = datasize[1:]
-                elif isinstance(datasize, symbolic.Operation):
+                opsize = symcall[argid]
+                if isinstance(opsize, symbolic.Symbol):
+                    opsize = [opsize]
+                elif isinstance(opsize, symbolic.Prod):
+                    opsize = opsize[1:]
+                elif isinstance(opsize, symbolic.Operation):
                     # try simplifying
-                    datasize = datasize()
-                    if isinstance(datasize, symbolic.Symbol):
-                        datasize = [datasize]
-                    elif isinstance(datasize, symbolic.Prod):
-                        datasize = datasize[1:]
+                    opsize = opsize()
+                    if isinstance(opsize, symbolic.Symbol):
+                        opsize = [opsize]
+                    elif isinstance(opsize, symbolic.Prod):
+                        opsize = opsize[1:]
                     else:
                         continue
                 else:
                     continue
-                datasize = [
+                opsize = [
                     size.name if isinstance(size, symbolic.Symbol) else None
-                    for size in datasize
+                    for size in opsize
                 ]
-                sizes[name].append(datasize)
+                sizes[name].append(opsize)
         # initial connections
         connections = dict(
             ((callid, argid), set([(callid, argid)]))
@@ -1853,9 +1853,9 @@ class Experiment(object):
             for argid in range(len(call))
         )
         connections[None] = set()
-        # combine connections for each data item
-        for datasize in sizes.values():
-            for idlist in zip(*datasize):
+        # combine connections for each operand item
+        for opsize in sizes.values():
+            for idlist in zip(*opsize):
                 connected = set().union(*(connections[id_] for id_ in idlist))
                 for id_ in connected:
                     connections[id_] = connected
@@ -1868,7 +1868,7 @@ class Experiment(object):
         nresults = 0
         for range_val in self.range_vals():
             if self.range_randomize_data:
-                nresults += len(self.data)
+                nresults += len(self.operands)
             for rep in range(self.nreps):
                 if self.sumrange and self.sumrange_parallel:
                     nresults += 1
