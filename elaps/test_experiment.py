@@ -48,7 +48,6 @@ class TestExperiment(unittest.TestCase):
     def test_init(self):
         """Test for __init__() and attribute access."""
         ex = Experiment(note="Test")
-        self.assertEqual(ex["note"], "Test")
         self.assertEqual(ex.note, "Test")
 
     def test_repr(self):
@@ -74,15 +73,15 @@ class TestExperiment(unittest.TestCase):
         }, ex.data["X"])
 
         # initial vary setup
-        self.assertEqual(ex.data["X"]["vary"],
+        self.assertEqual(ex.vary["X"],
                          {"with": set(), "along": 1, "offset": 0})
 
         # vary is not touched
-        ex.data["X"]["vary"]["with"].add("rep")
+        ex.vary["X"]["with"].add("rep")
         ex.call.m = 500
         ex.update_data("X")
 
-        self.assertIn("rep", ex.data["X"]["vary"]["with"])
+        self.assertIn("rep", ex.vary["X"]["with"])
 
         ex.call.A = None
         ex.update_data()
@@ -101,8 +100,8 @@ class TestExperiment(unittest.TestCase):
 
         # now setting along and rep
         ex.nreps = 8
-        ex.data["X"]["vary"]["along"] = 0
-        ex.data["X"]["vary"]["with"].add("rep")
+        ex.vary["X"]["along"] = 0
+        ex.vary["X"]["with"].add("rep")
 
         ex.infer_lds()
 
@@ -111,7 +110,7 @@ class TestExperiment(unittest.TestCase):
 
         # range
         ex.sumrange = ["i", range(10)]
-        ex.data["X"]["vary"]["with"].add("i")
+        ex.vary["X"]["with"].add("i")
 
         ex.infer_lds()
 
@@ -514,10 +513,10 @@ class TestExperimentSetters(TestExperiment):
 
         # disabling
         ex.set_arg(0, "m", "j + 100")
-        ex.data["A"]["vary"]["with"].add(j)
+        ex.vary["A"]["with"].add(j)
         ex.set_sumrange(None)
         self.assertEqual(ex.calls[0].m, 200)
-        self.assertEqual(ex.data["A"]["vary"]["with"], set())
+        self.assertEqual(ex.vary["A"]["with"], set())
 
         # check_only
         ex.set_range(["j", "1:100"], check_only=True)
@@ -703,7 +702,7 @@ class TestExperimentSetters(TestExperiment):
 
         # working:
         ex.set_vary_with("A", ["rep"])
-        self.assertEqual(ex.data["A"]["vary"]["with"], set(["rep"]))
+        self.assertEqual(ex.vary["A"]["with"], set(["rep"]))
 
         # index
         self.assertRaises(IndexError, ex.set_vary_with, "X", ["rep"])
@@ -714,11 +713,11 @@ class TestExperimentSetters(TestExperiment):
         # values
         self.assertRaises(ValueError, ex.set_vary_with, "A", [j, "a"])
         ex.set_vary_with("A", [j, "a"], force=True)
-        self.assertEqual(ex.data["A"]["vary"]["with"], set([j]))
+        self.assertEqual(ex.vary["A"]["with"], set([j]))
 
         # check_only
         ex.set_vary_with("A", [], check_only=True)
-        self.assertEqual(ex.data["A"]["vary"]["with"], set([j]))
+        self.assertEqual(ex.vary["A"]["with"], set([j]))
 
     def test_add_vary_with(self):
         """Test for add_vary_with()."""
@@ -726,7 +725,7 @@ class TestExperimentSetters(TestExperiment):
 
         # working
         ex.add_vary_with("A", "rep")
-        self.assertEqual(ex.data["A"]["vary"]["with"], set(["rep"]))
+        self.assertEqual(ex.vary["A"]["with"], set(["rep"]))
 
         # index
         self.assertRaises(IndexError, ex.add_vary_with, "X", "rep")
@@ -737,7 +736,7 @@ class TestExperimentSetters(TestExperiment):
         # check_only
         ex.set_sumrange(["j", "1:100"])
         ex.add_vary_with("A", "j", check_only=True)
-        self.assertEqual(ex.data["A"]["vary"]["with"], set(["rep"]))
+        self.assertEqual(ex.vary["A"]["with"], set(["rep"]))
 
     def test_remove_vary_with(self):
         """Test for remove_vary_with()."""
@@ -746,7 +745,7 @@ class TestExperimentSetters(TestExperiment):
         # working
         ex.add_vary_with("A", "rep")
         ex.remove_vary_with("A", "rep")
-        self.assertEqual(ex.data["A"]["vary"]["with"], set())
+        self.assertEqual(ex.vary["A"]["with"], set())
 
         # index
         self.assertRaises(IndexError, ex.remove_vary_with, "X", "rep")
@@ -758,7 +757,7 @@ class TestExperimentSetters(TestExperiment):
         ex.set_sumrange(["j", "1:100"])
         ex.add_vary_with("A", "j")
         ex.remove_vary_with("A", "j", check_only=True)
-        self.assertEqual(ex.data["A"]["vary"]["with"], set([j]))
+        self.assertEqual(ex.vary["A"]["with"], set([j]))
 
     def test_set_vary_along(self):
         """Test for set_vary_with()."""
@@ -767,7 +766,7 @@ class TestExperimentSetters(TestExperiment):
 
         # working:
         ex.set_vary_with("A", ["rep"])
-        self.assertEqual(ex.data["A"]["vary"]["with"], set(["rep"]))
+        self.assertEqual(ex.vary["A"]["with"], set(["rep"]))
 
         # index
         self.assertRaises(IndexError, ex.set_vary_with, "X", ["rep"])
@@ -778,11 +777,11 @@ class TestExperimentSetters(TestExperiment):
         # values
         self.assertRaises(ValueError, ex.set_vary_with, "A", [j, "a"])
         ex.set_vary_with("A", [j, "a"], force=True)
-        self.assertEqual(ex.data["A"]["vary"]["with"], set([j]))
+        self.assertEqual(ex.vary["A"]["with"], set([j]))
 
         # check_only
         ex.set_vary_with("A", [], check_only=True)
-        self.assertEqual(ex.data["A"]["vary"]["with"], set([j]))
+        self.assertEqual(ex.vary["A"]["with"], set([j]))
 
     def test_set_vary_offset(self):
         """Test for set_vary_offset()."""
@@ -790,9 +789,9 @@ class TestExperimentSetters(TestExperiment):
 
         # working
         ex.set_vary_offset("B", 1000)
-        self.assertEqual(ex.data["B"]["vary"]["offset"], 1000)
+        self.assertEqual(ex.vary["B"]["offset"], 1000)
         ex.set_vary_offset("B", "10 * i")
-        self.assertEqual(ex.data["B"]["vary"]["offset"], 10 * i)
+        self.assertEqual(ex.vary["B"]["offset"], 10 * i)
 
         # index
         self.assertRaises(IndexError, ex.set_vary_offset, "X", 10)
@@ -805,7 +804,7 @@ class TestExperimentSetters(TestExperiment):
 
         # check_only
         ex.set_vary_offset("B", 100, check_only=True)
-        self.assertEqual(ex.data["B"]["vary"]["offset"], 10 * i)
+        self.assertEqual(ex.vary["B"]["offset"], 10 * i)
 
     def test_set_vary(self):
         """Test for set_vary()."""
@@ -813,14 +812,14 @@ class TestExperimentSetters(TestExperiment):
 
         # working
         ex.set_vary("C", offset=1000)
-        self.assertEqual(ex.data["C"]["vary"]["offset"], 1000)
+        self.assertEqual(ex.vary["C"]["offset"], 1000)
 
         # index
         self.assertRaises(IndexError, ex.set_vary, "X")
 
         # check_only
         ex.set_vary("A", offset=100, check_only=True)
-        self.assertEqual(ex.data["A"]["vary"]["offset"], 0)
+        self.assertEqual(ex.vary["A"]["offset"], 0)
 
 
 class TestExperimentCmds(unittest.TestCase):
@@ -872,10 +871,10 @@ class TestExperimentCmds(unittest.TestCase):
 
         ex.nreps = nreps
         ex.sumrange = ["j", range(lensumrange)]
-        ex.data["X"]["vary"]["with"].add("rep")
-        ex.data["Y"]["vary"]["with"].add("j")
-        ex.data["Y"]["vary"]["along"] = 0
-        ex.data["Z"]["vary"]["with"].update(["rep", "j"])
+        ex.vary["X"]["with"].add("rep")
+        ex.vary["Y"]["with"].add("j")
+        ex.vary["Y"]["along"] = 0
+        ex.vary["Z"]["with"].update(["rep", "j"])
         ex.infer_lds()
 
         cmds = ex.generate_cmds()
@@ -909,8 +908,8 @@ class TestExperimentCmds(unittest.TestCase):
         ex.range = ["i", range(lenrange)]
         ex.nreps = nreps
 
-        ex.data["X"]["vary"]["along"] = 0
-        ex.data["X"]["vary"]["with"].add("rep")
+        ex.vary["X"]["along"] = 0
+        ex.vary["X"]["with"].add("rep")
         ex.infer_lds()
 
         cmds = ex.generate_cmds()
@@ -933,7 +932,7 @@ class TestExperimentCmds(unittest.TestCase):
         ex.range = [i, range(lenrange)]
         ex.sumrange = [j, range(lensumrange)]
         ex.call.m = j
-        ex.data["X"]["vary"]["with"].add(j)
+        ex.vary["X"]["with"].add(j)
 
         ex.infer_lds()
 
@@ -953,8 +952,8 @@ class TestExperimentCmds(unittest.TestCase):
 
         nreps = random.randint(1, 10)
         ex.nreps = nreps
-        ex.data["X"]["vary"]["with"].add("rep")
-        ex.data["X"]["vary"]["along"] = 1
+        ex.vary["X"]["with"].add("rep")
+        ex.vary["X"]["along"] = 1
         ex.infer_lds()
 
         cmds = ex.generate_cmds()
@@ -971,9 +970,9 @@ class TestExperimentCmds(unittest.TestCase):
 
         nreps = random.randint(1, 10)
         ex.nreps = nreps
-        ex.data["X"]["vary"]["with"].add("rep")
+        ex.vary["X"]["with"].add("rep")
         offset = random.randint(1, 100)
-        ex.data["X"]["vary"]["offset"] = offset
+        ex.vary["X"]["offset"] = offset
         ex.infer_lds()
 
         cmds = ex.generate_cmds()
@@ -989,7 +988,7 @@ class TestExperimentCmds(unittest.TestCase):
 
         nreps = random.randint(1, 10)
         ex.nreps = nreps
-        ex.data["X"]["vary"]["with"].add("rep")
+        ex.vary["X"]["with"].add("rep")
         ex.infer_lds()
 
         cmds = ex.generate_cmds()

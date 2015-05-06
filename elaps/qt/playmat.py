@@ -635,7 +635,7 @@ class PlayMat(QtGui.QMainWindow):
         """Generate vary menu for Operand."""
         ex = self.experiment
         data = ex.data[name]
-        vary = data["vary"]
+        vary = ex.vary[name]
 
         actions = []
 
@@ -1257,8 +1257,7 @@ class PlayMat(QtGui.QMainWindow):
     def on_vary_with_toggle(self, checked):
         """Event: changed vary with."""
         sender = self.Qapp.sender()
-        data = self.experiment.data[sender.name]
-        vary = data["vary"]
+        vary = self.experiment.vary[sender.name]
         if checked:
             if not vary["with"]:
                 vary["offset"] = 0
@@ -1272,8 +1271,7 @@ class PlayMat(QtGui.QMainWindow):
     def on_vary_along_toggle(self, checked):
         """Event: changed vary along."""
         sender = self.Qapp.sender()
-        ex = self.experiment
-        vary = ex.data[sender.name]["vary"]
+        vary = self.experiment.vary[sender.name]
         vary["along"] = sender.along
         self.experiment_infer_update_set()
 
@@ -1282,7 +1280,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: set vary offset."""
         sender = self.Qapp.sender()
         name = sender.name
-        vary = self.experiment.data[name]["vary"]
+        vary = self.experiment.vary[name]
         value, ok = QtGui.QInputDialog.getText(
             self, "Vary offset for %s" % name,
             "Vary offset for %s:" % name, text=str(vary["offset"])

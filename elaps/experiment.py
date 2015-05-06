@@ -14,63 +14,42 @@ from copy import deepcopy
 from numbers import Number
 
 
-class Experiment(dict):
+class Experiment(object):
 
     """ELAPS:Experiment."""
 
     def __init__(self, other={}, **kwargs):
         """Initialize experiment from (optional) other expeirment."""
-        dict.__init__(self)
-
         # empty experiment
-        self.update({
-            "note": "",
-            "sampler": None,
-            "nthreads": 1,
-            "script_header": "",
-            "range": None,
-            "range_randomize_data": False,
-            "nreps": 1,
-            "sumrange": None,
-            "sumrange_parallel": False,
-            "calls_parallel": False,
-            "calls": [],
-            "data": {},
-            "papi_counters": []
-        })
+        self.note = ""
+        self.sampler = None
+        self.nthreads = 1
+        self.script_header = ""
+        self.range = None
+        self.range_randomize_data = False
+        self.nreps = 1
+        self.sumrange = None
+        self.sumrange_parallel = False
+        self.calls_parallel = False
+        self.calls = []
+        self.data = {}
+        self.papi_counters = []
 
         # initialize from argument
         for key, value in chain(other.iteritems(), kwargs.items()):
-            if key in self:
-                self.__setattr__(key, value)
+            if hasattr(self, key):
+                setattr(self, key, value)
             else:
                 warnings.warn("%s doesn't support the key %r" %
                               (type(self).__name__, key), Warning)
-
-    def __getattr__(self, name):
-        """Element access through attributes."""
-        if name in self:
-            return self[name]
-        if name == "call" and len(self.calls) == 1:
-            return self.calls[0]
-        raise AttributeError("%r object has no attribute %r" %
-                             (type(self), name))
-
-    def __setattr__(self, name, value):
-        """Element access through attributes."""
-        if name in self:
-            self[name] = value
-        if name == "call":
-            self.calls = [value]
-        dict.__setattr__(self, name, value)
 
     def __repr__(self):
         """Python parsable representation."""
         empty = Experiment()
 
         # Only print non-default attribute values
-        changed = dict((key, value) for key, value in self.items()
-                       if value != empty[key])
+        changed = dict((key, value) for key, value in self.__dict__.items()
+                       if value != getattr(empty, key))
 
         # remove kernels and backend
         if "sampler" in changed:
@@ -125,7 +104,7 @@ class Experiment(dict):
                 value = call[argid]
                 if value not in self.data:
                     continue
-                with_ = list(self.data[value]["vary"]["with"])
+                with_ = list(self.vary[value]["with"])
                 if len(with_) == 1:
                     value += "_" + with_[0]
                 elif len(with_) > 1:
@@ -134,9 +113,72 @@ class Experiment(dict):
             result += indent + str(call) + "\n"
         return result[:-1]
 
+    def __eq__(self, other):
+        """Compare with other Experiment for equality."""
+        if not isinstance(other, type(self)):
+            return False
+        return self.__dict__ == other.__dict__
+
     def copy(self):
         """Create a deep copy of the experiment."""
-        return Experiment(deepcopy(dict(self)))
+        return Experiment(deepcopy(self.__dict__))
+
+    # properties
+
+    @property
+    def call(self):
+        """Return call if there is only one."""
+        if len(self.calls) > 1:
+            raise AttributeError("Cannot access 'call' attribute when there "
+                                 "is more than one call")
+        return self.calls[0]
+
+    @call.setter
+    def call(self, call):
+        """Set a single call."""
+        self.calls = [call]
+
+    @property
+    def vary(self):
+        """Proide access to data vary attributes."""
+        class ExperimentVaryAttribute(object):
+
+            """Access to vary attributes within Experiment.data."""
+
+            def __init__(self, ex):
+                """Init: reference to experiment."""
+                self.ex = ex
+
+            def __getitem__(self, name):
+                """Get a vary attribute."""
+                return self.ex.data[name]["vary"]
+
+            def __setitem__(self, name, value):
+                """Set a vary attribute."""
+                self.ex.data[name]["vary"] = value
+
+            def __contains__(self, name):
+                """Check if a vary attribute exists."""
+                return name in self.ex.data
+
+            def __iter__(self):
+                """Iterate over vary attributes."""
+                return iter(self.ex.data)
+
+            def __len__(self):
+                """Number of data elements."""
+                return len(self.ex.data)
+
+            def items(self):
+                """Access to vary items."""
+                return [(name, data["vary"])
+                        for name, data in self.ex.data.items()]
+
+            def values(self):
+                """Create list of vary attributes."""
+                return [data["vary"] for data in self.ex.data.values()]
+
+        return ExperimentVaryAttribute(self)
 
     # setters
     def set_sampler(self, sampler, force=False, check_only=False):
@@ -504,8 +546,8 @@ class Experiment(dict):
             if check_only:
                 return
             if self.sumrange:
-                for data in self.data.values():
-                    data["vary"]["with"].discard(self.sumrange[0])
+                for vary in self.vary.values():
+                    vary["with"].discard(self.sumrange[0])
                 sumrange_val = self.sumrange_vals(self.range_vals()[-1])[-1]
                 self.substitute(**self.ranges_valdict(None, sumrange_val))
                 self.sumrange = None
@@ -847,7 +889,7 @@ class Experiment(dict):
             return
 
         # set new value
-        self.data[name]["vary"]["with"] = with_
+        self.vary[name]["with"] = with_
         self.update_data()
 
     def add_vary_with(self, name, with_var, force=False, check_only=False):
@@ -866,7 +908,7 @@ class Experiment(dict):
         if check_only:
             return
 
-        self.data[name]["vary"]["with"].add(with_var)
+        self.vary[name]["with"].add(with_var)
         self.update_data()
 
     def remove_vary_with(self, name, with_var, force=False, check_only=False):
@@ -885,7 +927,7 @@ class Experiment(dict):
         if check_only:
             return
 
-        self.data[name]["vary"]["with"].discard(with_var)
+        self.vary[name]["with"].discard(with_var)
         self.update_data()
 
     def set_vary_along(self, name, along, force=False, check_only=False):
@@ -912,7 +954,7 @@ class Experiment(dict):
         if check_only:
             return
 
-        data["vary"]["along"] = along
+        self.vary[name]["along"] = along
 
     def set_vary_offset(self, name, offset, force=False, check_only=False):
         """Set the vary offset option of a variable."""
@@ -939,7 +981,7 @@ class Experiment(dict):
             return
 
         # set new values
-        data["vary"]["offset"] = offset
+        self.vary[name]["offset"] = offset
 
     def set_vary(self, name, with_=None, along=None, offset=None, force=False,
                  check_only=False):
@@ -1218,8 +1260,7 @@ class Experiment(dict):
         self.set_calls(self.calls, check_only=True)
 
         # vary
-        for name, data in self.data.items():
-            vary = data["vary"]
+        for name, vary in self.vary.items():
             self.set_vary_with(name, vary["with"], check_only=True)
             self.set_vary_along(name, vary["along"], check_only=True)
             self.set_vary_offset(name, vary["offset"], check_only=True)
@@ -1233,6 +1274,7 @@ class Experiment(dict):
         if newdata != databackup:
             raise Exception("Data is not up to date")
 
+    # job generation
     def generate_cmds(self, range_val=None):
         """Generate commands for the Sampler."""
         def varname(name, range_val, rep, sumrange_val):
@@ -1240,7 +1282,7 @@ class Experiment(dict):
 
             Format: <name>[_<range_val>][_<rep>][_<sumrange_val>]
             """
-            vary = self.data[name]["vary"]
+            vary = self.vary[name]
             if not vary["with"]:
                 return name
             parts = [name]
@@ -1300,6 +1342,7 @@ class Experiment(dict):
         for name in sorted(self.data):
             # TODO: merge this whole thing into call generation
             data = self.data[name]
+            vary = self.vary[name]
             cmdprefix = cmdprefixes[data["type"]]
 
             # comment
@@ -1308,7 +1351,6 @@ class Experiment(dict):
             # init data size collection
             data_range_sizes[name] = {}
 
-            vary = data["vary"]
             if not vary["with"]:
                 # argumnet doesn't vary
                 size = max(self.ranges_eval(data["size"], range_val))
@@ -1766,13 +1808,12 @@ class Experiment(dict):
         for call in self.calls:
             for argid, value in enumerate(call):
                 call[argid] = symbolic.simplify(value, **kwargs)
-        for data in self.data.values():
-            data["vary"]["offset"] = symbolic.simplify(data["vary"]["offset"],
-                                                       **kwargs)
+        for vary in self.vary.values():
+            vary["offset"] = symbolic.simplify(vary["offset"], **kwargs)
             for key, val in kwargs.items():
-                if key in data["vary"]["with"]:
-                    data["vary"]["with"].add(str(val))
-                    data["vary"]["with"].discard(key)
+                if key in vary["with"]:
+                    vary["with"].add(str(val))
+                    vary["with"].discard(key)
 
     def data_maxdim(self):
         """Get maximum size along any data dimension."""
