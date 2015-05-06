@@ -13,16 +13,16 @@ sigpath = os.path.join(rootpath, "resources", "signatures")
 docpath = os.path.join(rootpath, "resources", "kerneldocs")
 samplerpath = os.path.join(rootpath, "Sampler", "build")
 backendpath = os.path.join(rootpath, "elaps", "backends")
-experimentpath = os.path.join(rootpath, "experiments")
 reportpath = os.path.join(rootpath, "reports")
+experimentpath = reportpath
 metricpath = os.path.join(rootpath, "elaps", "metrics")
 papinamespath = os.path.join(rootpath, "resources", "papinames.py")
 
 # extensions
 report_extension = "elr"
 report_extensions = ("elr", "eer")
-experiment_extension = "els"
-experiment_extensions = ("els", "ees") + report_extensions
+experiment_extension = "ele"
+experiment_extensions = ("ele", "els", "ees") + report_extensions
 script_extension = "sh"
 calls_extension = "calls"
 error_extension = "err"
