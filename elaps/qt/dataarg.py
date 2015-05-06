@@ -101,8 +101,8 @@ class QDataArg(QtGui.QLineEdit):
         minwidth = sizehint.width() + fontmetrics.width(self.text())
         minwidth = max(minwidth, minheight)
         if self.offsetstr:
-            minheight += 2 * fontmetrics.height() + 8
-            minwidth = max(minwidth, fontmetrics.width(self.offsetstr))
+            minheight += 3 * fontmetrics.height() + 8
+            minwidth = max(minwidth, fontmetrics.width(self.offsetstr) + 4)
 
         fixedwidth = max(width, minwidth)
         fixedheight = max(height, minheight)
