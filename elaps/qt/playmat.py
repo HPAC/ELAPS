@@ -81,7 +81,8 @@ class PlayMat(QtGui.QMainWindow):
 
         # DEBUG: print experiment
         QtGui.QShortcut(
-            QtGui.QKeySequence.Print, self, lambda: print(self.experiment)
+            QtGui.QKeySequence.Print, self, lambda: print(self.experiment,
+                                                          repr(self.experiment))
         )
 
         def create_menus():

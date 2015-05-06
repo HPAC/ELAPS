@@ -63,6 +63,11 @@ class Experiment(object):
                 del changed["sampler"]["backend"]
             if "papi_counters_avail" in changed["sampler"]:
                 del changed["sampler"]["papi_counters_avail"]
+
+        # remove data section
+        if "data" in changed:
+            del changed["data"]
+
         args = ["%s=%r" % keyval for keyval in changed.items()]
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
