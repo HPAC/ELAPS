@@ -23,6 +23,7 @@ class Experiment(object):
         # empty experiment
         self.note = ""
         self.sampler = None
+        self.papi_counters = []
         self.nthreads = 1
         self.script_header = ""
         self.range = None
@@ -33,7 +34,7 @@ class Experiment(object):
         self.calls_parallel = False
         self.calls = []
         self.data = {}
-        self.papi_counters = []
+        self.vary = {}
 
         # initialize from argument
         for key, value in chain(other.iteritems(), kwargs.items()):
@@ -42,6 +43,8 @@ class Experiment(object):
             else:
                 warnings.warn("%s doesn't support the key %r" %
                               (type(self).__name__, key), Warning)
+
+        self.update_data()
 
     def __repr__(self):
         """Python parsable representation."""
@@ -137,48 +140,6 @@ class Experiment(object):
     def call(self, call):
         """Set a single call."""
         self.calls = [call]
-
-    @property
-    def vary(self):
-        """Proide access to data vary attributes."""
-        class ExperimentVaryAttribute(object):
-
-            """Access to vary attributes within Experiment.data."""
-
-            def __init__(self, ex):
-                """Init: reference to experiment."""
-                self.ex = ex
-
-            def __getitem__(self, name):
-                """Get a vary attribute."""
-                return self.ex.data[name]["vary"]
-
-            def __setitem__(self, name, value):
-                """Set a vary attribute."""
-                self.ex.data[name]["vary"] = value
-
-            def __contains__(self, name):
-                """Check if a vary attribute exists."""
-                return name in self.ex.data
-
-            def __iter__(self):
-                """Iterate over vary attributes."""
-                return iter(self.ex.data)
-
-            def __len__(self):
-                """Number of data elements."""
-                return len(self.ex.data)
-
-            def items(self):
-                """Access to vary items."""
-                return [(name, data["vary"])
-                        for name, data in self.ex.data.items()]
-
-            def values(self):
-                """Create list of vary attributes."""
-                return [data["vary"] for data in self.ex.data.values()]
-
-        return ExperimentVaryAttribute(self)
 
     # setters
     def set_sampler(self, sampler, force=False, check_only=False):
@@ -845,7 +806,7 @@ class Experiment(object):
         oldcalls = self.calls
         olddata = self.data
         self.calls = []
-        self.data = []
+        self.data = {}
         try:
             for call in calls:
                 self.set_call(-1, call, force=force)
@@ -1087,18 +1048,30 @@ class Experiment(object):
         lds = [symbolic.simplify(ld, **argdict) for ld in lds]
         data["lds"] = lds
 
-        # vary
-        if name in self.data:
-            vary = self.data[name]["vary"]
+        self.data[name] = data
+
+        self.update_vary(name)
+
+    def update_vary(self, name=None):
+        """Update the vary attributes."""
+        if name is None:
+            names = set(self.data)
+            for name in set(self.vary) - names:
+                del self.vary[name]
+            for name in names:
+                self.update_vary(name)
+            return
+
+        if name in self.vary:
+            vary = self.vary[name]
         else:
             vary = {
                 "with": set(),
-                "along": len(dims) - 1,
+                "along": len(self.data[name]["dims"]) - 1,
                 "offset": 0
             }
-        data["vary"] = vary
 
-        self.data[name] = data
+        self.vary[name] = vary
 
     def infer_ld(self, callid, ldargid):
         """Infer one leading dimension."""
@@ -1151,7 +1124,7 @@ class Experiment(object):
         dataname = call[dataargid]
         dimidx = dims.index("." + ldname)
         data = self.data[dataname]
-        vary = data["vary"]
+        vary = self.vary[dataname]
 
         # initial: required by data
         ld = data["dims"][dimidx]
