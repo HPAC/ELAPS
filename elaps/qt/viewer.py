@@ -461,7 +461,7 @@ class Viewer(QtGui.QMainWindow):
                     ))
                     colors.append(UI_item.color)
 
-        xlabel = " = ".join(range_vars)
+        xlabel = " = ".join(map(str, range_vars))
         elaps.plot.plot(plot_data, self.stats_showing, colors, {}, xlabel,
                         metric.name, {}, self.UI_figure)
         self.UI_canvas.draw()
