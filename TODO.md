@@ -14,6 +14,7 @@ Experiment
 * Test randomization
 * Hide output option
 * allow symbolic in BasicCall
+* test update_vary, get_operand
 
 * (Script Examples)
 * (How to handle PAPI counter conflicts?)
