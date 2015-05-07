@@ -5,7 +5,7 @@ Signature(
     Flag("range", ["A", "V", "I"]),
     Uplo(),
     Dim("n"),
-    dData("A", "ldA * n"),
+    dData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
     dScalar("vl"),
     dScalar("vu"),

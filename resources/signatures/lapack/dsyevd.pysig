@@ -4,7 +4,7 @@ Signature(
     Flag("jobz", ["V", "N"]),
     Uplo(),
     Dim("n"),
-    dData("A", "ldA * n"),
+    dData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
     dData("W", "n"),
     dWork("Work", "lWork"),

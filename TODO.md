@@ -6,7 +6,6 @@ Sampler
 
 Signature
 ----------
-* uplo for syev sigs
 
 
 Experiment
