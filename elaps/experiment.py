@@ -612,7 +612,6 @@ class Experiment(object):
         # check argid
         if argid == 0:
             raise IndexError("Cannot set routine name (argument 0)")
-            # TODO: create BasicCall?
 
         arg = call.sig[argid]
 
