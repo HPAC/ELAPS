@@ -44,6 +44,7 @@ class TestExperiment(unittest.TestCase):
         self.i = symbolic.Symbol("i")
         self.j = symbolic.Symbol("j")
         self.k = symbolic.Symbol("k")
+        self.ns = [random.randint(1, 100) for _ in range(5)]
 
     def test_init(self):
         """Test for __init__() and attribute access."""
@@ -57,73 +58,98 @@ class TestExperiment(unittest.TestCase):
 
     def test_infer_lds(self):
         """Test for infer_ld[s]()."""
+        n1, n2, n3, n4, n5 = self.ns[:5]
         sig = Signature("name", Dim("m"), Dim("n"),
                         cData("A", "ldA * n"), Ld("ldA", "m"), Info())
-        ex = Experiment(calls=[sig(100, 1000, "X", 2000, 0)])
+        ex = Experiment(calls=[sig(n1, n2, "X", n1 + n3, 0)])
 
         ex.infer_ld(0, 4)
 
-        self.assertEqual(ex.call.ldA, 100)
+        self.assertEqual(ex.call.ldA, n1)
 
         self.assertRaises(TypeError, ex.infer_ld, 0, 3)
 
         # now setting along and rep
-        ex.nreps = 8
+        ex.nreps = n4
         ex.vary["X"]["along"] = 0
         ex.vary["X"]["with"].add("rep")
 
         ex.infer_lds()
 
-        self.assertEqual(ex.call.ldA, 8 * 100)
-        self.assertEqual(ex.get_operand("X")["lds"], [8 * 100, 1000])
+        self.assertEqual(ex.call.ldA, n1 * n4)
 
         # range
-        ex.sumrange = ["i", range(10)]
+        ex.sumrange = ["i", range(n5)]
         ex.vary["X"]["with"].add("i")
 
         ex.infer_lds()
 
-        self.assertEqual(ex.call.ldA, 8 * 100 * 10)
+        self.assertEqual(ex.call.ldA, n1 * n4 * n5)
 
     def test_infer_lwork(self):
         """Test for infer_lwork[s]()."""
+        n1, n2, n3 = self.ns[:3]
         sig = Signature("name", Dim("m"), Dim("n"),
                         dWork("W", "lWork"), Lwork("lWork", "m * n"))
-        ex = Experiment(calls=[sig(100, 1000, "V", 2000)])
+        ex = Experiment(calls=[sig(n1, n2, "V", n1 * n2 + n3)])
 
         ex.infer_lwork(0, 4)
 
-        self.assertEqual(ex.call.lWork, 100 * 1000)
+        self.assertEqual(ex.call.lWork, n1 * n2)
 
     def test_apply_connections_from(self):
         """Test for apply_connections_from()."""
+        n1, n2, n3, n4 = self.ns[:4]
         sig = Signature("name", Dim("m"), Dim("n"),
                         iData("A", "m * n"), iData("B", "n * n"))
-        call = sig(10, 20, "X", "Y")
+        call = sig(n1, n2, "X", "Y")
         ex = Experiment(calls=[call.copy()])
 
+        # no connections
         ex.apply_connections_from(0, 1)
         self.assertEqual(call, ex.calls[0])
 
+        # one call
         ex.calls[0].B = "X"
         ex.apply_connections_from(0, 2)
         self.assertNotEqual(call, ex.calls[0])
-        self.assertEqual(ex.calls[0][1], 20)
+        self.assertEqual(ex.calls[0][1], n2)
 
         # two calls
-        ex.calls = [sig(10, 20, "X", "Y"), sig(30, 40, "Z", "X")]
+        ex.calls = [sig(n1, n2, "X", "Y"), sig(n3, n4, "Z", "X")]
 
         ex.apply_connections_from(1, 2)
 
-        self.assertEqual(ex.calls[0].m, ex.calls[1][2])
-        self.assertEqual(ex.calls[0].n, ex.calls[1][2])
+        self.assertEqual(ex.calls[0].m, n4)
+        self.assertEqual(ex.calls[0].n, n4)
+
+    def test_apply_connections_to(self):
+        """Test for apply_connections_to()."""
+        n1, n2, n3, n4 = self.ns[:4]
+        sig = Signature("name", Dim("m"), Dim("n"),
+                        iData("A", "m * n"), iData("B", "n * n"))
+        call = sig(n1, n2, "X", "Y")
+        ex = Experiment(calls=[call.copy()])
+
+        # no connections
+        ex.apply_connections_to(0, 1)
+        self.assertEqual(call, ex.calls[0])
+
+        # one call
+        ex.calls[0].B = "X"
+        ex.apply_connections_to(0, 2)
+        self.assertNotEqual(call, ex.calls[0])
+        self.assertEqual(ex.calls[0][1], n1)
+
+        # two calls
+        ex.calls = [sig(n1, n2, "X", "Y"), sig(n3, n4, "Z", "X")]
+
+        ex.apply_connections_to(1, 2)
+
+        self.assertEqual(ex.calls[1][2], n2)
 
     def test_check_sanity(self):
         """test for check_sanity()."""
-        i = self.i
-        j = self.j
-        k = self.k
-
         ex = Experiment(
             sampler=self.sampler,
             calls=[("dgemm", "N", "N", 1, 1, 1, 1, "A", 1, "B", 1, 1, "C", 1)]
@@ -132,9 +158,22 @@ class TestExperiment(unittest.TestCase):
         # working
         ex.check_sanity(True)
 
-        # error
+        # error error
         ex.sampler = None
         self.assertRaises(TypeError, ex.check_sanity, True)
+
+    def test_get_operand(self):
+        """Test for get_operand()."""
+        n1, n2, n3, n4 = self.ns[:4]
+        sig = Signature("name", Dim("m"), Dim("n"),
+                        sData("A", "ldA * n"), Ld("ldA", "m"))
+        ex = Experiment(calls=[sig(n1, n2, "X", n1 + n3)])
+
+        op = ex.get_operand("X")
+        self.assertEqual(op["type"], sData)
+        self.assertEqual(op["size"], (n1 + n3) * n2)
+        self.assertEqual(op["dims"], (n1, n2))
+        self.assertEqual(op["lds"], (n1 + n3, n2))
 
 
 class TestExperimentSetters(TestExperiment):

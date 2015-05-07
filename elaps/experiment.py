@@ -1049,7 +1049,7 @@ class Experiment(object):
         if isinstance(sig[name_argid], signature.Work):
             # Workspace is 1D
             dims = [symbolic.simplify(symbolic.Prod(*dims))]
-        operand["dims"] = dims
+        operand["dims"] = tuple(dims)
 
         # leading dimension
         lds = ldcall[name_argid]
@@ -1058,7 +1058,7 @@ class Experiment(object):
         else:
             lds = [lds]
         lds = [symbolic.simplify(ld, **argdict) for ld in lds]
-        operand["lds"] = lds
+        operand["lds"] = tuple(lds)
 
         return operand
 
@@ -1088,17 +1088,21 @@ class Experiment(object):
     def infer_ld(self, callid, ldargid):
         """Infer one leading dimension."""
         self.update_vary()
-
         call = self.calls[callid]
 
+        # check call type
         if not isinstance(call, signature.Call):
             raise TypeError(
                 "can only infer leading dimension for Call (not %r)" %
                 type(call)
             )
-
         sig = call.sig
 
+        # parse string argument name
+        if isinstance(ldargid, str):
+            ldargid = call.argpos(name)
+
+        # check argument type
         if not isinstance(sig[ldargid], signature.Ld):
             raise TypeError(
                 "can only infer leading dimension for Ld (not %r)" %
@@ -1169,21 +1173,28 @@ class Experiment(object):
     def infer_lwork(self, callid, argid):
         """Infer one leading dimension."""
         self.update_vary()
-
         call = self.calls[callid]
 
+        # check call type
         if not isinstance(call, signature.Call):
             raise TypeError(
                 "can only infer work space size for Call (not %r)" %
                 type(call)
             )
+        sig = call.sig
 
+        # parse string argument name
+        if isinstance(argid, str):
+            argid = call.argpos(name)
+
+        # check argument type
         if not isinstance(call.sig[argid], signature.Lwork):
             raise TypeError(
                 "can only infer work space size for Lwork (not %r)" %
                 type(call.sig[argid])
             )
 
+        # infer argument
         call[argid] = None
         call.complete()
 
@@ -1209,6 +1220,7 @@ class Experiment(object):
         call = self.calls[callid]
         argids = argid,
         if argid is None:
+            # no argid specified: infer all args
             argids = range(len(call))
         for argid in argids:
             for con_callid, con_argid in connections[callid, argid]:
@@ -1220,14 +1232,16 @@ class Experiment(object):
         call = self.calls[callid]
         argids = argid,
         if argid is None:
+            # no argid specified: infer all args
             argids = range(len(call))
         for argid in argids:
-            for con_callid, con_argid in reversed(connections[callid, argid]):
-                self.calls[con_callid][con_argid] = call[argid]
+            for con_callid, con_argid in connections[callid, argid]:
+                call[argid] = self.calls[con_callid][con_argid]
 
     def check_sanity(self, raise_=False):
         """Check if the experiment is self-consistent."""
         if not raise_:
+            # catch errors here and instead return False
             try:
                 self.check_sanity(True)
                 return True

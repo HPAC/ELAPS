@@ -92,18 +92,18 @@ class Signature(list):
 
     def __getattr__(self, name):
         """Variable names as attributes."""
-        argid = self.argpos(name)
-        if argid is not None:
-            return self[argid]
-        raise AttributeError("%r object has no attribute %r" %
-                             (type(self).__name__, name))
+        try:
+            return self[self.argpos(name)]
+        except:
+            raise AttributeError("%r object has no attribute %r" %
+                                 (type(self).__name__, name))
 
     def argpos(self, name):
         """Search for an argument id by name."""
         for argid, arg in enumerate(self):
             if arg.name == name:
                 return argid
-        return None
+        raise IndexError("Unknown argument: %s" % name)
 
     def dataargs(self):
         """Return a list of data argument positions."""
@@ -160,11 +160,11 @@ class Call(BasicCall):
 
     def __getattr__(self, name):
         """Variable names as attributes."""
-        argid = self.sig.argpos(name)
-        if argid is not None:
-            return self[argid]
-        raise AttributeError("%r object has no attribute %r" %
-                             (type(self).__name__, name))
+        try:
+            return self[self.sig.argpos(name)]
+        except:
+            raise AttributeError("%r object has no attribute %r" %
+                                 (type(self).__name__, name))
 
     def __setattr__(self, name, value):
         """Variable names as attributes."""
