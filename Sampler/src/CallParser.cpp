@@ -7,10 +7,6 @@
 
 using namespace std;
 
-////////////////////////////////////////////////////////////////////////////////
-// Initialize from token list                                                 //
-////////////////////////////////////////////////////////////////////////////////
-
 CallParser::CallParser(const vector<string> &tokens, const Signature &signature, MemoryManager &mem)
 : mem(&mem), signature(&signature), tokens(tokens)
 { 
@@ -32,31 +28,26 @@ CallParser::CallParser(const vector<string> &tokens, const Signature &signature,
     register_args();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Read 1 static value from string                                            //
-////////////////////////////////////////////////////////////////////////////////
-
+/** Explicit \ref read_static instantiation for `int`. */
 template <> int CallParser::read_static<int>(const char *str) const {
     // TODO: check for conversion errors
     return atol(str);
 }
 
+/** Explicit \ref read_static instantiation for `float`. */
 template <> float CallParser::read_static<float>(const char *str) const {
     // TODO: check for conversion errors
     return (float) atof(str);
 }
 
+/** Explicit \ref read_static instantiation for `double`. */
 template <> double CallParser::read_static<double>(const char *str) const {
     // TODO: check for conversion errors
     return atof(str);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Register static variable (list)                                            //
-////////////////////////////////////////////////////////////////////////////////
-
-template <typename T> void CallParser::register_static(unsigned char i) {
-    const string &val = tokens[i];
+template <typename T> void CallParser::register_static(unsigned char argid) {
+    const string &val = tokens[argid];
     vector<T> data;
 
     // read comma separated list into array
@@ -74,19 +65,18 @@ template <typename T> void CallParser::register_static(unsigned char i) {
     }
 
     // register variable
-    memtypes[i] = STATIC;
-    ids[i] = mem->static_register((void *) &data[0], data.size() * sizeof(T));
+    memtypes[argid] = STATIC;
+    ids[argid] = mem->static_register((void *) &data[0], data.size() * sizeof(T));
 }
 
+/** Explicit \ref register_static instantiation for `void`. 
+ * Since we cannot parse to `void`, throw an Exception.
+ */
 template <> void CallParser::register_static<void>(unsigned char i) {
     // cannot statically initialize void *
     cerr << "Cannot parse to void:" << tokens[i] << " (call ignored)" << endl;
     throw CallParserException();
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Register named variabes                                                    //
-////////////////////////////////////////////////////////////////////////////////
 
 template <typename T> void CallParser::register_named(unsigned char i) {
     const string &val = tokens[i];
@@ -100,10 +90,6 @@ template <typename T> void CallParser::register_named(unsigned char i) {
     // named variables are processed in get_call()
     memtypes[i] = NAMED;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Register dynamic variabes                                                  //
-////////////////////////////////////////////////////////////////////////////////
 
 template <typename T> void CallParser::register_dynamic(unsigned char i) {
     // We know the token starts with [
@@ -122,10 +108,6 @@ template <typename T> void CallParser::register_dynamic(unsigned char i) {
     ids[i] = mem->dynamic_register<T>(size);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Register single argument                                                   //
-////////////////////////////////////////////////////////////////////////////////
-
 template <typename T> void CallParser::register_arg(unsigned char i) {
     const string &val = tokens[i];
     if (val[0] == '[')
@@ -139,7 +121,9 @@ template <typename T> void CallParser::register_arg(unsigned char i) {
         register_static<T>(i);
 }
 
-// all char * are treated as static
+/** Explicit \ref register_arg instantiation for `char`.
+ * `char` are always parsed as Static Memory variables.
+ */
 template <> void CallParser::register_arg<char>(unsigned char i) {
     const string &val = tokens[i];
 
@@ -147,10 +131,6 @@ template <> void CallParser::register_arg<char>(unsigned char i) {
     memtypes[i] = STATIC;
     ids[i] = mem->static_register(val.c_str(), val.size() + 1);
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Register all arguments                                                     //
-////////////////////////////////////////////////////////////////////////////////
 
 void CallParser::register_args() {
     // make space for the call
@@ -181,10 +161,6 @@ void CallParser::register_args() {
                 break;
         }
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Produce call                                                               //
-////////////////////////////////////////////////////////////////////////////////
 
 KernelCall CallParser::get_call() const {
     KernelCall call;

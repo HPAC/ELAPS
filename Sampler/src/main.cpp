@@ -7,6 +7,7 @@ extern "C" {
 #include KERNEL_H
 }
 
+/** Main entry point for executables. */
 int main() {
     Sampler sampler;
 

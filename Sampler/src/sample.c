@@ -11,7 +11,6 @@
 #endif
 #endif
 
-// read time stamp counter (CPU register)
 #ifdef __x86_64__
 #define get_cycles(var) { \
     unsigned long int lower, upper; \
@@ -34,13 +33,11 @@
 } while(0)
 #endif
 
-////////////////////////////////////////////////////////////////////////////////
-// no PAPI                                                                    //
-////////////////////////////////////////////////////////////////////////////////
 
 #define COUNTERS_START0 get_cycles(ticks0);
 #define COUNTERS_END0   get_cycles(ticks1);
 
+/** \ref sample specialization without PAPI and without OpenMP. */
 void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
     // for each call
     int i;
@@ -69,6 +66,7 @@ void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
 }
 
 #ifdef OPENMP_ENABLED
+/** \ref sample specialization with OpenMP but without PAPI. */
 void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 #pragma omp parallel
     {
@@ -162,6 +160,7 @@ void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 #define COUNTERS_END0   get_cycles(ticks1); PAPI_stop_counters(calls[i].counters, ncounters);
 
 #ifdef PAPI_ENABLED
+/** \ref sample specialization with PAPI but without OpenMP. */
 void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, int ncounters) {
     // for each call
     int i;
@@ -190,6 +189,7 @@ void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, int ncou
 }
 
 #ifdef OPENMP_ENABLED
+/** \ref sample specialization with PAPI and OpenMP. */
 void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, int ncounters) {
 #pragma omp parallel
     {
@@ -281,10 +281,9 @@ void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, int ncount
 #undef COUNTERS_START0
 #undef COUNTERS_END0
 
-////////////////////////////////////////////////////////////////////////////////
-// branching for PAPI and OPENMP_ENABLED                                             //
-////////////////////////////////////////////////////////////////////////////////
-
+/** \ref sample specialization without PAPI. 
+ * Forks into \ref sample_nopapi_omp an \ref sample_nopapi_noomp.
+ * */
 void sample_nopapi(KernelCall *calls, size_t ncalls) {
 #ifdef OPENMP_ENABLED
     // TODO: branch to noomp if no parallel is set
@@ -295,6 +294,9 @@ void sample_nopapi(KernelCall *calls, size_t ncalls) {
 }
 
 #ifdef PAPI_ENABLED
+/** \ref sample specialization with PAPI. 
+ * Forks into \ref sample_papi_omp an \ref sample_papi_noomp.
+ * */
 void sample_papi(KernelCall *calls, size_t ncalls, int *counters, int ncounters) {
 #ifdef OPENMP_ENABLED
     // TODO: branch to noomp if no parallel is set
