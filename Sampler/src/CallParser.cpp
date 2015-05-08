@@ -115,7 +115,7 @@ template <typename T> void CallParser::register_arg(unsigned char i) {
         register_dynamic<T>(i);
     else if (isalpha(val[0]))
         // named variables start with a letter
-        register_named<T>(i);
+        register_named(i);
     else
         // anything else is parsed to static
         register_static<T>(i);
