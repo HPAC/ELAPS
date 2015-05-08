@@ -89,7 +89,7 @@ class MemoryManager {
         MemoryManager &operator=(const MemoryManager &that);
 
     public:
-        /** Default initializer.
+        /** Constructor.
          *
          * \param alignment Initial value for \ref alignment.
          * \param first_offset  Initial value for \ref dynamic_first_offset.
@@ -137,7 +137,6 @@ class MemoryManager {
          *
          * \param name  Name of the buffer.
          * \param size  Size of the buffer.
-         *
          */
         template <typename T> void named_malloc(const std::string &name, std::size_t size);
 
