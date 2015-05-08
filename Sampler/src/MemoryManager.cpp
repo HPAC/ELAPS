@@ -12,7 +12,7 @@ using namespace std;
 MemoryManager::MemoryManager(size_t alignment, size_t first_offset)
 : alignment(alignment), dynamic_first_offset(first_offset),
   dynamic_mem(first_offset)
-{ 
+{
     // initialize random number generator
     srand(time(NULL));
 }
@@ -103,7 +103,7 @@ bool MemoryManager::named_exists(const string &name) const {
 template <typename T>
 void MemoryManager::named_malloc(const string &name, size_t size) {
     // assumption: variable doesn't exist yet (check beforehand)
-    
+
     // allocate memory
     named_mem[name] = new char[sizeof(T) * size + alignment];
 
@@ -223,8 +223,8 @@ template size_t MemoryManager::dynamic_register<float>(size_t size);
 /** \ref dynamic_register instantiation for `double`. */
 template size_t MemoryManager::dynamic_register<double>(size_t size);
 
-/** Explicit \ref dynamic_register instantiation for `void`. 
- * Treated as `char` in temrs of size.
+/** Explicit \ref dynamic_register instantiation for `void`.
+ * Treated as `char` in terms of size.
  */
 template <> size_t MemoryManager::dynamic_register<void>(size_t size) {
     return dynamic_register<char>(size);

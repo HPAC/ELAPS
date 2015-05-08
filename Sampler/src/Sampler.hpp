@@ -18,7 +18,7 @@ class Sampler {
         /** Map of kernel names to Signature%s. */
         std::map<const std::string, Signature> signatures;
 
-        /** Central memory managment unit. */
+        /** Central memory management unit. */
         MemoryManager mem;
 
         /** List of \ref CallParser%s.

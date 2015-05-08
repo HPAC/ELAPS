@@ -52,13 +52,13 @@ class MemoryManager {
         std::map<const std::string, char *> named_mem;
 
         /** Lookup for Named Memory buffers.
-         * Contains both malloced bufers and named offsets.
+         * Contains both malloced buffers and named offsets.
         */
         std::map<const std::string, char *> named_map;
 
         /** Named Memory offset hierarchy
          * Mapping of named buffers and named offsets to relatively computed
-         * offsets.  The structure is needed to free computed offsets in @ref
+         * offsets.  The structure is needed to free computed offsets in \ref
          * named_free.
         */
         std::map<const std::string, std::vector<std::string> > named_aliases;
@@ -91,8 +91,8 @@ class MemoryManager {
     public:
         /** Default initializer.
          *
-         * \param alignment Initial value for @ref alignment.
-         * \param first_offset  Initial value for @ref dynamic_first_offset.
+         * \param alignment Initial value for \ref alignment.
+         * \param first_offset  Initial value for \ref dynamic_first_offset.
          */
         MemoryManager(std::size_t alignment = 64, std::size_t first_offset = 0);
 

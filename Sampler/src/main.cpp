@@ -13,7 +13,7 @@ int main() {
 
     // load signatures
     {
-        // signature datatype
+        // signature data type
         typedef struct {
             const char *name;
             void *fptr;

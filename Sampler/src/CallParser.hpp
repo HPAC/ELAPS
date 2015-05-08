@@ -8,8 +8,6 @@
 #include <vector>
 #include <string>
 
-class CallParserException: public std::exception { };
-
 /** Parser for kernel calls.
  * Parses input lines (tokens), registers memory, and prepares KenrelCall%s for
  * execution.
@@ -17,7 +15,7 @@ class CallParserException: public std::exception { };
 class CallParser {
     private:
 
-        /** Types of Memory. 
+        /** Types of Memory.
          * See also: MemoryManager.
          */
         enum MemType {
@@ -53,7 +51,7 @@ class CallParser {
          * Parses argument token \p argid as a variable value or a comma
          * separated list of such.  Registers corresponding space in \ref mem's
          * Static Memory.
-         * 
+         *
          * \tparam T    Data type as which to parse the argument token.
          * \param argid Argument number.
          */
@@ -62,7 +60,7 @@ class CallParser {
         /** Register a Named Memory buffer for an argument.
          * Parses argument token \p argid as a buffer name.  A corresponding
          * Named Memory buffer must exist in \ref mem.
-         * 
+         *
          * \param argid Argument number.
          */
         void register_named(unsigned char argid);
@@ -71,7 +69,7 @@ class CallParser {
          * Parses argument token \p argid as a Dynamic Memory buffer size for
          * elements of type \p T.  Registers corresponding space in \ref mem's
          * Dynamic Memory buffer for this call.
-         * 
+         *
          * \tparam T    Data type of which to reserve space
          * \param argid Argument number.
          */
@@ -86,19 +84,22 @@ class CallParser {
          * | `\[[0-9]+\]` | Dynamic     |
          * | `[A-Z].*`    | Named       |
          * | other        | Named       |
-         * 
+         *
          * \tparam T    Data type of which to reserve space
          * \param argid Argument number.
          */
         template <typename T> void register_arg(unsigned char argid);
 
-        /** Register all call arguments. 
+        /** Register all call arguments.
          * \ref register_arg is invoked for each argument with the
          * corresponding template type \p T as determined by \ref signature.
          */
         void register_args();
 
     public:
+        /** Custom exception thrown by CallParser%s. */
+        class CallParserException: public std::exception { };
+
 #ifdef OPENMP_ENABLED
         /** Is this call in parallel with the next? */
         bool omp_active;

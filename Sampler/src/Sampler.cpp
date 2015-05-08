@@ -95,12 +95,12 @@ template <typename T>
 void Sampler::named_malloc(const vector<string> &tokens) {
     // require 2 arguments: name, size
     if (tokens.size() < 3) {
-        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
+        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl;
         cerr << "usage (example): " << tokens[0] << " A 10000" << endl;
         return;
     }
     if (tokens.size() > 3) {
-        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl;
         cerr << "usage (example): " << tokens[0] << " A 10000" << endl;
     }
 
@@ -134,15 +134,15 @@ template <typename T>
 void Sampler::named_offset(const vector<string> &tokens) {
     // require 3 arguments: oldname, offset, newname
     if (tokens.size() < 4) {
-        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
+        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl;
         cerr << "usage (example): " << tokens[0] << " Old 10000 New" << endl;
         return;
     }
     if (tokens.size() > 4) {
-        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl;
         cerr << "usage (example): " << tokens[0] << " Old 10000 New" << endl;
     }
-    
+
     // parse arguments
     const string &oldname = tokens[1];
     const ssize_t offset = atol(tokens[2].c_str());
@@ -167,12 +167,12 @@ void Sampler::named_offset(const vector<string> &tokens) {
 void Sampler::named_free(const vector<string> &tokens) {
     // require 1 argument: name
     if (tokens.size() < 2) {
-        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
+        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl;
         cerr << "usage (example): " << tokens[0] << " A" << endl;
         return;
     }
     if (tokens.size() > 2) {
-        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl;
         cerr << "usage (example): " << tokens[0] << " A" << endl;
     }
 
@@ -185,7 +185,7 @@ void Sampler::named_free(const vector<string> &tokens) {
         return;
     }
 
-    // free the variabel
+    // free the variable
     mem.named_free(name);
 }
 
@@ -204,10 +204,10 @@ void Sampler::add_call(const vector<string> &tokens) {
         CallParser callparser(tokens, signature, mem);
 #ifdef OPENMP_ENABLED
         callparser.omp_active = omp_active;
-#endif 
+#endif
         callparsers.push_back(callparser);
     } catch (CallParser::CallParserException &e) {
-        // the call could not be parserd
+        // the call could not be parsed
         // (failure already reported)
     }
 }
@@ -277,7 +277,7 @@ void Sampler::info(const vector<string> &tokens) {
         return;
     }
     if (tokens.size() > 2) {
-        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl;
         cerr << "usage (example): " << tokens[0] << " dgemm" << endl;
     }
 

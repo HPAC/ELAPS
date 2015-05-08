@@ -43,7 +43,7 @@ void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
     int i;
     for (i = 0; i < ncalls; i++) {
         void **argv = calls[i].argv;
-        unsigned long ticks0, ticks1; 
+        unsigned long ticks0, ticks1;
 
         // start and end counters
 #define COUNTERS_START COUNTERS_START0
@@ -56,7 +56,7 @@ void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
 #include CALLS_C_INC
         }
 
-        // compute cycle count dfference (time)
+        // compute cycle count difference (time)
         calls[i].cycles = ticks1 - ticks0;
 
         // clean macros
@@ -72,7 +72,7 @@ void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
     {
 #pragma omp single
         {
-            unsigned long ticks0, ticks1; 
+            unsigned long ticks0, ticks1;
             char lastparallel = 0;
             // for each call
             int i;
@@ -102,7 +102,7 @@ void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 #include CALLS_C_INC
                         }
 
-                        // compute cycle count dfference (time)
+                        // compute cycle count difference (time)
                         calls[i].cycles = ticks1 - ticks0;
 
                         // clean macros
@@ -133,7 +133,7 @@ void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 #include CALLS_C_INC
                         }
 
-                        // compute cycle count dfference (time)
+                        // compute cycle count difference (time)
                         calls[i].cycles = ticks1 - ticks0;
 
                         // clean macros
@@ -166,20 +166,20 @@ void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, int ncou
     int i;
     for (i = 0; i < ncalls; i++) {
         void **argv = calls[i].argv;
-        unsigned long ticks0, ticks1; 
+        unsigned long ticks0, ticks1;
 
     // start and end counters
 #define COUNTERS_START COUNTERS_START0
 #define COUNTERS_END COUNTERS_END0
 
         // branch depending on #arguments
-        // actual routine invocations are 
+        // actual routine invocations are
         // automatically generated depending on the number of arguments
         switch (calls[i].argc) {
 #include CALLS_C_INC
         }
 
-        // compute cycle count dfference (time)
+        // compute cycle count difference (time)
         calls[i].cycles = ticks1 - ticks0;
 
         // clean macros
@@ -199,7 +199,7 @@ void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, int ncount
             // make sure to throw a compiler error when omp flags are not set
             omp_get_num_threads();
 
-            unsigned long ticks0, ticks1; 
+            unsigned long ticks0, ticks1;
             char lastparallel = 0;
             // for each call
             int i;
@@ -229,7 +229,7 @@ void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, int ncount
 #include CALLS_C_INC
                         }
 
-                        // compute cycle count dfference (time)
+                        // compute cycle count difference (time)
                         calls[i].cycles = ticks1 - ticks0;
 
                         // clean macros
@@ -260,7 +260,7 @@ void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, int ncount
 #include CALLS_C_INC
                         }
 
-                        // compute cycle count dfference (time)
+                        // compute cycle count difference (time)
                         calls[i].cycles = ticks1 - ticks0;
 
                         // clean macros
@@ -281,7 +281,7 @@ void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, int ncount
 #undef COUNTERS_START0
 #undef COUNTERS_END0
 
-/** \ref sample specialization without PAPI. 
+/** \ref sample specialization without PAPI.
  * Forks into \ref sample_nopapi_omp an \ref sample_nopapi_noomp.
  * */
 void sample_nopapi(KernelCall *calls, size_t ncalls) {
@@ -294,7 +294,7 @@ void sample_nopapi(KernelCall *calls, size_t ncalls) {
 }
 
 #ifdef PAPI_ENABLED
-/** \ref sample specialization with PAPI. 
+/** \ref sample specialization with PAPI.
  * Forks into \ref sample_papi_omp an \ref sample_papi_noomp.
  * */
 void sample_papi(KernelCall *calls, size_t ncalls, int *counters, int ncounters) {

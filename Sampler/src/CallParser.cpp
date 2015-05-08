@@ -9,19 +9,19 @@ using namespace std;
 
 CallParser::CallParser(const vector<string> &tokens, const Signature &signature, MemoryManager &mem)
 : mem(&mem), signature(&signature), tokens(tokens)
-{ 
+{
     // check for too few arguments
     if (tokens.size() < signature.arguments.size()) {
         cerr << "Too few arguments for kernel " << tokens[0];
         cerr << ": given " << (tokens.size() - 1);
-        cerr << " expecing " << (signature.arguments.size() - 1) << " (call ignored)" << endl;
-        throw CallParserException();
+        cerr << " expecting " << (signature.arguments.size() - 1) << " (call ignored)" << endl;
+        throw CallParser::CallParserException();
     }
     // check for too many arguments (warning only)
     if (tokens.size() > signature.arguments.size()) {
         cerr << "Ignoring excess arguments for kernel " << tokens[0];
         cerr << ": given " << (tokens.size() - 1);
-        cerr << " expecing " << (signature.arguments.size() - 1) << endl;
+        cerr << " expecting " << (signature.arguments.size() - 1) << endl;
     }
 
     // process arguments
@@ -69,22 +69,22 @@ template <typename T> void CallParser::register_static(unsigned char argid) {
     ids[argid] = mem->static_register((void *) &data[0], data.size() * sizeof(T));
 }
 
-/** Explicit \ref register_static instantiation for `void`. 
+/** Explicit \ref register_static instantiation for `void`.
  * Since we cannot parse to `void`, throw an Exception.
  */
 template <> void CallParser::register_static<void>(unsigned char i) {
     // cannot statically initialize void *
     cerr << "Cannot parse to void:" << tokens[i] << " (call ignored)" << endl;
-    throw CallParserException();
+    throw CallParser::CallParserException();
 }
 
-template <typename T> void CallParser::register_named(unsigned char i) {
+void CallParser::register_named(unsigned char i) {
     const string &val = tokens[i];
 
     // check variable existence
     if (!mem->named_exists(val)) {
         cout << "Unknown variable: " << val << " (call ignored)" << endl;
-        throw CallParserException();
+        throw CallParser::CallParserException();
     }
 
     // named variables are processed in get_call()
@@ -99,7 +99,7 @@ template <typename T> void CallParser::register_dynamic(unsigned char i) {
     const size_t closing = val.find_first_not_of("0123456789", 1);
     if (closing != val.size() - 1 || val[closing] != ']') {
         cout << "Invalid or incomplete memory size specification: " << val << " (call ignored)" << endl;
-        throw CallParserException();
+        throw CallParser::CallParserException();
     }
 
     // register memory accordingly
