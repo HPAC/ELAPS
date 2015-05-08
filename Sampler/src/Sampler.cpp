@@ -205,7 +205,7 @@ void Sampler::named_free(const vector<string> &tokens) {
 // Command: Add a call                                                        //
 ////////////////////////////////////////////////////////////////////////////////
 
-void Sampler::add_call(const vector<string> &tokens, bool hidden) {
+void Sampler::add_call(const vector<string> &tokens) {
     const string &routine = tokens[0];
 
     // catch unknown routines
@@ -218,7 +218,6 @@ void Sampler::add_call(const vector<string> &tokens, bool hidden) {
     const Signature &signature = signatures[routine];
     try {
         CallParser callparser(tokens, signature, mem);
-        callparser.hidden = hidden;
 #ifdef OPENMP_ENABLED
         callparser.omp_active = omp_active;
 #endif 
@@ -259,9 +258,6 @@ void Sampler::go(const vector<string> &tokens) {
     // print results
     for (size_t i = 0; i < ncalls; i++) {
         CallParser &callparser = callparsers[i];
-        if (callparser.hidden)
-            // output hiding set
-            continue;
 
 #ifdef OPENMP_ENABLED
         if (callparser.omp_active)
@@ -290,6 +286,65 @@ void Sampler::go(const vector<string> &tokens) {
 ////////////////////////////////////////////////////////////////////////////////
 // Add signatures to the sampler                                              //
 ////////////////////////////////////////////////////////////////////////////////
+void Sampler::print(const vector<string> &tokens) {
+    ostringstream text;
+    copy(tokens.begin() + 1, tokens.end(), ostream_iterator<string>(text, " "));
+    cout << text.str() << endl;
+}
+
+void Sampler::info(const vector<string> &tokens) {
+    // require 1 argument: kernel name
+    if (tokens.size() < 2) {
+        cerr << "No argument for " << tokens[0] << " (command ignored)" << endl;
+        cerr << "usage (exmaple): " << tokens[0] << " dgemm" << endl;
+        return;
+    }
+    if (tokens.size() > 2) {
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "usage (example): " << tokens[0] << " dgemm" << endl;
+    }
+
+    const string &routine = tokens[1];
+
+    // catch unknown routines
+    if (signatures.find(routine) == signatures.end()) {
+        cerr << "Uknown kernel: " << routine << " (command ignored)" << endl;
+        return;
+    }
+
+    // print <routine name>(
+    cerr << routine << "(";
+
+    // print the signatue for the routine
+    const Signature &signature = signatures[routine];
+    const size_t argc = signature.arguments.size();
+    for (unsigned char i = 1; i < argc; i++) {
+        switch (signature.arguments[i]) {
+            case CHARP:
+                cerr << "char *";
+                break;
+            case INTP:
+                cerr << "int *";
+                break;
+            case FLOATP:
+                cerr << "float *";
+                break;
+            case DOUBLEP:
+                cerr << "double *";
+                break;
+            case VOIDP:
+                cerr << "void *";
+                break;
+            default:
+                break;
+        }
+        if (i + 1 < argc)
+            cerr << ", ";
+    }
+
+    // print );
+    cerr << ");" << endl;
+}
 
 void Sampler::add_signature(const Signature &signature) {
     signatures[signature.name] = signature;
@@ -302,7 +357,6 @@ void Sampler::add_signature(const Signature &signature) {
 void Sampler::start() {
     // special commands
     map<string, void (Sampler:: *)(const vector<string> &)> commands;
-    commands["go"] = &Sampler::go;
     commands["set_counters"] = &Sampler::set_counters;
     commands["{omp"] = &Sampler::omp_start;
     commands["}"] = &Sampler::omp_end;
@@ -319,9 +373,9 @@ void Sampler::start() {
     commands["coffset"] = &Sampler::named_offset<complex<float> >;
     commands["zoffset"] = &Sampler::named_offset<complex<double> >;
     commands["free"] = &Sampler::named_free;
+    commands["go"] = &Sampler::go;
     commands["info"] = &Sampler::info;
     commands["print"] = &Sampler::print;
-    commands["date"] = &Sampler::date;
 
     // default: not parallel
 #ifdef OPENMP_ENABLED
@@ -340,7 +394,6 @@ void Sampler::start() {
             continue;
 
         // remove leading spaces
-        bool hidden = isspace(line[0]);
         line = line.substr(line.find_first_not_of(" \t\n\v\f\r"));
 
         // ignore empty lines
@@ -357,7 +410,7 @@ void Sampler::start() {
         if (command != commands.end())
             (this->*(command->second))(tokens);
         else
-            add_call(tokens, hidden);
+            add_call(tokens);
     }
 
     // process remaining calls

@@ -35,9 +35,6 @@ class CallParser {
         void register_args();
 
     public:
-        // hide output?
-        bool hidden;
-
 #ifdef OPENMP_ENABLED
         bool omp_active;
 #endif
