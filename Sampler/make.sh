@@ -59,7 +59,7 @@ defines=-D\ CFG_H="\"$cfg_h\""
 [ "$PAPI_COUNTERS_MAX" -gt 0 ] && defines+=" -D PAPI_ENABLED"
 
 # build .o
-for x in main CallParser MemoryManager Sampler Sampler_utility Signature; do
+for x in main CallParser MemoryManager Sampler Signature; do
     $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c $defines src/$x.cpp -o $TARGET_DIR/$x.o || exit
 done
 
