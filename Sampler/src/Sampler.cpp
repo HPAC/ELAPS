@@ -16,10 +16,6 @@
 
 using namespace std;
 
-////////////////////////////////////////////////////////////////////////////////
-// Command: set PAPI counters                                                 //
-////////////////////////////////////////////////////////////////////////////////
-
 void Sampler::set_counters(const vector<string> &tokens) {
 #ifdef PAPI_ENABLED
     // ignore excess counters
@@ -65,10 +61,6 @@ void Sampler::set_counters(const vector<string> &tokens) {
 #endif
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Commands: OpenMP regions                                                   //
-////////////////////////////////////////////////////////////////////////////////
-
 void Sampler::omp_start(const vector<string>&tokens) {
 #ifdef OPENMP_ENABLED
     if (tokens.size() > 1)
@@ -99,20 +91,16 @@ void Sampler::omp_end(const vector<string>&tokens) {
 #endif
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Commands: Handling named variables                                         //
-////////////////////////////////////////////////////////////////////////////////
-
 template <typename T>
 void Sampler::named_malloc(const vector<string> &tokens) {
     // require 2 arguments: name, size
     if (tokens.size() < 3) {
-        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
+        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl;
         cerr << "usage (example): " << tokens[0] << " A 10000" << endl;
         return;
     }
     if (tokens.size() > 3) {
-        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl;
         cerr << "usage (example): " << tokens[0] << " A 10000" << endl;
     }
 
@@ -146,15 +134,15 @@ template <typename T>
 void Sampler::named_offset(const vector<string> &tokens) {
     // require 3 arguments: oldname, offset, newname
     if (tokens.size() < 4) {
-        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
+        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl;
         cerr << "usage (example): " << tokens[0] << " Old 10000 New" << endl;
         return;
     }
     if (tokens.size() > 4) {
-        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl;
         cerr << "usage (example): " << tokens[0] << " Old 10000 New" << endl;
     }
-    
+
     // parse arguments
     const string &oldname = tokens[1];
     const ssize_t offset = atol(tokens[2].c_str());
@@ -179,12 +167,12 @@ void Sampler::named_offset(const vector<string> &tokens) {
 void Sampler::named_free(const vector<string> &tokens) {
     // require 1 argument: name
     if (tokens.size() < 2) {
-        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl; 
+        cerr << "Too few arguments for " << tokens[0] << " (command ignored)" << endl;
         cerr << "usage (example): " << tokens[0] << " A" << endl;
         return;
     }
     if (tokens.size() > 2) {
-        cerr << "Ignoring excess arguments for " << tokens[0] << endl; 
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl;
         cerr << "usage (example): " << tokens[0] << " A" << endl;
     }
 
@@ -197,15 +185,11 @@ void Sampler::named_free(const vector<string> &tokens) {
         return;
     }
 
-    // free the variabel
+    // free the variable
     mem.named_free(name);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Command: Add a call                                                        //
-////////////////////////////////////////////////////////////////////////////////
-
-void Sampler::add_call(const vector<string> &tokens, bool hidden) {
+void Sampler::add_call(const vector<string> &tokens) {
     const string &routine = tokens[0];
 
     // catch unknown routines
@@ -218,20 +202,15 @@ void Sampler::add_call(const vector<string> &tokens, bool hidden) {
     const Signature &signature = signatures[routine];
     try {
         CallParser callparser(tokens, signature, mem);
-        callparser.hidden = hidden;
 #ifdef OPENMP_ENABLED
         callparser.omp_active = omp_active;
-#endif 
+#endif
         callparsers.push_back(callparser);
-    } catch (CallParserException &e) {
-        // the call could not be parserd
+    } catch (CallParser::CallParserException &e) {
+        // the call could not be parsed
         // (failure already reported)
     }
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Command: Process the current calls                                         //
-////////////////////////////////////////////////////////////////////////////////
 
 void Sampler::go(const vector<string> &tokens) {
     // end parallel region if active
@@ -259,9 +238,6 @@ void Sampler::go(const vector<string> &tokens) {
     // print results
     for (size_t i = 0; i < ncalls; i++) {
         CallParser &callparser = callparsers[i];
-        if (callparser.hidden)
-            // output hiding set
-            continue;
 
 #ifdef OPENMP_ENABLED
         if (callparser.omp_active)
@@ -287,22 +263,73 @@ void Sampler::go(const vector<string> &tokens) {
     mem.static_reset();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Add signatures to the sampler                                              //
-////////////////////////////////////////////////////////////////////////////////
+void Sampler::print(const vector<string> &tokens) {
+    ostringstream text;
+    copy(tokens.begin() + 1, tokens.end(), ostream_iterator<string>(text, " "));
+    cout << text.str() << endl;
+}
+
+void Sampler::info(const vector<string> &tokens) {
+    // require 1 argument: kernel name
+    if (tokens.size() < 2) {
+        cerr << "No argument for " << tokens[0] << " (command ignored)" << endl;
+        cerr << "usage (exmaple): " << tokens[0] << " dgemm" << endl;
+        return;
+    }
+    if (tokens.size() > 2) {
+        cerr << "Ignoring excess arguments for " << tokens[0] << endl;
+        cerr << "usage (example): " << tokens[0] << " dgemm" << endl;
+    }
+
+    const string &routine = tokens[1];
+
+    // catch unknown routines
+    if (signatures.find(routine) == signatures.end()) {
+        cerr << "Uknown kernel: " << routine << " (command ignored)" << endl;
+        return;
+    }
+
+    // print <routine name>(
+    cerr << routine << "(";
+
+    // print the signatue for the routine
+    const Signature &signature = signatures[routine];
+    const size_t argc = signature.arguments.size();
+    for (unsigned char i = 1; i < argc; i++) {
+        switch (signature.arguments[i]) {
+            case CHARP:
+                cerr << "char *";
+                break;
+            case INTP:
+                cerr << "int *";
+                break;
+            case FLOATP:
+                cerr << "float *";
+                break;
+            case DOUBLEP:
+                cerr << "double *";
+                break;
+            case VOIDP:
+                cerr << "void *";
+                break;
+            default:
+                break;
+        }
+        if (i + 1 < argc)
+            cerr << ", ";
+    }
+
+    // print );
+    cerr << ");" << endl;
+}
 
 void Sampler::add_signature(const Signature &signature) {
     signatures[signature.name] = signature;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Sampler main loop                                                          //
-////////////////////////////////////////////////////////////////////////////////
-
 void Sampler::start() {
     // special commands
     map<string, void (Sampler:: *)(const vector<string> &)> commands;
-    commands["go"] = &Sampler::go;
     commands["set_counters"] = &Sampler::set_counters;
     commands["{omp"] = &Sampler::omp_start;
     commands["}"] = &Sampler::omp_end;
@@ -319,9 +346,9 @@ void Sampler::start() {
     commands["coffset"] = &Sampler::named_offset<complex<float> >;
     commands["zoffset"] = &Sampler::named_offset<complex<double> >;
     commands["free"] = &Sampler::named_free;
+    commands["go"] = &Sampler::go;
     commands["info"] = &Sampler::info;
     commands["print"] = &Sampler::print;
-    commands["date"] = &Sampler::date;
 
     // default: not parallel
 #ifdef OPENMP_ENABLED
@@ -340,7 +367,6 @@ void Sampler::start() {
             continue;
 
         // remove leading spaces
-        bool hidden = isspace(line[0]);
         line = line.substr(line.find_first_not_of(" \t\n\v\f\r"));
 
         // ignore empty lines
@@ -357,7 +383,7 @@ void Sampler::start() {
         if (command != commands.end())
             (this->*(command->second))(tokens);
         else
-            add_call(tokens, hidden);
+            add_call(tokens);
     }
 
     // process remaining calls

@@ -7,12 +7,13 @@ extern "C" {
 #include KERNEL_H
 }
 
+/** Main entry point for executables. */
 int main() {
     Sampler sampler;
 
     // load signatures
     {
-        // signature datatype
+        // signature data type
         typedef struct {
             const char *name;
             void *fptr;

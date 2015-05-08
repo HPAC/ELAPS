@@ -12,7 +12,7 @@ using namespace std;
 MemoryManager::MemoryManager(size_t alignment, size_t first_offset)
 : alignment(alignment), dynamic_first_offset(first_offset),
   dynamic_mem(first_offset)
-{ 
+{
     // initialize random number generator
     srand(time(NULL));
 }
@@ -23,45 +23,53 @@ MemoryManager::~MemoryManager() {
         named_free(named_mem.begin()->first);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// randomize memory region                                                    //
-////////////////////////////////////////////////////////////////////////////////
-
+/** Explicit \ref randomize instantiation for `char`.
+ * Random values taken from \f$\{0, 1, \ldots, {\tt UCHAR\_MAX} - 1\}\f$.
+ */
 template <> void MemoryManager::randomize<char>(void *data, size_t size) {
-    // random characters (between 0 and UCHAR_MAX)
     for (size_t i = 0; i < size; i++)
         ((unsigned char *) data)[i] = rand() % UCHAR_MAX;
 }
 
+/** Explicit \ref randomize instantiation for `int`.
+ * Random values taken from \f$\{0, 1, \ldots, \min({\tt RAND\_MAX}, {\tt
+ * INT\_MAX}) - 1\}\f$.
+ *
+ */
 template <> void MemoryManager::randomize<int>(void *data, size_t size) {
-    // random positive integers not exceeding INT_MAX (which is likely <= RAND_MAX)
     for (size_t i = 0; i < size; i++)
         ((unsigned int *) data)[i] = rand() % INT_MAX;
 }
 
+/** Explicit \ref randomize instantiation for `float`.
+ * Random values taken from \f$[0, 1)\f$.
+ */
 template <> void MemoryManager::randomize<float>(void *data, size_t size) {
-    // random single precision numbers in [0, 1)
     for (size_t i = 0; i < size; i++)
         ((float *) data)[i] = ((float) rand()) / RAND_MAX;
 }
 
+/** Explicit \ref randomize instantiation for `double`.
+ * Random values taken from \f$[0, 1)\f$.
+ */
 template <> void MemoryManager::randomize<double>(void *data, size_t size) {
-    // random double precision numbers in [0, 1)
     for (size_t i = 0; i < size; i++)
         ((double *) data)[i] = ((double) rand()) / RAND_MAX;
 }
 
+/** Explicit \ref randomize instantiation for `complex<float>`.
+ * Random values taken from \f$[0, 1) + [0, 1) i\f$.
+ */
 template <> void MemoryManager::randomize<complex<float> >(void *data, size_t size) {
     randomize<float>(data, 2 * size);
 }
 
+/** Explicit \ref randomize instantiation for `complex<double>`.
+ * Random values taken from \f$[0, 1) + [0, 1) i\f$.
+ */
 template <> void MemoryManager::randomize<complex<double> >(void *data, size_t size) {
     randomize<double>(data, 2 * size);
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// static                                                                     //
-////////////////////////////////////////////////////////////////////////////////
 
 size_t MemoryManager::static_register(const void *value, size_t size) {
     // record the start for this chunk
@@ -88,10 +96,6 @@ void MemoryManager::static_reset() {
     static_mem.clear();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// named                                                                      //
-////////////////////////////////////////////////////////////////////////////////
-
 bool MemoryManager::named_exists(const string &name) const {
     return (bool) named_map.count(name);
 }
@@ -99,7 +103,7 @@ bool MemoryManager::named_exists(const string &name) const {
 template <typename T>
 void MemoryManager::named_malloc(const string &name, size_t size) {
     // assumption: variable doesn't exist yet (check beforehand)
-    
+
     // allocate memory
     named_mem[name] = new char[sizeof(T) * size + alignment];
 
@@ -112,11 +116,23 @@ void MemoryManager::named_malloc(const string &name, size_t size) {
     // put random data of correspoindng type
     randomize<T>(named_map[name], size);
 }
+
+/** \ref named_malloc instantiation for `char`. */
 template void MemoryManager::named_malloc<char>(const string &name, size_t size);
+
+/** \ref named_malloc instantiation for `int`. */
 template void MemoryManager::named_malloc<int>(const string &name, size_t size);
+
+/** \ref named_malloc instantiation for `float`. */
 template void MemoryManager::named_malloc<float>(const string &name, size_t size);
+
+/** \ref named_malloc instantiation for `double`. */
 template void MemoryManager::named_malloc<double>(const string &name, size_t size);
+
+/** \ref named_malloc instantiation for `complex<float>`. */
 template void MemoryManager::named_malloc<complex<float> >(const string &name, size_t size);
+
+/** \ref named_malloc instantiation for `complex<double>`. */
 template void MemoryManager::named_malloc<complex<double> >(const string &name, size_t size);
 
 template <typename T>
@@ -127,11 +143,23 @@ void MemoryManager::named_offset(const string &oldname, size_t offset, const str
     // register alias
     named_aliases[oldname].push_back(newname);
 }
+
+/** \ref named_offset instantiation for `char`. */
 template void MemoryManager::named_offset<char>(const string &oldname, size_t offset, const string &newname);
+
+/** \ref named_offset instantiation for `int`. */
 template void MemoryManager::named_offset<int>(const string &oldname, size_t offset, const string &newname);
+
+/** \ref named_offset instantiation for `float`. */
 template void MemoryManager::named_offset<float>(const string &oldname, size_t offset, const string &newname);
+
+/** \ref named_offset instantiation for `double`. */
 template void MemoryManager::named_offset<double>(const string &oldname, size_t offset, const string &newname);
+
+/** \ref named_offset instantiation for `complex<float>`. */
 template void MemoryManager::named_offset<complex<float> >(const string &oldname, size_t offset, const string &newname);
+
+/** \ref named_offset instantiation for `complex<double>`. */
 template void MemoryManager::named_offset<complex<double> >(const string &oldname, size_t offset, const string &newname);
 
 void *MemoryManager::named_get(const string &name) {
@@ -156,10 +184,6 @@ void MemoryManager::named_free(const string &name) {
         named_mem.erase(name);
     }
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// dynamic                                                                    //
-////////////////////////////////////////////////////////////////////////////////
 
 void MemoryManager::dynamic_newcall() {
     dynamic_needed_curr = dynamic_first_offset;
@@ -186,12 +210,22 @@ size_t MemoryManager::dynamic_register(size_t size) {
     }
     return id;
 }
+
+/** \ref dynamic_register instantiation for `char`. */
 template size_t MemoryManager::dynamic_register<char>(size_t size);
+
+/** \ref dynamic_register instantiation for `int`. */
 template size_t MemoryManager::dynamic_register<int>(size_t size);
+
+/** \ref dynamic_register instantiation for `float`. */
 template size_t MemoryManager::dynamic_register<float>(size_t size);
+
+/** \ref dynamic_register instantiation for `double`. */
 template size_t MemoryManager::dynamic_register<double>(size_t size);
 
-// void treated as char for size
+/** Explicit \ref dynamic_register instantiation for `void`.
+ * Treated as `char` in terms of size.
+ */
 template <> size_t MemoryManager::dynamic_register<void>(size_t size) {
     return dynamic_register<char>(size);
 }
