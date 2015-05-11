@@ -72,10 +72,10 @@ repetition within a `Report`, resulting in a derived `Report` object.
 Applying metrics
 ----------------
 Metrics turn raw measurement data (i.e., cycle counts) into more meaningful
-quantities, such as "Execution time in seconds" or "floating point operations
-per cycle".  A set of predefined metrics can be loaded using `elaps.io`'s
-`load_metric(name)`.  Such a metric, which is essentially a python function, can
-be applied to an experiment (or a subset of its calls) through
+quantities, such as "Execution time in seconds" (`seconds`) or "floating point
+operations per cycle" (`ipc`).  A set of predefined metrics can be loaded using
+`elaps.io`'s `load_metric(name)`.  Such a metric, which is essentially a python
+function, can be applied to an experiment (or a subset of its calls) through
 `apply_metric(metric, callid)`.  In addition to valid call numbers, `callid` can
 be `None` to access the sum of all calls.
 
@@ -91,7 +91,7 @@ Computing statistics
 --------------------
 The function `apply_stat(stat_name, data)` applies a statistics to a data
 structure as returned by a `Report`'s `apply_metric()`.  The following
-`stat_name's are available:
+`stat_name`'s are available:
 - `"min"`: Minimum.
 - `"med"`: Median
 - `"max"`: Maximum.
