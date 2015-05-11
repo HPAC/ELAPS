@@ -131,10 +131,10 @@ Deletes a Named Buffer (or offset pointer) and all offsets computed from it.
 - The name of the variable.
 
 
-A note on RDTSC and clock speeds
--------------------------------- 
-Samplers measure clock cycle counts in terms of the CPU's time stamp counter (in
-X86: `rdtsc`).  This counter is guaranteed to be incremented at a constant rate
-and thus yields reliable timings.  On the other hand, this rate is not
-necessarily equal to the CPU clock speed, especially, when the clock speed is
-dynamically changed due to Turbo Boost or power saving features.
+A note on clock cycle counters
+------------------------------
+Samplers count clock cycles in terms of the CPU's time stamp counter (in x86:
+`rdtsc`).  This counter is guaranteed to be incremented at a constant rate and
+thus yields reliable timings.  On the other hand, this rate is not necessarily
+equal to the CPU clock speed, especially when the clock speed is dynamically
+changed due to Turbo Boost or power saving features.

@@ -4,10 +4,6 @@ Sampler
 * (about command)
 
 
-Signature
-----------
-
-
 Experiment
 ----------
 * Test randomization
@@ -20,7 +16,6 @@ Experiment
 PlayMat
 -------
 * disable sumrange_parallel if no omp support
-* unnecessary "incompatible sizes" alert
   
 * (script header)
 * (status tips)
@@ -28,9 +23,8 @@ PlayMat
 
 Viewer
 ------
-* periodical reload of truncated reports
-  
-* (legend placement)
 * (hide unavailable metrics)
+* (periodical reload of truncated reports)
+* (legend placement)
 * (memory metrics)
 * (status tips)
