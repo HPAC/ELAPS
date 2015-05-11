@@ -15,13 +15,14 @@ implementing this work-flow:
 Compilation
 -----------
 
-In the `Sampler/` folder, invoke `make.sh` with a configuration file.  Such
-files, typically collected in `Sampler/cfgs/`, are bash scripts that define a
-series of configuration parameters.  `Sampler/cfgs/examples/template.cfg`
-contains a detailed description of these parameters and their effects.
-
-Many of these configuration parameters can be detected automatically by running
-`/gathercfg.sh` on the target system.
+In the `Sampler/` folder, invoke `make.sh` with a configuration file to
+construct a specialized Sampler in `Sampler/buid/*/sampler.x`, where `*` is the
+Sampler's name.  The configurations files, typically collected in
+`Sampler/cfgs/`, are bash scripts that define a series of configuration
+parameters.  `Sampler/cfgs/examples/template.cfg` contains a detailed
+description of these parameters and their effects.  Many of these configuration
+parameters can be detected automatically by running `Sampler/gathercfg.sh` on
+the target system.
 
 
 Usage
