@@ -64,10 +64,10 @@ def load_all_signatures():
     return sigs
 
 
-def write_experiment(ex, filename):
+def write_experiment(experiment, filename):
     """Write an Experiment."""
     with open(filename, "w") as fout:
-        fout.write(repr(ex))
+        fout.write(repr(experiment))
 
 
 def load_experiment_string(string):

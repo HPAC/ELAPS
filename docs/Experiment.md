@@ -146,7 +146,8 @@ and possibly other calls' in the `Experiment`:
 #### Calls without a `Signature` (`BasicCall`)
 Each sampler provides minimal signatures for each of its associated kernels,
 which basically are lists of the involved C arguments (e.g. `("dcopy", "int *",
-"double *", "int *", "double *", "int *")`).
+"double *", "int *", "double *", "int *")`).  The `BasicCall` constructor takes
+such a signature followed by a list of arguments of appropriate length.
 - `char *` arguments can be passed any string.
 - Any other argument (`int *`, `float *`, or `double *`) can be passed values in
   two different formats:
@@ -155,6 +156,11 @@ which basically are lists of the involved C arguments (e.g. `("dcopy", "int *",
   - A size in brackets (e.g. `"[100000]"`) will pass a buffer of such many
     elements from the Sampler's Dynamic Memory buffer.
   In both formats, symbolic `Expression`s are allowed.
+
+By passing only the kernel name in a `list` of length 1 to `set_call` (e.g.
+`set_call(0, ["dcopy"])`), the `Experiment` will automatically generate a
+`BasicCall` if the kernel is available.
+
 
 ### `vary`
 Wether operands refer to the same memory buffers across repetitions and
@@ -182,7 +188,22 @@ Setters:
 
 Execution and Job Submission
 ----------------------------
+`Experiment` are executed or submitted as jobs through its `submit(reportname)`
+routine.  This routine will generate input files for the specified Sampler, as
+well as a shells script that invokes the Sampler accordingly.  Depending on the
+Sampler, this script is then either executed locally or submitted to a batch job
+system, such as LSF or LoadLeveler.
 
+Upon execution, the script generates a report file (extension: `.elr`, which can
+be loaded as a [`Report`](Report.md) through `elaps.io`'s
+`load_report(filename)`.  If any errors occur, an error file (extension: `.err`)
+is generated.
 
 Storing and Loading Experiments
 -------------------------------
+`Experiment`s can be represented as strings in two ways:
+- As a formatted and human readable visual representation obtained through
+  `str()`.
+- As a python parsable text obtained through `repr()`.
+The module `elaps.io` further provides the utility routines
+`load_experiment(filename)` and `write_experiment(experiment, filename)`.
