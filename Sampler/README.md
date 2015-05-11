@@ -100,14 +100,15 @@ of which take effect immediately and not between kernel invocations.
 Allocate a Named Buffer, fill it with random data and set a pointer to its
 beginning.  The prefix `*` identifies the data type and the initial random
 numbers in the buffer:
-| prefix | data type         | random numbers       |
-| ------ | ----------------- | -------------------- |
-|        | `char`            | {0, 1, ..., 255}     |
-| `i`    | `int`             | {0, 1, ..., MAX_INT} |
-| `s`    | `float`           | [0, 1)               |
-| `d`    | `double`          | [0, 1)               |
-| `c`    | `complex<float>`  | [0, 1) + [0, 1) i    |
-| `z`    | `complex<double>` | [0, 1) + [0, 1) i    |
+
+| prefix | data type         | random numbers         |
+| ------ | ----------------- | ---------------------- |
+|        | `char`            | {0, 1, ..., 255}       |
+| `i`    | `int`             | {0, 1, ..., `MAX_INT`} |
+| `s`    | `float`           | [0, 1)                 |
+| `d`    | `double`          | [0, 1)                 |
+| `c`    | `complex<float>`  | [0, 1) + [0, 1) *i*    |
+| `z`    | `complex<double>` | [0, 1) + [0, 1) *i*    |
 
 `*malloc` expects two arguments:
 - *name*: A previously unused buffer name, beginning with a letter.
