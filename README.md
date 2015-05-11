@@ -55,8 +55,8 @@ The Framework consists for three layers:
   See [docs/plot.md](docs/plot.md).
 
 - The third, "top" layer adds a graphical user interface, written in PyQt4, to
-  both design `Experiment`s in the *PlayMat* and study Reports and plots in the
-  *Viewer*.
+  both design `Experiment`s in the *PlayMat* and study `Report`s and plots in
+  the *Viewer*.
   See [docs/PlayMat.md](docs/PlayMat.md)
   and [docs/Viewer.md](docs/Viewer.md).
 
@@ -65,7 +65,7 @@ Installation
 ------------
 
 Installing ELAPS boils down to configuring and compiling Samplers; the Python
-package "elaps" including the GUI  should work "out of the box".
+package `elaps` including the GUI should work "out of the box".
 
 
 Bugs
