@@ -986,13 +986,13 @@ class PlayMat(QtGui.QMainWindow):
             return
         try:
             sampler = self.samplers[str(value)]
-            self.experiment.set_sampler(samplers, force=force)
+            self.experiment.set_sampler(sampler, force=force)
             self.UI_setall()
         except Exception as e:
             self.UI_dialog(
                 "question", "Incompatible sampler",
-                "Sampler %r is not compatible with the current experiment\n"
-                "(%s)\nAdjust the experiment?",
+                "Sampler %s is not compatible with the current experiment\n"
+                "(%s)\nAdjust the experiment?" % (value, e),
                 {"Ok": (self.on_sampler_change, (value, True)), "Cancel": None}
             )
 
