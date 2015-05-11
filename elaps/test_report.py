@@ -212,9 +212,6 @@ class TestReport(unittest.TestCase):
         metricdata = report.apply_metric(metric, 0)
         self.assertEqual(metricdata, {None: [val]})
 
-        metricdata = report.apply_metric(metric)
-        self.assertEqual(len(metricdata), 2)
-
     def test_discrard_frist_repetitions(self):
         """Test discard_first_repetitions()."""
         ex = self.ex
