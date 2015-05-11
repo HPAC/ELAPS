@@ -222,14 +222,8 @@ class Report(object):
         report.data = deepcopy(self.data)
         return report
 
-    def apply_metric(self, metric, callid=-1):
+    def apply_metric(self, metric, callid=None):
         """Evaluate data with respect to a metric."""
-        if callid == -1:
-            results = {}
-            for callid in self.data.values()[0][0]:
-                results[callid] = self.apply_metric(metric, callid)
-            return results
-
         ex = self.experiment
         result = {}
         for range_val in ex.range_vals():
