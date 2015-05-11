@@ -1,11 +1,32 @@
 ELAPS Experiment
 ================
 
-*This file is under construction*
-
 The `Experiment` class is the central component of the `elaps` Python module.
 It both statically represents the experiments within the ELAPS framework and
 features functionality to support their design and handling.
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [ELAPS Experiment](#elaps-experiment)
+  - [Setup and Attributes](#setup-and-attributes)
+    - [`sampler`](#sampler)
+    - [`papi_counters`](#papi_counters)
+    - [`nthreads`](#nthreads)
+    - [`range`](#range)
+    - [`nreps`](#nreps)
+    - [`sumrange`](#sumrange)
+    - [`sumrange_parallel`](#sumrange_parallel)
+    - [`calls_parallel`](#calls_parallel)
+    - [`calls`](#calls)
+      - [Calls with a `Signature` (`Call`)](#calls-with-a-signature-call)
+      - [Calls without a `Signature` (`BasicCall`)](#calls-without-a-signature-basiccall)
+    - [`vary`](#vary)
+  - [Execution and Job Submission](#execution-and-job-submission)
+  - [Storing and Loading Experiments](#storing-and-loading-experiments)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 
 Setup and Attributes
@@ -38,7 +59,7 @@ structures, the package `elaps.io` provides the routines the utility routines
 `load_sampler(name)` and `load_all_samplers()`.
 
 Relevant for the `Experiment` setup are the following `sampler` entries:
-- `papi_enabled`: Whether PAPI is available.  If so: 
+- `papi_enabled`: Whether PAPI is available.  If so:
   - `papi_counters_avail`: A list of available PAPI event names.
   - `papi_counters_max`: Maximum number of parallel counters.
 - `nt_max`: The maximum number of threads on the system.
@@ -105,7 +126,7 @@ Setter: `set_calls_parallel(calls_parallel)`
 
 ### `calls`
 The `list` of kernel invocations to be sampled.  Each kernel in this list must
-be supported by the Sampler.  
+be supported by the Sampler.
 
 There are two types of calls:
 - `elaps.signature.Call` instances represent calls with associated `Signature`s.
@@ -122,9 +143,9 @@ Setters:
 - `set_arg(callid, argid, value)`
 
 #### Calls with a `Signature` (`Call`)
-`Signature`s can be loaded through `elaps.io.load_signature(name)` or
-`elaps.io.load_all_signatures()`.  Calling such a Signature, results in a
-corresponding `Call` instance.  For more details on `Signature`s see
+`Signature`s can be loaded through `elaps.io`'s `load_signature(name)` or
+`load_all_signatures()`.  Calling such a Signature, results in a corresponding
+`Call` instance.  For more details on `Signature`s see
 [Signature.md](Signature.md).
 
 Within an `Experiment`, a `Call`'s values have to conform with its `Signature`
@@ -147,19 +168,19 @@ and possibly other calls' in the `Experiment`:
 Each sampler provides minimal signatures for each of its associated kernels,
 which basically are lists of the involved C arguments (e.g. `("dcopy", "int *",
 "double *", "int *", "double *", "int *")`).  The `BasicCall` constructor takes
-such a signature followed by a list of arguments of appropriate length.
+such a signature followed by a list of arguments of appropriate length.  By
+passing only the kernel name in a `list` of length 1 to `set_call` (e.g.
+`set_call(0, ["dcopy"])`), the `Experiment` will automatically generate a
+`BasicCall` if the kernel is available.
+
+The allowed argument formats are:
 - `char *` arguments can be passed any string.
 - Any other argument (`int *`, `float *`, or `double *`) can be passed values in
-  two different formats:
+  two different formats, both of which may contain symbolic `Expression`s:
   - A single value or a list of values, e.g. `1,2` to represent the complex
     number *1 + 2 i*.
   - A size in brackets (e.g. `"[100000]"`) will pass a buffer of such many
     elements from the Sampler's Dynamic Memory buffer.
-  In both formats, symbolic `Expression`s are allowed.
-
-By passing only the kernel name in a `list` of length 1 to `set_call` (e.g.
-`set_call(0, ["dcopy"])`), the `Experiment` will automatically generate a
-`BasicCall` if the kernel is available.
 
 
 ### `vary`
@@ -169,25 +190,30 @@ iterations of the sumrange and how they depend on these iterations.
 `dict` with they following keys:
 - `with`: A `set` of variables with which the operand varies.  Can contain
   `"rep"` (to vary with repetitions) and the `sumrange_var`.
+
+  Setters: `set_vary_with(name, with_)`, `add_vary_with(name, with_var)`, and
+  `remove_vary_with(name, with_var)`
 - `along`: Along which dimension the variable shall vary. (only makes sense for
   matrix operands.)  If `along == 0`, matrix arguments for different iterations
   would be stacked along their first dimension (in BLAS data layout forming a
   column stack), thereby increasing the leading dimension; `along == 1` would
   stack them along their second dimension (in BLAS data layout forming a row
   stack).
+
+  Setter: `set_vary_along(name, along)`
 - `offset`: An additional offset to further separate consecutive iterations'
   operands.  Can be an `int` or a symbolic `Expression`.
 
-Setters:
-- `set_vary(name, with_=None, along=None, offset=0)`
-- `set_vary_with(name, with_)`, `add_vary_with(name, with_var)`, and
-  `remove_vary_with(name, with_var)`
-- `set_vary_along(name, along)`
-- `set_vary_offset(name, offset)`
+  Setter: `set_vary_offset(name, offset)`
+
+All vary entries can also be set at once:
+
+Setter: `set_vary(name, with_=None, along=None, offset=0)`
 
 
 Execution and Job Submission
 ----------------------------
+
 `Experiment` are executed or submitted as jobs through its `submit(reportname)`
 routine.  This routine will generate input files for the specified Sampler, as
 well as a shells script that invokes the Sampler accordingly.  Depending on the
@@ -199,8 +225,10 @@ be loaded as a [`Report`](Report.md) through `elaps.io`'s
 `load_report(filename)`.  If any errors occur, an error file (extension: `.err`)
 is generated.
 
+
 Storing and Loading Experiments
 -------------------------------
+
 `Experiment`s can be represented as strings in two ways:
 - As a formatted and human readable visual representation obtained through
   `str()`.
