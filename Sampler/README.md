@@ -1,7 +1,5 @@
-ELAPS Sampler                                                       {#mainpage}
+ELAPS Sampler
 =============
-
-[TOC]
 
 At the core of the ELAPS framework is a low-level performance measurement tool
 tailored to dense linear algebra operations: the Sampler.  This tool makes it
