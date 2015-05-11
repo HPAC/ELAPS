@@ -45,14 +45,14 @@ class Sampler {
         std::vector<int> counters;
 #endif
 
-        /** Command `set_counter [` *counter* `[...]]`: Set PAPI counters
+        /** Command `set_counters [` *counter* `[...]]`: Set PAPI counters
          * Set the PAPI counters to be measured.  The event (counter) names are
          * parsed to event codes.  Unknown events or events incompatible with
          * the previously selected set are ignored.
          *
          * Only available when compiled with PAPI enabled.
          *
-         * \param tokens    command + arguments: `set_counter [` *counter* `[...]]`
+         * \param tokens    command + arguments: `set_counters [` *counter* `[...]]`
          * - *counter*: A PAPI event name.
          */
         void set_counters(const std::vector<std::string> &tokens);
@@ -190,9 +190,7 @@ class Sampler {
          * treated according to the first token:  While commands invoke
          * corresponding Sampler member functions (see below); all other lines
          * are parsed as sampling calls by \ref add_call.  At the end of
-         * `stdin` \ref go is
-         * invoked
-         * implicitly.
+         * `stdin` \ref go is invoked implicitly.
          *
          * | command        | arguments              | member function   |
          * | -------------- | ---------------------- | ----------------- |
