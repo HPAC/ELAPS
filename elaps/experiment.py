@@ -169,6 +169,46 @@ class Experiment(object):
             if isinstance(call[argid], str)
         ]))
 
+    @property
+    def range_var(self):
+        """Return the range variable if set."""
+        return self.range[0]
+
+    @range_var.setter
+    def range_var(self, value):
+        """Set the range variable."""
+        self.range[0] = value
+
+    @property
+    def range_vals(self):
+        """Return the range values if set."""
+        return self.range[1]
+
+    @range_vals.setter
+    def range_vals(self, value):
+        """Set the range values."""
+        self.range[1] = value
+
+    @property
+    def sumrange_var(self):
+        """Return the sumrange variable if set."""
+        return self.sumrange[0]
+
+    @sumrange_var.setter
+    def sumrange_vals(self, value):
+        """Set the sumrange variable."""
+        self.sumrange[0] = value
+
+    @property
+    def sumrange_vals(self):
+        """Return the sumrange values if set."""
+        return self.sumrange[1]
+
+    @sumrange_vals.setter
+    def sumrange_vals(self, value):
+        """Set the sumrange values."""
+        self.sumrange[1] = value
+
     # setters
     def set_sampler(self, sampler, force=False, check_only=False):
         """Set the Sampler."""
