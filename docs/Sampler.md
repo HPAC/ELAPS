@@ -1,6 +1,27 @@
 ELAPS Sampler
 =============
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Compilation](#compilation)
+- [Usage](#usage)
+  - [Sampling call syntax](#sampling-call-syntax)
+  - [Special commands](#special-commands)
+    - [`go`](#go)
+    - [`set_counters [` *counter* `[...]]`](#set_counters--counter-)
+    - [`{omp` and `}`](#omp-and-)
+    - [`info` *kernel_name*](#info-kernel_name)
+    - [`print` *text*](#print-text)
+  - [Named Buffer](#named-buffer)
+    - [`*malloc` *name size*](#malloc-name-size)
+    - [`*offset` *name offset new_name*](#offset-name-offset-new_name)
+    - [`free` *name*](#free-name)
+- [A note on clock cycle counters](#a-note-on-clock-cycle-counters)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 At the core of the ELAPS framework is a low-level performance measurement tool
 tailored to dense linear algebra operations: the Sampler.  This tool makes it
 possible to measure the performance of individual kernel executions,
