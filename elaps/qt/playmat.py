@@ -769,9 +769,8 @@ class PlayMat(QtGui.QMainWindow):
         usesumrange = bool(ex.sumrange)
         self.UI_usesumrange.setChecked(usesumrange)
         self.UI_sumrangeW.setEnabled(usesumrange)
-        self.UI_sumrange_parallel.setCurrentIndex(
-            1 if ex.sumrange_parallel else 0
-        )
+        self.UI_sumrange_parallel.setEnabled(ex.sampler["omp_enabled"])
+        self.UI_sumrange_parallel.setCurrentIndex(int(ex.sumrange_parallel))
         if usesumrange:
             self.UI_sumrangevar.setText(str(ex.sumrange[0]))
             self.UI_set_invalid(self.UI_sumrangevar, False)
@@ -782,7 +781,9 @@ class PlayMat(QtGui.QMainWindow):
     def UI_calls_parallel_set(self):
         """Set UI element: calls_parallel."""
         self.UI_setting += 1
-        calls_parallel = self.experiment.calls_parallel
+        ex = self.experiment
+        calls_parallel = ex.calls_parallel
+        self.UI_calls_parallel.setEnabled(ex.sampler["omp_enabled"])
         self.UI_calls_parallel.setChecked(calls_parallel)
         self.UI_calls_parallelW.setEnabled(calls_parallel)
         self.UI_setting -= 1

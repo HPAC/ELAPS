@@ -15,8 +15,6 @@ Experiment
 
 PlayMat
 -------
-* disable sumrange_parallel if no omp support
-  
 * (script header)
 * (status tips)
 
