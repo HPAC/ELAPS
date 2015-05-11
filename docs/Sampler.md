@@ -16,7 +16,7 @@ Compilation
 -----------
 
 In the `Sampler/` folder, invoke `make.sh` with a configuration file to
-construct a specialized Sampler in `Sampler/buid/*/sampler.x`, where `*` is the
+construct a specialized Sampler in `Sampler/build/*/sampler.x`, where `*` is the
 Sampler's name.  The configurations files, typically collected in
 `Sampler/cfgs/`, are bash scripts that define a series of configuration
 parameters.  `Sampler/cfgs/examples/template.cfg` contains a detailed
