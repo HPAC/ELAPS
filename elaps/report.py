@@ -166,7 +166,7 @@ class Report(object):
             flops[None] = totalflops
 
             # get repetition data
-            data_keys = map(intern, ["rdtsc"] + ex.papi_counters)
+            data_keys = map(intern, ["cycles"] + ex.papi_counters)
             nvalues = len(data_keys)
             rep_data = []
             for rep, sumrange_fdata in enumerate(rep_fdata):

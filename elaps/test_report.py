@@ -45,7 +45,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(report.endtime, end_time)
         self.assertEqual(report.fulldata, {None: ({None: ((val,),)},)})
         self.assertEqual(report.data, {None: ({
-            None: {"rdtsc": val}, 0: {"rdtsc": val}
+            None: {"cycles": val}, 0: {"cycles": val}
         },)})
 
         rawdata = [[0], [1]]
@@ -69,7 +69,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(len(report.fulldata), lenrange)
         idx = random.choice(range_vals)
         self.assertEqual(report.fulldata[idx][0][None][0][0], vals[idx])
-        self.assertEqual(report.data[idx][0][0]["rdtsc"], vals[idx])
+        self.assertEqual(report.data[idx][0][0]["cycles"], vals[idx])
 
     def test_reps(self):
         """Test for Experiment with repetitions."""
@@ -86,7 +86,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(len(report.fulldata[None]), nreps)
         idx = random.randint(0, nreps - 1)
         self.assertEqual(report.fulldata[None][idx][None][0][0], vals[idx])
-        self.assertEqual(report.data[None][idx][None]["rdtsc"], vals[idx])
+        self.assertEqual(report.data[None][idx][None]["cycles"], vals[idx])
 
     def test_sumrange(self):
         """Test for Experiment with sumrange."""
@@ -105,7 +105,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(len(report.fulldata[None][0]), lenrange)
         idx = random.choice(range_vals)
         self.assertEqual(report.fulldata[None][0][idx][0][0], vals[idx])
-        self.assertEqual(report.data[None][0][None]["rdtsc"],
+        self.assertEqual(report.data[None][0][None]["cycles"],
                          sum(vals.values()))
 
     def test_sumrange_parallel(self):
@@ -124,7 +124,7 @@ class TestReport(unittest.TestCase):
         report = Report(ex, rawdata)
         self.assertEqual(len(report.fulldata[None][0]), 1)
         self.assertEqual(report.fulldata[None][0][0], val)
-        self.assertEqual(report.data[None][0][None]["rdtsc"], val)
+        self.assertEqual(report.data[None][0][None]["cycles"], val)
 
     def test_calls(self):
         """Test for Experiment multiple calls."""
@@ -140,7 +140,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(len(report.fulldata[None][0][None]), ncalls)
         idx = random.randint(0, ncalls - 1)
         self.assertEqual(report.fulldata[None][0][None][idx][0], vals[idx])
-        self.assertEqual(report.data[None][0][None]["rdtsc"], sum(vals))
+        self.assertEqual(report.data[None][0][None]["cycles"], sum(vals))
 
     def test_calls_parallel(self):
         """Test for Experiment parallel calls."""
@@ -156,7 +156,7 @@ class TestReport(unittest.TestCase):
         report = Report(ex, rawdata)
         self.assertEqual(len(report.fulldata[None][0][None]), 1)
         self.assertEqual(report.fulldata[None][0][None][0], val)
-        self.assertEqual(report.data[None][0][None]["rdtsc"], val)
+        self.assertEqual(report.data[None][0][None]["cycles"], val)
 
     def test_counters(self):
         """Test for Experiment with counters."""
@@ -206,7 +206,7 @@ class TestReport(unittest.TestCase):
         rawdata = [[0], [val], [1]]
 
         def metric(data, **kwargs):
-            return data.get("rdtsc")
+            return data.get("cycles")
 
         report = Report(ex, rawdata)
         metricdata = report.apply_metric(metric, 0)

@@ -10,8 +10,8 @@ def metric(data, experiment, nthreads, callid, **kwargs):
     Not acocuting for Turbo Boost.
     """
     nops = data.get("flops")
-    rdtsc = data.get("rdtsc")
-    if nops is None or rdtsc is None:
+    cycles = data.get("cycles")
+    if nops is None or cycles is None:
         return None
 
     # get datatype
@@ -35,6 +35,6 @@ def metric(data, experiment, nthreads, callid, **kwargs):
         return None
     ncores = min(sampler["ncores"], nthreads)
 
-    return 100 * nops / (rdtsc * ipc * ncores)
+    return 100 * nops / (cycles * ipc * ncores)
 
 name = "efficiency [%]"

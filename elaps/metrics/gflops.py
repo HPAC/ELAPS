@@ -9,10 +9,10 @@ def metric(data, experiment, **kwargs):
     Counting mathematically required operations.
     """
     nops = data.get("flops")
-    rdtsc = data.get("rdtsc")
+    cycles = data.get("cycles")
     freq = experiment.sampler.get("frequency")
-    if nops is None or rdtsc is None or freq is None:
+    if nops is None or cycles is None or freq is None:
         return None
-    return 1e-9 * nops * (freq / rdtsc)
+    return 1e-9 * nops * (freq / cycles)
 
 name = "Gflops/s"

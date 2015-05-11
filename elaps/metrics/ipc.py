@@ -10,9 +10,9 @@ def metric(data, **kwargs):
     Not accounting for Turbo Boost.
     """
     nops = data.get("flops")
-    rdtsc = data.get("rdtsc")
-    if nops is None or rdtsc is None:
+    cycles = data.get("cycles")
+    if nops is None or cycles is None:
         return None
-    return nops / rdtsc
+    return nops / cycles
 
 name = "flops/cycle"
