@@ -212,7 +212,7 @@ class QJobProgress(QtGui.QDockWidget):
         """Event: kill job(s)."""
         for job in self.selected_jobs():
             if job["stat"] in ("PEND", "RUN"):
-                job["experiment"]["sampler"]["backend"].kill(job["jobid"])
+                job["experiment"].sampler["backend"].kill(job["jobid"])
         self.on_remove()
 
     @pyqtSlot()
@@ -230,7 +230,7 @@ class QJobProgress(QtGui.QDockWidget):
         """Event: kill all jobs confirmed."""
         for job in self.jobs():
             if job["stat"] in ("PEND", "RUN"):
-                job["experiment"]["sampler"]["backend"].kill(job["jobid"])
+                job["experiment"].sampler["backend"].kill(job["jobid"])
         self.on_removeall()
 
     @pyqtSlot()
