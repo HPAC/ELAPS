@@ -6,6 +6,24 @@ plots a series of metric data sets as produced by a [`Report`](Report.md)'s
 `apply_metric()` method.  If any of the provided data sets contains a range,
 it produces a line-plot, otherwise a bar-plot.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [ELAPS Report plotting](#elaps-report-plotting)
+  - [Input](#input)
+    - [`datas`](#datas)
+    - [`stat_names`](#stat_names)
+    - [`colors`](#colors)
+    - [`styles`](#styles)
+    - [`xlabel`](#xlabel)
+    - [`ylabel`](#ylabel)
+    - [`legendargs`](#legendargs)
+    - [`figure`](#figure)
+  - [Output](#output)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 
 Input
 -----
