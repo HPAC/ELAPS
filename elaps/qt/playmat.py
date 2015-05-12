@@ -1015,8 +1015,8 @@ class PlayMat(QtGui.QMainWindow):
             ex.set_range((range_var, range_vals), force=True)
         else:
             ex.set_range(None)
-            self.UI_nthreads_set()
             self.UI_sumrange_set()
+        self.UI_nthreads_set()
         self.UI_range_set()
         self.UI_calls_set()
         self.UI_submit_setenabled()
