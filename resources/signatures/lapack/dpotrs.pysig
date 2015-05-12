@@ -9,5 +9,5 @@ Signature(
     dData("B", "ldB * nrhs"),
     Ld("ldB", "n"),
     Info(),
-    complexity="2 * m * n * nrhs"
+    complexity="2 * n * n * nrhs"
 )
