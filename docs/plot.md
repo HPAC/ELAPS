@@ -28,10 +28,10 @@ it produces a line-plot, otherwise a bar-plot.
 Input
 -----
 
-`plot()` takes the following arguments:
+`plot()` takes the following arguments, all of which but the first are optional.
 
 ### `datas`
-(no default)  
+(required)  
 The datasets to be plotted as a `list` of two-element `tuples` consisting of the
 legend entry and the data set as returned by `Report.apply_metric()`.
 
