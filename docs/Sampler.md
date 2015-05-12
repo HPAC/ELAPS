@@ -52,7 +52,7 @@ Usage
 The Sampler main loop reads `stdin` line by line.  Thereby discarding anything
 following the comment character `#` and empty lines.  The lines are tokenized
 (separated by white spaces) and treated according to the first token:  While
-special commands invoke Sampler functions (see below); all other lines are
+special commands invoke Sampler methods (see below); all other lines are
 parsed as sampling calls.
 
 Example:

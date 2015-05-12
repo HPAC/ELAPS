@@ -37,8 +37,8 @@ of kernel invocations defined in its `calls` attribute shall be executed.  The
 attributes of the `Experiment` class that form this setup are described in this
 section.
 
-For each attribute `*`, there exists a setter function `set_*()`.  These
-functions incorporate type and consistency checks for the attribute values and
+For each attribute `*`, there exists a setter method `set_*()`.  These
+methods incorporate type and consistency checks for the attribute values and
 should be preferred over setting the attributes directly.  Upon encountering
 invalid or incompatible values, the setters will throw corresponding exceptions.
 Each setter allows two optional keyword arguments:

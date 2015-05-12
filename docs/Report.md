@@ -89,7 +89,7 @@ be `None` to access the sum of all calls.
 
 Computing statistics
 --------------------
-The function `apply_stat(stat_name, data)` applies a statistics to a data
+The method `apply_stat(stat_name, data)` applies a statistics to a data
 structure as returned by a `Report`'s `apply_metric()`.  The following
 `stat_name`'s are available:
 - `"min"`: Minimum.
