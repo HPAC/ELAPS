@@ -85,7 +85,7 @@ void Sampler::omp_end(const vector<string>&tokens) {
     }
     omp_active = false;
     if (!callparsers.empty())
-        callparsers.back().omp_active = true;
+        callparsers.back().omp_active = false;
 #else
     cerr << "OpenMP support not enabled (command ignored)" << endl;
 #endif
