@@ -249,8 +249,8 @@ class Experiment(object):
 
         # thread count
         nthreads = self.nthreads
-        if isinstance(self.nthreads, int):
-            if self.nthreads > sampler["nt_max"]:
+        if isinstance(nthreads, int):
+            if nthreads > sampler["nt_max"]:
                 if not force:
                     raise ValueError("Sampler only supports %s threads" %
                                      sampler["nt_max"])
@@ -258,9 +258,9 @@ class Experiment(object):
 
         # check OpenMP
         calls_parallel = self.calls_parallel
-        sumrange_parallel = self.calls_parallel
+        sumrange_parallel = self.sumrange_parallel
         if not sampler["omp_enabled"]:
-            if self.calls_parallel or self.sumrange_parallel:
+            if calls_parallel or sumrange_parallel:
                 if not force:
                     raise ValueError("Sampler doesn't support OpenMP")
                 calls_parallel = False
