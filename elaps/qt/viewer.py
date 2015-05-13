@@ -301,8 +301,6 @@ class Viewer(QtGui.QMainWindow):
     def report_load(self, filename, index=None, UI_alert=False):
         """Load a report."""
         filename = os.path.abspath(filename)
-        if index is None:
-            index = self.UI_reports.topLevelItemCount()
 
         # load report
         try:
@@ -329,6 +327,7 @@ class Viewer(QtGui.QMainWindow):
 
         if index is None:
             self.log("Loaded %r" % filename)
+            index = self.UI_reports.topLevelItemCount()
         else:
             self.log("Reloaded %r" % filename)
 
