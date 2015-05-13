@@ -1826,7 +1826,8 @@ class Experiment(object):
             if self.sampler:
                 self.nthreads = min(self.sampler["nt_max"], self.nthreads)
         if self.sumrange:
-            self.sumrange_vals = symbolic.simplify(self.sumrange_vals, **kwargs)
+            self.sumrange_vals = symbolic.simplify(self.sumrange_vals,
+                                                   **kwargs)
         for call in self.calls:
             for argid, value in enumerate(call):
                 call[argid] = symbolic.simplify(value, **kwargs)
