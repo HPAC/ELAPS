@@ -86,7 +86,7 @@ class Report(object):
 
         # full structured data
         range_data = {}
-        for range_val in ex.range_vals():
+        for range_val in ex.range_vals:
             # discard randomization results
             if ex.range_randomize_data:
                 for name in ex.operands:
@@ -103,7 +103,7 @@ class Report(object):
                     continue
                 # results for each sumrange iteration
                 sumrange_data = {}
-                for sumrange_val in ex.sumrange_vals(range_val):
+                for sumrange_val in ex.sumrange_vals_at(range_val):
                     if ex.calls_parallel:
                         # only one result per sumrange
                         values = getints(rawdata, nvalues)
@@ -136,7 +136,7 @@ class Report(object):
 
         # reduced data
         range_data = {}
-        for range_val in ex.range_vals():
+        for range_val in ex.range_vals:
 
             if range_val not in self.fulldata:
                 # missing full range_val data
@@ -146,7 +146,7 @@ class Report(object):
             # results for each repetition
             # complextiy evaluation
             flops = len(ex.calls) * [0]
-            for sumrange_val in ex.sumrange_vals(range_val):
+            for sumrange_val in ex.sumrange_vals_at(range_val):
                 for callid, call in enumerate(ex.calls):
                     if not isinstance(call, signature.Call):
                         flops[callid] = None
@@ -226,12 +226,12 @@ class Report(object):
         """Evaluate data with respect to a metric."""
         ex = self.experiment
         result = {}
-        for range_val in ex.range_vals():
+        for range_val in ex.range_vals:
             nthreads = ex.nthreads
             if ex.range and nthreads == ex.range[0]:
                 nthreads = range_val
             if ex.sumrange_parallel:
-                nthreads *= len(ex.sumrange_vals(range_val)) * len(ex.calls)
+                nthreads *= len(ex.sumrange_vals_at(range_val)) * len(ex.calls)
             elif ex.calls_parallel:
                 nthreads *= len(ex.calls)
             nthreads = min(nthreads, ex.sampler["nt_max"])

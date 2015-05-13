@@ -451,8 +451,8 @@ class Viewer(QtGui.QMainWindow):
             ex = report.experiment
             if self.discard_firstrep:
                 report = report.discard_first_repetitions()
-            if ex.range and ex.range[0] not in range_vars:
-                range_vars.append(ex.range[0])
+            if ex.range and ex.range_var not in range_vars:
+                range_vars.append(ex.range_var)
             for UI_item in UI_items:
                 if UI_item.showing:
                     plot_data.append((

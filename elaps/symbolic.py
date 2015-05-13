@@ -92,6 +92,10 @@ class Symbol(Expression):
             return self.name == other.name
         return self.name == other
 
+    def __ne__(self, other):
+        """Compare for non-equality."""
+        return not (self == other)
+
     def __hash__(self):
         """Hash: hash name."""
         return hash(self.name)

@@ -182,7 +182,9 @@ class Experiment(object):
     @property
     def range_vals(self):
         """Return the range values if set."""
-        return self.range[1]
+        if self.range:
+            return self.range[1]
+        return None,
 
     @range_vals.setter
     def range_vals(self, value):
@@ -195,14 +197,16 @@ class Experiment(object):
         return self.sumrange[0]
 
     @sumrange_var.setter
-    def sumrange_vals(self, value):
+    def sumrange_var(self, value):
         """Set the sumrange variable."""
         self.sumrange[0] = value
 
     @property
     def sumrange_vals(self):
         """Return the sumrange values if set."""
-        return self.sumrange[1]
+        if self.sumrange:
+            return self.sumrange[1]
+        return None,
 
     @sumrange_vals.setter
     def sumrange_vals(self, value):
@@ -346,7 +350,7 @@ class Experiment(object):
                 nthreads = self.sampler["nt_max"]
         elif isinstance(nthreads, symbolic.Symbol):
             # check if == range_var
-            if not self.range or nthreads != self.range[0]:
+            if not self.range or nthreads != self.range_var:
                 raise NameError("Invalid thread count: %s" % nthreads)
         else:
             raise TypeError("Invalid thread count: %s" % nthreads)
@@ -372,7 +376,7 @@ class Experiment(object):
                 raise TypeError("Invalid range variable: %r" % range_var)
             range_var = symbolic.Symbol("i")
         # check conflict with sumrange
-        if self.sumrange and range_var == self.sumrange[0]:
+        if self.sumrange and range_var == self.sumrange_var:
             if not force:
                 raise ValueError(
                     "Cannot use same variable for range and sumrange"
@@ -390,7 +394,7 @@ class Experiment(object):
         else:
             # set new value
             self.substitute(**self.ranges_valdict(range_var))
-            self.range[0] = range_var
+            self.range_var = range_var
 
     def set_range_vals(self, range_vals, force=False, check_only=False):
         """Set range values."""
@@ -430,7 +434,7 @@ class Experiment(object):
             self.set_range_var("i", force=True)
 
         # set new value
-        self.range[1] = range_vals
+        self.range_vals = range_vals
 
     def set_range(self, range_, force=False, check_only=False):
         """Set the range."""
@@ -440,7 +444,7 @@ class Experiment(object):
                 return
             if self.range:
                 # use last range value
-                range_val = self.range_vals()[-1]
+                range_val = tuple(self.range_vals)[-1]
                 self.substitute(**self.ranges_valdict(range_val))
                 self.range = None
             return
@@ -504,7 +508,7 @@ class Experiment(object):
             sumrange_var = symbolic.Symbol("j")
 
         # check conflict with range
-        if self.range and sumrange_var == self.range[0]:
+        if self.range and sumrange_var == self.range_var:
             if not force:
                 raise ValueError(
                     "Cannot use same variable for range and sumrange"
@@ -522,7 +526,7 @@ class Experiment(object):
         else:
             # set new value
             self.substitute(**self.ranges_valdict(None, sumrange_var))
-            self.sumrange[0] = sumrange_var
+            self.sumrange_var = sumrange_var
 
     def set_sumrange_vals(self, sumrange_vals, force=False, check_only=False):
         """Set sumrange values."""
@@ -546,7 +550,7 @@ class Experiment(object):
         symbols = symbolic.findsymbols(sumrange_vals)
         if symbols:
             if (not self.range or len(symbols) > 1 or
-                    (len(symbols) == 1 and self.range[0] not in symbols)):
+                    (len(symbols) == 1 and self.range_var not in symbols)):
                 if not force:
                     raise ValueError("Unknown symbols in range: %s" %
                                      sumrange_vals)
@@ -568,7 +572,7 @@ class Experiment(object):
             self.set_sumrange_var("j", force=True)
 
         # set new value
-        self.sumrange[1] = sumrange_vals
+        self.sumrange_vals = sumrange_vals
 
     def set_sumrange(self, sumrange, force=False, check_only=False):
         """Set the sumrange."""
@@ -578,8 +582,9 @@ class Experiment(object):
             if self.sumrange:
                 self.update_vary()
                 for vary in self.vary.values():
-                    vary["with"].discard(self.sumrange[0])
-                sumrange_val = self.sumrange_vals(self.range_vals()[-1])[-1]
+                    vary["with"].discard(self.sumrange_var)
+                range_val = tuple(self.range_vals)[-1]
+                sumrange_val = tuple(self.sumrange_vals_at(range_val))[-1]
                 self.substitute(**self.ranges_valdict(None, sumrange_val))
                 self.sumrange = None
             return
@@ -734,10 +739,10 @@ class Experiment(object):
             # check min
             if arg.min:
                 argmin = arg.min(*call)
-                for range_val in self.range_vals():
+                for range_val in self.range_vals:
                     if value == argmin:
                         break
-                    for sumrange_val in self.sumrange_vals(range_val):
+                    for sumrange_val in self.sumrange_vals_at(range_val):
                         if value == argmin:
                             break
                         valdict = self.ranges_valdict(range_val, sumrange_val)
@@ -900,7 +905,7 @@ class Experiment(object):
             if with_var == "rep":
                 with2.add(with_var)
                 continue
-            if self.sumrange and with_var == self.sumrange[0]:
+            if self.sumrange and with_var == self.sumrange_var:
                 with2.add(with_var)
                 continue
             if not force:
@@ -925,7 +930,7 @@ class Experiment(object):
         if with_var != "rep":
             if isinstance(with_var, str):
                 with_var = self.ranges_parse(with_var, dorange=False)
-            if not self.sumrange or with_var != self.sumrange[0]:
+            if not self.sumrange or with_var != self.sumrange_var:
                 raise ValueError("Invalid vary with entry: %s" % with_var)
 
         if check_only:
@@ -945,7 +950,7 @@ class Experiment(object):
         if with_var != "rep":
             if isinstance(with_var, str):
                 with_var = self.ranges_parse(with_var, dorange=False)
-            if not self.sumrange or with_var != self.sumrange[0]:
+            if not self.sumrange or with_var != self.sumrange_var:
                 raise ValueError("Invalid vary with entry: %s" % with_var)
 
         if check_only:
@@ -1186,7 +1191,7 @@ class Experiment(object):
 
         # varying along this dimension
         if vary["along"] == dimidx:
-            if self.sumrange and self.sumrange[0] in vary["with"]:
+            if self.sumrange and self.sumrange_var in vary["with"]:
                 ld = symbolic.Sum(ld, **dict((self.sumrange,)))()
             if "rep" in vary["with"]:
                 ld *= self.nreps
@@ -1317,11 +1322,11 @@ class Experiment(object):
             if not vary["with"]:
                 return name
             parts = [name]
-            if self.range and self.nthreads != self.range[0]:
+            if self.range and self.nthreads != self.range_var:
                 parts.append(range_val)
             if "rep" in vary["with"]:
                 parts.append(rep)
-            if self.sumrange and self.sumrange[0] in vary["with"]:
+            if self.sumrange and self.sumrange_var in vary["with"]:
                 parts.append(sumrange_val)
             return "_".join(map(str, parts))
 
@@ -1331,7 +1336,7 @@ class Experiment(object):
 
         range_vals = range_val,
         if range_val is None:
-            range_vals = self.range_vals()
+            range_vals = tuple(self.range_vals)
 
         if len(self.papi_counters):
             cmds += [
@@ -1402,10 +1407,10 @@ class Experiment(object):
             for range_val in range_vals:
                 if range_val is not None:
                     # comment
-                    offsetcmds.append(["#", self.range[1], "=", range_val])
+                    offsetcmds.append(["#", self.range_var, "=", range_val])
 
                 # prepare sumrange
-                sumrange_vals = self.sumrange_vals(range_val)
+                sumrange_vals = self.sumrange_vals_at(range_val)
 
                 offset = 0
 
@@ -1416,7 +1421,7 @@ class Experiment(object):
                         offset = 0
 
                     if (not self.sumrange or
-                            self.sumrange[0] not in vary["with"]):
+                            self.sumrange_var not in vary["with"]):
                         # operand doesn't vary in sumrange (1 offset)
                         offsetcmds.append([
                             cmdprefix + "offset", name, offset,
@@ -1430,7 +1435,7 @@ class Experiment(object):
                     offset_rep = offset
                     # go over sumrange
                     for sumrange_val in sumrange_vals:
-                        if self.sumrange and self.sumrange[0] in vary["with"]:
+                        if self.sumrange and self.sumrange_var in vary["with"]:
                             # operand varies in sumrange (offset)
                             offsetcmds.append([
                                 cmdprefix + "offset", name, offset,
@@ -1482,7 +1487,7 @@ class Experiment(object):
         for range_val in range_vals:
             if self.range and len(range_vals) > 1:
                 # comment
-                cmds += [[], ["#", str(self.range[0]), "=", range_val]]
+                cmds += [[], ["#", str(self.range_var), "=", range_val]]
 
             # randomize operand
             if self.range_randomize_data:
@@ -1492,7 +1497,7 @@ class Experiment(object):
                     cmds.append([cmdprefix + "gerand", size, 1, name, size])
 
             # set up sumrange values
-            sumrange_vals = self.sumrange_vals(range_val)
+            sumrange_vals = self.sumrange_vals_at(range_val)
 
             # go over repetitions
             for rep in range(self.nreps):
@@ -1587,8 +1592,8 @@ class Experiment(object):
             os.remove(errfile)
 
         nthreads_vals = self.nthreads,
-        if self.range and self.range[0] == self.nthreads:
-            nthreads_vals = tuple(self.range[1])
+        if self.range and self.range_var == self.nthreads:
+            nthreads_vals = tuple(self.range_vals)
 
         script = ""
 
@@ -1643,19 +1648,14 @@ class Experiment(object):
             if self.sumrange and self.sumrange_parallel:
                 if self.range:
                     if len(nthreads_vals) > 1:
-                        sumrangelen = len(symbolic.simplify(
-                            self.sumrange[1],
-                            **self.ranges_valdict(nthreads)
-                        ))
+                        sumrangelen = len(self.sumrange_vals_at(nthreads))
                     else:
                         sumrangelen = max(
-                            len(symbolic.simplify(
-                                self.sumrange[1],
-                                **self.ranges_valdict(range_val)
-                            )) for range_val in self.range[1]
+                            len(self.sumrange_vals_at(range_val))
+                            for range_val in self.range_vals
                         )
                 else:
-                    sumrangelen = len(self.sumrange[1])
+                    sumrangelen = len(self.sumrange_vals)
                 ompthreads = sumrangelen * len(self.calls)
             elif self.calls_parallel:
                 ompthreads = len(self.calls)
@@ -1707,46 +1707,37 @@ class Experiment(object):
         """Submit the experiment to a backend."""
         script = self.submit_prepare(filebase)
         nthreads = self.nthreads
-        if self.range and self.range[0] == nthreads:
-            nthreads = symbolic.max(self.range[1])
+        if self.range and self.range_var == nthreads:
+            nthreads = symbolic.max(self.range_vals)
         backend = self.sampler["backend"]
         jobname = os.path.basename(filebase)
         return(backend.submit(script, nt=nthreads, jobname=jobname))
 
     # primarily internal routines
-    def range_vals(self):
-        """Get the range values if set, else None."""
-        if self.range:
-            return tuple(self.range[1])
-        return None,
-
-    def sumrange_vals(self, range_val=None):
-        """Get the range values if set, else None."""
-        if self.sumrange:
-            if self.range:
-                return tuple(symbolic.simplify(
-                    self.sumrange[1], **self.ranges_valdict(range_val)
-                ))
-            return tuple(self.sumrange[1])
-        return None,
-
     def ranges_vardict(self, dorange=True, dosumrange=True):
         """Create a dictionary for the symbolic range variables."""
         vardict = {}
         if self.range and dorange:
-            vardict[str(self.range[0])] = self.range[0]
+            vardict[str(self.range_var)] = self.range_var
         if self.sumrange and dosumrange:
-            vardict[str(self.sumrange[0])] = self.sumrange[0]
+            vardict[str(self.sumrange_var)] = self.sumrange_var
         return vardict
 
     def ranges_valdict(self, range_val=None, sumrange_val=None):
         """Create a dictionary for the range substitution."""
         valdict = {}
         if self.range and range_val is not None:
-            valdict[str(self.range[0])] = range_val
+            valdict[str(self.range_var)] = range_val
         if self.sumrange and sumrange_val is not None:
-            valdict[str(self.sumrange[0])] = sumrange_val
+            valdict[str(self.sumrange_var)] = sumrange_val
         return valdict
+
+    def sumrange_vals_at(self, range_val):
+        """Evaluate the sumrange at a range value."""
+        if self.range:
+            return symbolic.simplify(self.sumrange_vals,
+                                     **self.ranges_valdict(range_val))
+        return self.sumrange_vals
 
     def ranges_parse(self, expr, dorange=True, dosumrange=True):
         """Parse (eval) a string or Call with symbolic range variables."""
@@ -1771,7 +1762,7 @@ class Experiment(object):
         # range values
         range_vals = range_val_fixed,
         if range_val_fixed is None:
-            range_vals = self.range_vals()
+            range_vals = tuple(self.range_vals)
 
         # go over the range
         for range_val in range_vals:
@@ -1779,7 +1770,7 @@ class Experiment(object):
             # sumrange values
             sumrange_vals = sumrange_val_fixed,
             if sumrange_val_fixed is None:
-                sumrange_vals = self.sumrange_vals(range_val)
+                sumrange_vals = self.sumrange_vals_at(range_val)
 
             # go over sumrange
             for sumrange_val in sumrange_vals:
@@ -1795,11 +1786,12 @@ class Experiment(object):
         # range values
         range_vals = range_val_fixed,
         if range_val_fixed is None and self.range:
-            if not self.range[1]:
+            range_vals = self.range_vals
+            if not range_vals:
                 range_vals = None,
             else:
-                range_vals = (symbolic.min(self.range[1]),
-                              symbolic.max(self.range[1]))
+                range_vals = (symbolic.min(range_vals),
+                              symbolic.max(range_vals))
 
         values = []
 
@@ -1809,16 +1801,12 @@ class Experiment(object):
             # sumrange values
             sumrange_vals = sumrange_val_fixed,
             if sumrange_val_fixed is None and self.sumrange:
-                sumrange = self.sumrange[1]
-                if self.range and range_val is not None:
-                    sumrange = symbolic.simplify(
-                        sumrange, **self.ranges_valdict(range_val)
-                    )
-                if sumrange is None or sumrange.findsymbols() or not sumrange:
+                sumrange_vals = self.sumrange_vals_at(range_val)
+                if not sumrange_vals:
                     sumrange_vals = None,
                 else:
-                    sumrange_vals = (symbolic.min(sumrange),
-                                     symbolic.max(sumrange))
+                    sumrange_vals = (symbolic.min(sumrange_vals),
+                                     symbolic.max(sumrange_vals))
 
             # go over sumrange
             for sumrange_val in sumrange_vals:
@@ -1830,13 +1818,13 @@ class Experiment(object):
     def substitute(self, **kwargs):
         """Substitute symbols everywhere."""
         if self.range:
-            self.range[1] = symbolic.simplify(self.range[1], **kwargs)
+            self.range_vals = symbolic.simplify(self.range_vals, **kwargs)
         if self.nthreads in kwargs:
             self.nthreads = kwargs[self.nthreads]
             if self.sampler:
                 self.nthreads = min(self.sampler["nt_max"], self.nthreads)
         if self.sumrange:
-            self.sumrange[1] = symbolic.simplify(self.sumrange[1], **kwargs)
+            self.sumrange_vals = symbolic.simplify(self.sumrange_vals, **kwargs)
         for call in self.calls:
             for argid, value in enumerate(call):
                 call[argid] = symbolic.simplify(value, **kwargs)
@@ -1920,14 +1908,14 @@ class Experiment(object):
         """How many results the current experiment woudl produce."""
         assert(self.check_sanity())
         nresults = 0
-        for range_val in self.range_vals():
+        for range_val in self.range_vals:
             if self.range_randomize_data:
                 nresults += len(self.operands)
             for rep in range(self.nreps):
                 if self.sumrange and self.sumrange_parallel:
                     nresults += 1
                 else:
-                    for sumrange_val in self.sumrange_vals(range_val):
+                    for sumrange_val in self.sumrange_vals_at(range_val):
                         if self.calls_parallel:
                             nresults += 1
                         else:
