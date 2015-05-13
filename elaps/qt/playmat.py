@@ -645,13 +645,13 @@ class PlayMat(QtGui.QMainWindow):
 
         if ex.sumrange:
             withsumrange = QtGui.QAction(
-                "Vary with %s" % ex.sumrange[0], self,
-                checkable=True, checked=ex.sumrange[0] in vary["with"],
+                "Vary with %s" % ex.sumrange_var, self,
+                checkable=True, checked=ex.sumrange_var in vary["with"],
                 toggled=self.on_vary_with_toggle
             )
 
             withsumrange.name = name
-            withsumrange.with_ = ex.sumrange[0]
+            withsumrange.with_ = ex.sumrange_var
             actions.append(withsumrange)
 
         if not vary["with"]:
@@ -731,7 +731,7 @@ class PlayMat(QtGui.QMainWindow):
             map(str, range(1, self.experiment.sampler["nt_max"] + 1))
         )
         if self.experiment.range:
-            self.UI_nthreads.addItem(str(self.experiment.range[0]))
+            self.UI_nthreads.addItem(str(self.experiment.range_var))
         self.UI_nthreads.setCurrentIndex(
             self.UI_nthreads.findText(str(self.experiment.nthreads))
         )
@@ -746,9 +746,9 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_userange.setChecked(userange)
         self.UI_rangeW.setEnabled(userange)
         if userange:
-            self.UI_rangevar.setText(str(ex.range[0]))
+            self.UI_rangevar.setText(str(ex.range_var))
             self.UI_set_invalid(self.UI_rangevar, False)
-            self.UI_rangevals.setText(str(ex.range[1]))
+            self.UI_rangevals.setText(str(ex.range_vals))
             self.UI_set_invalid(self.UI_rangevals, False)
         self.UI_setting -= 1
 
@@ -771,9 +771,9 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_sumrange_parallel.setEnabled(ex.sampler["omp_enabled"])
         self.UI_sumrange_parallel.setCurrentIndex(int(ex.sumrange_parallel))
         if usesumrange:
-            self.UI_sumrangevar.setText(str(ex.sumrange[0]))
+            self.UI_sumrangevar.setText(str(ex.sumrange_var))
             self.UI_set_invalid(self.UI_sumrangevar, False)
-            self.UI_sumrangevals.setText(str(ex.sumrange[1]))
+            self.UI_sumrangevals.setText(str(ex.sumrange_vals))
             self.UI_set_invalid(self.UI_sumrangevals, False)
         self.UI_setting -= 1
 
