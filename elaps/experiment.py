@@ -250,11 +250,12 @@ class Experiment(object):
         # thread count
         nthreads = self.nthreads
         if isinstance(nthreads, int):
-            if nthreads > sampler["nt_max"]:
+            nt_max = sampler["nt_max"]
+            if nthreads > nt_max:
                 if not force:
                     raise ValueError("Sampler only supports %s threads" %
-                                     sampler["nt_max"])
-                nthreads = sampler["nt_max"]
+                                     nt_max)
+                nthreads = nt_max
 
         # check OpenMP
         calls_parallel = self.calls_parallel
@@ -343,11 +344,12 @@ class Experiment(object):
             nthreads = self.ranges_parse(nthreads, dosumrange=False)
         if isinstance(nthreads, int):
             # check bounds
-            if nthreads > self.sampler["nt_max"]:
+            nt_max = self.sampler["nt_max"]
+            if nthreads > nt_max:
                 if not force:
-                    raise ValueError("Sampler only supports up to %s threads."
-                                     % self.sampler["nt_max"])
-                nthreads = self.sampler["nt_max"]
+                    raise ValueError("Sampler only supports %s threads." %
+                                     nt_max)
+                nthreads = nt_max
         elif isinstance(nthreads, symbolic.Symbol):
             # check if == range_var
             if not self.range or nthreads != self.range_var:
