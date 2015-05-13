@@ -1644,7 +1644,8 @@ class Experiment(object):
                 if self.range:
                     if len(nthreads_vals) > 1:
                         sumrangelen = len(symbolic.simplify(
-                            self.sumrange, **dict(self.range)
+                            self.sumrange[1],
+                            **self.ranges_valdict(nthreads)
                         ))
                     else:
                         sumrangelen = max(
