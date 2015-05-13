@@ -228,7 +228,7 @@ class Report(object):
         result = {}
         for range_val in ex.range_vals():
             nthreads = ex.nthreads
-            if isinstance(ex.nthreads, str):
+            if ex.range and nthreads == ex.range[0]:
                 nthreads = range_val
             if ex.sumrange_parallel:
                 nthreads *= len(ex.sumrange_vals(range_val)) * len(ex.calls)
