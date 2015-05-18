@@ -1194,7 +1194,8 @@ class Experiment(object):
         # varying along this dimension
         if vary["along"] == dimidx:
             if self.sumrange and self.sumrange_var in vary["with"]:
-                ld = symbolic.Sum(ld, **dict((self.sumrange,)))()
+                ld = symbolic.Sum(ld, **{str(self.sumrange_var):
+                                         self.sumrange_vals})()
             if "rep" in vary["with"]:
                 ld *= self.nreps
 
