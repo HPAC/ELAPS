@@ -295,7 +295,7 @@ void Sampler::info(const vector<string> &tokens) {
     // print the signatue for the routine
     const Signature &signature = signatures[routine];
     const size_t argc = signature.arguments.size();
-    for (unsigned char i = 1; i < argc; i++) {
+    for (size_t i = 1; i < argc; i++) {
         switch (signature.arguments[i]) {
             case CHARP:
                 cerr << "char *";
