@@ -1,8 +1,8 @@
 # double precision matrix-matrix product
 Signature(
     "zgemm",
-    Trans("transA"),
-    Trans("transB"),
+    cTrans("transA"),
+    cTrans("transB"),
     Dim("m"),
     Dim("n"),
     Dim("k"),
@@ -14,5 +14,5 @@ Signature(
     zScalar("beta"),
     zData("C", "ldC * n"),
     Ld("ldC", "m"),
-    complexity = "4 * 2 * m * n * k"
+    complexity="4 * 2 * m * n * k"
 )

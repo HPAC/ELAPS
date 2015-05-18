@@ -324,7 +324,7 @@ def _create_Flag(classname, defaultname, flags):
 _create_Flag("Side", "side", ("L", "R"))
 _create_Flag("Uplo", "uplo", ("L", "U"))
 _create_Flag("Trans", "trans", ("N", "T"))
-_create_Flag("cTrans", "trans", ("N", "C"))
+_create_Flag("cTrans", "trans", ("N", "T", "C"))
 _create_Flag("Diag", "diag", ("N", "U"))
 
 
