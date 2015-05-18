@@ -1307,7 +1307,7 @@ class PlayMat(QtGui.QMainWindow):
         if not self.Qapp.viewer:
             self.viewer_start(filename)
             return
-        self.Qapp.viewer.report_load(filename, True)
+        self.Qapp.viewer.report_load(filename, UI_alert=True)
         self.Qapp.viewer.UI_setall()
         self.Qapp.viewer.show()
         self.Qapp.viewer.raise_()

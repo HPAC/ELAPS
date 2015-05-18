@@ -302,6 +302,13 @@ class Viewer(QtGui.QMainWindow):
         """Load a report."""
         filename = os.path.abspath(filename)
 
+        # check if loaded
+        if index is None:
+            for UI_report in self.UI_reportitems():
+                if UI_report.filename == filename:
+                    self.report_reload(UI_report, UI_alert)
+                    return
+
         # load report
         try:
             report = elaps.io.load_report(filename)
@@ -328,8 +335,6 @@ class Viewer(QtGui.QMainWindow):
         if index is None:
             self.log("Loaded %r" % filename)
             index = self.UI_reports.topLevelItemCount()
-        else:
-            self.log("Reloaded %r" % filename)
 
         self.UI_setting += 1
         UI_report = QReportItem(self, filename, report)
@@ -360,6 +365,7 @@ class Viewer(QtGui.QMainWindow):
 
         for UI_item in [UI_report] + UI_report.children:
             UI_item.showing = UI_item.callid in showing
+        self.log("Reloaded %r" % UI_report.filename)
 
     # playmat
     def playmat_start(self, filename=None):
