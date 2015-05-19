@@ -1,0 +1,17 @@
+# double precision complex eigensolver (DC based)
+Signature(
+    "zheevd",
+    Flag("jobz", ["V", "N"]),
+    Uplo(),
+    Dim("n"),
+    zData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    dData("W", "n"),
+    zWork("Work", "lWork"),
+    Lwork("lWork", "n + 1 if jobz == 'N' else 2 * n + n * n"),
+    dWork("rWork", "lrWork"),
+    Lwork("lrWork", "n if jobz == 'N' else 1 + 5 * n + 2 * n * n"),
+    iWork("iWork", "liWork"),
+    Lwork("liWork", "1 if jobz == 'N' else 3 + 5 * n"),
+    Info()
+)
