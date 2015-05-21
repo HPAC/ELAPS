@@ -1179,7 +1179,7 @@ class PlayMat(QtGui.QMainWindow):
                                 False)
             self.experiment_infer_update_set()
         except Exception as e:
-            if "Incompatible operend sizes" in str(e):
+            if "Incompatible operand sizes" in str(e):
                 ret = QtGui.QMessageBox.question(
                     self, str(e), "Adjust dimensions automatically?",
                     QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
