@@ -1,4 +1,4 @@
-# double precision complex eigensolver (DC based)
+# double precision complex eigensolver using DC
 Signature(
     "zheevd",
     Flag("jobz", ["V", "N"]),

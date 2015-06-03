@@ -3,8 +3,8 @@ Signature(
     "zporand",
     Uplo(),
     Dim("n"),
-    dData("A", "ldA * n",
+    zData("A", "ldA * n",
           "lower if uplo == 'L' else upper, symm"),
     Ld("ldA", "n"),
-    complexity="n * n + n"
+    complexity="2 * (n * n + n)"
 )
