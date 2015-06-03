@@ -589,6 +589,7 @@ class Experiment(object):
                 sumrange_val = tuple(self.sumrange_vals_at(range_val))[-1]
                 self.substitute(**self.ranges_valdict(None, sumrange_val))
                 self.sumrange = None
+                self.sumrange_parallel = False
             return
 
         sumrange_var, sumrange_vals = sumrange
@@ -1510,7 +1511,7 @@ class Experiment(object):
                     # comment
                     cmds += [[], ["#", "repetition",  rep]]
 
-                if self.sumrange_parallel:
+                if self.sumrange and self.sumrange_parallel:
                     # begin omp range
                     cmds.append(["{omp"])
 
@@ -1574,7 +1575,7 @@ class Experiment(object):
                         # begin parallel calls
                         cmds.append(["}"])
 
-                if self.sumrange_parallel:
+                if self.sumrange and self.sumrange_parallel:
                     # end omp range
                     cmds.append(["}"])
 
