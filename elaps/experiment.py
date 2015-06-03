@@ -736,7 +736,9 @@ class Experiment(object):
 
             # check type
             if not isinstance(value, (int, symbolic.Expression)):
-                raise TypeError("Invalid argument type: %s" % value)
+                if not force:
+                    raise TypeError("Invalid argument type: %s" % value)
+                value = 0
 
             # check min
             if arg.min:

@@ -1151,7 +1151,7 @@ class PlayMat(QtGui.QMainWindow):
                         call[argid] = varnames.pop(0)
 
                 # set call
-                ex.set_call(callid, call)
+                ex.set_call(callid, call, force=True)
                 ex.infer_lds(callid)
                 ex.infer_lworks(callid)
                 self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0],
