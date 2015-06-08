@@ -11,9 +11,9 @@ if [ -e /proc/cpuinfo ]; then
     NPROCS=$((`< /proc/cpuinfo sed -n "s/processor\\s*: \(.*\)/\1/p" | tail -n 1` + 1))
     NCORES=$((NPROCS / $THREADS_PER_CORE))
     if hash lscpu 2>/dev/null; then
-        MHZ=`lscpu | sed -n "s/CPU MHz:\\s*\(.*\)/\1/p"`
+        MHZ=`lscpu | sed -n "s/CPU MHz:\\s*\(.*\)/\1/p" | tr , .`
         [ -z "$MHZ" ] || FREQUENCY_HZ=`bc -l <<< "$MHZ * 1000000"`
-        MHZ=`lscpu | sed -n "s/CPU max MHz:\\s*\(.*\)/\1/p"`
+        MHZ=`lscpu | sed -n "s/CPU max MHz:\\s*\(.*\)/\1/p" | tr , .`
         [ -z "$MHZ" ] || FREQUENCY_HZ=`bc -l <<< "$MHZ * 1000000"`
     fi
 elif hash sysctl 2>/dev/null; then
