@@ -1,6 +1,7 @@
 #!/bin/bash
 
 if [ -e /proc/cpuinfo ]; then
+    # Linux stuff
     CPU_MODEL=`< /proc/cpuinfo sed -n "s/model name\\s*: \(.*\)/\1/p" | tail -n 1`
     MHZ=`< /proc/cpuinfo sed -n "s/cpu MHz\\s*: \(.*\)/\1/p" | tail -n 1`
     FREQUENCY_HZ=`bc -l <<< "$MHZ * 1000000"`
@@ -9,7 +10,12 @@ if [ -e /proc/cpuinfo ]; then
     THREADS_PER_CORE=$(($SIBLINGS / $CORES_PER_CPU))
     NPROCS=$((`< /proc/cpuinfo sed -n "s/processor\\s*: \(.*\)/\1/p" | tail -n 1` + 1))
     NCORES=$((NPROCS / $THREADS_PER_CORE))
-    # Linux stuff
+    if hash lscpu 2>/dev/null; then
+        MHZ=`lscpu | sed -n "s/CPU MHz:\\s*\(.*\)/\1/p"`
+        [ -z "$MHZ" ] || FREQUENCY_HZ=`bc -l <<< "$MHZ * 1000000"`
+        MHZ=`lscpu | sed -n "s/CPU max MHz:\\s*\(.*\)/\1/p"`
+        [ -z "$MHZ" ] || FREQUENCY_HZ=`bc -l <<< "$MHZ * 1000000"`
+    fi
 elif hash sysctl 2>/dev/null; then
     # MAC stuff
     CPU_MODEL="`sysctl -n machdep.cpu.brand_string`"
