@@ -1,0 +1,18 @@
+# single precision complex symmetric rank 2 k update
+Signature(
+    "csyr2k",
+    Uplo(),
+    Trans(),
+    Dim("n"),
+    Dim("k"),
+    cScalar(),
+    cData("A", "ldA * (k if trans == 'N' else n)"),
+    Ld("ldA", "n if trans == 'N' else k"),
+    cData("B", "ldB * (k if trans == 'N' else n)"),
+    Ld("ldB", "n  if trans == 'N' else k"),
+    cScalar("beta"),
+    cData("C", "ldC * n",
+          "symm, lower if uplo == 'L' else upper"),
+    Ld("ldC", "n"),
+    complexity="4 * 2 * k * n ** 2"
+)

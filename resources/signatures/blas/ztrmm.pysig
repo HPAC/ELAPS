@@ -1,0 +1,17 @@
+# double precision complex triangular matrix-vector product
+Signature(
+    "ztrmm",
+    Side(),
+    Uplo(),
+    Trans("transA"),
+    Diag(),
+    Dim("m"),
+    Dim("n"),
+    zScalar(),
+    zData("A", "ldA * (m if side == 'L' else n)",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "m if side == 'L' else n"),
+    zData("B", "ldB * n"),
+    Ld("ldB", "m"),
+    complexity="4 * m * n * (m if side == 'L' else n + 1)"  # checked
+)

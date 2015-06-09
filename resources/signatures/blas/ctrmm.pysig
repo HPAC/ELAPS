@@ -1,0 +1,17 @@
+# single precision complex triangular matrix-vector product
+Signature(
+    "ctrmm",
+    Side(),
+    Uplo(),
+    Trans("transA"),
+    Diag(),
+    Dim("m"),
+    Dim("n"),
+    cScalar(),
+    cData("A", "ldA * (m if side == 'L' else n)",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "m if side == 'L' else n"),
+    cData("B", "ldB * n"),
+    Ld("ldB", "m"),
+    complexity="4 * m * n * (m if side == 'L' else n + 1)"
+)
