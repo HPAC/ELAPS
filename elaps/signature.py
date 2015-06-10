@@ -132,7 +132,13 @@ class BasicCall(list):
 
     def __str__(self):
         """Foramt as human readable."""
-        return str(self[0]) + "(" + ", ".join(map(str, self[1:])) + ")"
+        args = []
+        for arg in self[1:]:
+            if isinstance(arg, list):
+                args.append("[%s]" % arg[0])
+            else:
+                args.append(str(arg))
+        return str(self[0]) + "(" + ", ".join(args) + ")"
 
     def __repr__(self):
         """Format as python parsable string."""

@@ -82,7 +82,10 @@ class QCall(QtGui.QListWidgetItem):
         UI_arglabel = self.UI_arglabels[argid]
         if force or not UI_arg.hasFocus():
             if isinstance(UI_arg, QtGui.QLineEdit):
-                UI_arg.setText(str(value))
+                if isinstance(value, list):
+                    UI_arg.setText("[%s]" % value[0])
+                else:
+                    UI_arg.setText(str(value))
             elif isinstance(UI_arg, QtGui.QComboBox):
                 UI_arg.setCurrentIndex(UI_arg.findText(str(value)))
 

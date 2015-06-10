@@ -1032,17 +1032,17 @@ class TestExperimentCmds(unittest.TestCase):
         i = self.i
 
         sig = ("name", "char*", "int*", "double*", "double*")
-        ex.call = BasicCall(sig, "N", "100", "1.5", "[10000]")
+        ex.call = BasicCall(sig, "N", 100, 1.5, [10000])
         cmds = ex.generate_cmds()
-        self.assertIn(["name", "N", 100, 1.5, "[10000]"], cmds)
+        self.assertIn(["name", "N", 100, 1.5, [10000]], cmds)
 
         # now with a range
         lenrange = random.randint(1, 10)
         ex.range = [i, range(lenrange)]
-        ex.call = BasicCall(sig, "N", "i", "1.5", "[i * i]")
+        ex.call = BasicCall(sig, "N", i, 1.5, [i * i])
         cmds = ex.generate_cmds()
         idx = random.randint(0, lenrange - 1)
-        self.assertIn(["name", "N", idx, 1.5, "[%d]" % (idx * idx)], cmds)
+        self.assertIn(["name", "N", idx, 1.5, [idx * idx]], cmds)
 
 
 class TestExperimentSubmit(TestExperimentCmds):

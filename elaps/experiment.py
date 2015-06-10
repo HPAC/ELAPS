@@ -1549,24 +1549,17 @@ class Experiment(object):
                                 if argid == 0 or sig[argid] == "char*":
                                     # chars don't need further processing
                                     continue
-                                if isinstance(value, str):
-                                    if value[0] == "[" and value[-1] == "]":
-                                        # parse string as array argument [ ]
-                                        expr = self.ranges_parse(value[1:-1])
-                                        if expr is not None:
-                                            value = next(self.ranges_eval(
-                                                expr, range_val, sumrange_val
-                                            ))
-                                            value = "[%s]" % str(value)
-                                        # TODO: parse list argument
-                                    else:
-                                        # parse scalar arguments
-                                        expr = self.ranges_parse(value)
-                                        if expr is not None:
-                                            value = next(self.ranges_eval(
-                                                expr, range_val, sumrange_val
-                                            ))
-                                    cmd[argid] = value
+                                if isinstance(value, list):
+                                    value = [next(self.ranges_eval(
+                                        value[0], range_val, sumrange_val
+                                    ))]
+                                    # TODO: parse list argument
+                                else:
+                                    # parse scalar arguments
+                                    value = next(self.ranges_eval(
+                                        value, range_val, sumrange_val
+                                    ))
+                                cmd[argid] = value
 
                         # add created call
                         cmds.append(cmd)
