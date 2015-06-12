@@ -3,8 +3,8 @@
 [ "$#" -eq 0 ] && echo "usage: $0 config_file" && exit
 
 # load config file
-[ ! -e $1 ] && echo "no such file: $1" && exit
-. $1
+[ ! -e "$1" ] && echo "no such file: $1" && exit
+. "$1"
 
 # set default values
 : ${NAME:=`basename "$1" .cfg`}
@@ -43,34 +43,33 @@ calls_c_inc=$TARGET_DIR/calls.c.inc
 info_py=$TARGET_DIR/info.py
 
 # clean previous build
-rm -rf $TARGET_DIR
+rm -rf "$TARGET_DIR"
 
 # craete buld directory
-mkdir -p $TARGET_DIR
+mkdir -p "$TARGET_DIR"
 
 # create headers file
-src/create_header.py > $kernel_h
+src/create_header.py > "$kernel_h"
 
 # create aux files
-$CC $CFLAGS -E -I. $kernel_h | src/create_incs.py $cfg_h $kernel_h $sigs_c_inc $calls_c_inc $info_py || exit
+$CC $CFLAGS -E -I. "$kernel_h" | src/create_incs.py "$cfg_h" "$kernel_h" "$sigs_c_inc" "$calls_c_inc" "$info_py" || exit
 
-defines=-D\ CFG_H="\"$cfg_h\""
+defines=""
 [ "$OPENMP" == "1" ] && defines+=" -D OPENMP_ENABLED"
 [ "$PAPI_COUNTERS_MAX" -gt 0 ] && defines+=" -D PAPI_ENABLED"
-
 # build .o
 for x in main CallParser MemoryManager Sampler Signature; do
-    $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c $defines src/$x.cpp -o $TARGET_DIR/$x.o || exit
+    $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" $defines $defineother src/$x.cpp -o "$TARGET_DIR/$x.o" || exit
 done
 
 # build kernels
-mkdir $TARGET_DIR/kernels
+mkdir "$TARGET_DIR/kernels"
 for file in kernels/*.c; do
-    $CC $CFLAGS -c $file -o $TARGET_DIR/${file%.c}.o || exit
+    $CC $CFLAGS -c $file -o "$TARGET_DIR/${file%.c}.o" || exit
 done
 
 # build sample.o
-$CC $CFLAGS $INCLUDE_FLAGS -I. -c $defines src/sample.c -o $TARGET_DIR/sample.o || exit
+$CC $CFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" $defines src/sample.c -o "$TARGET_DIR/sample.o" || exit
 
 # build sampler
-$CXX $CXXFLAGS $TARGET_DIR/*.o $TARGET_DIR/kernels/*.o -o $TARGET_DIR/sampler.x $LINK_FLAGS || exit
+$CXX $CXXFLAGS "$TARGET_DIR/"*.o "$TARGET_DIR/kernels/"*.o -o "$TARGET_DIR/sampler.x" $LINK_FLAGS || exit

@@ -1668,7 +1668,7 @@ class Experiment(object):
                 script += "export OMP_NUM_THREADS=%d\n" % ompthreads
             if b_prefix:
                 script += "%s " % b_prefix.format(nt=nthreads)
-            script += "%(x)s < \"%(i)s\" >> \"%(o)s\" 2>> \"%(e)s\"" % {
+            script += "\"%(x)s\" < \"%(i)s\" >> \"%(o)s\" 2>> \"%(e)s\"" % {
                 "x": self.sampler["exe"],  # executable
                 "i": callfile,  # input
                 "o": reportfile,  # output
