@@ -18,7 +18,7 @@ class Experiment(object):
 
     """ELAPS:Experiment."""
 
-    def __init__(self, other={}, **kwargs):
+    def __init__(self, other=None, **kwargs):
         """Initialize experiment from (optional) other expeirment."""
         # empty experiment
         self.note = ""
@@ -36,7 +36,8 @@ class Experiment(object):
         self.vary = {}
 
         # initialize from argument
-        for key, value in chain(other.iteritems(), kwargs.items()):
+        otherdict = other.__dict__ if isinstance(other, Experiment) else {}
+        for key, value in chain(otherdict, kwargs.items()):
             if hasattr(self, key):
                 setattr(self, key, value)
             else:
