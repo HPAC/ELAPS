@@ -24,7 +24,7 @@ def main():
     parser.add_argument("--reset", action="store_true",
                         help="reset to default Experiment")
     parser.add_argument("report",  nargs="*",
-                        help="ELAPS Report (.%s)" % (defines.report_extension))
+                        help="ELAPS Report (.%s)" % defines.report_extension)
     args = parser.parse_args()
 
     # start Viewr
