@@ -142,7 +142,7 @@ class Experiment(object):
 
     def copy(self):
         """Create a deep copy of the experiment."""
-        return Experiment(deepcopy(self.__dict__))
+        return Experiment(**deepcopy(self.__dict__))
 
     # properties
 

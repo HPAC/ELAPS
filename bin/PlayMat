@@ -12,20 +12,26 @@ sys.path.append(rootpath)
 from elaps.qt import PlayMat
 import elaps.defines as defines
 
+import argparse
+
 
 def main():
     """Main entry point."""
-    if "--reset" in sys.argv:
-        PlayMat(reset=True).start()
-        return
-    if len(sys.argv) > 1:
-        filename = sys.argv[1]
-        if (filename[-4] == "." and
-                filename[-3:] in defines.experiment_extensions):
-            PlayMat(load=filename).start()
-            return
-    PlayMat().start()
+    # parse args
+    parser = argparse.ArgumentParser(
+        description="ELAPS PlayMat (Experiment GUI)"
+    )
+    parser.add_argument("--reset", action="store_true",
+                        help="reset to default Experiment")
+    parser.add_argument(
+        "experiment",  nargs="?",
+        help="An ELAPS Experiment (.%s) or Report (.%s)" %
+        (defines.experiment_extension, defines.report_extension)
+    )
+    args = parser.parse_args()
 
+    # start PlayMat
+    PlayMat(load=args.experiment, reset=args.reset).start()
 
 if __name__ == "__main__":
     main()
