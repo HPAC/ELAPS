@@ -1,6 +1,6 @@
 # double precision complex symmetric rank 2 k update
 Signature(
-    "csyr2k",
+    "zsyr2k",
     Uplo(),
     Trans(),
     Dim("n"),
