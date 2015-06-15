@@ -137,16 +137,16 @@ class TestPlus(TestSymbolic):
         self.assertEqual(Plus(n1, n2)(), n1 + n2)
 
 
-class TestProd(TestSymbolic):
+class TestTimes(TestSymbolic):
 
-    """Tests for Prod."""
+    """Tests for Times."""
 
     def test_overload(self):
         """Test for overloading."""
         A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
 
-        self.assertEqual(n1 * A, Prod(n1, A))
-        self.assertEqual(A * n1, Prod(A, n1))
+        self.assertEqual(n1 * A, Times(n1, A))
+        self.assertEqual(A * n1, Times(A, n1))
 
     def test_simplify(self):
         """Test for simplify()."""
@@ -157,8 +157,8 @@ class TestProd(TestSymbolic):
         self.assertEqual((n1 * A * n2)(), n1 * n2 * A)
         self.assertEqual((1 * A)(), A)
 
-        self.assertEqual(Prod()(), 1)
-        self.assertEqual(Prod(n1, n2)(), n1 * n2)
+        self.assertEqual(Times()(), 1)
+        self.assertEqual(Times(n1, n2)(), n1 * n2)
 
 
 class TestDiv(TestSymbolic):

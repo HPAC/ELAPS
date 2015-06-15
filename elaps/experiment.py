@@ -1091,19 +1091,19 @@ class Experiment(object):
 
         # dimensions
         dims = dimcall[name_argid]
-        if isinstance(dims, symbolic.Prod):
+        if isinstance(dims, symbolic.Times):
             dims = dims[1:]
         else:
             dims = [dims]
         dims = [symbolic.simplify(dim, **argdict) for dim in dims]
         if isinstance(sig[name_argid], signature.Work):
             # Workspace is 1D
-            dims = [symbolic.simplify(symbolic.Prod(*dims))]
+            dims = [symbolic.simplify(symbolic.Times(*dims))]
         operand["dims"] = tuple(dims)
 
         # leading dimension
         lds = ldcall[name_argid]
-        if isinstance(lds, symbolic.Prod):
+        if isinstance(lds, symbolic.Times):
             lds = lds[1:]
         else:
             lds = [lds]
@@ -1174,7 +1174,7 @@ class Experiment(object):
         # search for ld in all operand args
         for dataargid in sig.dataargs():
             dims = ldcall[dataargid]
-            if isinstance(dims, symbolic.Prod):
+            if isinstance(dims, symbolic.Times):
                 dims = dims[1:]
             else:
                 dims = [dims]
@@ -1871,14 +1871,14 @@ class Experiment(object):
                 opsize = symcall[argid]
                 if isinstance(opsize, symbolic.Symbol):
                     opsize = [opsize]
-                elif isinstance(opsize, symbolic.Prod):
+                elif isinstance(opsize, symbolic.Times):
                     opsize = opsize[1:]
                 elif isinstance(opsize, symbolic.Operation):
                     # try simplifying
                     opsize = opsize()
                     if isinstance(opsize, symbolic.Symbol):
                         opsize = [opsize]
-                    elif isinstance(opsize, symbolic.Prod):
+                    elif isinstance(opsize, symbolic.Times):
                         opsize = opsize[1:]
                     else:
                         continue

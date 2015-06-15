@@ -39,11 +39,11 @@ class Expression(object):
 
     def __mul__(self, other):
         """Expression * Other ."""
-        return Prod(self, other)
+        return Times(self, other)
 
     def __rmul__(self, other):
         """Other * Expression ."""
-        return Prod(other, self)
+        return Times(other, self)
 
     def __truediv__(self, other):
         """Expression / Other ."""
@@ -271,9 +271,9 @@ class Plus(Operation):
         return type(self)(*newargs)
 
 
-class Prod(Operation):
+class Times(Operation):
 
-    """Product of multiple operands (at least 1 Expression)."""
+    """Timesuct of multiple operands (at least 1 Expression)."""
 
     def __str__(self):
         """Format as human readable."""
@@ -292,8 +292,8 @@ class Prod(Operation):
         num = 1
         newargs = []
         for arg in args:
-            if isinstance(arg, Prod):
-                # flatten recursive Prod
+            if isinstance(arg, Times):
+                # flatten recursive Times
                 otherargs = arg[1:]
                 if isinstance(otherargs[0], Number):
                     num *= otherargs[0]
@@ -310,7 +310,7 @@ class Prod(Operation):
             newargs.insert(0, num)
 
         if len(newargs) == 0:
-            # empty Prod = 1
+            # empty Times = 1
             return 1
 
         if len(newargs) == 1:
@@ -318,6 +318,8 @@ class Prod(Operation):
             return newargs[0]
 
         return type(self)(*newargs)
+
+Prod = Times
 
 
 class Div(Operation):
@@ -389,7 +391,7 @@ class Power(Operation):
 
         if isinstance(exponent, int):
             # expand for integer exponent
-            return Prod(*(exponent * [base]))()
+            return Times(*(exponent * [base]))()
 
         return base ** exponent
 
