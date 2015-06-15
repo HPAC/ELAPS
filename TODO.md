@@ -15,6 +15,8 @@ Experiment
 
 PlayMat
 -------
+* Data argument linking only on leave
+
 * (script header)
 * (status tips)
 
