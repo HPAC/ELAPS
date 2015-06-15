@@ -319,8 +319,6 @@ class Times(Operation):
 
         return type(self)(*newargs)
 
-Prod = Times
-
 
 class Div(Operation):
 
@@ -565,6 +563,184 @@ class Max(Operation):
         return type(self)(*newargs)
 
 
+class Sum(Operation):
+
+    """Sum of an Expression over a Range."""
+
+    def __new__(cls, *args, **kwargs):
+        """Create a new Sum or Plus."""
+        if len(kwargs) == 0:
+            return Plus(*args)
+        if len(kwargs) == 1:
+            return Operation.__new__(cls)
+        raise TypeError("Sum can only handle one range.")
+
+    def __init__(self, *args, **kwargs):
+        """Initialize from argument and range."""
+        if len(args) == 0:
+            # no arguments: 0
+            arg = 0
+        elif len(args) == 1:
+            # single argument
+            arg = args[0]
+        else:
+            # multiple arguments: Plus
+            arg = Plus(*args)
+        Operation.__init__(self, arg)
+
+        # set range attributes
+        self.rangevar, self.range_ = next(kwargs.iteritems())
+
+        if not isinstance(self.range_, Iterable):
+            # range must be iterable
+            raise TypeError("range must support iteration")
+
+    def __str__(self):
+        """Format as human readable (not parsable) string."""
+        return "sum(%s, %s=%s)" % (self[1], self.rangevar, self.range_)
+
+    def __repr__(self):
+        """Format s python parsable string."""
+        return "%s(%r, %s=%r)" % (type(self).__name__, self[1],
+                                  self.rangevar, self.range_)
+
+    def __eq__(self, other):
+        """Compare range too."""
+        return Operation.__eq__(self, other) and self.range_ == other.range_
+
+    def substitute(self, **kwargs):
+        """Substitute in arg but not rangevar."""
+        # substitute in range
+        newrange = substitute(self.range_, **kwargs)
+
+        # don't substitute own rangevar in arg
+        if self.rangevar in kwargs:
+            del kwargs[self.rangevar]
+
+        # substitute in arg
+        newarg = substitute(self[1], **kwargs)
+
+        return type(self)(newarg, **{self.rangevar: newrange})
+
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify range
+        range_ = simplify(self.range_, **kwargs)
+
+        # don't substitute own rangevar in arg
+        if self.rangevar in kwargs:
+            del kwargs[self.rangevar]
+
+        # simplify argument
+        arg = simplify(self[1], **kwargs)
+
+        if isinstance(range_, Range) and range_.findsymbols():
+            # range is symbolic
+            return type(self)(arg, **{self.rangevar: range_})
+
+        # range is not symbolic
+        if (not isinstance(arg, Expression) or
+                self.rangevar not in arg.findsymbols()):
+            # argument doesn't depend on range
+            return len(range_) * arg
+
+        # Note: sum() would start with 0
+
+        # argument depends on range
+        return Plus(*(arg(**{self.rangevar: val}) for val in range_))()
+
+
+class Prod(Operation):
+
+    """Product of an Expression over a Range."""
+
+    def __new__(cls, *args, **kwargs):
+        """Create a new Prod or Times."""
+        if len(kwargs) == 0:
+            return Times(*args)
+        if len(kwargs) == 1:
+            return Operation.__new__(cls)
+        raise TypeError("Times can only handle one range.")
+
+    def __init__(self, *args, **kwargs):
+        """Initialize from argument and range."""
+        if len(args) == 0:
+            # no arguments: 0
+            arg = 1
+        elif len(args) == 1:
+            # single argument
+            arg = args[0]
+        else:
+            # multiple arguments: Plus
+            arg = Times(*args)
+        Operation.__init__(self, arg)
+
+        if len(kwargs) != 1:
+            # more than one keyword argument
+            raise TypeError("Need exactly one range.")
+
+        # set range attributes
+        self.rangevar, self.range_ = next(kwargs.iteritems())
+
+        if not isinstance(self.range_, Iterable):
+            # range must be iterable
+            raise TypeError("range must support iteration")
+
+    def __str__(self):
+        """Format as human readable (not parsable) string."""
+        return "prod(%s, %s=%s)" % (self[1], self.rangevar, self.range_)
+
+    def __repr__(self):
+        """Format s python parsable string."""
+        return "%s(%r, %s=%r)" % (type(self).__name__, self[1],
+                                  self.rangevar, self.range_)
+
+    def __eq__(self, other):
+        """Compare range too."""
+        return Operation.__eq__(self, other) and self.range_ == other.range_
+
+    def substitute(self, **kwargs):
+        """Substitute in arg but not rangevar."""
+        # substitute in range
+        newrange = substitute(self.range_, **kwargs)
+
+        # don't substitute own rangevar in arg
+        if self.rangevar in kwargs:
+            del kwargs[self.rangevar]
+
+        # substitute in arg
+        newarg = substitute(self[1], **kwargs)
+
+        return type(self)(newarg, **{self.rangevar: newrange})
+
+    def simplify(self, **kwargs):
+        """(Substitute in and) Simplify the operation."""
+        # simplify range
+        range_ = simplify(self.range_, **kwargs)
+
+        # don't substitute own rangevar in arg
+        if self.rangevar in kwargs:
+            del kwargs[self.rangevar]
+
+        # simplify argument
+        arg = simplify(self[1], **kwargs)
+
+        if isinstance(range_, Range) and range_.findsymbols():
+            # range is symbolic
+            return type(self)(arg, **{self.rangevar: range_})
+
+        # range is not symbolic
+        if (not isinstance(arg, Expression) or
+                self.rangevar not in arg.findsymbols()):
+            # argument doesn't depend on range
+            return len(range_) * arg
+
+        # Note: sum() would start with 0
+
+        # argument depends on range
+        return Times(*(arg(**{self.rangevar: val}) for val in range_))()
+
+
 class Range(object):
 
     """Complex range object (possibly containing Expressions)."""
@@ -778,89 +954,6 @@ class Range(object):
         """Format as python parsable string."""
         return "%s(%s)" % (type(self).__name__,
                            ", ".join(map(repr, self.subranges)))
-
-
-class Sum(Operation):
-
-    """Sum of an Expression over a Range."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize from argument and range."""
-        if len(args) == 0:
-            # no arguments: 0
-            arg = 0
-        elif len(args) == 1:
-            # single argument
-            arg = args[0]
-        else:
-            # multiple arguments: Plus
-            arg = Plus(*args)
-        Operation.__init__(self, arg)
-
-        if len(kwargs) != 1:
-            # more than one keyword argument
-            raise TypeError("Need exactly one range.")
-
-        # set range attributes
-        self.rangevar, self.range_ = next(kwargs.iteritems())
-
-        if not isinstance(self.range_, Iterable):
-            # range must be iterable
-            raise TypeError("range must support iteration")
-
-    def __str__(self):
-        """Format as human readable (not parsable) string."""
-        return "sum(%s, %s=%s)" % (self[1], self.rangevar, self.range_)
-
-    def __repr__(self):
-        """Format s python parsable string."""
-        return "%s(%r, %s=%r)" % (type(self).__name__, self[1],
-                                  self.rangevar, self.range_)
-
-    def __eq__(self, other):
-        """Compare range too."""
-        return Operation.__eq__(self, other) and self.range_ == other.range_
-
-    def substitute(self, **kwargs):
-        """Substitute in arg but not rangevar."""
-        # substitute in range
-        newrange = substitute(self.range_, **kwargs)
-
-        # don't substitute own rangevar in arg
-        if self.rangevar in kwargs:
-            del kwargs[self.rangevar]
-
-        # substitute in arg
-        newarg = substitute(self[1], **kwargs)
-
-        return type(self)(newarg, **{self.rangevar: newrange})
-
-    def simplify(self, **kwargs):
-        """(Substitute in and) Simplify the operation."""
-        # simplify range
-        range_ = simplify(self.range_, **kwargs)
-
-        # don't substitute own rangevar in arg
-        if self.rangevar in kwargs:
-            del kwargs[self.rangevar]
-
-        # simplify argument
-        arg = simplify(self[1], **kwargs)
-
-        if isinstance(range_, Range) and range_.findsymbols():
-            # range is symbolic
-            return type(self)(arg, **{self.rangevar: range_})
-
-        # range is not symbolic
-        if (not isinstance(arg, Expression) or
-                self.rangevar not in arg.findsymbols()):
-            # argument doesn't depend on range
-            return len(range_) * arg
-
-        # Note: sum() would start with 0
-
-        # argument depends on range
-        return Plus(*(arg(**{self.rangevar: val}) for val in range_))()
 
 
 def substitute(expr, **kwargs):

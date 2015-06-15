@@ -306,6 +306,88 @@ class TestMax(TestSymbolic):
         self.assertEqual(Max(n1, n2)(), __builtin__.max(n1, n2))
 
 
+class TestSum(TestSymbolic):
+
+    """Tests for Sum."""
+
+    def test_init(self):
+        """Test for __init__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertRaises(TypeError, Sum, A, A=[n1], B=[n2])
+        self.assertRaises(TypeError, Sum, A, A=n1)
+
+        self.assertEqual(Sum(A, n1, A=range(n2)), Sum(A + n1, A=range(n2)))
+        self.assertEqual(Sum(A, n1), A + n1)
+
+    def test_substitute(self):
+        """Test for substitute()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        inst = Sum(A + B, A=Range((A, C, n1)))
+
+        self.assertEqual(inst.substitute(A=n2),
+                         Sum(A + B, A=Range((n2, C, n1))))
+        self.assertEqual(inst.substitute(B=n2),
+                         Sum(A + n2, A=Range((A, C, n1))))
+        self.assertEqual(inst.substitute(C=n2),
+                         Sum(A + B, A=Range((A, n2, n1))))
+
+    def test_simplify(self):
+        """Test for simplify()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(Sum(A * n1, A=Range((B, n2, n3)))(),
+                         Sum((A * n1)(), A=Range((B, n2, n3))))
+        self.assertEqual(Sum(A, A=Range((B * n1, n2, n3)))(),
+                         Sum(A, A=Range((B * n1, n2, n3))()))
+
+        self.assertEqual(Sum(A, B=range(n1))(), n1 * A)
+        self.assertEqual(Sum(A + B, A=range(n1))(),
+                         Plus(*(A + B for A in range(n1)))())
+
+
+class TestProd(TestSymbolic):
+
+    """Tests for Prod."""
+
+    def test_init(self):
+        """Test for __init__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertRaises(TypeError, Prod, A, A=[n1], B=[n2])
+        self.assertRaises(TypeError, Prod, A, A=n1)
+
+        self.assertEqual(Prod(A, n1), A * n1)
+        self.assertEqual(Prod(A, n1, A=range(n2)), Prod(A * n1, A=range(n2)))
+
+    def test_substitute(self):
+        """Test for substitute()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        inst = Prod(A + B, A=Range((A, C, n1)))
+
+        self.assertEqual(inst.substitute(A=n2),
+                         Prod(A + B, A=Range((n2, C, n1))))
+        self.assertEqual(inst.substitute(B=n2),
+                         Prod(A + n2, A=Range((A, C, n1))))
+        self.assertEqual(inst.substitute(C=n2),
+                         Prod(A + B, A=Range((A, n2, n1))))
+
+    def test_simplify(self):
+        """Test for simplify()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(Prod(A * n1, A=Range((B, n2, n3)))(),
+                         Prod((A * n1)(), A=Range((B, n2, n3))))
+        self.assertEqual(Prod(A, A=Range((B * n1, n2, n3)))(),
+                         Prod(A, A=Range((B * n1, n2, n3))()))
+
+        self.assertEqual(Prod(A, B=range(n1))(), n1 * A)
+        self.assertEqual(Prod(A + B, A=range(n1))(),
+                         Times(*(A + B for A in range(n1)))())
+
+
 class TestRange(TestSymbolic):
 
     """Tests for Range."""
@@ -378,47 +460,6 @@ class TestRange(TestSymbolic):
         self.assertEqual(len(Range("1:10,20:-2:0")), 21)
 
         self.assertEqual(len(Range((n1, n2, n3))), len(range(n1, n3 + 1, n2)))
-
-
-class TestSum(TestSymbolic):
-
-    """Tests for Sum."""
-
-    def test_init(self):
-        """Test for __init__()."""
-        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
-
-        self.assertRaises(TypeError, Sum, A, A=[n1], B=[n2])
-        self.assertRaises(TypeError, Sum, A)
-        self.assertRaises(TypeError, Sum, A, A=n1)
-
-        self.assertEqual(Sum(A, n1, A=range(n2)), Sum(A + n1, A=range(n2)))
-
-    def test_substitute(self):
-        """Test for substitute()."""
-        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
-
-        inst = Sum(A + B, A=Range((A, C, n1)))
-
-        self.assertEqual(inst.substitute(A=n2),
-                         Sum(A + B, A=Range((n2, C, n1))))
-        self.assertEqual(inst.substitute(B=n2),
-                         Sum(A + n2, A=Range((A, C, n1))))
-        self.assertEqual(inst.substitute(C=n2),
-                         Sum(A + B, A=Range((A, n2, n1))))
-
-    def test_simplify(self):
-        """Test for simplify()."""
-        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
-
-        self.assertEqual(Sum(A * n1, A=Range((B, n2, n3)))(),
-                         Sum((A * n1)(), A=Range((B, n2, n3))))
-        self.assertEqual(Sum(A, A=Range((B * n1, n2, n3)))(),
-                         Sum(A, A=Range((B * n1, n2, n3))()))
-
-        self.assertEqual(Sum(A, B=range(n1))(), n1 * A)
-        self.assertEqual(Sum(A + B, A=range(n1))(),
-                         sum(A + B for A in range(n1))())
 
 
 if __name__ == "__main__":
