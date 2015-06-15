@@ -82,7 +82,7 @@ class QCall(QtGui.QListWidgetItem):
         UI_arglabel = self.UI_arglabels[argid]
         if force or not UI_arg.hasFocus():
             if isinstance(UI_arg, QtGui.QLineEdit):
-                if isinstance(value, list):
+                if type(value) is list:
                     UI_arg.setText("[%s]" % value[0])
                 else:
                     UI_arg.setText(str(value))
