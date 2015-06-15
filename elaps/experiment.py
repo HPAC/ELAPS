@@ -745,10 +745,16 @@ class Experiment(object):
             # check min
             if arg.min:
                 argmin = arg.min(*call)
-                for range_val in self.range_vals:
+                range_vals = (symbolic.min(self.range_vals),
+                              symbolic.max(self.range_vals))
+                for range_val in range_vals:
                     if value == argmin:
                         break
-                    for sumrange_val in self.sumrange_vals_at(range_val):
+                    sumrange_vals = (
+                        symbolic.min(self.sumrange_vals_at(range_val)),
+                        symbolic.max(self.sumrange_vals_at(range_val))
+                    )
+                    for sumrange_val in sumrange_vals:
                         if value == argmin:
                             break
                         valdict = self.ranges_valdict(range_val, sumrange_val)
@@ -1785,13 +1791,9 @@ class Experiment(object):
 
         # range values
         range_vals = range_val_fixed,
-        if range_val_fixed is None and self.range:
-            range_vals = self.range_vals
-            if not range_vals:
-                range_vals = None,
-            else:
-                range_vals = (symbolic.min(range_vals),
-                              symbolic.max(range_vals))
+        if range_val_fixed is None:
+            range_vals = (symbolic.min(self.range_vals),
+                          symbolic.max(self.range_vals))
 
         values = []
 
@@ -1800,13 +1802,10 @@ class Experiment(object):
 
             # sumrange values
             sumrange_vals = sumrange_val_fixed,
-            if sumrange_val_fixed is None and self.sumrange:
+            if sumrange_val_fixed is None:
                 sumrange_vals = self.sumrange_vals_at(range_val)
-                if not sumrange_vals:
-                    sumrange_vals = None,
-                else:
-                    sumrange_vals = (symbolic.min(sumrange_vals),
-                                     symbolic.max(sumrange_vals))
+                sumrange_vals = (symbolic.min(sumrange_vals),
+                                 symbolic.max(sumrange_vals))
 
             # go over sumrange
             for sumrange_val in sumrange_vals:
