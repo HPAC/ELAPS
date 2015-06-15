@@ -986,7 +986,7 @@ def findsymbols(expr):
 def min(*args, **kwargs):
     """Symbolic minimum."""
     if len(args) > 1:
-        return min(args)
+        return min(args, **kwargs)
     # 1 argument: iterable
     if isinstance(args[0], Range):
         return args[0].min()
@@ -998,7 +998,7 @@ def min(*args, **kwargs):
 def max(*args, **kwargs):
     """Symbolic maximum."""
     if len(args) > 1:
-        return max(args)
+        return max(args, **kwargs)
     if isinstance(args[0], Range):
         return args[0].max()
     if any(isinstance(arg, Expression) for arg in args[0]):
