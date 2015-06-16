@@ -10,6 +10,7 @@ from defines import *
 
 import os
 import imp
+from collections import defaultdict
 
 
 def write_signature(sig, filename):
@@ -200,8 +201,13 @@ def load_all_backends():
 
 def load_papinames():
     """Load all papi names."""
+    class keydefaultdict(defaultdict):
+        def __missing__(self, key):
+            self[key] = self.default_factory(key)
+            return self[key]
     with open(papinamespath) as fin:
-        return eval(fin.read())
+        return keydefaultdict(lambda key: {"short": key, "long": key},
+                              eval(fin.read()))
 
 
 def load_report(filename, discard_first_repetitions=False):
