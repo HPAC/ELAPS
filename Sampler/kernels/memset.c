@@ -1,5 +1,13 @@
 #include "memset.h"
 
+/** Set all elements in an integer matrix to a single value.
+ *
+ * \param m Number of rows.
+ * \param n Number of columns.
+ * \param alpha Value.
+ * \param A Matrix pointer.
+ * \param ldA Leading dimension.
+ */
 void imemset(int *m, int *n, int *alpha, int *A, int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
@@ -7,6 +15,14 @@ void imemset(int *m, int *n, int *alpha, int *A, int *ldA) {
             A[i + j * *ldA] = *alpha;
 }
 
+/** Set all elements in a single precision matrix to a single value.
+ *
+ * \param m Number of rows.
+ * \param n Number of columns.
+ * \param alpha Value.
+ * \param A Matrix pointer.
+ * \param ldA Leading dimension.
+ */
 void smemset(int *m, int *n, float *alpha, float *A, int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
@@ -14,6 +30,14 @@ void smemset(int *m, int *n, float *alpha, float *A, int *ldA) {
             A[i + j * *ldA] = *alpha;
 }
 
+/** Set all elements in a double precision matrix to a single value.
+ *
+ * \param m Number of rows.
+ * \param n Number of columns.
+ * \param alpha Value.
+ * \param A Matrix pointer.
+ * \param ldA Leading dimension.
+ */
 void dmemset(int *m, int *n, double *alpha, double *A, int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
@@ -21,6 +45,14 @@ void dmemset(int *m, int *n, double *alpha, double *A, int *ldA) {
             A[i + j * *ldA] = *alpha;
 }
 
+/** Set all elements in a single precision complex matrix to a single value.
+ *
+ * \param m Number of rows.
+ * \param n Number of columns.
+ * \param alpha Value.
+ * \param A Matrix pointer.
+ * \param ldA Leading dimension.
+ */
 void cmemset(int *m, int *n, float *alpha, float *A, int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
@@ -30,6 +62,14 @@ void cmemset(int *m, int *n, float *alpha, float *A, int *ldA) {
         }
 }
 
+/** Set all elements in a double precision complex matrix to a single value.
+ *
+ * \param m Number of rows.
+ * \param n Number of columns.
+ * \param alpha Value.
+ * \param A Matrix pointer.
+ * \param ldA Leading dimension.
+ */
 void zmemset(int *m, int *n, double *alpha, double *A, int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)

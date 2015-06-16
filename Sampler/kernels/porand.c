@@ -2,6 +2,15 @@
 
 #include <stdlib.h>
 
+/** Randomize a single precision SPD matrix.
+ * Random values taken from \f$[0, 1)\f$ (off-diagonal), \f$[0, 1) + n\f$
+ * (diagonal).
+ *
+ * \param uplo Lower (`"L"`) or upper (`"U"`) triangular.
+ * \param n Number of rows and columns.
+ * \param A Matrix pointer.
+ * \param ldA Leading dimension.
+ */
 void sporand(char *uplo, int *n, float *A, int *ldA) {
     int i, j;
     switch(uplo[0]) {
@@ -22,6 +31,15 @@ void sporand(char *uplo, int *n, float *A, int *ldA) {
     }
 }
 
+/** Randomize a double precision SPD matrix.
+ * Random values taken from \f$[0, 1)\f$ (off-diagonal), \f$[0, 1) + n\f$
+ * (diagonal).
+ *
+ * \param uplo Lower (`"L"`) or upper (`"U"`) triangular.
+ * \param n Number of rows and columns.
+ * \param A Matrix pointer.
+ * \param ldA Leading dimension.
+ */
 void dporand(char *uplo, int *n, double *A, int *ldA) {
     int i, j;
     switch(uplo[0]) {
@@ -42,6 +60,15 @@ void dporand(char *uplo, int *n, double *A, int *ldA) {
     }
 }
 
+/** Randomize a single precision complex HPD matrix.
+ * Random values taken from \f$[0, 1) + [0, 1) i\f$ (off-diagonal), \f$[0, 1) +
+ * 2 n\f$ (diagonal).
+ *
+ * \param uplo Lower (`"L"`) or upper (`"U"`) triangular.
+ * \param n Number of rows and columns.
+ * \param A Matrix pointer.
+ * \param ldA Leading dimension.
+ */
 void cporand(char *uplo, int *n, float *A, int *ldA) {
     int i, j;
     switch(uplo[0]) {
@@ -68,6 +95,15 @@ void cporand(char *uplo, int *n, float *A, int *ldA) {
     }
 }
 
+/** Randomize a double precision complex HPD matrix.
+ * Random values taken from \f$[0, 1) + [0, 1) i\f$ (off-diagonal), \f$[0, 1) +
+ * 2 n\f$ (diagonal).
+ *
+ * \param uplo Lower (`"L"`) or upper (`"U"`) triangular.
+ * \param n Number of rows and columns.
+ * \param A Matrix pointer.
+ * \param ldA Leading dimension.
+ */
 void zporand(char *uplo, int *n, double *A, int *ldA) {
     int i, j;
     switch(uplo[0]) {
