@@ -1902,7 +1902,7 @@ class Experiment(object):
                 for id_ in connected:
                     connections[id_] = connected
         del connections[None]
-        return {key: sorted(val) for key, val in connections.items()}
+        return dict((key, sorted(val)) for key, val in connections.items())
 
     def nresults(self):
         """How many results the current experiment woudl produce."""

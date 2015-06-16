@@ -58,7 +58,8 @@ class TestReport(unittest.TestCase):
 
         lenrange = random.randint(1, 10)
         range_vals = random.sample(range(1000), lenrange)
-        vals = {range_val: random.randint(1, 1000) for range_val in range_vals}
+        vals = dict((range_val, random.randint(1, 1000))
+                    for range_val in range_vals)
 
         ex.call = Signature("name")()
         ex.range = [i, range_vals]
@@ -94,7 +95,8 @@ class TestReport(unittest.TestCase):
 
         lenrange = random.randint(1, 10)
         range_vals = random.sample(range(1000), lenrange)
-        vals = {range_val: random.randint(1, 1000) for range_val in range_vals}
+        vals = dict((range_val, random.randint(1, 1000))
+                    for range_val in range_vals)
 
         ex.call = Signature("name")()
         ex.sumrange = [i, range_vals]
