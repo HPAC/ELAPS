@@ -173,8 +173,7 @@ class QCall(QtGui.QListWidgetItem):
                 elif isinstance(arg, signature.Data):
                     UI_arg = QDataArg(
                         self,
-                        textChanged=self.on_arg_change,
-                        editingFinished=self.on_arg_focusout
+                        editingFinished=self.on_dataarg_focusout
                     )
                 else:
                     UI_arg = QtGui.QLineEdit(
@@ -234,6 +233,13 @@ class QCall(QtGui.QListWidgetItem):
         if self.playmat.UI_setting:
             return
         self.playmat.on_arg_set(self.callid, argid, value)
+
+    def on_dataarg_focusout(self):
+        """Event: Changed a data argument."""
+        sender = self.playmat.Qapp.sender()
+        value = sender.text()
+        self.on_arg_change(value)
+        self.on_arg_focusout()
 
     # @pyqtSlot(QtCore.QPoint)  # sender() pyqt bug
     def on_arg_rightclick(self, pos):
