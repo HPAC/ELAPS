@@ -591,7 +591,7 @@ class TestExperimentSetters(TestExperiment):
 
         # data: working
         ex.set_arg(0, "A", "D")
-        self.assertTrue("D" in ex.operands)
+        self.assertIn("D", ex.operands)
 
         # data: type
         self.assertRaises(TypeError, ex.set_arg, 0, "A", "C")
