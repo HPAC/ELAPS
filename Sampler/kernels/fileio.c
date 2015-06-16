@@ -11,6 +11,7 @@
  * \param info Error status, 0 on success.
  */
 void readfile(char *filename, int *m, int *n, char *A, int *ldA, int *info) {
+    *info = 0;
     FILE *fin = fopen(filename, "rb");
     if (!fin) {
         *info = -1;
@@ -109,6 +110,7 @@ void zreadfile(char *filename, int *m, int *n, double *A, int *ldA, int *info) {
  * \param info Error status, 0 on success.
  */
 void writefile(char *filename, int *m, int *n, char *A, int *ldA, int *info) {
+    *info = 0;
     FILE *fin = fopen(filename, "wb");
     if (!fin) {
         *info = -1;
