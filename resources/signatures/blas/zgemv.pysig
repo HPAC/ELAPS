@@ -1,0 +1,16 @@
+# double precision complex matrix-vector product
+Signature(
+    "zgemv",
+    cTrans(),
+    Dim("m"),
+    Dim("n"),
+    zScalar(),
+    zData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    zData("X", "1 + ((n if trans == 'N' else m) - 1) * abs(incX)"),
+    Inc("incX"),
+    zScalar("beta"),
+    zData("Y", "1 + ((m if trans == 'N' else n) - 1) * abs(incY)"),
+    Ld("incY"),
+    complexity = "4 * 2 * m * n"
+)

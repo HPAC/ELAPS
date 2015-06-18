@@ -1,0 +1,16 @@
+# single precision complex matrix-vector product
+Signature(
+    "cgemv",
+    cTrans(),
+    Dim("m"),
+    Dim("n"),
+    cScalar(),
+    cData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    cData("X", "1 + ((n if trans == 'N' else m) - 1) * abs(incX)"),
+    Inc("incX"),
+    cScalar("beta"),
+    cData("Y", "1 + ((m if trans == 'N' else n) - 1) * abs(incY)"),
+    Ld("incY"),
+    complexity = "4 * 2 * m * n"
+)
