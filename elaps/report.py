@@ -42,18 +42,25 @@ class Report(object):
 
     """ELAPS:Report, result of an ELAPS:Experiment."""
 
-    def __init__(self, experiment, rawdata):
+    def __init__(self, experiment, rawdata, fulldata=None, data=None):
         """Initialize report."""
         if not isinstance(experiment, Experiment):
             raise TypeError("first argument must be Experiment (not %s)" %
                             type(experiment).__name__)
         self.experiment = experiment
+        self.first_repetitions_discarded = None
         try:
             self.rawdata = tuple(map(tuple, rawdata))
         except:
             raise TypeError("invalid rawdata format")
-        self.fulldata_fromraw()
-        self.data_fromfull()
+        if fulldata:
+            self.fulldata = fulldata
+        else:
+            self.fulldata_fromraw()
+        if data:
+            self.data = data
+        else:
+            self.data_fromfull()
 
     def fulldata_fromraw(self):
         """Initialize fulldata from rawdata."""
@@ -61,24 +68,25 @@ class Report(object):
         self.truncated = False
         ex = self.experiment
         rawdata = list(self.rawdata)
+        rawdata_idx = 0
 
-        def getints(data, count=1):
+        def getints(count, iterator=iter(rawdata)):
             try:
-                values = data.pop(0)
+                values = iterator.next()
             except:
                 self.truncated = True
                 return None
             try:
-                if all(isinstance(value, int) for value in values):
-                    if len(values) == count:
-                        return tuple(values)
+                if (all(isinstance(value, int) for value in values) and
+                        len(values) == count):
+                    return tuple(values)
             except:
                 pass
             self.error = True
-            return getints(data, count)
+            return getints(count)
 
         self.starttime = None
-        values = getints(rawdata, 1)
+        values = getints(1)
         if values is not None:
             self.starttime = values[0]
 
@@ -90,14 +98,14 @@ class Report(object):
             # discard randomization results
             if ex.range_randomize_data:
                 for name in ex.operands:
-                    getints(data, 1)
+                    getints(1)
 
             # results for each repetition
             rep_data = []
             for rep in range(ex.nreps):
                 if ex.sumrange_parallel:
                     # only one result per repetition
-                    values = getints(rawdata, nvalues)
+                    values = getints(nvalues)
                     if values:
                         rep_data.append(values)
                     continue
@@ -106,7 +114,7 @@ class Report(object):
                 for sumrange_val in ex.sumrange_vals_at(range_val):
                     if ex.calls_parallel:
                         # only one result per sumrange
-                        values = getints(rawdata, nvalues)
+                        values = getints(nvalues)
                         if values:
                             sumrange_data[sumrange_val] = values
                         continue
@@ -114,7 +122,7 @@ class Report(object):
                     call_data = []
                     for call in ex.calls:
                         # one result per call
-                        values = getints(rawdata, nvalues)
+                        values = getints(nvalues)
                         if values:
                             call_data.append(values)
                     if call_data:
@@ -126,7 +134,7 @@ class Report(object):
         self.fulldata = range_data
 
         self.endtime = None
-        values = getints(rawdata, 1)
+        values = getints(1)
         if values is not None:
             self.endtime = values[0]
 
@@ -217,10 +225,7 @@ class Report(object):
 
     def copy(self):
         """Generate a copy."""
-        report = Report(self.experiment.copy(), deepcopy(self.rawdata))
-        report.fulldata = deepcopy(self.fulldata)
-        report.data = deepcopy(self.data)
-        return report
+        return Report(self.experiment, self.rawdata, self.fulldata, self.data)
 
     def apply_metric(self, metric, callid=None):
         """Evaluate data with respect to a metric."""
@@ -253,13 +258,18 @@ class Report(object):
 
     def discard_first_repetitions(self):
         """Discard the first repetitions."""
+        if self.first_repetitions_discarded:
+            return self.first_repetitions_discarded
         report = self.copy()
-        fulldata = report.fulldata
         nreps = self.experiment.nreps
         if nreps > 1:
-            for range_val in fulldata:
-                if len(fulldata[range_val]) == nreps:
-                    # do not take away more than 1
-                    fulldata[range_val] = fulldata[range_val][1:]
-        report.data_fromfull()
+            fulldata = {}
+            for range_val, range_val_data in self.fulldata.iteritems():
+                if len(range_val_data) > 1:
+                    # do not take away last one
+                    range_val_data = range_val_data[1:]
+                fulldata[range_val] = range_val_data
+            report.fulldata = fulldata
+            report.data_fromfull()
+        self.first_repetitions_discarded = report
         return report

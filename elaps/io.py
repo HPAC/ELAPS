@@ -212,14 +212,18 @@ def load_papinames():
 
 def load_report(filename, discard_first_repetitions=False):
     """Load a Report from a frile."""
-    def try_eval(expr, *args):
-        try:
-            return eval(expr, *args)
-        except:
-            return expr
     with open(filename) as fin:
         experiment = eval(fin.readline())
-        rawdata = [map(try_eval, line.split()) for line in fin.readlines()]
+        rawdata = []
+        for line in fin:
+            vals = []
+            for val in line.split():
+                try:
+                    val = int(val)
+                except:
+                    pass
+                vals.append(val)
+            rawdata.append(vals)
     report = Report(experiment, rawdata)
     if discard_first_repetitions:
         return report.discard_first_repetitions()
