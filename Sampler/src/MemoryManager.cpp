@@ -107,13 +107,13 @@ void MemoryManager::named_malloc(const string &name, size_t size) {
     // allocate memory
     named_mem[name] = new char[sizeof(T) * size + alignment];
 
-    // aligned memory registerd in the mapping
+    // aligned memory registered in the mapping
     named_map[name] = (char *) (((size_t) named_mem[name] / alignment + 1) * alignment);
 
-    // initialially empty list of aliases
+    // initially empty list of aliases
     named_aliases[name] = vector<string>();
 
-    // put random data of correspoindng type
+    // put random data of corresponding type
     randomize<T>(named_map[name], size);
 }
 

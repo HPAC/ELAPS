@@ -80,7 +80,7 @@ void Sampler::omp_end(const vector<string>&tokens) {
     if (tokens.size() > 1)
         cerr << "Ignoring arguments for " << tokens[0] << endl;
     if (!omp_active) {
-        cerr << "Not in parallel region (comand ignored)" << endl;
+        cerr << "Not in parallel region (command ignored)" << endl;
         return;
     }
     omp_active = false;
@@ -113,7 +113,7 @@ void Sampler::named_malloc(const vector<string> &tokens) {
         cerr << "Variable already exists: " << name << " (command ignored)" << endl;
         return;
     }
-    // name must beginn with letter
+    // name must begin with letter
     if (!isalpha(name[0])) {
         cerr << "Variable name must begin with a letter: " << name << " (command ignored)" << endl;
         return;
@@ -126,7 +126,7 @@ void Sampler::named_malloc(const vector<string> &tokens) {
         return;
     }
 
-    // malloc the variabel
+    // malloc the variable
     mem.named_malloc<T>(name, size);
 }
 
@@ -194,7 +194,7 @@ void Sampler::add_call(const vector<string> &tokens) {
 
     // catch unknown routines
     if (signatures.find(routine) == signatures.end()) {
-        cerr << "Uknown kernel: " << routine << " (call ignored)" << endl;
+        cerr << "Unknown kernel: " << routine << " (call ignored)" << endl;
         return;
     }
 
@@ -249,7 +249,7 @@ void Sampler::go(const vector<string> &tokens) {
         cout << calls[i].cycles;
 
 #ifdef PAPI_ENABLED
-        // papi counters
+        // PAPI counters
         for (size_t j = 0; j < counters.size(); j++)
             cout << "\t" << calls[i].counters[j];
 #endif
@@ -273,7 +273,7 @@ void Sampler::info(const vector<string> &tokens) {
     // require 1 argument: kernel name
     if (tokens.size() < 2) {
         cerr << "No argument for " << tokens[0] << " (command ignored)" << endl;
-        cerr << "usage (exmaple): " << tokens[0] << " dgemm" << endl;
+        cerr << "usage (example): " << tokens[0] << " dgemm" << endl;
         return;
     }
     if (tokens.size() > 2) {
@@ -285,14 +285,14 @@ void Sampler::info(const vector<string> &tokens) {
 
     // catch unknown routines
     if (signatures.find(routine) == signatures.end()) {
-        cerr << "Uknown kernel: " << routine << " (command ignored)" << endl;
+        cerr << "Unknown kernel: " << routine << " (command ignored)" << endl;
         return;
     }
 
     // print <routine name>(
     cerr << routine << "(";
 
-    // print the signatue for the routine
+    // print the signature for the routine
     const Signature &signature = signatures[routine];
     const size_t argc = signature.arguments.size();
     for (size_t i = 1; i < argc; i++) {
