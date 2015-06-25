@@ -100,6 +100,9 @@ class CallParser {
         /** Custom exception thrown by CallParser%s. */
         class CallParserException: public std::exception { };
 
+        /** Is the output of this call hidden? */
+        bool hidden;
+
 #ifdef OPENMP_ENABLED
         /** Is this call in parallel with the next? */
         bool omp_active;

@@ -189,7 +189,7 @@ void Sampler::named_free(const vector<string> &tokens) {
     mem.named_free(name);
 }
 
-void Sampler::add_call(const vector<string> &tokens) {
+void Sampler::add_call(const vector<string> &tokens, bool hidden=false) {
     const string &routine = tokens[0];
 
     // catch unknown routines
@@ -202,6 +202,7 @@ void Sampler::add_call(const vector<string> &tokens) {
     const Signature &signature = signatures[routine];
     try {
         CallParser callparser(tokens, signature, mem);
+        callparser.hidden = hidden;
 #ifdef OPENMP_ENABLED
         callparser.omp_active = omp_active;
 #endif
@@ -238,6 +239,10 @@ void Sampler::go(const vector<string> &tokens) {
     // print results
     for (size_t i = 0; i < ncalls; i++) {
         CallParser &callparser = callparsers[i];
+
+        if (callparser.hidden)
+            // call is hidden
+            continue;
 
 #ifdef OPENMP_ENABLED
         if (callparser.omp_active)
@@ -366,6 +371,8 @@ void Sampler::start() {
         if (line.size() == 0)
             continue;
 
+        bool hidden = isspace(line[0]);
+
         // remove leading spaces
         line = line.substr(line.find_first_not_of(" \t\n\v\f\r"));
 
@@ -383,7 +390,7 @@ void Sampler::start() {
         if (command != commands.end())
             (this->*(command->second))(tokens);
         else
-            add_call(tokens);
+            add_call(tokens, hidden);
     }
 
     // process remaining calls

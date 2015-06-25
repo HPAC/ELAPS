@@ -135,7 +135,7 @@ class Sampler {
          *
          * \param tokens    kernel name + arguments: *kernel_name* `[` *arg* `[...]]`
          */
-        void add_call(const std::vector<std::string> &tokens);
+        void add_call(const std::vector<std::string> &tokens, bool hidden);
 
         /** Sample registerd calls.
          * Samples all recorded calls and prints the measurements.  If inside
@@ -146,6 +146,7 @@ class Sampler {
          * The obtained measurements are then printed to `stdout`.
          *
          * \param tokens    command + arguments: `go`
+         * \param hidden    whether the output is hidden
          */
         void go(const std::vector<std::string> &tokens);
 
