@@ -3,6 +3,7 @@
 from __future__ import division, print_function
 
 import os
+from random import randint
 
 # root path
 filepath = os.path.dirname(os.path.realpath(__file__))
@@ -33,7 +34,7 @@ colors = [
     "#800000", "#008000", "#000080", "#808000", "#008080", "#800080",  # dark
     "#ff8000", "#00ff80", "#8000ff", "#80ff00", "#0080ff", "#ff0080",  # mixed
     "#c04000", "#00c040", "#4000c0", "#40c000", "#0040c0", "#c00040",  # mdark
-]
+] + ["#%6x" % randint(0, 0xFFFFFF) for _ in range(100)]
 background_color = "#f0f0f0"
 face_color = "#ffffff"
 
