@@ -134,7 +134,7 @@ class BasicCall(list):
         """Foramt as human readable."""
         args = []
         for arg in self[1:]:
-            if isinstance(arg, list):
+            if type(arg) is list:
                 args.append("[%s]" % arg[0])
             else:
                 args.append(str(arg))
