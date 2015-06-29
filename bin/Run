@@ -57,7 +57,7 @@ def main():
             setattr(ex, key, value)
 
         if "sampler" not in replace:
-            ex.sampler = io.load_sampler(ex.sampler["name"])
+            ex.sampler = elaps.io.load_sampler(ex.sampler["name"])
 
         # submit
         filebase = filename
