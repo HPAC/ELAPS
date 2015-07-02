@@ -166,7 +166,10 @@ class PlayMat(QtGui.QMainWindow):
             )
 
             samplerT = self.addToolBar("Sampler")
-            samplerT.pyqtConfigure(movable=False, objectName="Sampler")
+            samplerT.pyqtConfigure(
+                movable=False, objectName="Sampler",
+                toolTip="The Sampler on which to run the Experiment."
+            )
             samplerT.addWidget(QtGui.QLabel("Sampler:"))
             samplerT.addWidget(self.UI_sampler)
 
@@ -177,7 +180,11 @@ class PlayMat(QtGui.QMainWindow):
             )
 
             nthreadsT = self.addToolBar("#threads")
-            nthreadsT.pyqtConfigure(movable=False, objectName="#threads")
+            nthreadsT.pyqtConfigure(
+                movable=False, objectName="#threads",
+                toolTip="The number of threads for the kernel (BLAS) library."
+                "\nCan be linked to the range variable."
+            )
             nthreadsT.addWidget(QtGui.QLabel("#threads:"))
             nthreadsT.addWidget(self.UI_nthreads)
 
@@ -215,7 +222,9 @@ class PlayMat(QtGui.QMainWindow):
             # range
             self.UI_rangevar = QtGui.QLineEdit(
                 textEdited=self.on_rangevar_change,
-                editingFinished=self.UI_range_set
+                editingFinished=self.UI_range_set,
+                toolTip="The variable that contains the range value.\n"
+                "Can be used in any numeric field below and in #threads above."
             )
             self.UI_rangevar.setValidator(QtGui.QRegExpValidator(
                 QtCore.QRegExp("[a-zA-Z]+"), self.UI_rangevar
@@ -224,7 +233,9 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_rangevals = QtGui.QLineEdit(
                 minimumWidth=32,
                 textEdited=self.on_rangevals_change,
-                editingFinished=self.UI_range_set
+                editingFinished=self.UI_range_set,
+                toolTip="Values for the range.\nSyntax: start:step:stop, a "
+                "comma separated list of values, or a combination of both."
             )
 
             rangeL = QtGui.QHBoxLayout(spacing=0)
@@ -235,13 +246,18 @@ class PlayMat(QtGui.QMainWindow):
             rangeL.addWidget(self.UI_rangevals)
             rangeL.addWidget(QtGui.QLabel(":"))
             rangeL.addStretch(1)
-            self.UI_rangeW = QtGui.QWidget()
+            self.UI_rangeW = QtGui.QWidget(
+                toolTip="A range of values for which to perform the "
+                "measurements.\n(x-axis in the Viewer)"
+            )
             self.UI_rangeW.setLayout(rangeL)
 
             # reps
             self.UI_nreps = QtGui.QLineEdit(
                 textEdited=self.on_nreps_change,
-                editingFinished=self.UI_nreps_set
+                editingFinished=self.UI_nreps_set,
+                toolTip="The variable that contains the range value.\n"
+                "Can be used in any numeric field below above."
             )
             # self.UI_nreps.setValidator(QtGui.QIntValidator(bottom=1))
             self.UI_nreps.setValidator(QtGui.QIntValidator(1, 1000000, self))
@@ -253,11 +269,19 @@ class PlayMat(QtGui.QMainWindow):
             nrepsL.addWidget(self.UI_nreps)
             nrepsL.addWidget(QtGui.QLabel(" times:"))
             nrepsL.addStretch(1)
-            self.UI_nrepsW = QtGui.QWidget()
+            self.UI_nrepsW = QtGui.QWidget(
+                toolTip="Number of experiment repetitions for statistcal"
+                "evaluation."
+            )
             self.UI_nrepsW.setLayout(nrepsL)
 
             # sumrange
-            self.UI_sumrange_parallel = QtGui.QComboBox()
+            self.UI_sumrange_parallel = QtGui.QComboBox(
+                toolTip="sum over: the calls are executed sequencially and "
+                "the measurements are summed to a single value.\n#omp for: "
+                "the calls in the range are executed in parallel through "
+                "OpenMP yielding one measurement value."
+            )
             self.UI_sumrange_parallel.addItems(["sum over", "#omp for"])
             self.UI_sumrange_parallel.currentIndexChanged[int].connect(
                 self.on_sumrange_parallel_change
@@ -273,7 +297,10 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_sumrangevals = QtGui.QLineEdit(
                 minimumWidth=32,
                 textEdited=self.on_sumrangevals_change,
-                editingFinished=self.UI_sumrange_set
+                editingFinished=self.UI_sumrange_set,
+                toolTip="Values for the sum/omp range.\nSyntax: "
+                "start:step:stop, a comma separated list of values, or a "
+                "combination of both."
             )
 
             sumrangeL = QtGui.QHBoxLayout(spacing=0)
@@ -285,7 +312,10 @@ class PlayMat(QtGui.QMainWindow):
             sumrangeL.addWidget(self.UI_sumrangevals)
             sumrangeL.addWidget(QtGui.QLabel(":"))
             sumrangeL.addStretch(1)
-            self.UI_sumrangeW = QtGui.QWidget()
+            self.UI_sumrangeW = QtGui.QWidget(
+                toolTip="A range of values for which the performance is "
+                "collected as a single value."
+            )
             self.UI_sumrangeW.setLayout(sumrangeL)
 
             # calls_parallel
@@ -293,7 +323,9 @@ class PlayMat(QtGui.QMainWindow):
             calls_parallelL.setContentsMargins(48, 0, 0, 0)
             calls_parallelL.addWidget(QtGui.QLabel("in parallel:"))
             calls_parallelL.addStretch(1)
-            self.UI_calls_parallelW = QtGui.QWidget()
+            self.UI_calls_parallelW = QtGui.QWidget(
+                toolTip="Execute the calls below in parallel thorugh OpenMP."
+            )
             self.UI_calls_parallelW.setLayout(calls_parallelL)
 
             rangesL = QtGui.QGridLayout(spacing=0)
