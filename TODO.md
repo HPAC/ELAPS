@@ -8,6 +8,7 @@ Experiment
 ----------
 * Test randomization
 * test update_vary
+* Simpler experiment naming
   
 * (Script Examples)
 * (How to handle PAPI counter conflicts?)
@@ -15,14 +16,17 @@ Experiment
 
 PlayMat
 -------
+* Tooltips
+
 * (script header)
-* (status tips)
 
 
 Viewer
 ------
+* Tooltips
+* Further improve speed
+
 * (hide unavailable metrics)
 * (periodical reload of truncated reports)
 * (legend placement)
 * (memory metrics)
-* (status tips)
