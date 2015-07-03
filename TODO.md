@@ -8,7 +8,6 @@ Experiment
 ----------
 * Test randomization
 * test update_vary
-* Simpler experiment naming
   
 * (Script Examples)
 * (How to handle PAPI counter conflicts?)
