@@ -79,7 +79,7 @@ class PlayMat(QtGui.QMainWindow):
         self.setCorner(QtCore.Qt.TopRightCorner, QtCore.Qt.TopDockWidgetArea)
         self.statusBar()
 
-        # DEBUG: print experiment
+        # DEBUG: print Experiment
         QtGui.QShortcut(
             QtGui.QKeySequence.Print, self, lambda: print(self.experiment)
         )
@@ -113,7 +113,7 @@ class PlayMat(QtGui.QMainWindow):
                 triggered=self.on_experiment_load
             ))
 
-            # load report shortcut
+            # load Report shortcut
             QtGui.QShortcut(
                 QtGui.QKeySequence("Ctrl+Shift+O"), self,
                 self.on_experiment_load_report
@@ -154,7 +154,7 @@ class PlayMat(QtGui.QMainWindow):
 
         def create_toolbar():
             """Create all toolbars."""
-            # sampler
+            # Sampler
             self.UI_sampler = QtGui.QComboBox()
             self.UI_sampler.addItems(sorted(self.samplers.keys()))
             self.UI_sampler.currentIndexChanged[str].connect(
@@ -277,8 +277,7 @@ class PlayMat(QtGui.QMainWindow):
             nrepsL.addWidget(QtGui.QLabel(" times:"))
             nrepsL.addStretch(1)
             self.UI_nrepsW = QtGui.QWidget(
-                toolTip="Number of experiment repetitions for statistcal"
-                "evaluation."
+                toolTip="Number of repetitions for statistcal evaluation."
             )
             self.UI_nrepsW.setLayout(nrepsL)
 
@@ -535,9 +534,9 @@ class PlayMat(QtGui.QMainWindow):
         widget.style().polish(widget)
         widget.update()
 
-    # experiment routines
+    # Experiment routines
     def experiment_set(self, ex):
-        """Insert own/new objects into loaded experiment."""
+        """Insert own/new objects into loaded Experiment."""
         # own Sampler
         if ex.sampler is None or ex.sampler["name"] not in self.samplers:
             sampler = self.samplers[min(self.samplers)]
@@ -558,7 +557,7 @@ class PlayMat(QtGui.QMainWindow):
         self.experiment = ex
 
     def experiment_reset(self):
-        """Reset experiment to default."""
+        """Reset Experiment to default."""
         self.experiment_set(elaps.io.load_experiment_string(
             defines.default_experiment_str
         ))
@@ -762,7 +761,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_setting -= 1
 
     def UI_sampler_set(self):
-        """Set UI element: sampler."""
+        """Set UI element: Sampler."""
         self.UI_setting += 1
         self.UI_sampler.setCurrentIndex(
             self.UI_sampler.findText(self.experiment.sampler["name"])
@@ -929,13 +928,13 @@ class PlayMat(QtGui.QMainWindow):
 
     @pyqtSlot()
     def on_experiment_reset(self):
-        """Event: reset experiment."""
+        """Event: reset Experiment."""
         self.experiment_reset()
         self.UI_setall()
 
     @pyqtSlot()
     def on_experiment_load(self, report=False):
-        """Event: load experiment."""
+        """Event: load Experiment."""
         filename = QtGui.QFileDialog.getOpenFileName(
             self, "Load Experiment",
             elaps.io.reportpath if report else defines.experimentpath,
@@ -948,12 +947,12 @@ class PlayMat(QtGui.QMainWindow):
 
     @pyqtSlot()
     def on_experiment_load_report(self):
-        """Event: load experiment from report."""
+        """Event: load Experiment from Report."""
         self.on_experiment_load(True)
 
     @pyqtSlot()
     def on_experiment_save(self):
-        """Event: save experiment."""
+        """Event: save Experiment."""
         filename = QtGui.QFileDialog.getSaveFileName(
             self,
             "Save Setup",
@@ -1041,7 +1040,7 @@ class PlayMat(QtGui.QMainWindow):
 
     @pyqtSlot(str)
     def on_sampler_change(self, value, force=False):
-        """Event: change sampler."""
+        """Event: change Sampler."""
         if self.UI_setting:
             return
         try:
@@ -1050,9 +1049,9 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_setall()
         except Exception as e:
             self.UI_dialog(
-                "question", "Incompatible sampler",
-                "Sampler %s is not compatible with the current experiment\n"
-                "(%s)\nAdjust the experiment?" % (value, e),
+                "question", "Incompatible Sampler",
+                "Sampler %s is not compatible with the current Experiment\n"
+                "(%s)\nAdjust the Experiment?" % (value, e),
                 {"Ok": (self.on_sampler_change, (value, True)), "Cancel": None}
             )
 
@@ -1367,7 +1366,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_counters_set()
 
     def on_open_viewer(self, filename):
-        """Event: open report in Viewer."""
+        """Event: open Report in Viewer."""
         if not self.Qapp.viewer:
             self.viewer_start(filename)
             return
