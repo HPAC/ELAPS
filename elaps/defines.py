@@ -53,6 +53,7 @@ plot_styles = {
 # PlayMat
 viz_scale = 100
 default_dim = 1000
+default_reportname = "default"
 default_experiment_str = """
 Experiment(
     range=[Symbol("i"), Range((100, 100, 2000))],

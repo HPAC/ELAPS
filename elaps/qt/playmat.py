@@ -43,6 +43,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_init()
         self.hideargs = set([signature.Ld, signature.Inc, signature.Work,
                              signature.Lwork, signature.Info])
+        self.reportname = defines.default_reportname
         if not reset:
             try:
                 self.UI_settings_load()
@@ -96,11 +97,6 @@ class PlayMat(QtGui.QMainWindow):
                 triggered=self.on_submit
             )
             fileM.addAction(self.UI_submitA)
-
-            # submit last shortcut
-            QtGui.QShortcut(
-                QtGui.QKeySequence("Ctrl+Shift+R"), self, self.on_submit_last
-            )
 
             # file
             fileM.addSeparator()
@@ -188,21 +184,32 @@ class PlayMat(QtGui.QMainWindow):
             nthreadsT.addWidget(QtGui.QLabel("#threads:"))
             nthreadsT.addWidget(self.UI_nthreads)
 
-            # submit
-            samplerT = self.addToolBar("Submit")
-            samplerT.pyqtConfigure(movable=False, objectName="Submit")
-
             # spacer
             spacer = QtGui.QWidget()
             spacer.setSizePolicy(QtGui.QSizePolicy.Expanding,
                                  QtGui.QSizePolicy.Expanding)
-            samplerT.addWidget(spacer)
-
             # submit
+            self.UI_reportname = QtGui.QLineEdit(
+                textChanged=self.on_reportname_change,
+                toolTip="Name for the Report."
+            )
+            self.UI_reportname.setFixedWidth(32)
+            reportname_choose = QtGui.QAction(
+                self.style().standardIcon(QtGui.QStyle.SP_FileDialogStart),
+                "...", self, triggered=self.on_reportname_choose,
+                toolTip="Browse Report folder."
+            )
             self.UI_submit = QtGui.QAction(self.style().standardIcon(
                 QtGui.QStyle.SP_DialogOkButton
             ), "Run", self, triggered=self.on_submit)
-            samplerT.addAction(self.UI_submit)
+
+            submitT = self.addToolBar("Submit")
+            submitT.pyqtConfigure(movable=False, objectName="Submit")
+            submitT.addWidget(spacer)
+            submitT.addWidget(QtGui.QLabel("Report name:"))
+            submitT.addWidget(self.UI_reportname)
+            submitT.addAction(reportname_choose)
+            submitT.addAction(self.UI_submit)
 
         def create_ranges():
             """Create the ranges dock widget."""
@@ -489,6 +496,7 @@ class PlayMat(QtGui.QMainWindow):
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
         self.hideargs = eval(str(settings.value("hideargs", type=str)),
                              signature.__dict__)
+        self.reportname = str(settings.value("reportname", type=str))
         self.UI_setting += 1
         self.restoreGeometry(settings.value("geometry",
                                             type=QtCore.QByteArray))
@@ -727,8 +735,8 @@ class PlayMat(QtGui.QMainWindow):
     # UI setters
     def UI_setall(self):
         """Set all UI elements."""
-        # sampler
         self.UI_hideargs_set()
+        self.UI_reportname_set()
         self.UI_sampler_set()
         self.UI_nthreads_set()
         self.UI_range_set()
@@ -745,6 +753,12 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_setting += 1
         for UI_showarg, classes in self.UI_hideargs:
             UI_showarg.setChecked(self.hideargs >= classes)
+        self.UI_setting -= 1
+
+    def UI_reportname_set(self):
+        """Set UI element: reportname."""
+        self.UI_setting += 1
+        self.UI_reportname.setText(self.reportname)
         self.UI_setting -= 1
 
     def UI_sampler_set(self):
@@ -910,38 +924,8 @@ class PlayMat(QtGui.QMainWindow):
         settings.setValue("windowState", self.saveState())
         settings.setValue("Experiment", repr(self.experiment))
         settings.setValue("hideargs", repr(self.hideargs))
+        settings.setValue("reportname", self.reportname)
         self.log("Experiment saved.")
-
-    @pyqtSlot()
-    def on_submit(self):
-        """Event: submit."""
-        if self.Qapp.keyboardModifiers() & QtCore.Qt.ShiftModifier:
-            if self.last_filebase:
-                self.on_submit_last()
-                return
-
-        reportpath = elaps.io.reportpath
-        if self.last_filebase:
-            reportpath = "%s.%s" % (self.last_filebase,
-                                    defines.report_extension)
-        filename = QtGui.QFileDialog.getSaveFileName(
-            self, "Generate Report", reportpath,
-            "*." + defines.report_extension
-        )
-        if not filename:
-            return
-        filebase = str(filename)
-        if filebase[-4:] == "." + defines.report_extension:
-            filebase = filebase[:-4]
-        self.experiment_submit(filebase)
-
-    @pyqtSlot()
-    def on_submit_last(self):
-        """Event: resubmit last job."""
-        if not self.last_filebase:
-            self.on_submit()
-            return
-        self.experiment_submit(self.last_filebase)
 
     @pyqtSlot()
     def on_experiment_reset(self):
@@ -954,7 +938,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: load experiment."""
         filename = QtGui.QFileDialog.getOpenFileName(
             self, "Load Experiment",
-            elaps.io.reportpath if report else elaps.io.experimentpath,
+            elaps.io.reportpath if report else defines.experimentpath,
             " ".join("*." + ext for ext in defines.experiment_extensions)
         )
         if not filename:
@@ -1003,6 +987,50 @@ class PlayMat(QtGui.QMainWindow):
             self.hideargs -= classes
         self.UI_hideargs_set()
         self.UI_calls_set()
+
+    @pyqtSlot(str)
+    def on_reportname_change(self, value):
+        """Event: change Report name."""
+        value = str(value)
+        sender = self.UI_reportname
+        width = sender.fontMetrics().width(value) + 4
+        width += sender.minimumSizeHint().width()
+        margins = sender.getTextMargins()
+        width += margins[0] + margins[2]
+        width = min(width, sender.sizeHint().width())
+        width = max(width, sender.sizeHint().height())
+        sender.setFixedWidth(width)
+        if self.UI_setting:
+            return
+        self.reportname = value
+
+    @pyqtSlot()
+    def on_reportname_choose(self):
+        """Event: choose Report (file) name."""
+        filebase = os.path.abspath(os.path.join(
+            defines.reportpath, self.reportname
+        ))
+        filename = QtGui.QFileDialog.getSaveFileName(
+            self, "Choose Report file", filebase,
+            "Reports (*.%s)" % defines.report_extension,
+            options=QtGui.QFileDialog.DontConfirmOverwrite
+        )
+        if not filename:
+            return
+        reportname = os.path.relpath(str(filename), defines.reportpath)
+        if reportname[-4:] == "." + defines.report_extension:
+            reportname = reportname[:-4]
+        self.reportname = reportname
+        self.UI_reportname_set()
+
+    @pyqtSlot()
+    def on_submit(self):
+        """Event: submit."""
+        reportname = str(self.UI_reportname.text())
+        filebase = os.path.abspath(os.path.join(
+            defines.reportpath, reportname
+        ))
+        self.experiment_submit(filebase)
 
     @pyqtSlot(str)
     def on_note_change(self):
