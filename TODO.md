@@ -16,8 +16,6 @@ Experiment
 
 PlayMat
 -------
-* Tooltips
-
 * (script header)
 
 
