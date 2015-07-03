@@ -225,11 +225,11 @@ class QCall(QtGui.QListWidgetItem):
             margins = sender.getTextMargins()
             width += margins[0] + margins[2]
             width = min(width, sender.sizeHint().width())
-            height = sender.sizeHint().height()
+            width = max(width, sender.sizeHint().height())
             if argid == 0:
-                sender.setMinimumSize(max(height, width), height)
+                sender.setMinimumWidth(width)
             else:
-                sender.setFixedSize(max(height, width), height)
+                sender.setFixedWidth(width)
         if self.playmat.UI_setting:
             return
         self.playmat.on_arg_set(self.callid, argid, value)
