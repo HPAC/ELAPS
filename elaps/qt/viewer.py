@@ -300,7 +300,7 @@ class Viewer(QtGui.QMainWindow):
     # report routines
     def report_load(self, filename, index=None, UI_alert=False):
         """Load a report."""
-        filename = os.path.abspath(filename)
+        filename = os.path.relpath(filename)
 
         # check if loaded
         if index is None:

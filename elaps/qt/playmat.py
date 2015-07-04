@@ -1006,7 +1006,7 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot()
     def on_reportname_choose(self):
         """Event: choose Report (file) name."""
-        filebase = os.path.abspath(os.path.join(
+        filebase = os.path.relpath(os.path.join(
             defines.reportpath, self.reportname
         ))
         filename = QtGui.QFileDialog.getSaveFileName(
@@ -1026,7 +1026,7 @@ class PlayMat(QtGui.QMainWindow):
     def on_submit(self):
         """Event: submit."""
         reportname = str(self.UI_reportname.text())
-        filebase = os.path.abspath(os.path.join(
+        filebase = os.path.relpath(os.path.join(
             defines.reportpath, reportname
         ))
         self.experiment_submit(filebase)
