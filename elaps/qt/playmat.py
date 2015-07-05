@@ -380,6 +380,26 @@ class PlayMat(QtGui.QMainWindow):
 
             self.addDockWidget(QtCore.Qt.TopDockWidgetArea, noteD)
 
+        def create_counters():
+            """Create the counters widget."""
+            countersW = QtGui.QWidget()
+            countersW.setLayout(QtGui.QVBoxLayout())
+            countersW.layout().insertStretch(100, 1)
+
+            self.UI_countersD = QtGui.QDockWidget(
+                "PAPI counters", objectName="PAPI counters",
+                features=(QtGui.QDockWidget.DockWidgetVerticalTitleBar |
+                          QtGui.QDockWidget.DockWidgetMovable),
+                toolTip="<tt>papi_counters</tt>: "
+                "List of counters to be measured through PAPI."
+            )
+            self.UI_countersD.setWidget(countersW)
+
+            self.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.UI_countersD)
+            self.UI_countersD.hide()
+
+            self.UI_countersD.widgets = []
+
         def create_calls():
             """Create the calls list and add button (central widget)."""
             self.UI_calls = QtGui.QListWidget(
@@ -474,8 +494,8 @@ class PlayMat(QtGui.QMainWindow):
         create_toolbar()
         create_ranges()
         create_note()
-        create_calls()
         create_counters()
+        create_calls()
         create_style()
 
         self.UI_jobprogress = QJobProgress(self)
