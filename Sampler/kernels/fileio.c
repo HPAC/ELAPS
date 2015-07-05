@@ -20,7 +20,7 @@ void readfile(char *filename, int *m, int *n, char *A, int *ldA, int *info) {
     int j;
     for (j = 0; j < *n; j++)
         if (fread(A + *m + *n * *ldA, sizeof(char), *m, fin) != *m) {
-            *info = -1;
+            *info = j;
             return;
         }
 }
@@ -119,7 +119,7 @@ void writefile(char *filename, int *m, int *n, char *A, int *ldA, int *info) {
     int j;
     for (j = 0; j < *n; j++)
         if (fwrite(A + *m + *n * *ldA, sizeof(char), *m, fin) != *m) {
-            *info = -1;
+            *info = j;
             return;
         }
 }
