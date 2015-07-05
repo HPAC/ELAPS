@@ -127,6 +127,11 @@ class QCall(QtGui.QListWidgetItem):
             if self.sig:
                 self.args_clear()
                 self.sig = None
+        self.setToolTip(
+            "<tt>calls[%d]</tt>: Call number %d to be measured" %
+            (self.fixcallid, self.fixcallid)
+        )
+
         self.UI_args_set()
         self.playmat.UI_setting -= 1
 
