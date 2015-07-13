@@ -1,0 +1,16 @@
+# double precision symmetirc generalized eigensolver
+Signature(
+    "dsygv",
+    Flag("itype", [1, 2, 3]),
+    Flag("jobz", ["V", "N"]),
+    Uplo(),
+    Dim("n"),
+    dData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    dData("B", "ldB * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldB", "n"),
+    dData("W", "n"),
+    dWork("Work", "lWork"),
+    Lwork("lWork", "3 * n - 1"),
+    Info()
+)

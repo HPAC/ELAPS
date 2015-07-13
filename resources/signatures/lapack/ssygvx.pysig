@@ -1,0 +1,27 @@
+# single precision symmetirc generalized eigensolver (expert version)
+Signature(
+    "ssygvx",
+    Flag("itype", [1, 2, 3]),
+    Flag("jobz", ["V", "N"]),
+    Flag("range", ["A", "V", "I"]),
+    Uplo(),
+    Dim("n"),
+    sData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    sData("B", "ldB * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldB", "n"),
+    sScalar("vl"),
+    sScalar("vu"),
+    iScalar("il"),
+    iScalar("iu"),
+    sScalar("abstol"),
+    iScalar("m"),
+    sData("W", "n"),
+    sData("Z", "ldZ * n"),  # actually: ldZ * m
+    Ld("ldZ", "n if jobz == 'V' else 1"),
+    sWork("Work", "lWork"),
+    Lwork("lWork", "8 * n"),
+    iWork("iWork", "5 * n"),
+    iData("iFail", "n"),
+    Info()
+)

@@ -1,15 +1,15 @@
-# double precision complex hermetin eigensolver using DC
+# single precision complex hermetin eigensolver using DC
 Signature(
-    "zheevd",
+    "cheevd",
     Flag("jobz", ["V", "N"]),
     Uplo(),
     Dim("n"),
-    zData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
+    cData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
-    dData("W", "n"),
-    zWork("Work", "lWork"),
+    sData("W", "n"),
+    cWork("Work", "lWork"),
     Lwork("lWork", "n + 1 if jobz == 'N' else 2 * n + n * n"),
-    dWork("rWork", "lrWork"),
+    sWork("rWork", "lrWork"),
     Lwork("lrWork", "n if jobz == 'N' else 1 + 5 * n + 2 * n * n"),
     iWork("iWork", "liWork"),
     Lwork("liWork", "1 if jobz == 'N' else 3 + 5 * n"),

@@ -1,0 +1,14 @@
+# single precision cmplex hermetian eigensolver
+Signature(
+    "cheev",
+    Flag("jobz", ["V", "N"]),
+    Uplo(),
+    Dim("n"),
+    cData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    sData("W", "n"),
+    cWork("Work", "lWork"),
+    Lwork("lWork", "2 * n - 1"),
+    sWork("rWork", "3 * n - 2"),
+    Info()
+)

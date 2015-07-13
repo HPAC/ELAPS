@@ -1,0 +1,13 @@
+# single precision symmetirc eigensolver
+Signature(
+    "ssyev",
+    Flag("jobz", ["V", "N"]),
+    Uplo(),
+    Dim("n"),
+    sData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    sData("W", "n"),
+    sWork("Work", "lWork"),
+    Lwork("lWork", "3 * n - 1"),
+    Info()
+)

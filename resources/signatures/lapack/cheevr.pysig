@@ -1,0 +1,27 @@
+# single precision complex hermetian eigensolver using MRRR
+Signature(
+    "cheevr",
+    Flag("jobz", ["V", "N"]),
+    Flag("range", ["A", "V", "I"]),
+    Uplo(),
+    Dim("n"),
+    cData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    sScalar("vl"),
+    sScalar("vu"),
+    iScalar("il"),
+    iScalar("iu"),
+    iScalar("abstol"),
+    iScalar("m"),
+    sData("W", "n"),
+    cData("Z", "ldZ * n"),  # actually: ldZ * m
+    Ld("ldZ", "n if jobz == 'V' else 1"),
+    iData("isuppZ", "2 * n"),  # actually: 2 * m
+    cWork("Work", "lWork"),
+    Lwork("lWork", "2 * n"),
+    sWork("rWork", "lWork"),
+    Lwork("lrWork", "24 * n"),
+    iWork("iWork", "liWork"),
+    Lwork("liWork", "10 * n"),
+    Info()
+)

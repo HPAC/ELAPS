@@ -1,0 +1,12 @@
+# single precision tridiagonl eigensolver using QR
+Signature(
+    "ssteqr",
+    Flag("compz", ["V", "N"]),
+    Dim("n")
+    sData("D", "n"),
+    sData("E", "n - 1"),
+    sData("Z", "ldZ * n if compz == 'V' else 0"),
+    Ld("ldZ", "n if compz == 'V' else 1")
+    sData("Work", "2 * n - 2 if jobz == 'V' else 0"),
+    Info()
+)

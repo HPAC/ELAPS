@@ -1,0 +1,17 @@
+# double precision complex hermetian generalized eigensolver
+Signature(
+    "zsygv",
+    Flag("itype", [1, 2, 3]),
+    Flag("jobz", ["V", "N"]),
+    Uplo(),
+    Dim("n"),
+    zData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    zData("B", "ldB * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldB", "n"),
+    sData("W", "n"),
+    zWork("Work", "lWork"),
+    Lwork("lWork", "2 * n - 1"),
+    sWork("rWork", "3 * n - 2"),
+    Info()
+)

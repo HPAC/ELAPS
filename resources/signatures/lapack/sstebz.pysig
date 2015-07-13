@@ -1,0 +1,22 @@
+# single precision symmetirc tridiagonal eigenvalues
+Signature(
+    "sstebz",
+    Flag("range", ["A", "V", "I"]),
+    Flag("order", ["B", "E"]),
+    Dim("n"),
+    sScalar("vl"),
+    sScalar("vu"),
+    iScalar("il"),
+    iScalar("iu"),
+    iScalar("abstol"),
+    sData("D", "n"),
+    sData("E", "n - 1"),
+    iScalar("m"),
+    iScalar("nsplit"),
+    sData("W", "n"),
+    iData("iBlock", "n"),
+    iSplit("iBlock", "n"),
+    sData("Work", "4 * n"),
+    iData("iWork", "3 * n"),
+    Info()
+)

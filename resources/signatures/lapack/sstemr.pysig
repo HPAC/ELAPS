@@ -1,0 +1,25 @@
+# single precision tridiagonl eigensolver using MRRR
+Signature(
+    "dstemr",
+    Flag("jobz", ("V", "N")),
+    Flag("range", ("A", "V", "I")),
+    Dim("n"),
+    sData("D", "n"),
+    sData("E", "n - 1"),
+    sScalar("vl"),
+    sScalar("vu"),
+    iScalar("il"),
+    iScalar("iu"),
+    iScalar("m"),
+    sData("W", "n"),
+    sData("Z", "ldZ * n"),  # actually: ldZ * m
+    Ld("ldZ", "n if jobz == 'V' else 1"),
+    Dim("nZc", "n if range == 'A' else n if range == 'V' else iu + il + 1"),
+    iData("isuppZ", "2 * n"),  # actually: 2 * m
+    Flag("tryrac", ("0", "1")), #TODO: allow 0 and 1
+    sWork("Work", "lWork"),
+    Lwork("lWork", "18 * n if jobz == 'V' else 12 * n"),
+    iWork("iWork", "liWork"),
+    Lwork("liWork", "10 * n if jobz == 'V' else 8 * n"),
+    Info()
+)
