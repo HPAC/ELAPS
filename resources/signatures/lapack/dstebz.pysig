@@ -1,4 +1,4 @@
-# double precision symmetirc tridiagonal eigenvalues
+# double precision symmetirc tridiagonal eigensolver
 Signature(
     "dstebz",
     Flag("range", ["A", "V", "I"]),
@@ -15,7 +15,7 @@ Signature(
     iScalar("nsplit"),
     dData("W", "n"),
     iData("iBlock", "n"),
-    iSplit("iBlock", "n"),
+    iData("iSplit", "n"),
     dData("Work", "4 * n"),
     iData("iWork", "3 * n"),
     Info()

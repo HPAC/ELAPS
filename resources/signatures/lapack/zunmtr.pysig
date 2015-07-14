@@ -1,0 +1,18 @@
+# double precision complex multiplication by Q from zhetrd
+Signature(
+    "zunmtr",
+    Side(),
+    Uplo(),
+    cTrans(),
+    Dim("m"),
+    Dim("n"),
+    zData("A", "ldA * (m if side == 'L' else n)",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "m if side == 'L' else n"),
+    zData("Tau", "m - 1 if side == 'L' else n - 1"),
+    zData("C", "ldC * n"),
+    Ld("ldC", "m"),
+    zWork("Work", "lWork"),
+    Lwork("lWork", "n if side == 'L' else m"),
+    Info()
+)

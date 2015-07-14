@@ -1,6 +1,6 @@
-# single precision tridiagonl eigensolver using DC
+# single precision symmetric tridiagonl eigensolver using DC
 Signature(
-    "dstedc",
+    "sstedc",
     Flag("compz", ["V", "I", "N"]),
     Dim("n"),
     sData("D", "n"),

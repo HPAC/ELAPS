@@ -1,4 +1,4 @@
-# double precision complex hermetian eigensolver (expert version)
+# double precision complex Hermitian eigensolver (expert version)
 Signature(
     "zheevx",
     Flag("jobz", ["V", "N"]),

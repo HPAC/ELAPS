@@ -1,0 +1,17 @@
+# double precision symmetric tridiagonl eigensolver using inverse iteration
+Signature(
+    "dstein",
+    Dim("n"),
+    dData("D", "n"),
+    dData("E", "n - 1"),
+    Dim("m", "n"),
+    dData("W", "n"),
+    iData("iBlock", "n"),
+    iData("iSplit", "n"),
+    dData("Z", "ldZ * m"),
+    Ld("ldZ", "n"),
+    dWork("Work", "5 * n"),
+    iWork("iWork", "n"),
+    iData("iFail", "m"),
+    Info()
+)

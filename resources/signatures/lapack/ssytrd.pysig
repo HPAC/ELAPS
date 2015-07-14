@@ -1,0 +1,15 @@
+# single precision symmetric reduction to tridiagonal
+Signature(
+    "ssytrd",
+    Uplo(),
+    Dim("n"),
+    sData("A", "ldA * n",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    sData("D", "n"),
+    sData("E", "n - 1"),
+    sData("Tau", "n - 1"),
+    sWork("Work", "lWork"),
+    Lwork("lWork", "1"),
+    Info()
+)

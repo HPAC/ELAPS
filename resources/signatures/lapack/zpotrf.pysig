@@ -1,4 +1,4 @@
-# double precision complex cholesky factorization
+# double precision complex Cholesky factorization
 Signature(
     "zpotrf",
     Uplo(),

@@ -1,12 +1,12 @@
-# single precision tridiagonl eigensolver
+# single precision symmetric tridiagonl eigensolver
 Signature(
     "sstev",
     Flag("jobz", ["V", "N"]),
-    Dim("n")
+    Dim("n"),
     sData("D", "n"),
     sData("E", "n - 1"),
     sData("Z", "ldZ * n if jobz == 'V' else 0"),
-    Ld("ldZ", "n if jobz == 'V' else 1")
+    Ld("ldZ", "n if jobz == 'V' else 1"),
     sWork("Work", "2 * n - 2 if jobz == 'V' else 0"),
     Info()
 )

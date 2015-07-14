@@ -1,4 +1,4 @@
-# single precision symmetirc tridiagonal eigenvalues
+# single precision symmetric tridiagonal eigenvalues
 Signature(
     "sstebz",
     Flag("range", ["A", "V", "I"]),
@@ -15,8 +15,8 @@ Signature(
     iScalar("nsplit"),
     sData("W", "n"),
     iData("iBlock", "n"),
-    iSplit("iBlock", "n"),
-    sData("Work", "4 * n"),
-    iData("iWork", "3 * n"),
+    iData("iSplit", "n"),
+    sWork("Work", "4 * n"),
+    iWork("iWork", "3 * n"),
     Info()
 )

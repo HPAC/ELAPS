@@ -1,0 +1,8 @@
+# double precision symmetric tridiagonl eigensolver using Pal-Walker-Kahan QR
+Signature(
+    "dsterf",
+    Dim("n"),
+    dData("D", "n"),
+    dData("E", "n - 1"),
+    Info()
+)

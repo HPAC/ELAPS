@@ -1,6 +1,6 @@
-# double precision complex hermetian generalized eigensolver using DC
+# double precision complex Hermitian generalized eigensolver using DC
 Signature(
-    "zsygvd",
+    "zhegvd",
     Flag("itype", [1, 2, 3]),
     Flag("jobz", ["V", "N"]),
     Uplo(),
@@ -9,10 +9,10 @@ Signature(
     Ld("ldA", "n"),
     zData("B", "ldB * n", "symm, lower if uplo == 'L' else upper"),
     Ld("ldB", "n"),
-    sData("W", "n"),
+    dData("W", "n"),
     zWork("Work", "lWork"),
     Lwork("lWork", "n + 1 if jobz == 'N' else 2 * n + n * n"),
-    sWork("rWork", "lrWork"),
+    dWork("rWork", "lrWork"),
     Lwork("lrWork", "n if jobz == 'N' else 1 + 5 * n + 2 * n * n"),
     iWork("iWork", "liWork"),
     Lwork("liWork", "1 if jobz == 'N' else 3 + 5 * n"),

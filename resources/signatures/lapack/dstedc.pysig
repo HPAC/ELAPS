@@ -1,4 +1,4 @@
-# double precision tridiagonl eigensolver using DC
+# double precision symmetric tridiagonl eigensolver using DC
 Signature(
     "dstedc",
     Flag("compz", ["V", "I", "N"]),

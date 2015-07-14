@@ -1,6 +1,6 @@
-# single precision complex hermetian generalized eigensolver using DC
+# single precision complex Hermitian generalized eigensolver using DC
 Signature(
-    "csygvd",
+    "chegvd",
     Flag("itype", [1, 2, 3]),
     Flag("jobz", ["V", "N"]),
     Uplo(),

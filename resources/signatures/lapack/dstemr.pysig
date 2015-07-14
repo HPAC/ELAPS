@@ -1,4 +1,4 @@
-# double precision tridiagonl eigensolver using MRRR
+# double precision symmetric tridiagonl eigensolver using MRRR
 Signature(
     "dstemr",
     Flag("jobz", ("V", "N")),

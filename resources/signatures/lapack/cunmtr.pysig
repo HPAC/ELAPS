@@ -1,0 +1,18 @@
+# single precision complex multiplication by Q from chetrd
+Signature(
+    "cunmtr",
+    Side(),
+    Uplo(),
+    cTrans(),
+    Dim("m"),
+    Dim("n"),
+    cData("A", "ldA * (m if side == 'L' else n)",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "m if side == 'L' else n"),
+    cData("Tau", "m - 1 if side == 'L' else n - 1"),
+    cData("C", "ldC * n"),
+    Ld("ldC", "m"),
+    cWork("Work", "lWork"),
+    Lwork("lWork", "n if side == 'L' else m"),
+    Info()
+)

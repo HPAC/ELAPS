@@ -1,0 +1,13 @@
+# double precision complex generate Q from zhetrd
+Signature(
+    "zungtr",
+    Uplo(),
+    Dim("n"),
+    zData("A", "ldA * n",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    zData("Tau", "n - 1"),
+    zWork("Work", "lWork"),
+    Lwork("lWork", "n - 1"),
+    Info()
+)

@@ -1,4 +1,4 @@
-# single precision complex hermetian eigensolver (expert version)
+# single precision complex Hermitian eigensolver (expert version)
 Signature(
     "cheevx",
     Flag("jobz", ["V", "N"]),

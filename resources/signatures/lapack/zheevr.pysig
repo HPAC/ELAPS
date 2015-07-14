@@ -1,25 +1,25 @@
-# double precision complex hermetian eigensolver using MRRR
+# double precision complex Hermitian eigensolver using MRRR
 Signature(
-    "cheevr",
+    "zheevr",
     Flag("jobz", ["V", "N"]),
     Flag("range", ["A", "V", "I"]),
     Uplo(),
     Dim("n"),
     zData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
-    sScalar("vl"),
-    sScalar("vu"),
+    dScalar("vl"),
+    dScalar("vu"),
     iScalar("il"),
     iScalar("iu"),
     iScalar("abstol"),
     iScalar("m"),
-    sData("W", "n"),
+    dData("W", "n"),
     zData("Z", "ldZ * n"),  # actually: ldZ * m
     Ld("ldZ", "n if jobz == 'V' else 1"),
     iData("isuppZ", "2 * n"),  # actually: 2 * m
     zWork("Work", "lWork"),
     Lwork("lWork", "2 * n"),
-    sWork("rWork", "lWork"),
+    dWork("rWork", "lWork"),
     Lwork("lrWork", "24 * n"),
     iWork("iWork", "liWork"),
     Lwork("liWork", "10 * n"),

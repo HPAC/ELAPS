@@ -1,4 +1,4 @@
-# single precision cmplex hermetian eigensolver
+# single precision cmplex Hermitian eigensolver
 Signature(
     "cheev",
     Flag("jobz", ["V", "N"]),

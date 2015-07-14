@@ -4,8 +4,8 @@ Signature(
     Dim("n"),
     dData("A", "ldA * n"),
     Ld("ldA", "n"),
-    iData("ipiv", "min(n)"),
+    iData("ipiv", "n"),
     dWork("Work", "lWork"),
-    Lwork("lWork", "n")
+    Lwork("lWork", "n"),
     Info()
 )

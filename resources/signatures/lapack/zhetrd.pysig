@@ -1,0 +1,15 @@
+# double precision complex Hermitian reduction to tridiagonal
+Signature(
+    "zhetrd",
+    Uplo(),
+    Dim("n"),
+    zData("A", "ldA * n",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    sData("D", "n"),
+    sData("E", "n - 1"),
+    zData("Tau", "n - 1"),
+    zWork("Work", "lWork"),
+    Lwork("lWork", "1"),
+    Info()
+)

@@ -1,4 +1,4 @@
-# single precision complex hermetin eigensolver using DC
+# single precision complex Hermitian eigensolver using DC
 Signature(
     "cheevd",
     Flag("jobz", ["V", "N"]),

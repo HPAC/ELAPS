@@ -1,0 +1,12 @@
+# double precision complex symmetric tridiagonl eigensolver using QR
+Signature(
+    "zsteqr",
+    Flag("compz", ["V", "N"]),
+    Dim("n"),
+    dData("D", "n"),
+    dData("E", "n - 1"),
+    zData("Z", "ldZ * n if compz == 'V' else 0"),
+    Ld("ldZ", "n if compz == 'V' else 1"),
+    dData("Work", "2 * n - 2 if compz == 'V' else 0"),
+    Info()
+)

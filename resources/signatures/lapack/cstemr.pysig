@@ -1,6 +1,6 @@
-# single precision symmetric tridiagonl eigensolver using MRRR
+# single precision complex symmetric tridiagonl eigensolver using MRRR
 Signature(
-    "sstemr",
+    "cstemr",
     Flag("jobz", ("V", "N")),
     Flag("range", ("A", "V", "I")),
     Dim("n"),
@@ -12,7 +12,7 @@ Signature(
     iScalar("iu"),
     iScalar("m"),
     sData("W", "n"),
-    sData("Z", "ldZ * n"),  # actually: ldZ * m
+    cData("Z", "ldZ * n"),  # actually: ldZ * m
     Ld("ldZ", "n if jobz == 'V' else 1"),
     Dim("nZc", "n if range == 'A' else n if range == 'V' else iu + il + 1"),
     iData("isuppZ", "2 * n"),  # actually: 2 * m

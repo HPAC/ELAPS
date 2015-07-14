@@ -1,6 +1,6 @@
 # single precision symmetirc eigensolver (expert version)
 Signature(
-    "dsyevx",
+    "ssyevx",
     Flag("jobz", ["V", "N"]),
     Flag("range", ["A", "V", "I"]),
     Uplo(),

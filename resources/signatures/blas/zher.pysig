@@ -1,0 +1,12 @@
+# double precision complex vector-vector outer product
+Signature(
+    "zher",
+    Uplo(),
+    Dim("n"),
+    zScalar(),
+    zData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    zData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    complexity = "4 * 2 * n ** 2"
+)

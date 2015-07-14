@@ -1,4 +1,4 @@
-# single precision complex hermetian eigensolver using MRRR
+# single precision complex Hermitian eigensolver using MRRR
 Signature(
     "cheevr",
     Flag("jobz", ["V", "N"]),

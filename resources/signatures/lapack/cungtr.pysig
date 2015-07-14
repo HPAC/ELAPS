@@ -1,0 +1,13 @@
+# single precision complex generate Q from chetrd
+Signature(
+    "cungtr",
+    Uplo(),
+    Dim("n"),
+    cData("A", "ldA * n",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    cData("Tau", "n - 1"),
+    cWork("Work", "lWork"),
+    Lwork("lWork", "n - 1"),
+    Info()
+)

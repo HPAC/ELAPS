@@ -1,0 +1,12 @@
+# double precision symmetirc generalized reduction to standard
+Signature(
+    "dsygst",
+    Flag("itype", [1, 2, 3]),
+    Uplo(),
+    Dim("n"),
+    dData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    dData("B", "ldB * n", "symm, lower if uplo == 'L' else upper"),
+    Ld("ldB", "n"),
+    Info()
+)

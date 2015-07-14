@@ -6,7 +6,7 @@ Signature(
     Dim("nrhs"),
     dData("A", "ldA * n"),
     Ld("ldA", "n"),
-    iData("ipiv", "min(n)"),
+    iData("ipiv", "n"),
     dData("B", "ldB * nrhs"),
     Ld("ldB", "n"),
     Info()

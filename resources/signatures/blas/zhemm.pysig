@@ -1,6 +1,6 @@
 # double precision complex symmetrix matrix-matrix product
 Signature(
-    "chemm",
+    "zhemm",
     Side(),
     Uplo(),
     Dim("m"),

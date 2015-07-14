@@ -1,6 +1,6 @@
-# single precision complex hermetian generalized eigensolver (expert version)
+# single precision complex Hermitian generalized eigensolver (expert version)
 Signature(
-    "csygvx",
+    "chegvx",
     Flag("itype", [1, 2, 3]),
     Flag("jobz", ["V", "N"]),
     Flag("range", ["A", "V", "I"]),
