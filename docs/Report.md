@@ -39,7 +39,7 @@ is a nested data structure that organizes the data according to the
 
 - `range_val`: The range value (or `None`).
 - `rep`: The repetition number.
-- `sumrange_val`: the sumrange value (or `None`).
+- `sumrange_val`: the sum-range value (or `None`).
 - `callid`: The call number.
 - `counterid`: Number of the PAPI counter (`0` for cycle count).
 

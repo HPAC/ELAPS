@@ -125,13 +125,13 @@ Setters:
 - `set_sumrange_var(sumrange_var)` and `set_sumrange_vals(sumrange_vals)`
 
 ### `sumrange_parallel`
-Wether the calls in the sumrange shall we executed in parallel.  The used
+Wether the calls in the sum-range shall we executed in parallel.  The used
 Sampler must support OpenMP for this option.
 
 Setter: `set_sumrange_parallel(sumrange_parallel)`
 
 ### `calls_parallel`
-Wether the calls for one sumrange iteration shall be executed in parallel.  The
+Wether the calls for one sum-range iteration shall be executed in parallel.  The
 used Sampler must support OpenMP for this option.  The option is automatically
 implied when `sumrange_parallel == True`.
 
@@ -198,7 +198,7 @@ The allowed argument formats are:
 
 ### `vary`
 Wether operands refer to the same memory buffers across repetitions and
-iterations of the sumrange and how they depend on these iterations.
+iterations of the sum-range and how they depend on these iterations.
 `vary` is a `dict` that has one entry for each operand, which in turn is a
 `dict` with they following keys:
 - `with`: A `set` of variables with which the operand varies.  Can contain
