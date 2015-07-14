@@ -8,7 +8,7 @@ Signature(
     sScalar("vu"),
     iScalar("il"),
     iScalar("iu"),
-    iScalar("abstol"),
+    sScalar("abstol"),
     sData("D", "n"),
     sData("E", "n - 1"),
     iScalar("m"),

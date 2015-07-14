@@ -6,9 +6,9 @@ Signature(
     Dim("n"),
     zData("A", "ldA * n", "symm, lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
-    sData("W", "n"),
+    dData("W", "n"),
     zWork("Work", "lWork"),
     Lwork("lWork", "2 * n - 1"),
-    sWork("rWork", "3 * n - 2"),
+    dWork("rWork", "3 * n - 2"),
     Info()
 )

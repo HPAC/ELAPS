@@ -14,9 +14,9 @@ Signature(
     dScalar("vu"),
     iScalar("il"),
     iScalar("iu"),
-    sScalar("abstol"),
+    dScalar("abstol"),
     iScalar("m"),
-    sData("W", "n"),
+    dData("W", "n"),
     zData("Z", "ldZ * n"),  # actually: ldZ * m
     Ld("ldZ", "n if jobz == 'V' else 1"),
     zWork("Work", "lWork"),

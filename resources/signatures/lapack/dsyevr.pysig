@@ -11,7 +11,7 @@ Signature(
     dScalar("vu"),
     iScalar("il"),
     iScalar("iu"),
-    iScalar("abstol"),
+    dScalar("abstol"),
     iScalar("m"),
     dData("W", "n"),
     dData("Z", "ldZ * n"),  # actually: ldZ * m
