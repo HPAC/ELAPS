@@ -41,7 +41,10 @@ def load_signature(name):
             continue
         filename = os.path.join(dirpath, name + ".pysig")
         if os.path.isfile(filename):
-            return load_signature_file(filename)
+            sig = load_signature_file(filename)
+            if str(sig[0]) != name:
+                raise IOError("Routine mismatch for Signature %s" % name)
+            return sig
     raise IOError("No signature found for %s" % name)
 
 
@@ -54,13 +57,18 @@ def load_all_signatures():
         dirpath = os.path.join(sigpath, dirname)
         if not os.path.isdir(dirpath):
             continue
-        for filename in os.listdir(sigpath):
+        for filename in os.listdir(os.path.join(sigpath, dirname)):
             if not filename[-6:] == ".pysig":
                 continue
             filepath = os.path.join(dirpath, filename)
             if not os.path.isfile(filepath):
                 continue
-            sig = load_signature_file(filepath)
+            try:
+                sig = load_signature_file(filepath)
+            except:
+                raise IOError("Error parsing %s" % filepath)
+            if str(sig[0]) != filename[:-6]:
+                raise IOError("Routine mismatch for %s" % filepath)
             sigs[str(sig[0])] = sig
     return sigs
 
