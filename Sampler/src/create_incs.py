@@ -134,7 +134,6 @@ def main():
         info["papi_counters_avail"] = tuple()
     if "DFLOPS_PER_CYCLE" in os.environ:
         info["dflops/cycle"] = int(os.environ["DFLOPS_PER_CYCLE"])
-        info["sflops/cycle"] = 2 * int(os.environ["DFLOPS_PER_CYCLE"])
     if "SFLOPS_PER_CYCLE" in os.environ:
         info["sflops/cycle"] = int(os.environ["SFLOPS_PER_CYCLE"])
     info = info
