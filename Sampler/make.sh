@@ -59,10 +59,10 @@ else
     echo "PAPI counters:    $PAPI_COUNTERS_AVAIL"
 fi
 echo "backend:          $BACKEND"
-[ -z $BACKEND_HEADER ] || echo "backend header:   $BACKEND_HEADER"
-[ -z $BACKEND_PREFIX ] || echo "backend prefix:   $BACKEND_PREFIX"
-[ -z $BACKEND_SUFFIX ] || echo "backend suffix:   $BACKEND_SUFFIX"
-[ -z $BACKEND_FOOTER ] || echo "backend footer:   $BACKEND_FOOTER"
+[ -z "$BACKEND_HEADER" ] || echo "backend header:   $BACKEND_HEADER"
+[ -z "$BACKEND_PREFIX" ] || echo "backend prefix:   $BACKEND_PREFIX"
+[ -z "$BACKEND_SUFFIX" ] || echo "backend suffix:   $BACKEND_SUFFIX"
+[ -z "$BACKEND_FOOTER" ] || echo "backend footer:   $BACKEND_FOOTER"
 echo -n "compiling "
 
 # set paths

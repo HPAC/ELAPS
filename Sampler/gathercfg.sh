@@ -3,13 +3,13 @@
 if [ -e /proc/cpuinfo ]; then
     # Linux stuff
     CPU_MODEL_=`< /proc/cpuinfo sed -n "s/model name\\s*: \(.*\)/\1/p" | tail -n 1`
-    MHZ_=`< /proc/cpuinfo sed -n "s/cpu MHz\\s*: \(.*\)/\1/p" | tail -n 1`
+    MHZ=`< /proc/cpuinfo sed -n "s/cpu MHz\\s*: \(.*\)/\1/p" | tail -n 1`
     FREQUENCY_HZ_=`bc -l <<< "$MHZ * 1000000"`
     CORES_PER_CPU=`< /proc/cpuinfo sed -n "s/cpu cores\\s*: \(.*\)/\1/p" | tail -n 1`
     SIBLINGS=`< /proc/cpuinfo sed -n "s/siblings\\s*: \(.*\)/\1/p" | tail -n 1`
     THREADS_PER_CORE_=$(($SIBLINGS / $CORES_PER_CPU))
     NPROCS=$((`< /proc/cpuinfo sed -n "s/processor\\s*: \(.*\)/\1/p" | tail -n 1` + 1))
-    NCORES_=$((NPROCS / $THREADS_PER_CORE))
+    NCORES_=$((NPROCS / $THREADS_PER_CORE_))
     if hash lscpu 2>/dev/null; then
         MHZ=`lscpu | sed -n "s/CPU MHz:\\s*\(.*\)/\1/p" | tr , .`
         [ -z "$MHZ" ] || FREQUENCY_HZ_=`bc -l <<< "$MHZ * 1000000"`
