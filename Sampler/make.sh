@@ -37,6 +37,34 @@ export PAPI_COUNTERS_MAX PAPI_COUNTERS_AVAIL OPENMP
 export DFLOPS_PER_CYCLE SFLOPS_PER_CYCLE 
 export CPU_MODEL FREQUENCY_HZ NCORES THREADS_PER_CORE
 
+# print info
+echo "Building Sampler  $NAME"
+echo "build folder:     $TARGET_DIR"
+echo "system/BLAS:      $SYSTEM_NAME/$BLAS_NAME"
+echo "CPU (Hz):         $CPU_MODEL ($FREQUENCY_HZ)"
+echo "#cores:           $NCORES"
+echo "threads/core:     $THREADS_PER_CORE"
+echo "flops/cycle:      $SFLOPS_PER_CYCLE (single) / $DFLOPS_PER_CYCLE (double)"
+echo "kernels:          $KERNEL_HEADERS"
+echo -n "OpenMP:           "
+[ $OPENMP -eq 1 ] && echo "Enabled" || echo "Disabled"
+echo "C compiler:       $CC $CFLAGS"
+echo "C++ compiler:     $CXX $CXXFLAGS"
+echo "include flags:    $INCLUDE_FLAGS"
+echo "linker flags:     $LINK_FLAGS"
+if [ $PAPI_COUNTERS_MAX -eq 0 ]; then
+    echo "PAPI:             Disabled"
+else
+    echo "#PAPI counters:   $PAPI_COUNTERS_MAX"
+    echo "PAPI counters:    $PAPI_COUNTERS_AVAIL"
+fi
+echo "backend:          $BACKEND"
+[ -z $BACKEND_HEADER ] || echo "backend header:   $BACKEND_HEADER"
+[ -z $BACKEND_PREFIX ] || echo "backend prefix:   $BACKEND_PREFIX"
+[ -z $BACKEND_SUFFIX ] || echo "backend suffix:   $BACKEND_SUFFIX"
+[ -z $BACKEND_FOOTER ] || echo "backend footer:   $BACKEND_FOOTER"
+echo -n "compiling "
+
 # set paths
 cfg_h=$TARGET_DIR/cfg.h
 kernel_h=$TARGET_DIR/kernels.h
@@ -52,9 +80,11 @@ mkdir -p "$TARGET_DIR"
 
 # create headers file
 src/create_header.py > "$kernel_h"
+echo -n "."
 
 # create aux files
 $CC $CFLAGS -E -I. "$kernel_h" | src/create_incs.py "$cfg_h" "$kernel_h" "$sigs_c_inc" "$calls_c_inc" "$info_py" || exit
+echo -n "."
 
 defines=""
 [ "$OPENMP" == "1" ] && defines+=" -D OPENMP_ENABLED"
@@ -62,16 +92,20 @@ defines=""
 # build .o
 for x in main CallParser MemoryManager Sampler Signature; do
     $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" $defines $defineother src/$x.cpp -o "$TARGET_DIR/$x.o" || exit
+    echo -n "."
 done
 
 # build kernels
 mkdir "$TARGET_DIR/kernels"
 for file in kernels/*.c; do
     $CC $CFLAGS -c $file -o "$TARGET_DIR/${file%.c}.o" || exit
+    echo -n "."
 done
 
 # build sample.o
 $CC $CFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" $defines src/sample.c -o "$TARGET_DIR/sample.o" || exit
+echo -n "."
 
 # build sampler
 $CXX $CXXFLAGS "$TARGET_DIR/"*.o "$TARGET_DIR/kernels/"*.o -o "$TARGET_DIR/sampler.x" $LINK_FLAGS || exit
+echo " Done!"
