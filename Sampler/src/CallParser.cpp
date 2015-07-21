@@ -167,7 +167,7 @@ KernelCall CallParser::get_call() const {
 
     // set up argument count and function pointer
     call.argc = signature->arguments.size();
-    call.argv[0] = signature->function;
+    call.fptr = signature->fptr;
 
     // get the argument pointers from the MemoryManager
     for (unsigned char i = 1; i < call.argc; i++)

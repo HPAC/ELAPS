@@ -22,7 +22,7 @@ class Signature {
         std::string name;
 
         /** Function pointer to the kernel. */
-        void *function;
+        void (*fptr)();
 
         /** Argument types. */
         std::vector<ArgType> arguments;
@@ -31,10 +31,10 @@ class Signature {
          * Creates the \ref arguments from the raw list of input \p args.
          *
          * \param name  Initial value for \p name.
-         * \param fptr  Initial value for \p function.
+         * \param fptr  Initial value for \p fptr.
          * \param args  List of arguments, \ref ArgType::NONE terminated.
          */
-        Signature(const char *name, void *fptr, const ArgType *args);
+        Signature(const char *name, void (*fptr)(), const ArgType *args);
 
         /** Default Destructor */
         Signature();

@@ -44,6 +44,7 @@ void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
     // for each call
     int i;
     for (i = 0; i < ncalls; i++) {
+        void (*fptr)() = calls[i].fptr;
         void **argv = calls[i].argv;
         unsigned long ticks0, ticks1;
 
@@ -79,6 +80,7 @@ void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
             // for each call
             int i;
             for (i = 0; i < ncalls; i++) {
+                void (*fptr)() = calls[i].fptr;
                 void **argv = calls[i].argv;
                 if (lastparallel) {
                     if (calls[i].parallel) {
@@ -167,6 +169,7 @@ void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, int ncou
     // for each call
     int i;
     for (i = 0; i < ncalls; i++) {
+        void (*fptr)() = calls[i].fptr;
         void **argv = calls[i].argv;
         unsigned long ticks0, ticks1;
 
@@ -206,6 +209,7 @@ void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, int ncount
             // for each call
             int i;
             for (i = 0; i < ncalls; i++) {
+                void (*fptr)() = calls[i].fptr;
                 void **argv = calls[i].argv;
                 if (lastparallel) {
                     if (calls[i].parallel) {

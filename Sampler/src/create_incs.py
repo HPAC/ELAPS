@@ -72,7 +72,7 @@ def main():
             kernelsigs.append((name,) + tuple(arg for arg in args))
             enumargs = [argtypes[arg] for arg in args]
             argcmax = max(argcmax, len(enumargs) + 1)
-            print("{\"" + name + "\", (void *) " + symbolname + ", { " +
+            print("{\"" + name + "\", (void (*)()) " + symbolname + ", { " +
                   ", ".join(enumargs) + " } },", file=fout)
 
     # create calls.s.cin
@@ -82,7 +82,7 @@ def main():
             print("\tCOUNTERS_START", file=fout)
             voidlist = (argc - 1) * ["void *"]
             arglist = ["argv[" + str(n) + "]" for n in range(1, argc)]
-            print("\t((void (*)(" + ",".join(voidlist) + ")) argv[0])(" +
+            print("\t((void (*)(" + ",".join(voidlist) + ")) fptr)(" +
                   ",".join(arglist) + ");", file=fout)
             print("\tCOUNTERS_END", file=fout)
             print("\t break;", file=fout)

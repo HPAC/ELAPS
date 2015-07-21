@@ -17,7 +17,7 @@ int main() {
         // signature data type
         typedef struct {
             const char *name;
-            void *fptr;
+            void (*fptr)();
             ArgType args[KERNEL_MAX_ARGS];
         } sigstruct;
 
