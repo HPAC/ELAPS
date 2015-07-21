@@ -1,9 +1,10 @@
 #ifndef SAMPLE_H
 #define SAMPLE_H
 
-#include <stddef.h>
-
+#include CFG_H
 #include "KernelCall.h"
+
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {

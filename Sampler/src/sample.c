@@ -1,5 +1,7 @@
 #include "sample.h"
 
+#include CFG_H
+
 #ifdef PAPI_ENABLED
 #include <papi.h>
 #endif

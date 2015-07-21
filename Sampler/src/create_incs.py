@@ -96,8 +96,10 @@ def main():
         print("#define CALLS_C_INC \"" + calls_c_inc + "\"", file=fout)
         print("#define KERNEL_MAX_ARGS", argcmax, file=fout)
         if papi_counters_max > 0:
-            print("#define PAPI", file=fout)
+            print("#define PAPI_ENABLED", file=fout)
             print("#define MAX_COUNTERS", papi_counters_max, file=fout)
+        if os.environ["OPENMP"] == "1":
+            print("#define OPENMP_ENABLED", file=fout)
         print("#endif /* SAMPLERCFG_H */", file=fout)
 
     # create info.py

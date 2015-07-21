@@ -28,8 +28,8 @@
 : ${BACKEND_PREFIX:=""}
 : ${BACKEND_SUFFIX:=""}
 : ${BACKEND_FOOTER:=""}
-[ -n "$DFLOPS_PER_CYCLE" -a -z "$SFLOPS_PER_CYCLE" ] && SFLOPS_PER_CYCLE=$((DFLOPS_PER_CYCLE * 2))
-[ -n "$SFLOPS_PER_CYCLE" -a -z "$DFLOPS_PER_CYCLE" ] && DFLOPS_PER_CYCLE=$((SFLOPS_PER_CYCLE / 2))
+[ -n "$DFLOPS_PER_CYCLE" ] && : ${SFLOPS_PER_CYCLE:=$((DFLOPS_PER_CYCLE * 2))}
+[ -n "$SFLOPS_PER_CYCLE" ] && : ${DFLOPS_PER_CYCLE:=$((SFLOPS_PER_CYCLE / 2))}
 
 export TARGET_DIR NAME BLAS_NAME SYSTEM_NAME KERNEL_HEADERS
 export BACKEND BACKEND_HEADER BACKEND_PREFIX BACKEND_SUFFIX BACKEND_FOOTER
@@ -66,11 +66,11 @@ echo "backend:          $BACKEND"
 echo -n "compiling "
 
 # set paths
-cfg_h=$TARGET_DIR/cfg.h
-kernel_h=$TARGET_DIR/kernels.h
-sigs_c_inc=$TARGET_DIR/sigs.c.inc
-calls_c_inc=$TARGET_DIR/calls.c.inc
-info_py=$TARGET_DIR/info.py
+cfg_h="$TARGET_DIR/cfg.h"
+kernel_h="$TARGET_DIR/kernels.h"
+sigs_c_inc="$TARGET_DIR/sigs.c.inc"
+calls_c_inc="$TARGET_DIR/calls.c.inc"
+info_py="$TARGET_DIR/info.py"
 
 # clean previous build
 rm -rf "$TARGET_DIR"
@@ -86,12 +86,9 @@ echo -n "."
 $CC $CFLAGS -E -I. "$kernel_h" | src/create_incs.py "$cfg_h" "$kernel_h" "$sigs_c_inc" "$calls_c_inc" "$info_py" || exit
 echo -n "."
 
-defines=""
-[ "$OPENMP" == "1" ] && defines+=" -D OPENMP_ENABLED"
-[ "$PAPI_COUNTERS_MAX" -gt 0 ] && defines+=" -D PAPI_ENABLED"
 # build .o
 for x in main CallParser MemoryManager Sampler Signature; do
-    $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" $defines $defineother src/$x.cpp -o "$TARGET_DIR/$x.o" || exit
+    $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/$x.cpp -o "$TARGET_DIR/$x.o" || exit
     echo -n "."
 done
 
@@ -103,7 +100,7 @@ for file in kernels/*.c; do
 done
 
 # build sample.o
-$CC $CFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" $defines src/sample.c -o "$TARGET_DIR/sample.o" || exit
+$CC $CFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/sample.c -o "$TARGET_DIR/sample.o" || exit
 echo -n "."
 
 # build sampler

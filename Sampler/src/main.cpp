@@ -1,7 +1,8 @@
 #include "Sampler.hpp"
-#include <cstdlib>
 
 #include CFG_H
+
+#include <cstdlib>
 
 extern "C" {
 #include KERNEL_H

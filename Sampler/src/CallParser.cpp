@@ -1,5 +1,7 @@
 #include "CallParser.hpp"
 
+#include CFG_H
+
 #include <iostream>
 
 #include <cstdlib>

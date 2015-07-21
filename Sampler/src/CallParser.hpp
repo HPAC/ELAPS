@@ -1,6 +1,7 @@
 #ifndef CALLPARSER_HPP
 #define CALLPARSER_HPP
 
+#include CFG_H
 #include "MemoryManager.hpp"
 #include "Signature.hpp"
 #include "KernelCall.h"

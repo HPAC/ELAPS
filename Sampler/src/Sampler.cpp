@@ -1,5 +1,8 @@
 #include "Sampler.hpp"
 
+#include CFG_H
+#include "sample.h"
+
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -10,9 +13,6 @@
 #ifdef PAPI_ENABLED
 #include <papi.h>
 #endif
-
-#include CFG_H
-#include "sample.h"
 
 using namespace std;
 

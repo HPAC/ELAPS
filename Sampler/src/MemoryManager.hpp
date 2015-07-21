@@ -5,7 +5,6 @@
 #include <map>
 #include <string>
 
-
 /** Memory manager.
  * This class manages the memory for the kernel calls' pointer arguments.
  *

@@ -1,6 +1,7 @@
 #ifndef SAMPLER_HPP
 #define SAMPLER_HPP
 
+#include CFG_H
 #include "MemoryManager.hpp"
 #include "Signature.hpp"
 #include "CallParser.hpp"

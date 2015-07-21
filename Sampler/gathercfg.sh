@@ -33,7 +33,7 @@ else
     PAPI_COUNTERS_AVAIL_=""
 fi
 
-if [ "$0" = "$BASH_SOURCE" ]; then
+if [ "$0" == "$BASH_SOURCE" ]; then
     echo "CPU_MODEL=\"$CPU_MODEL_\""
     echo "FREQUENCY_HZ=$FREQUENCY_HZ"_
     echo "NCORES=$NCORES_"
