@@ -157,8 +157,6 @@ void CallParser::register_args() {
             case VOIDP:
                 register_arg<void>(i);
                 break;
-            default:
-                break;
         }
 }
 

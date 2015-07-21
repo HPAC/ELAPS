@@ -222,7 +222,7 @@ void Sampler::go(const vector<string> &tokens) {
     }
 #endif
 
-    size_t ncalls = callparsers.size();
+    const size_t ncalls = callparsers.size();
     KernelCall *calls = new KernelCall[ncalls];
 
     // construct KernelCalls (C structs)
@@ -317,8 +317,6 @@ void Sampler::info(const vector<string> &tokens) {
             case VOIDP:
                 cerr << "void *";
                 break;
-            default:
-                break;
         }
         if (i + 1 < argc)
             cerr << ", ";
@@ -371,7 +369,7 @@ void Sampler::start() {
         if (line.size() == 0)
             continue;
 
-        bool hidden = isspace(line[0]);
+        const bool hidden = isspace(line[0]);
 
         // remove leading spaces
         line = line.substr(line.find_first_not_of(" \t\n\v\f\r"));

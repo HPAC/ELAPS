@@ -21,7 +21,7 @@ int main() {
         } sigstruct;
 
         // static initialization from an include file
-        sigstruct sigs[] = {
+        const sigstruct sigs[] = {
 #include SIGS_C_INC
             {""}  // needed to mark the end
         };

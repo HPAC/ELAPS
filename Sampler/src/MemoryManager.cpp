@@ -192,7 +192,7 @@ void MemoryManager::dynamic_newcall() {
 template <typename T>
 size_t MemoryManager::dynamic_register(size_t size) {
     // go to next alignment step
-    const size_t id = (((size_t) dynamic_needed_curr / alignment + 1) * alignment);
+    const size_t id = ((size_t) dynamic_needed_curr / alignment + 1) * alignment;
 
     // compute new size of needed memory
     dynamic_needed_curr = id + size * sizeof(T);
