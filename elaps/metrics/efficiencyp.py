@@ -7,7 +7,7 @@ def metric(data, experiment, nthreads, callid, **kwargs):
     """Performance of the operations relative to peak in %.
 
     Comparing the flops/cycle to the system's peak.
-    Not acocuting for Turbo Boost.
+    Not accounting for Turbo Boost.
     """
     nops = data.get("flops")
     cycles = data.get("cycles")

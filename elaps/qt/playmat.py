@@ -22,7 +22,7 @@ class PlayMat(QtGui.QMainWindow):
     """GUI for Experiment."""
 
     def __init__(self, app=None, load=None, reset=False):
-        """Initilialize the PlayMat."""
+        """Initialize the PlayMat."""
         if app:
             self.Qapp = app
         else:
@@ -287,7 +287,7 @@ class PlayMat(QtGui.QMainWindow):
             # sumrange
             self.UI_sumrange_parallel = QtGui.QComboBox(
                 toolTip="<tt>sumrange_parallel</tt>:\n"
-                "<i>sum over</i>: the calls are executed sequencially and "
+                "<i>sum over</i>: the calls are executed sequentially and "
                 "the measurements are summed to a single value.\n"
                 "<i>#omp for</i>: the calls in the range are executed in"
                 "parallel through OpenMP yielding one measurement value."
@@ -338,7 +338,7 @@ class PlayMat(QtGui.QMainWindow):
             calls_parallelL.addStretch(1)
             self.UI_calls_parallelW = QtGui.QWidget(
                 toolTip="<tt>calls_parallel</tt>: "
-                "Execute the calls below in parallel thorugh OpenMP."
+                "Execute the calls below in parallel through OpenMP."
             )
             self.UI_calls_parallelW.setLayout(calls_parallelL)
 

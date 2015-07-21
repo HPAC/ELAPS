@@ -19,7 +19,7 @@ class Experiment(object):
     """ELAPS:Experiment."""
 
     def __init__(self, other=None, **kwargs):
-        """Initialize experiment from (optional) other expeirment."""
+        """Initialize experiment from (optional) other experiment."""
         # empty experiment
         self.note = ""
         self.sampler = None
@@ -217,7 +217,7 @@ class Experiment(object):
     # setters
     def set_sampler(self, sampler, force=False, check_only=False):
         """Set the Sampler."""
-        # check completness
+        # check completeness
         for key in ("backend_name", "backend_header", "backend_prefix",
                     "backend_suffix", "backend_footer", "threads_per_core",
                     "ncores", "nt_max", "exe", "kernels", "omp_enabled",
@@ -314,7 +314,7 @@ class Experiment(object):
                     raise ValueError("Sampler doesn't support PAPI")
                 papi_counters = []
         else:
-            # availablility
+            # availability
             papi_counters2 = []
             for counter in papi_counters:
                 if counter not in sampler["papi_counters_avail"]:
@@ -340,7 +340,7 @@ class Experiment(object):
         self.papi_counters = papi_counters
 
     def set_nthreads(self, nthreads, force=False, check_only=False):
-        """Set number of threds."""
+        """Set number of threads."""
         if isinstance(nthreads, str):
             nthreads = self.ranges_parse(nthreads, dosumrange=False)
         if isinstance(nthreads, int):
@@ -365,7 +365,7 @@ class Experiment(object):
         self.nthreads = nthreads
 
     def set_range_var(self, range_var, force=False, check_only=False):
-        """Set the range variabel."""
+        """Set the range variable."""
         # turn str to symbol
         if isinstance(range_var, str):
             if not range_var:
@@ -494,7 +494,7 @@ class Experiment(object):
         self.nreps = nreps
 
     def set_sumrange_var(self, sumrange_var, force=False, check_only=False):
-        """Set the sumrange variabel."""
+        """Set the sumrange variable."""
         # turn str to symbol
         if isinstance(sumrange_var, str):
             if not sumrange_var:
@@ -609,7 +609,7 @@ class Experiment(object):
 
     def set_sumrange_parallel(self, sumrange_parallel=True, force=False,
                               check_only=False):
-        """Set the parllalel sumrange option."""
+        """Set the parallel sumrange option."""
         # convert to bool
         sumrange_parallel = bool(sumrange_parallel)
 
@@ -627,7 +627,7 @@ class Experiment(object):
 
     def set_calls_parallel(self, calls_parallel=True, force=False,
                            check_only=False):
-        """Set the parllalel sumrange option."""
+        """Set the parallel sumrange option."""
         # convert to bool
         calls_parallel = bool(calls_parallel)
 
@@ -669,7 +669,7 @@ class Experiment(object):
                 # check if flag is known
                 if value not in arg.flags:
                     if not force:
-                        raise ValueError("Unkonwn flag: %s" % value)
+                        raise ValueError("Unknown flag: %s" % value)
                     value = arg.flags[0]
 
                 # TODO: check for changes?
@@ -697,7 +697,7 @@ class Experiment(object):
                     raise ValueError("Empty operand argument.")
 
                 if value not in self.operands:
-                    # no conflics
+                    # no conflicts
                     if check_only:
                         return
 
@@ -921,7 +921,7 @@ class Experiment(object):
                 with2.add(with_var)
                 continue
             if not force:
-                raise ValueError("Invlaid vary with entry: %s" % with_var)
+                raise ValueError("Invalid vary with entry: %s" % with_var)
         with_ = with2
 
         if check_only:
@@ -1401,7 +1401,7 @@ class Experiment(object):
             operand_range_sizes[name] = {}
 
             if not vary["with"]:
-                # argumnet doesn't vary
+                # argument doesn't vary
                 size = max(self.ranges_eval(operand["size"], range_val))
                 cmds.append([cmdprefix + "malloc", name, size])
                 operand_range_sizes[name][range_val] = size
@@ -1591,7 +1591,7 @@ class Experiment(object):
         reportfile = "%s.%s" % (filebase, defines.report_extension)
         errfile = "%s.%s" % (filebase, defines.error_extension)
 
-        # emptly output files
+        # empty output files
         if os.path.isfile(reportfile):
             os.remove(reportfile)
         if os.path.isfile(errfile):
@@ -1905,7 +1905,7 @@ class Experiment(object):
         return dict((key, sorted(val)) for key, val in connections.items())
 
     def nresults(self):
-        """How many results the current experiment woudl produce."""
+        """How many results the current experiment would produce."""
         assert(self.check_sanity())
         nresults = 0
         for range_val in self.range_vals:

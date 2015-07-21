@@ -57,7 +57,7 @@ class Backend(object):
         return "DONE"
 
     def wait(self, jobid):
-        """Wait for a job to comple."""
+        """Wait for a job to complete."""
         returncode = self.jobs[jobid].wait()
         if returncode != 0:
             return "EXIT"

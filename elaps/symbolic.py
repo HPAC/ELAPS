@@ -205,11 +205,11 @@ class Abs(Operation):
         arg = simplify(self[1], **kwargs)
 
         if isinstance(arg, Minus):
-            # redundand -
+            # redundant -
             return simplify(abs(arg[1]))
 
         if isinstance(arg, Abs):
-            # redundand recursive abs
+            # redundant recursive abs
             return arg
 
         return abs(arg)
@@ -273,14 +273,14 @@ class Plus(Operation):
 
 class Times(Operation):
 
-    """Timesuct of multiple operands (at least 1 Expression)."""
+    """Product of multiple operands (at least 1 Expression)."""
 
     def __str__(self):
         """Format as human readable."""
         strs = map(str, self[1:])
         for i, arg in enumerate(self[1:]):
             if isinstance(arg, Plus):
-                # parantheses around sums
+                # parentheses around sums
                 strs[i] = "(" + strs[i] + ")"
         return " * ".join(strs)
 
@@ -325,7 +325,7 @@ class Div(Operation):
     """Division with at least one of nom, denom an Expression."""
 
     def __init__(self, nominator, denominator):
-        """Init: exactly two arguments."""
+        """Initialize: exactly two arguments."""
         Operation.__init__(self, nominator, denominator)
 
     def __str__(self):
@@ -333,7 +333,7 @@ class Div(Operation):
         strs = map(str, self[1:])
         for i, arg in enumerate(self[1:]):
             if isinstance(arg, Operation):
-                # paranteses around any Operation
+                # parentheses around any Operation
                 strs[i] = "(" + strs[i] + ")"
         return strs[0] + " / " + strs[1]
 
@@ -359,10 +359,10 @@ class Div(Operation):
 
 class Power(Operation):
 
-    """Power with an experssion as the base."""
+    """Power with an Expression as the base."""
 
     def __init__(self, base, exponent):
-        """Init: exactly two arguments."""
+        """Initialize: exactly two arguments."""
         Operation.__init__(self, base, exponent)
 
     def __str__(self):
@@ -370,7 +370,7 @@ class Power(Operation):
         strs = map(str, self[1:])
         for i, arg in enumerate(self[1:]):
             if isinstance(arg, Operation):
-                # paranteses around any Operation
+                # parentheses around any Operation
                 strs[i] = "(" + strs[i] + ")"
         return strs[0] + " ^ " + strs[1]
 
@@ -439,7 +439,7 @@ class Floor(Operation):
         arg = simplify(self[1], **kwargs)
 
         if isinstance(arg, Floor):
-            # redundand recursive floor
+            # redundant recursive floor
             return arg
 
         if isinstance(arg, Number):
@@ -466,7 +466,7 @@ class Ceil(Operation):
         arg = simplify(self[1], **kwargs)
 
         if isinstance(arg, Ceil):
-            # redundand recursive floor
+            # redundant recursive floor
             return arg
 
         if isinstance(arg, Number):
@@ -600,7 +600,7 @@ class Sum(Operation):
         return "sum(%s, %s=%s)" % (self[1], self.rangevar, self.range_)
 
     def __repr__(self):
-        """Format s python parsable string."""
+        """Format as python parsable string."""
         return "%s(%r, %s=%r)" % (type(self).__name__, self[1],
                                   self.rangevar, self.range_)
 
@@ -691,7 +691,7 @@ class Prod(Operation):
         return "prod(%s, %s=%s)" % (self[1], self.rangevar, self.range_)
 
     def __repr__(self):
-        """Format s python parsable string."""
+        """Format as python parsable string."""
         return "%s(%r, %s=%r)" % (type(self).__name__, self[1],
                                   self.rangevar, self.range_)
 
@@ -835,7 +835,7 @@ class Range(object):
                     # first value
                     yield start
 
-                # iterate overe next values
+                # iterate over next values
                 val = start + step
                 while val <= stop:
                     yield val
@@ -853,7 +853,7 @@ class Range(object):
                     # first value
                     yield start
 
-                # iterate overe next values
+                # iterate over next values
                 val = start + step
                 while val >= stop:
                     yield val

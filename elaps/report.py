@@ -152,7 +152,7 @@ class Report(object):
             rep_fdata = self.fulldata[range_val]
 
             # results for each repetition
-            # complextiy evaluation
+            # complexity evaluation
             flops = len(ex.calls) * [0]
             for sumrange_val in ex.sumrange_vals_at(range_val):
                 for callid, call in enumerate(ex.calls):

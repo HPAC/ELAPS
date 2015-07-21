@@ -185,7 +185,7 @@ class QDataArg(QtGui.QLineEdit):
         self.linesminback = None
 
     def viz_vector(self, dimmin, dimmax):
-        """Vizualize a vector."""
+        """Visualize a vector."""
         self.viz_matrix(dimmin + [1], dimmax + [1])
 
     def viz_matrix(self, dimmin, dimmax):

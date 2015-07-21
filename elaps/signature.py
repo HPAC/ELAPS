@@ -11,7 +11,7 @@ named_attributes = ("lower", "upper", "symm", "herm", "work")
 
 class Signature(list):
 
-    """Representaiton of a kernel signature."""
+    """Representation of a kernel signature."""
 
     def __init__(self, *args, **kwargs):
         """Initialize from file ore arguments."""
@@ -55,20 +55,20 @@ class Signature(list):
             try:
                 self.complexity(*args)
             except NameError as e:
-                raise NameError("Uknown argument %r used in complexity" %
+                raise NameError("Unknown argument %r used in complexity" %
                                 str(e).split("'")[1])
         for arg in self:
             if arg.min:
                 try:
                     arg.min(*args)
                 except NameError as e:
-                    raise NameError("Uknown argument %r used in min for %s" %
+                    raise NameError("Unknown argument %r used in min for %s" %
                                     (str(e).split("'")[1], arg))
             if arg.properties:
                 try:
                     arg.properties(*args)
                 except NameError as e:
-                    raise NameError("Uknown argument or properity %r "
+                    raise NameError("Unknown argument or property %r "
                                     "used in properties for %s" %
                                     (str(e).split("'")[1], arg))
 
@@ -111,7 +111,7 @@ class Signature(list):
                 if isinstance(arg, Data)]
 
     def datatype(self):
-        """Deduce type of perands (single, double, complex, ...)."""
+        """Deduce type of operands (single, double, complex, ...)."""
         # datatype is type of first dataarg
         return self[self.dataargs()[0]].typename
 
@@ -131,7 +131,7 @@ class BasicCall(list):
         self.__dict__["sig"] = sig
 
     def __str__(self):
-        """Foramt as human readable."""
+        """Format as human readable."""
         args = []
         for arg in self[1:]:
             if type(arg) is list:
@@ -161,7 +161,7 @@ class Call(BasicCall):
     def __init__(self, sig, *args):
         """Initialize from signature and arguments."""
         if not isinstance(sig, Signature):
-            raise TypeError("a Signature is requred as first argument")
+            raise TypeError("a Signature is required as first argument")
         BasicCall.__init__(self, sig, *args)
 
     def __getattr__(self, name):
@@ -284,7 +284,7 @@ class Flag(Arg):
     """Flag argument."""
 
     def __init__(self, name, flags, attr=None):
-        """Init with name nad list of possible flags."""
+        """Initalize with name and list of possible flags."""
         Arg.__init__(self, name, attr)
         self.flags = flags
 
@@ -301,14 +301,14 @@ class Flag(Arg):
         return Arg.__eq__(self, other) and self.flags == other.flags
 
     def default(self):
-        """Default: first possible falg."""
+        """Default: first possible flag."""
         return self.flags[0]
 
 
 def _create_Flag(classname, defaultname, flags):
     """Class factory for Flag arguments."""
     def __init__(self, name=defaultname, attr=None):
-        """Initialize custon Flag."""
+        """Initialize custom Flag."""
         Flag.__init__(self, name, flags, attr)
 
     def __repr__(self):
@@ -437,7 +437,7 @@ def _create_Data(classname, typename):
     attributes = {"typename": typename}
     if "complex" in typename:
         def format_sampler(self, val):
-            """Requrest 2x space (for real, compex parts)."""
+            """Request 2x space (for real, complex parts)."""
             if isinstance(val, int):
                 val *= 2
             return val
@@ -506,7 +506,7 @@ class Info(Arg):
     """Info argument."""
 
     def __init__(self, name="info", attr=None):
-        """Init (no special case)."""
+        """Initialize (no special case)."""
         Arg.__init__(self, name, attr)
 
     @staticmethod

@@ -367,7 +367,7 @@ class Viewer(QtGui.QMainWindow):
             UI_item.showing = UI_item.callid in showing
         self.log("Reloaded %r" % UI_report.filename)
 
-    # playmat
+    # PlayMat
     def playmat_start(self, filename=None):
         """Start the PlayMat."""
         from playmat import PlayMat

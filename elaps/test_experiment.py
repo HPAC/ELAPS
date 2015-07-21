@@ -218,7 +218,7 @@ class TestExperimentSetters(TestExperiment):
         self.assertRaises(KeyError, ex.set_sampler, sampler)
         sampler["ncores"] = 1
 
-        # papi not available
+        # PAPI not available
         ex.papi_counters = ["C1", "C2"]
         sampler["papi_enabled"] = False
         self.assertRaises(ValueError, ex.set_sampler, sampler)
@@ -926,7 +926,7 @@ class TestExperimentCmds(unittest.TestCase):
                        "X_%d_%d" % (rangeidx, repidx)], cmds)
 
     def test_data_dep(self):
-        """Test data commands with depedencies in data."""
+        """Test data commands with dependencies in data."""
         ex = self.ex
         j = self.j
         i = self.i
@@ -1002,7 +1002,7 @@ class TestExperimentCmds(unittest.TestCase):
         self.assertIn(["name", m, n, "X_%d" % idx, m, "Y", m, "Z", n], cmds)
 
     def test_omp(self):
-        """Test for omp in genrated call commands."""
+        """Test for omp in generated call commands."""
         ex = self.ex
         j = self.j
 
@@ -1047,7 +1047,7 @@ class TestExperimentCmds(unittest.TestCase):
 
 class TestExperimentSubmit(TestExperimentCmds):
 
-    """Tests for Experiment.submit_prepate()."""
+    """Tests for Experiment.submit_prepare()."""
 
     def setUp(self):
         """Generate filenames."""
@@ -1065,7 +1065,7 @@ class TestExperimentSubmit(TestExperimentCmds):
         self.filebase = "test_experiment.py_tmp"
 
     def tearDown(self):
-        """Delete remporary files."""
+        """Delete temporary files."""
         for filename in glob.glob(self.filebase + "*"):
             os.remove(filename)
 

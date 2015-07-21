@@ -19,7 +19,7 @@ class TestLoaders(unittest.TestCase):
         self.filebase = "test_loaders.py_tmp"
 
     def tearDown(self):
-        """Delete remporary files."""
+        """Delete temporary files."""
         for filename in glob.glob(self.filebase + "*"):
             os.remove(filename)
 

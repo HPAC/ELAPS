@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""ELAPS python packag."""
+"""ELAPS python package."""
 from __future__ import division, print_function
 
 import defines

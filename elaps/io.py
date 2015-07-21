@@ -14,7 +14,7 @@ from collections import defaultdict
 
 
 def write_signature(sig, filename):
-    """Write a Siganture."""
+    """Write a Signature."""
     with open(filename, "w") as fout:
         fout.write(repr(sig))
 
@@ -119,7 +119,7 @@ def load_doc(name):
 
 
 def load_all_docs():
-    """Load all documenations."""
+    """Load all documentations."""
     if not os.path.isdir(docpath):
         return {}
     docs = {}
@@ -208,7 +208,7 @@ def load_all_backends():
 
 
 def load_papinames():
-    """Load all papi names."""
+    """Load all PAPI names."""
     class keydefaultdict(defaultdict):
         def __missing__(self, key):
             self[key] = self.default_factory(key)
@@ -219,7 +219,7 @@ def load_papinames():
 
 
 def load_report(filename, discard_first_repetitions=False):
-    """Load a Report from a frile."""
+    """Load a Report from a file."""
     with open(filename) as fin:
         experiment = eval(fin.readline())
         rawdata = []

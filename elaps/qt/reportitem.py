@@ -13,7 +13,7 @@ class QReportItem(QtGui.QTreeWidgetItem):
     """Report list entry (Viewer)."""
 
     def __init__(self, viewer, filename, report, callid=None):
-        """Init the report element."""
+        """Initialize the report element."""
         QtGui.QTreeWidgetItem.__init__(self)
 
         ex = report.experiment
@@ -50,7 +50,7 @@ class QReportItem(QtGui.QTreeWidgetItem):
         self.viewer.colors.append(self.color)
 
     def UI_init(self):
-        """Init the UI elements."""
+        """Initialize the UI elements."""
         flags = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
         if self.callid is None:
             flags = flags | QtCore.Qt.ItemIsDragEnabled

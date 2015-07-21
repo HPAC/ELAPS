@@ -28,7 +28,7 @@ class QCall(QtGui.QListWidgetItem):
 
     @property
     def call(self):
-        """Get the associalted Call (or BasicCall)."""
+        """Get the associated Call (or BasicCall)."""
         return self.playmat.experiment.calls[self.callid]
 
     def UI_init(self):
@@ -224,7 +224,7 @@ class QCall(QtGui.QListWidgetItem):
         argid = sender.argid
         if isinstance(sender, QtGui.QLineEdit) and not isinstance(sender,
                                                                   QDataArg):
-            # adjust widt no matter where the change came from
+            # adjust width no matter where the change came from
             width = sender.fontMetrics().width(value) + 4
             width += sender.minimumSizeHint().width()
             margins = sender.getTextMargins()
