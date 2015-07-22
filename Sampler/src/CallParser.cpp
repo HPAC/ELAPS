@@ -173,13 +173,13 @@ KernelCall CallParser::get_call() const {
     for (unsigned char i = 1; i < call.argc; i++)
         switch (memtypes[i]) {
             case STATIC:
-                call.argv[i] = mem->static_get(ids[i]);
+                call.argv[i - 1] = mem->static_get(ids[i]);
                 break;
             case NAMED:
-                call.argv[i] = mem->named_get(tokens[i]);
+                call.argv[i - 1] = mem->named_get(tokens[i]);
                 break;
             case DYNAMIC:
-                call.argv[i] = mem->dynamic_get(ids[i]);
+                call.argv[i - 1] = mem->dynamic_get(ids[i]);
                 break;
         }
 
