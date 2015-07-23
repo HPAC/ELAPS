@@ -39,6 +39,7 @@ def main():
             (" ?\( ?", "("),  # remove spaces before openingparentheses
             (" \)", ")"),  # remove spaces before closing parentheses
             (" \*", "*"),  # remove spaces before asterisks
+            ("\*", " *"),  # add spaces before asterisks
             ("\*\w+", "*"),  # remove variable names
             ("; ?", ";\n")):  # reintroduce newlines
         kernels = re.sub(p, s, kernels)
@@ -46,11 +47,16 @@ def main():
 
     # create sigs.c.inc
     argtypes = {
-        "char*": "CHARP",
-        "int*": "INTP",
-        "float*": "FLOATP",
-        "double*": "DOUBLEP",
-        "void*": "VOIDP",
+        "char *": "CHARP",
+        "int *": "INTP",
+        "float *": "FLOATP",
+        "double *": "DOUBLEP",
+        "void *": "VOIDP",
+        "const char *": "CONST_CHARP",
+        "const int *": "CONST_INTP",
+        "const float *": "CONST_FLOATP",
+        "const double *": "CONST_DOUBLEP",
+        "const void *": "CONST_VOIDP",
     }
     argcmax = 0
     kernelsigs = []

@@ -8,7 +8,7 @@
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void imemset(int *m, int *n, int *alpha, int *A, int *ldA) {
+void imemset(const int *m, const int *n, const int *alpha, int *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
@@ -23,7 +23,7 @@ void imemset(int *m, int *n, int *alpha, int *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void smemset(int *m, int *n, float *alpha, float *A, int *ldA) {
+void smemset(const int *m, const int *n, const float *alpha, float *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
@@ -38,7 +38,7 @@ void smemset(int *m, int *n, float *alpha, float *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void dmemset(int *m, int *n, double *alpha, double *A, int *ldA) {
+void dmemset(const int *m, const int *n, const double *alpha, double *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
@@ -53,7 +53,7 @@ void dmemset(int *m, int *n, double *alpha, double *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void cmemset(int *m, int *n, float *alpha, float *A, int *ldA) {
+void cmemset(const int *m, const int *n, const float *alpha, float *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++) {
@@ -70,7 +70,7 @@ void cmemset(int *m, int *n, float *alpha, float *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void zmemset(int *m, int *n, double *alpha, double *A, int *ldA) {
+void zmemset(const int *m, const int *n, const double *alpha, double *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++) {

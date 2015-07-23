@@ -317,6 +317,21 @@ void Sampler::info(const vector<string> &tokens) {
             case VOIDP:
                 cerr << "void *";
                 break;
+            case CONST_CHARP:
+                cerr << "const char *";
+                break;
+            case CONST_INTP:
+                cerr << "const int *";
+                break;
+            case CONST_FLOATP:
+                cerr << "const float *";
+                break;
+            case CONST_DOUBLEP:
+                cerr << "const double *";
+                break;
+            case CONST_VOIDP:
+                cerr << "const void *";
+                break;
         }
         if (i + 1 < argc)
             cerr << ", ";

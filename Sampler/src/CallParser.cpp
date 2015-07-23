@@ -145,18 +145,23 @@ void CallParser::register_args() {
     for (unsigned char i = 1; i < argc; i++)
         switch (signature->arguments[i]) {
             case CHARP:
+            case CONST_CHARP:
                 register_arg<char>(i);
                 break;
             case INTP:
+            case CONST_INTP:
                 register_arg<int>(i);
                 break;
             case FLOATP:
+            case CONST_FLOATP:
                 register_arg<float>(i);
                 break;
             case DOUBLEP:
+            case CONST_DOUBLEP:
                 register_arg<double>(i);
                 break;
             case VOIDP:
+            case CONST_VOIDP:
                 register_arg<void>(i);
                 break;
         }

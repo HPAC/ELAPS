@@ -1,10 +1,10 @@
 #ifndef MEMSET_H
 #define MEMSET_H
 
-void imemset(int *, int *, int *, int *, int *);
-void smemset(int *, int *, float *, float *, int *);
-void dmemset(int *, int *, double *, double *, int *);
-void cmemset(int *, int *, float *, float *, int *);
-void zmemset(int *, int *, double *, double *, int *);
+void imemset(const int *, const int *, const int *, int *, const int *);
+void smemset(const int *, const int *, const float *, float *, const int *);
+void dmemset(const int *, const int *, const double *, double *, const int *);
+void cmemset(const int *, const int *, const float *, float *, const int *);
+void zmemset(const int *, const int *, const double *, double *, const int *);
 
 #endif /* MEMSET_H */

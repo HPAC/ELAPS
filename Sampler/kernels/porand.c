@@ -11,7 +11,7 @@
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void sporand(char *uplo, int *n, float *A, int *ldA) {
+void sporand(const char *uplo, const int *n, float *A, const int *ldA) {
     int i, j;
     switch(uplo[0]) {
         case 'L':
@@ -40,7 +40,7 @@ void sporand(char *uplo, int *n, float *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void dporand(char *uplo, int *n, double *A, int *ldA) {
+void dporand(const char *uplo, const int *n, double *A, const int *ldA) {
     int i, j;
     switch(uplo[0]) {
         case 'L':
@@ -69,7 +69,7 @@ void dporand(char *uplo, int *n, double *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void cporand(char *uplo, int *n, float *A, int *ldA) {
+void cporand(const char *uplo, const int *n, float *A, const int *ldA) {
     int i, j;
     switch(uplo[0]) {
         case 'L':
@@ -104,7 +104,7 @@ void cporand(char *uplo, int *n, float *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void zporand(char *uplo, int *n, double *A, int *ldA) {
+void zporand(const char *uplo, const int *n, double *A, const int *ldA) {
     int i, j;
     switch(uplo[0]) {
         case 'L':

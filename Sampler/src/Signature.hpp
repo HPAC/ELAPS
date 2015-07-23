@@ -12,7 +12,12 @@ enum ArgType {
     INTP, /**< `int *`. */
     FLOATP, /**< `float *`. */
     DOUBLEP,  /**< `double *`. */
-    VOIDP /**< `void *` (for completeness). */
+    VOIDP, /**< `void *` (for completeness). */
+    CONST_CHARP, /**< `const char *`. */
+    CONST_INTP, /**< `const int *`. */
+    CONST_FLOATP, /**< `const float *`. */
+    CONST_DOUBLEP,  /**< `const double *`. */
+    CONST_VOIDP /**< `const void *` (for completeness). */
 };
 
 /** Representation of kernel signature with corresponding function pointer. */

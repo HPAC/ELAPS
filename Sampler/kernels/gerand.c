@@ -11,7 +11,7 @@
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void igerand(int *m, int *n, int *A, int *ldA) {
+void igerand(const int *m, const int *n, int *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
@@ -26,7 +26,7 @@ void igerand(int *m, int *n, int *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void sgerand(int *m, int *n, float *A, int *ldA) {
+void sgerand(const int *m, const int *n, float *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
@@ -41,7 +41,7 @@ void sgerand(int *m, int *n, float *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void dgerand(int *m, int *n, double *A, int *ldA) {
+void dgerand(const int *m, const int *n, double *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
@@ -56,7 +56,7 @@ void dgerand(int *m, int *n, double *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void cgerand(int *m, int *n, float *A, int *ldA) {
+void cgerand(const int *m, const int *n, float *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++) {
@@ -73,7 +73,7 @@ void cgerand(int *m, int *n, float *A, int *ldA) {
  * \param A Matrix pointer.
  * \param ldA Leading dimension.
  */
-void zgerand(int *m, int *n, double *A, int *ldA) {
+void zgerand(const int *m, const int *n, double *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++) {

@@ -1,10 +1,10 @@
 #ifndef GERAND_H
 #define GERAND_H
 
-void igerand(int *, int *, int *, int *);
-void sgerand(int *, int *, float *, int *);
-void dgerand(int *, int *, double *, int *);
-void cgerand(int *, int *, float *, int *);
-void zgerand(int *, int *, double *, int *);
+void igerand(const int *, const int *, int *, const int *);
+void sgerand(const int *, const int *, float *, const int *);
+void dgerand(const int *, const int *, double *, const int *);
+void cgerand(const int *, const int *, float *, const int *);
+void zgerand(const int *, const int *, double *, const int *);
 
 #endif /* GERAND_H */
