@@ -3,6 +3,7 @@ Signature(
     "dormtr",
     Side(),
     Uplo(),
+    Trans(),
     Dim("m"),
     Dim("n"),
     dData("A", "ldA * (m if side == 'L' else n)",
@@ -12,5 +13,6 @@ Signature(
     dData("C", "ldC * n"),
     Ld("ldC", "m"),
     dWork("Work", "lWork"),
-    Lwork("lWork", "n if side == 'L' else m")
+    Lwork("lWork", "n if side == 'L' else m"),
+    Info()
 )
