@@ -1,0 +1,11 @@
+# double precision QR decomposition (unblocked)
+Signature(
+    "dgeqr2",
+    Dim("m"),
+    Dim("n"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    dData("Tau", "m if m < n else n"),
+    dWork("Work", "min(m, n)"),
+    Info()
+)
