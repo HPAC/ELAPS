@@ -12,8 +12,9 @@ from matplotlib.patches import Patch
 def plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
          ylabel=None, legendargs={}, figure=None):
     """Plot a series of data sets."""
-    styles = defines.plot_styles.copy()
-    styles.update(styles)
+    styles2 = defines.plot_styles.copy()
+    styles2.update(styles)
+    styles = styles2
 
     # set up figure
     fig = figure
