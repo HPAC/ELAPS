@@ -614,7 +614,8 @@ class PlayMat(QtGui.QMainWindow):
         jobid = ex.submit(filebase)
         self.last_filebase = filebase
         self.UI_jobprogress.add_job(filebase, jobid, ex)
-        self.log("Submitted job for %r to %r." % (filebase, backend.name))
+        filename = "%s.%s" % (filebase, defines.report_extension)
+        self.log("Submitted job for %r to %r." % (filename, backend.name))
 
     # loaders
     def sig_get(self, routine):
