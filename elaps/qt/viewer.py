@@ -295,7 +295,7 @@ class Viewer(QtGui.QMainWindow):
         """Alert a messagebox."""
         msg = " ".join(map(str, args))
         title = kwargs.get("title", "")
-        self.UI_dialog("information", title, msg)
+        QtGui.QMessageBox.information(self, title, msg)
 
     # report routines
     def report_load(self, filename, index=None, UI_alert=False):
