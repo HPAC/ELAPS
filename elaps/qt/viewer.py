@@ -124,12 +124,12 @@ class Viewer(QtGui.QMainWindow):
             statsT.pyqtConfigure(movable=False, objectName="Statistics")
             self.UI_stats = []
             for stat_name, desc in (
+                ("all", "all data points"),
                 ("min", "minimum"),
                 ("med", "median"),
                 ("max", "maximum"),
                 ("avg", "average"),
-                ("std", "standard deviation"),
-                ("all", "all data points")
+                ("std", "standard deviation")
             ):
                 stat = QtGui.QCheckBox(
                     stat_name, toolTip=desc, toggled=self.on_stat_toggle

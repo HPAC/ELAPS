@@ -157,7 +157,7 @@ def bar_plot(datas, stat_names=["med"], colors=[], styles={}, ylabel=None,
     # min-max stat
     stat_names = stat_names[:]
     if "min" in stat_names and "max" in stat_names:
-        stat_names.insert(0, "min-max")
+        stat_names.insert(stat_names.index("min"), "min-max")
         stat_names.remove("min")
         stat_names.remove("max")
 
