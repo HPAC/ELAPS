@@ -1,0 +1,12 @@
+# single precision complex matrix copy
+Signature(
+    "clacpy",
+    Flag("uplo", ["A", "L", "U"]),
+    Dim("m"),
+    Dim("n"),
+    cData("A", "ldA * n", "lower if uplo == 'L' else upper if uplo == 'L' else None"),
+    Ld("ldA", "m"),
+    cData("B", "ldB * n", "lower if uplo == 'L' else upper if uplo == 'L' else None"),
+    Ld("ldB", "m"),
+    complexity="0"
+)

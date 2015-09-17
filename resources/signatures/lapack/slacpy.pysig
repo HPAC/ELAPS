@@ -1,0 +1,12 @@
+# single precision matrix copy
+Signature(
+    "slacpy",
+    Flag("uplo", ["A", "L", "U"]),
+    Dim("m"),
+    Dim("n"),
+    sData("A", "ldA * n", "lower if uplo == 'L' else upper if uplo == 'L' else None"),
+    Ld("ldA", "m"),
+    sData("B", "ldB * n", "lower if uplo == 'L' else upper if uplo == 'L' else None"),
+    Ld("ldB", "m"),
+    complexity="0"
+)

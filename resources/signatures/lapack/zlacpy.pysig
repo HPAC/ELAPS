@@ -1,0 +1,12 @@
+# double precision complex matrix copy
+Signature(
+    "zlacpy",
+    Flag("uplo", ["A", "L", "U"]),
+    Dim("m"),
+    Dim("n"),
+    zData("A", "ldA * n", "lower if uplo == 'L' else upper if uplo == 'L' else None"),
+    Ld("ldA", "m"),
+    zData("B", "ldB * n", "lower if uplo == 'L' else upper if uplo == 'L' else None"),
+    Ld("ldB", "m"),
+    complexity="0"
+)
