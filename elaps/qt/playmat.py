@@ -271,7 +271,6 @@ class PlayMat(QtGui.QMainWindow):
                 toolTip="<tt>nreps</tt>: "
                 "Number of repetitions for statistical evaluation."
             )
-            # self.UI_nreps.setValidator(QtGui.QIntValidator(bottom=1))
             self.UI_nreps.setValidator(QtGui.QIntValidator(1, 1000000, self))
             self.UI_nreps.setFixedWidth(32)
 
