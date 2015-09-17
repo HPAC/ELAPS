@@ -1906,7 +1906,6 @@ class Experiment(object):
 
     def nresults(self):
         """How many results the current experiment would produce."""
-        assert(self.check_sanity())
         nresults = 0
         for range_val in self.range_vals:
             if self.range_randomize_data:

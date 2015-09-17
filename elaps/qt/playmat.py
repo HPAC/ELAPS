@@ -43,7 +43,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_init()
         self.hideargs = set([signature.Ld, signature.Inc, signature.Work,
                              signature.Lwork, signature.Info])
-        self.reportname = defines.default_reportname
+        self.reportname_set()
         if not reset:
             try:
                 self.UI_settings_load()
@@ -509,7 +509,7 @@ class PlayMat(QtGui.QMainWindow):
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
         self.hideargs = eval(str(settings.value("hideargs", type=str)),
                              signature.__dict__)
-        self.reportname = str(settings.value("reportname", type=str))
+        self.reportname_set(str(settings.value("reportname", type=str)))
         self.UI_setting += 1
         self.restoreGeometry(settings.value("geometry",
                                             type=QtCore.QByteArray))
@@ -579,17 +579,18 @@ class PlayMat(QtGui.QMainWindow):
 
     def experiment_qt_load(self):
         """Load Experiment from Qt setting."""
-        ex = elaps.io.load_experiment_string(str(
-            QtCore.QSettings("HPAC", "ELAPS:PlayMat").value("Experiment",
-                                                            type=str)
-        ))
-        self.experiment_set(ex)
+        settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
+        self.experiment_set(elaps.io.load_experiment_string(str(
+            settings.value("Experiment", type=str)
+        )))
+        self.reportname_set(str(settings.value("reportname", type=str)))
         self.log("Loaded last Experiment")
 
     def experiment_load(self, filename):
         """Load Experiment from a file."""
         ex = elaps.io.load_experiment(filename)
         self.experiment_set(ex)
+        self.reportname_set(filename=filename)
         self.log("Loaded Experiment from %r." % os.path.relpath(filename))
 
     def experiment_write(self, filename):
@@ -614,7 +615,21 @@ class PlayMat(QtGui.QMainWindow):
         jobid = ex.submit(filebase)
         self.last_filebase = filebase
         self.UI_jobprogress.add_job(filebase, jobid, ex)
-        self.log("Submitted job for %r to %r." % (filebase, backend.name))
+        filename = "%s.%s" % (filebase, defines.report_extension)
+        self.log("Submitted job for %r to %r." % (filename, backend.name))
+
+    def reportname_set(self, name=None, filename=None):
+        """Set the reporname from a filename."""
+        if name:
+            self.reportname = name
+        elif filename:
+            name = os.path.relpath(str(filename), defines.reportpath)
+            if name[-4:] == "." + defines.report_extension:
+                name = name[:-4]
+            self.reportname = name
+        else:
+            self.reportname = defines.default_reportname
+        self.UI_reportname_set()
 
     # loaders
     def sig_get(self, routine):
@@ -1015,7 +1030,7 @@ class PlayMat(QtGui.QMainWindow):
         sender.setFixedWidth(width)
         if self.UI_setting:
             return
-        self.reportname = value
+        self.reportname_set(value)
 
     @pyqtSlot()
     def on_reportname_choose(self):
@@ -1030,18 +1045,14 @@ class PlayMat(QtGui.QMainWindow):
         )
         if not filename:
             return
-        reportname = os.path.relpath(str(filename), defines.reportpath)
-        if reportname[-4:] == "." + defines.report_extension:
-            reportname = reportname[:-4]
-        self.reportname = reportname
+        self.reportname_set(filename=str(filename))
         self.UI_reportname_set()
 
     @pyqtSlot()
     def on_submit(self):
         """Event: submit."""
-        reportname = str(self.UI_reportname.text())
         filebase = os.path.relpath(os.path.join(
-            defines.reportpath, reportname
+            defines.reportpath, self.reportname
         ))
         self.experiment_submit(filebase)
 

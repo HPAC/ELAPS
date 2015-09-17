@@ -13,7 +13,11 @@ def plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
          ylabel=None, legendargs={}, figure=None):
     """Plot a series of data sets."""
     styles2 = defines.plot_styles.copy()
-    styles2.update(styles)
+    for name, style in styles.items():
+        if name in styles2:
+            styles2[name].update(style)
+        else:
+            styles2[name] = style
     styles = styles2
 
     # set up figure
@@ -120,6 +124,9 @@ def range_plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
     limits[1] = range_max + gap
     axes.axis(limits)
 
+    # grid
+    axes.yaxis.grid(**styles["grid"])
+
     # legend
     colorpool = (colors + defines.colors)[::-1]
     legend = []
@@ -157,7 +164,7 @@ def bar_plot(datas, stat_names=["med"], colors=[], styles={}, ylabel=None,
     # min-max stat
     stat_names = stat_names[:]
     if "min" in stat_names and "max" in stat_names:
-        stat_names.insert(0, "min-max")
+        stat_names.insert(stat_names.index("min"), "min-max")
         stat_names.remove("min")
         stat_names.remove("max")
 
@@ -181,17 +188,19 @@ def bar_plot(datas, stat_names=["med"], colors=[], styles={}, ylabel=None,
             elif stat_name == "min-max":
                 min_y = apply_stat("min", data)
                 max_y = apply_stat("max", data)
-                axes.bar(left, max_y - min_y, width, min_y, color=color)
+                axes.bar(left, max_y - min_y, width, min_y, color=color,
+                         **styles["bar"])
             elif stat_name == "std":
                 avg = apply_stat("avg", data)
                 std = apply_stat("std", data)
-                axes.bar(left, 2 * std, width, avg - std, color=color)
+                axes.bar(left, 2 * std, width, avg - std, color=color,
+                         **styles["bar"])
                 axes.plot([left, left + width], [avg, avg], linestyle="--",
-                          color="#000000")
+                          color="#000000", zorder=4)
             else:
                 # all other stats
                 value = apply_stat(stat_name, data)
-                axes.bar(left, value, width, color=color)
+                axes.bar(left, value, width, color=color, **styles["bar"])
 
     # xlabels
     axes.set_xticks([i + groupwidth / 2 for i in range(len(stat_names))])
@@ -206,6 +215,9 @@ def bar_plot(datas, stat_names=["med"], colors=[], styles={}, ylabel=None,
     # xmax
     limits[1] = len(stat_names) + (1 - groupwidth)
     axes.axis(limits)
+
+    # grid
+    axes.yaxis.grid(**styles["grid"])
 
     # legend
     colorpool = (colors + defines.colors)[::-1]

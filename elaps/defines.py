@@ -41,13 +41,15 @@ face_color = "#ffffff"
 # plot styles
 plot_styles = {
     "legend": {"color": "#808080"},
-    "med": {"linestyle": "-"},
-    "min": {"linestyle": "--"},
-    "max": {"linestyle": ":", "linewidth": 2},
-    "avg": {"linestyle": "-."},
-    "min-max": {"hatch": "...", "facecolor": (0, 0, 0, 0)},
-    "std": {"alpha": .25},
-    "all": {"linestyle": "None", "marker": "."},
+    "grid": {"zorder": 0, "color": "#808080", "linestyle": "-"},
+    "bar": {"zorder": 3},
+    "all": {"zorder": 3, "linestyle": "None", "marker": "."},
+    "med": {"zorder": 3, "linestyle": "-"},
+    "min": {"zorder": 3, "linestyle": "--"},
+    "max": {"zorder": 3, "linestyle": ":", "linewidth": 2},
+    "avg": {"zorder": 3, "linestyle": "-."},
+    "min-max": {"zorder": 3, "hatch": "...", "facecolor": (0, 0, 0, 0)},
+    "std": {"zorder": 3, "alpha": .25},
 }
 
 # PlayMat

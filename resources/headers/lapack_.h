@@ -202,6 +202,7 @@ void ctrrfs_(const char *, const char *, const char *, const int *, const int *,
 void ctrsen_(const char *, const char *, const int *, const int *, float *, const int *, float *, const int *, float *, int *, float *, float *, float *, const int *, int *);
 void ctrsna_(const char *, const char *, const int *, const int *, const float *, const int *, const float *, const int *, const float *, const int *, float *, float *, const int *, int *, float *, const int *, float *, int *);
 void ctrsyl_(const char *, const char *, const int *, const int *, const int *, const float *, const int *, const float *, const int *, float *, const int *, float *, int *);
+void ctrti2_(const char *, const char *, const int *, float *, const int *, int *);
 void ctrtri_(const char *, const char *, const int *, float *, const int *, int *);
 void ctrtrs_(const char *, const char *, const char *, const int *, const int *, const float *, const int *, float *, const int *, int *);
 void ctrttf_(const char *, const char *, const int *, const float *, const int *, float *, int *);
@@ -442,6 +443,7 @@ void dtrrfs_(const char *, const char *, const char *, const int *, const int *,
 void dtrsen_(const char *, const char *, const int *, const int *, double *, const int *, double *, const int *, double *, double *, int *, double *, double *, double *, const int *, int *, const int *, int *);
 void dtrsna_(const char *, const char *, const int *, const int *, const double *, const int *, const double *, const int *, const double *, const int *, double *, double *, const int *, int *, double *, const int *, int *, int *);
 void dtrsyl_(const char *, const char *, const int *, const int *, const int *, const double *, const int *, const double *, const int *, double *, const int *, double *, int *);
+void dtrti2_(const char *, const char *, const int *, double *, const int *, int *);
 void dtrtri_(const char *, const char *, const int *, double *, const int *, int *);
 void dtrtrs_(const char *, const char *, const char *, const int *, const int *, const double *, const int *, double *, const int *, int *);
 void dtrttf_(const char *, const char *, const int *, const double *, const int *, double *, int *);
@@ -664,6 +666,7 @@ void strrfs_(const char *, const char *, const char *, const int *, const int *,
 void strsen_(const char *, const char *, const int *, const int *, float *, const int *, float *, const int *, float *, float *, int *, float *, float *, float *, const int *, int *, const int *, int *);
 void strsna_(const char *, const char *, const int *, const int *, const float *, const int *, const float *, const int *, const float *, const int *, float *, float *, const int *, int *, float *, const int *, int *, int *);
 void strsyl_(const char *, const char *, const int *, const int *, const int *, const float *, const int *, const float *, const int *, float *, const int *, float *, int *);
+void strti2_(const char *, const char *, const int *, float *, const int *, int *);
 void strtri_(const char *, const char *, const int *, float *, const int *, int *);
 void strtrs_(const char *, const char *, const char *, const int *, const int *, const float *, const int *, float *, const int *, int *);
 void strttf_(const char *, const char *, const int *, const float *, const int *, float *, int *);
@@ -873,6 +876,7 @@ void ztrrfs_(const char *, const char *, const char *, const int *, const int *,
 void ztrsen_(const char *, const char *, const int *, const int *, double *, const int *, double *, const int *, double *, int *, double *, double *, double *, const int *, int *);
 void ztrsna_(const char *, const char *, const int *, const int *, const double *, const int *, const double *, const int *, const double *, const int *, double *, double *, const int *, int *, double *, const int *, double *, int *);
 void ztrsyl_(const char *, const char *, const int *, const int *, const int *, const double *, const int *, const double *, const int *, double *, const int *, double *, int *);
+void ztrti2_(const char *, const char *, const int *, double *, const int *, int *);
 void ztrtri_(const char *, const char *, const int *, double *, const int *, int *);
 void ztrtrs_(const char *, const char *, const char *, const int *, const int *, const double *, const int *, double *, const int *, int *);
 void ztrttf_(const char *, const char *, const int *, const double *, const int *, double *, int *);
