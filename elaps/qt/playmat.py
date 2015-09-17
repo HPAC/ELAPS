@@ -197,7 +197,7 @@ class PlayMat(QtGui.QMainWindow):
             )
             self.UI_reportname.setFixedWidth(32)
             reportname_choose = QtGui.QAction(
-                self.style().standardIcon(QtGui.QStyle.SP_FileDialogStart),
+                self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton),
                 "...", self, triggered=self.on_reportname_choose,
                 toolTip="Browse Report folder."
             )
@@ -620,7 +620,7 @@ class PlayMat(QtGui.QMainWindow):
 
     def reportname_set(self, name=None, filename=None):
         """Set the reporname from a filename."""
-        if name:
+        if name is not None:
             self.reportname = name
         elif filename:
             name = os.path.relpath(str(filename), defines.reportpath)
@@ -786,7 +786,9 @@ class PlayMat(QtGui.QMainWindow):
     def UI_reportname_set(self):
         """Set UI element: reportname."""
         self.UI_setting += 1
-        self.UI_reportname.setText(self.reportname)
+        if not self.UI_reportname.hasFocus():
+            self.UI_reportname.setText(self.reportname)
+        self.UI_set_invalid(self.UI_reportname, self.reportname == "")
         self.UI_setting -= 1
 
     def UI_sampler_set(self):
@@ -927,6 +929,8 @@ class PlayMat(QtGui.QMainWindow):
         """En/Disable the submit Action."""
         try:
             self.experiment.check_sanity(True)
+            if not self.reportname:
+                raise Exception("empty report name")
             enabled = True
             tooltip = "Run"
         except Exception as e:
@@ -1031,6 +1035,7 @@ class PlayMat(QtGui.QMainWindow):
         if self.UI_setting:
             return
         self.reportname_set(value)
+        self.UI_submit_setenabled()
 
     @pyqtSlot()
     def on_reportname_choose(self):
