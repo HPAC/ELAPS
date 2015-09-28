@@ -83,7 +83,6 @@ void cporand(const char *uplo, const int *n, float *A, const int *ldA) {
             }
             break;
         case 'U':
-            break;
             for (j = 0; j < *n; j++) {
                 A[2 * (j + j * *ldA)] = ((float) rand()) / RAND_MAX + 2 * *n;
                 A[2 * (j + j * *ldA) + 1] = 0;
@@ -92,6 +91,7 @@ void cporand(const char *uplo, const int *n, float *A, const int *ldA) {
                     A[2 * (i + j * *ldA) + 1] = ((float) rand()) / RAND_MAX;
                 }
             }
+            break;
     }
 }
 
@@ -118,7 +118,6 @@ void zporand(const char *uplo, const int *n, double *A, const int *ldA) {
             }
             break;
         case 'U':
-            break;
             for (j = 0; j < *n; j++) {
                 A[2 * (j + j * *ldA)] = ((double) rand()) / RAND_MAX + 2 * *n;
                 A[2 * (j + j * *ldA) + 1] = 0;
@@ -127,5 +126,6 @@ void zporand(const char *uplo, const int *n, double *A, const int *ldA) {
                     A[2 * (i + j * *ldA) + 1] = ((double) rand()) / RAND_MAX;
                 }
             }
+            break;
     }
 }
