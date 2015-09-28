@@ -11,5 +11,6 @@ Signature(
     dData("tau", "n - 1"),
     dData("Work", "lWork"),
     Dim("lWork", 1),
-    Info()
+    Info(),
+    complexity="n * (35 + 21 * n + 4 * n ** 2) / 3"
 )

@@ -1,0 +1,8 @@
+# double precision eucledian norm
+Signature(
+    "dnrm2",
+    Dim("n"),
+    dData("X", "1 + (n-1) * incX"),
+    Inc("incX"),
+    complexity="2 * n"
+)
