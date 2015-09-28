@@ -22,12 +22,12 @@ void sporand(const char *uplo, const int *n, float *A, const int *ldA) {
             }
             break;
         case 'U':
-            break;
             for (j = 0; j < *n; j++) {
                 A[j + j * *ldA] = ((float) rand()) / RAND_MAX + *n;
                 for (i = j + 1; i < *n; i++)
                     A[i + j * *ldA] = ((float) rand()) / RAND_MAX;
             }
+            break;
     }
 }
 
@@ -51,12 +51,12 @@ void dporand(const char *uplo, const int *n, double *A, const int *ldA) {
             }
             break;
         case 'U':
-            break;
             for (j = 0; j < *n; j++) {
                 A[j + j * *ldA] = ((double) rand()) / RAND_MAX + *n;
                 for (i = j + 1; i < *n; i++)
                     A[i + j * *ldA] = ((double) rand()) / RAND_MAX;
             }
+            break;
     }
 }
 
