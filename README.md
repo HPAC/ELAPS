@@ -76,8 +76,10 @@ The Framework consists for three layers:
 Installation
 ------------
 
-Installing ELAPS boils down to configuring and compiling Samplers; the Python
-package `elaps` including the GUI should work "out of the box".
+To use ELAPS:
+- clone the GitHub repository
+- compile one or more `Sampler`s (see [docs/Sampler.md](docs/Sampler.md))
+Now, ELAPS is ready to go.  To get started, run `bin/PlayMat`.
 
 
 Bugs
