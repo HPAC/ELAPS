@@ -145,7 +145,6 @@ class Experiment(object):
         return Experiment(**deepcopy(self.__dict__))
 
     # properties
-
     @property
     def call(self):
         """Return call if there is only one."""
@@ -1556,7 +1555,7 @@ class Experiment(object):
                                 if argid == 0 or sig[argid] == "char*":
                                     # chars don't need further processing
                                     continue
-                                if isinstance(value, list):
+                                if type(value) is list:
                                     value = [next(self.ranges_eval(
                                         value[0], range_val, sumrange_val
                                     ))]

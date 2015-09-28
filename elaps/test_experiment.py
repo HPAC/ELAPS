@@ -1026,7 +1026,7 @@ class TestExperimentCmds(unittest.TestCase):
         self.assertEqual(cmds.count(["{omp"]), nreps)
         self.assertEqual(cmds.count(["}"]), nreps)
 
-    def test_basecall(self):
+    def test_basiccall(self):
         """Test for BasicCall calls (i.e., no Signature)."""
         ex = self.ex
         i = self.i
@@ -1039,10 +1039,10 @@ class TestExperimentCmds(unittest.TestCase):
         # now with a range
         lenrange = random.randint(1, 10)
         ex.range = [i, range(lenrange)]
-        ex.call = BasicCall(sig, "N", i, 1.5, [i * i])
+        ex.call = BasicCall(sig, "N", i - 1, 1.5, [i * i])
         cmds = ex.generate_cmds()
         idx = random.randint(0, lenrange - 1)
-        self.assertIn(["name", "N", idx, 1.5, [idx * idx]], cmds)
+        self.assertIn(["name", "N", idx - 1, 1.5, [idx * idx]], cmds)
 
 
 class TestExperimentSubmit(TestExperimentCmds):
