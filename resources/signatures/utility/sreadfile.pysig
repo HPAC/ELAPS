@@ -1,0 +1,10 @@
+# read single precision binary file
+Signature(
+    "sreadfile",
+    String("filename"),
+    Dim("m"),
+    Dim("n"),
+    sData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    Info(),
+)

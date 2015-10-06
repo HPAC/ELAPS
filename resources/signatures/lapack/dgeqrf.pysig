@@ -9,5 +9,5 @@ Signature(
     dWork("Work", "lWork"),
     Lwork("lWork", "n"),
     Info(),
-    complexity="n * (n + 1) * (4 + 8 n + 9) / 6"
+    complexity="n * (n + 1) * (4 + 8 * n + 9) / 6"
 )

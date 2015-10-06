@@ -1,0 +1,10 @@
+# read singel precision complex binary file
+Signature(
+    "creadfile",
+    String("filename"),
+    Dim("m"),
+    Dim("n"),
+    cData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    Info(),
+)

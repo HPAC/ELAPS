@@ -1,0 +1,10 @@
+# write singel precision complex binary file
+Signature(
+    "cwritefile",
+    String("filename"),
+    Dim("m"),
+    Dim("n"),
+    cData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    Info(),
+)

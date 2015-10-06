@@ -513,3 +513,13 @@ class Info(Arg):
     def default():
         """Default: 0."""
         return 0
+
+
+class String(Arg):
+
+    """String argument."""
+
+    @staticmethod
+    def default():
+        """Default: '' (empty string)."""
+        return ""

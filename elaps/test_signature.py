@@ -72,6 +72,10 @@ class TestArgs(unittest.TestCase):
         """Test for Info."""
         pass
 
+    def test_String(self):
+        """Test for String."""
+        pass
+
 
 class TestSignature(unittest.TestCase):
 

@@ -1,0 +1,10 @@
+# read double precision complex binary file
+Signature(
+    "zreadfile",
+    String("filename"),
+    Dim("m"),
+    Dim("n"),
+    zData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    Info(),
+)

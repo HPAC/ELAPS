@@ -1,0 +1,10 @@
+# write single precision binary file
+Signature(
+    "swritefile",
+    String("filename"),
+    Dim("m"),
+    Dim("n"),
+    sData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    Info(),
+)
