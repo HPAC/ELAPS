@@ -325,12 +325,9 @@ class Viewer(QtGui.QMainWindow):
             metric_name = counter_info["short"]
             if metric_name in self.metrics:
                 continue
-
-            def metric(data, **kwargs):
-                return data.get(counter_name)
-            metric.name = metric_name
-            metric.__doc__ = counter_info["long"]
-            self.metrics[metric_name] = metric
+            self.metrics[metric_name] = elaps.io.get_counter_metric(
+                counter_name, counter_info["long"]
+            )
 
         if index is None:
             self.log("Loaded %r" % filename)

@@ -275,3 +275,12 @@ def load_all_metrics():
         except:
             pass
     return metrics
+
+
+def get_counter_metric(counter, doc=None):
+    """Create a metric for a PAPI counter."""
+    def metric(data, **kwargs):
+        return data.get(counter)
+    metric.name = metric
+    metric.__doc__ = doc
+    return metric
