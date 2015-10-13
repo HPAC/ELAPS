@@ -3,7 +3,7 @@
 from __future__ import division, print_function
 
 
-def metric(data, experiment, nthreads, callid, **kwargs):
+def metric(data, experiment, nthreads, selector, **kwargs):
     """Performance of the operations relative to peak in %.
 
     Comparing the flops/cycle to the system's peak.
@@ -15,13 +15,17 @@ def metric(data, experiment, nthreads, callid, **kwargs):
         return None
 
     # get datatype
+    datatypes = set()
     calls = experiment.calls
-    if callid is not None:
-        calls = [calls[callid]]
-    if any(not hasattr(call, "sig") for call in calls):
-        return None
-    datatypes = set(call.sig.datatype() for call in calls)
-    if len(datatypes) > 1:
+    ncalls = len(calls)
+    for callid, call in enumerate(calls):
+        if (experiment.sumrange_parallel or experiment.calls_parallel
+                or selector([int(callid == i) for i in range(ncalls)]) != 0):
+            # selector responds to call i
+            if not hasattr(call, "sig"):
+                return None
+            datatypes.add(call.sig.datatype())
+    if len(datatypes) != 1:
         return None
     datatype = datatypes.pop()
 

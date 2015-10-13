@@ -459,7 +459,7 @@ class Viewer(QtGui.QMainWindow):
                 if UI_item.showing:
                     plot_data.append((
                         UI_item.plotlabel,
-                        report.apply_metric(metric, UI_item.callid)
+                        report.evaluate(UI_item.callid, metric)
                     ))
                     colors.append(UI_item.color)
 
@@ -485,7 +485,7 @@ class Viewer(QtGui.QMainWindow):
         stat_names = ("min", "med", "max", "avg", "std")
         table_data = {}
         for metric_name, metric in self.metrics.items():
-            metric_data = report.apply_metric(metric, current.callid)
+            metric_data = report.evaluate(current.callid, metric)
             metric_values = [value for values in metric_data.values()
                              for value in values if value is not None]
             if not metric_values:

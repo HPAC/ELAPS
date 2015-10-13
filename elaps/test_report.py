@@ -44,9 +44,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(report.starttime, start_time)
         self.assertEqual(report.endtime, end_time)
         self.assertEqual(report.fulldata, {None: ({None: ((val,),)},)})
-        self.assertEqual(report.data, {None: ({
-            None: {"cycles": val}, 0: {"cycles": val}
-        },)})
+        self.assertEqual(report.data, {None: (({"cycles": val},),)})
 
         rawdata = [[0], [1]]
         report = Report(ex, rawdata)
@@ -87,7 +85,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(len(report.fulldata[None]), nreps)
         idx = random.randint(0, nreps - 1)
         self.assertEqual(report.fulldata[None][idx][None][0][0], vals[idx])
-        self.assertEqual(report.data[None][idx][None]["cycles"], vals[idx])
+        self.assertEqual(report.data[None][idx][0]["cycles"], vals[idx])
 
     def test_sumrange(self):
         """Test for Experiment with sumrange."""
@@ -107,8 +105,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(len(report.fulldata[None][0]), lenrange)
         idx = random.choice(range_vals)
         self.assertEqual(report.fulldata[None][0][idx][0][0], vals[idx])
-        self.assertEqual(report.data[None][0][None]["cycles"],
-                         sum(vals.values()))
+        self.assertEqual(report.data[None][0][0]["cycles"], sum(vals.values()))
 
     def test_sumrange_parallel(self):
         """Test for Experiment with parallel sumrange."""
@@ -126,7 +123,7 @@ class TestReport(unittest.TestCase):
         report = Report(ex, rawdata)
         self.assertEqual(len(report.fulldata[None][0]), 1)
         self.assertEqual(report.fulldata[None][0][0], val)
-        self.assertEqual(report.data[None][0][None]["cycles"], val)
+        self.assertEqual(report.data[None][0]["cycles"], val)
 
     def test_calls(self):
         """Test for Experiment multiple calls."""
@@ -142,7 +139,6 @@ class TestReport(unittest.TestCase):
         self.assertEqual(len(report.fulldata[None][0][None]), ncalls)
         idx = random.randint(0, ncalls - 1)
         self.assertEqual(report.fulldata[None][0][None][idx][0], vals[idx])
-        self.assertEqual(report.data[None][0][None]["cycles"], sum(vals))
 
     def test_calls_parallel(self):
         """Test for Experiment parallel calls."""
@@ -158,7 +154,7 @@ class TestReport(unittest.TestCase):
         report = Report(ex, rawdata)
         self.assertEqual(len(report.fulldata[None][0][None]), 1)
         self.assertEqual(report.fulldata[None][0][None][0], val)
-        self.assertEqual(report.data[None][0][None]["cycles"], val)
+        self.assertEqual(report.data[None][0]["cycles"], val)
 
     def test_counters(self):
         """Test for Experiment with counters."""
@@ -178,7 +174,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(report.fulldata[None][0][None][0][idx], vals[idx])
         idx = random.randint(0, ncounters - 1)
         name = names[idx]
-        self.assertEqual(report.data[None][0][None][name], vals[1 + idx])
+        self.assertEqual(report.data[None][0][0][name], vals[1 + idx])
 
     def test_complexity(self):
         """Test for Call with complexity."""
@@ -198,8 +194,8 @@ class TestReport(unittest.TestCase):
         self.assertEqual(report.data[range_idx][0][0]["flops"],
                          range_idx * sum(i for i in range(lensumrange)))
 
-    def test_apply_metric(self):
-        """Test for apply_metric()."""
+    def test_evaluate(self):
+        """Test for evaluate()."""
         ex = self.ex
 
         val = random.randint(1, 1000)
@@ -211,7 +207,13 @@ class TestReport(unittest.TestCase):
             return data.get("cycles")
 
         report = Report(ex, rawdata)
-        metricdata = report.apply_metric(metric, 0)
+        metricdata = report.evaluate(0, metric)
+        self.assertEqual(metricdata, {None: [val]})
+
+        # parallel
+        ex.sumrange_parallel = True
+        report = Report(ex, rawdata)
+        metricdata = report.evaluate(None, metric)
         self.assertEqual(metricdata, {None: [val]})
 
     def test_discrard_frist_repetitions(self):
