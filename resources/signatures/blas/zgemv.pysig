@@ -12,5 +12,5 @@ Signature(
     zScalar("beta"),
     zData("Y", "1 + ((m if trans == 'N' else n) - 1) * abs(incY)"),
     Ld("incY"),
-    complexity = "4 * 2 * m * n"
+    flops="4 * 2 * m * n"
 )

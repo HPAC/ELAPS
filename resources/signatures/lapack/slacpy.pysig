@@ -8,5 +8,5 @@ Signature(
     Ld("ldA", "m"),
     sData("B", "ldB * n", "lower if uplo == 'L' else upper if uplo == 'L' else None"),
     Ld("ldB", "m"),
-    complexity="0"
+    flops="0"
 )

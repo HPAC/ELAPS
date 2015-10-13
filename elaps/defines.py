@@ -72,7 +72,7 @@ Experiment(
             Ld("ldB", "k if transB == 'N' else n"),
             dScalar("beta"),
             dData("C", "ldC * n"), Ld("ldC", "m"),
-            complexity="2 * m * n * k"
+            flops="2 * m * n * k"
         )(
             "N", "N", Symbol("i"), Symbol("i"), Symbol("i"),
             1, "A", Symbol("i"), "B", Symbol("i"), 1, "C", Symbol("i")

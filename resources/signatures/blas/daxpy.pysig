@@ -7,5 +7,5 @@ Signature(
     Inc("incX"),
     dData("Y", "1 + (n - 1) * abs(incY)"),
     Inc("incY"),
-    complexity = "2 * n"
+    flops="2 * n"
 )

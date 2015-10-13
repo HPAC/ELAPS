@@ -6,5 +6,5 @@ Signature(
     sData("A", "ldA * n",
           "lower if uplo == 'L' else upper, symm"),
     Ld("ldA", "n"),
-    complexity="n * n + n"
+    flops="n * n + n"
 )

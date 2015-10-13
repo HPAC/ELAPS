@@ -14,5 +14,5 @@ Signature(
     Ld("ldC", "m"),
     dScalar("scale"),
     Info(),
-    complexity="m * n * (m + n + 4)"
+    flops="m * n * (m + n + 4)"
 )

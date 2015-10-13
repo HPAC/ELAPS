@@ -10,5 +10,5 @@ Signature(
     Inc("incY"),
     dData("A", "ldA * n"),
     Ld("ldA", "m"),
-    complexity = "2 * m * n"
+    flops="2 * m * n"
 )

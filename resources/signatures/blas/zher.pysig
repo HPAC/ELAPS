@@ -8,5 +8,5 @@ Signature(
     Inc("incX"),
     zData("A", "ldA * n", "lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
-    complexity = "4 * 2 * n ** 2"
+    flops="4 * 2 * n ** 2"
 )

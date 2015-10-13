@@ -6,5 +6,5 @@ Signature(
     dScalar(),
     dData("A", "ldA * n"),
     Ld("ldA", "m"),
-    complexity="0"
+    flops="0"
 )

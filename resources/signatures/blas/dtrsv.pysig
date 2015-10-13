@@ -9,5 +9,5 @@ Signature(
     Ld("ldA", "n"),
     dData("X", "1 + (n - 1) * abs(incX)"),
     Inc("incX"),
-    complexity = "n ** 2 + n"
+    flops="n ** 2 + n"
 )

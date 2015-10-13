@@ -7,5 +7,5 @@ Signature(
     Ld("ldA", "m"),
     iData("ipiv", "min(m, n)"),
     Info(),
-    complexity="min(m, n) * (min(m, n) * (4 * min(m, n) - 6 * m - 6 * n + 3) + 6 * (2 * m - 1) * n - 1) / 6"
+    flops="min(m, n) * (min(m, n) * (4 * min(m, n) - 6 * m - 6 * n + 3) + 6 * (2 * m - 1) * n - 1) / 6"
 )

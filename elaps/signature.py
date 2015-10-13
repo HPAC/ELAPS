@@ -16,22 +16,23 @@ class Signature(list):
     def __init__(self, *args, **kwargs):
         """Initialize from file ore arguments."""
         list.__init__(self, args)
-        self.complexitystr = None
-        self.complexity = None
+        self.flopsstr = None
+        self.flops = None
 
         if not isinstance(self[0], Name):
             self[0] = Name(self[0])
 
-        # infer and compile complexity, min, attr
+        # infer and compile flops, min, attr
         self.init_lambdas(kwargs)
 
     def init_lambdas(self, kwargs):
         """Initialize lambda expressions."""
         lambdaargs = ", ".join(arg.name for arg in self)
-        if "complexity" in kwargs:
-            self.complexitystr = kwargs["complexity"]
-            self.complexity = eval("lambda %s: %s" %
-                                   (lambdaargs, kwargs["complexity"]))
+        if "complexity" in kwargs and "flops" not in kwargs:
+                kwargs["flops"] = kwargs["complexity"]
+        if "flops" in kwargs:
+            self.flopsstr = kwargs["flops"]
+            self.flops = eval("lambda %s: %s" % (lambdaargs, kwargs["flops"]))
         for arg in self:
             arg.min = None
             if isinstance(arg, ArgWithMin) and arg.minstr:
@@ -51,11 +52,11 @@ class Signature(list):
     def check_lambdas(self):
         """Check lambdas for unknown arguments."""
         args = range(len(self))
-        if self.complexity:
+        if self.flops:
             try:
-                self.complexity(*args)
+                self.flops(*args)
             except NameError as e:
-                raise NameError("Unknown argument %r used in complexity" %
+                raise NameError("Unknown argument %r used in flops" %
                                 str(e).split("'")[1])
         for arg in self:
             if arg.min:
@@ -80,8 +81,8 @@ class Signature(list):
     def __repr__(self):
         """Format as python parsable string."""
         args = [repr(self[0].name)] + map(repr, self[1:])
-        if self.complexity:
-            args.append("complexity=" + repr(self.complexitystr))
+        if self.flops:
+            args.append("flops=" + repr(self.flopsstr))
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __call__(self, *args):
@@ -214,10 +215,10 @@ class Call(BasicCall):
             return self.sig[argid].properties(*self)
         return tuple(arg.properties(*self) for arg in self.sig)
 
-    def complexity(self):
-        """Compute the call complexity."""
-        if self.sig.complexity is not None:
-            return self.sig.complexity(*self)
+    def flops(self):
+        """Compute the call flops."""
+        if self.sig.flops is not None:
+            return self.sig.flops(*self)
         return None
 
     def format_sampler(self):

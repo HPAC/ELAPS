@@ -200,7 +200,7 @@ class TestExperimentSetters(TestExperiment):
                     Ld("ldB", "k if transB == 'N' else n"),
                     dScalar("beta"),
                     sData("C", "ldC * n"), Ld("ldC", "m"),
-                    complexity="2 * m * n * k"
+                    flops="2 * m * n * k"
                 )("N", "N", i, i, i, 1, "A", i, "B", i, 1, "C", i)
             ]
         )

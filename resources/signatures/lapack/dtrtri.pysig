@@ -8,5 +8,5 @@ Signature(
           "lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
     Info(),
-    complexity="n * (n + 1) * (2 * n + 1) / 6"
+    flops="n * (n + 1) * (2 * n + 1) / 6"
 )

@@ -14,5 +14,5 @@ Signature(
     zData("C", "ldC * n",
           "symm, lower if uplo == 'L' else upper"),
     Ld("ldC", "n"),
-    complexity="4 * 2 * k * n ** 2"
+    flops="4 * 2 * k * n ** 2"
 )

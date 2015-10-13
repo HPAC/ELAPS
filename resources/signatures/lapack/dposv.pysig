@@ -9,5 +9,5 @@ Signature(
     dData("B", "ldB * nrhs"),
     Ld("ldB", "n"),
     Info(),
-    complexity="n * (n + 1) * (2 * n + 1) / 6 + 2 * n * n * nrhs"
+    flops="n * (n + 1) * (2 * n + 1) / 6 + 2 * n * n * nrhs"
 )

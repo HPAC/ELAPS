@@ -176,8 +176,8 @@ class TestReport(unittest.TestCase):
         name = names[idx]
         self.assertEqual(report.data[None][0][0][name], vals[1 + idx])
 
-    def test_complexity(self):
-        """Test for Call with complexity."""
+    def test_flops(self):
+        """Test for Call with flops."""
         ex, i, j = self.ex, self.i, self.j
 
         lenrange = random.randint(1, 10)
@@ -185,7 +185,7 @@ class TestReport(unittest.TestCase):
 
         ex.range = [i, range(lenrange)]
         ex.sumrange = [j, range(lensumrange)]
-        sig = Signature("name", Dim("m"), Dim("n"), complexity="m * n")
+        sig = Signature("name", Dim("m"), Dim("n"), flops="m * n")
         ex.call = sig(i, j)
         rawdata = [[0]] + lenrange * lensumrange * [[0]] + [[1]]
 

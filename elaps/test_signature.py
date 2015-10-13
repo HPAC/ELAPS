@@ -87,9 +87,9 @@ class TestSignature(unittest.TestCase):
 
     def test_lambdas(self):
         """Test for lambda functions."""
-        # complexity
-        sig = Signature("name", Dim("m"), Dim("n"), complexity="m + n")
-        self.assertEqual(sig.complexity("name", 1234, 5678), 1234 + 5678)
+        # flops
+        sig = Signature("name", Dim("m"), Dim("n"), flops="m + n")
+        self.assertEqual(sig.flops("name", 1234, 5678), 1234 + 5678)
 
         # min
         sig = Signature("name", Dim("m"), Dim("n"), Data("A", "m * n"))
@@ -103,7 +103,7 @@ class TestSignature(unittest.TestCase):
 
         # failure checking
         self.assertRaises(NameError,
-                          Signature, "name", Dim("m"), complexity="n")
+                          Signature, "name", Dim("m"), flops="n")
 
         self.assertRaises(NameError,
                           Signature, "name", Dim("m"), Data("X", "m * n"))
@@ -132,7 +132,7 @@ class TestCall(unittest.TestCase):
     def setUp(self):
         """Set up a signature."""
         self.sig = Signature("name", Dim("n"), dData("A", "ldA * n + 5"),
-                             Ld("ldA", "n + 3"), complexity="n ** 4")
+                             Ld("ldA", "n + 3"), flops="n ** 4")
 
     def test_init(self):
         """Test for __init__()."""
@@ -177,13 +177,13 @@ class TestCall(unittest.TestCase):
         call2.complete()
         self.assertEqual(call2, sig(1234, (1234 + 3) * 1234 + 5, 1234 + 3))
 
-    def test_complexity(self):
-        """Test for complexity()."""
+    def test_flops(self):
+        """Test for flops()."""
         sig = self.sig
 
         call = sig()
         call.n = 1234
-        self.assertEqual(call.complexity(), 1234 ** 4)
+        self.assertEqual(call.flops(), 1234 ** 4)
 
 
 if __name__ == "__main__":

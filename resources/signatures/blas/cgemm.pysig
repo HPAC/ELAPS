@@ -14,5 +14,5 @@ Signature(
     cScalar("beta"),
     cData("C", "ldC * n"),
     Ld("ldC", "m"),
-    complexity = "4 * 2 * m * n * k"
+    flops="4 * 2 * m * n * k"
 )

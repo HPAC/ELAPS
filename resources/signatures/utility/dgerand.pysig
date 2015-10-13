@@ -5,5 +5,5 @@ Signature(
     Dim("n"),
     dData("A", "ldA * n"),
     Ld("ldA", "m"),
-    complexity="m * n"
+    flops="m * n"
 )

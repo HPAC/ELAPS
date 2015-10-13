@@ -12,5 +12,5 @@ Signature(
     dScalar("beta"),
     dData("Y", "1 + ((m if trans == 'N' else n) - 1) * abs(incY)"),
     Ld("incY"),
-    complexity = "2 * m * n"
+    flops="2 * m * n"
 )

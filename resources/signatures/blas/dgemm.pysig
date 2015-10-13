@@ -1,4 +1,4 @@
-# double precision matrix-matrix product
+# Double precision matrix-matrix product
 Signature(
     "dgemm",
     Trans("transA"),
@@ -14,5 +14,5 @@ Signature(
     dScalar("beta"),
     dData("C", "ldC * n"),
     Ld("ldC", "m"),
-    complexity = "2 * m * n * k"
+    flops="2 * m * n * k"
 )

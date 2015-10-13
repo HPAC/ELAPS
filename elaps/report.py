@@ -195,7 +195,7 @@ class Report(object):
                         flops[callid] = None
                         continue
                     call_flops = next(ex.ranges_eval(
-                        call.complexity(), range_val, sumrange_val
+                        call.flops(), range_val, sumrange_val
                     ))
                     if call_flops is None:
                         flops[callid] = None
