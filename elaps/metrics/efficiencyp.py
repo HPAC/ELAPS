@@ -41,4 +41,4 @@ def metric(data, experiment, nthreads, selector, **kwargs):
 
     return 100 * nops / (cycles * ipc * ncores)
 
-name = "efficiency [%]"
+metric.name = "efficiency [%]"

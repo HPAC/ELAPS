@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""time in seconds metric."""
+"""Time in seconds metric."""
 from __future__ import division, print_function
 
 
@@ -14,4 +14,4 @@ def metric(data, experiment, **kwargs):
         return None
     return cycles / freq
 
-name = "time [s]"
+metric.name = "time [s]"

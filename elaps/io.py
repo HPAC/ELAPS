@@ -246,7 +246,6 @@ def load_metric_file(filename):
     name = os.path.basename(filename)[:-3]
     module = imp.load_source(name, filename)
     metric = module.metric
-    metric.name = module.name
     return metric
 
 

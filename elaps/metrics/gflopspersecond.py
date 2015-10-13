@@ -15,4 +15,4 @@ def metric(data, experiment, **kwargs):
         return None
     return 1e-9 * nops * (freq / cycles)
 
-name = "Gflops/s"
+metric.name = "Gflops/s"

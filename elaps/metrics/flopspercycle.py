@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""flops/cycle metric."""
+"""Flops/cycle metric."""
 from __future__ import division, print_function
 
 
@@ -15,4 +15,4 @@ def metric(data, **kwargs):
         return None
     return nops / cycles
 
-name = "flops/cycle"
+metric.name = "flops/cycle"

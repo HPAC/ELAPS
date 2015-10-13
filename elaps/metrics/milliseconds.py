@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-"""time in milliseconds metric."""
+"""Time in milliseconds metric."""
 from __future__ import division, print_function
 
 
 def metric(data, experiment, **kwargs):
-    """milliseconds spent during the operations.
+    """Milliseconds spent during the operations.
 
     Obtained form the CPU's time stamp counter and information on the system.
     """
@@ -14,4 +14,4 @@ def metric(data, experiment, **kwargs):
         return None
     return 1000 * cycles / freq
 
-name = "time [ms]"
+metric.name = "time [ms]"

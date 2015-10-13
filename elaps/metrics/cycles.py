@@ -11,4 +11,4 @@ def metric(data, **kwargs):
     """
     return data.get("cycles")
 
-name = "cycles"
+metric.name = "cycles"
