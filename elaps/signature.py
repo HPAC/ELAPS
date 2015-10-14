@@ -29,7 +29,8 @@ class Signature(list):
         """Initialize lambda expressions."""
         lambdaargs = ", ".join(arg.name for arg in self)
         if "complexity" in kwargs and "flops" not in kwargs:
-                kwargs["flops"] = kwargs["complexity"]
+            # legacy support
+            kwargs["flops"] = kwargs["complexity"]
         if "flops" in kwargs:
             self.flopsstr = kwargs["flops"]
             self.flops = eval("lambda %s: %s" % (lambdaargs, kwargs["flops"]))
