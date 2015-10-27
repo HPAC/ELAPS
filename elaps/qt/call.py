@@ -173,7 +173,7 @@ class QCall(QtGui.QListWidgetItem):
                 arg = sig[argid]
                 if isinstance(arg, signature.Flag):
                     UI_arg = QtGui.QComboBox()
-                    UI_arg.addItems(arg.flags)
+                    UI_arg.addItems(map(str, arg.flags))
                     UI_arg.currentIndexChanged[str].connect(self.on_arg_change)
                 elif isinstance(arg, signature.Data):
                     UI_arg = QDataArg(
