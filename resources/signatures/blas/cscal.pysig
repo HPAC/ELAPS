@@ -1,0 +1,9 @@
+# single precision complex vector scaling
+Signature(
+    "cscal",
+    Dim("n"),
+    cScalar(),
+    cData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    flops="4 * n"
+)

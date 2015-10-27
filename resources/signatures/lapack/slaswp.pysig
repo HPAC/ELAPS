@@ -1,0 +1,12 @@
+# single precision matrix row/column swaps
+Signature(
+    "slaswp",
+    Dim("n"),
+    sData("A", "ldA * n"),
+    Ld("ldA"),
+    Dim("k1"),
+    Dim("k2"),
+    iData("ipiv", "k2 * incx"),
+    Inc("incx"),
+    flops="0"
+)

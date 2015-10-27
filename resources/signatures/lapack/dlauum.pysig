@@ -1,6 +1,6 @@
-# double precision Cholesky factorization (unblocked)
+# double precision symmetric triangular matrix squaring
 Signature(
-    "dpotf2",
+    "dlauum",
     Uplo(),
     Dim("n"),
     dData("A", "ldA * n", "lower if uplo == 'L' else upper"),

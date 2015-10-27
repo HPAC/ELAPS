@@ -1,0 +1,11 @@
+# double precision complex scaled vector addition
+Signature(
+    "zaxpy",
+    Dim("n"),
+    zScalar(),
+    zData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    zData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("incY"),
+    flops="4 * 2 * n"
+)

@@ -1,0 +1,10 @@
+# double precision complex Cholesky factorization (unblocked)
+Signature(
+    "zpotf2",
+    Uplo(),
+    Dim("n"),
+    zData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    Info(),
+    flops="4 * n * (n + 1) * (2 * n + 1) / 6"
+)

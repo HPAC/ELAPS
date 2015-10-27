@@ -1,0 +1,15 @@
+# single precision complex hermetian matrix-vector product
+Signature(
+    "chemv",
+    Uplo(),
+    Dim("n"),
+    cScalar(),
+    cData("A", "ldA * n", "herm, lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    cData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    cScalar("beta"),
+    cData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("incY"),
+    flops="4 * 2 * n ** 2"
+)

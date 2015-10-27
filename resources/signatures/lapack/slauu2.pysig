@@ -1,0 +1,10 @@
+# single precision symmetric triangular matrix squaring (unblocked)
+Signature(
+    "slauu2",
+    Uplo(),
+    Dim("n"),
+    sData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    Info(),
+    flops="n * (n + 1) * (2 * n + 1) / 6"
+)

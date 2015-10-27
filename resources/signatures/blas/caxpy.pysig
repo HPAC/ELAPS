@@ -1,0 +1,11 @@
+# single precision complex scaled vector addition
+Signature(
+    "caxpy",
+    Dim("n"),
+    cScalar(),
+    cData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    cData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("incY"),
+    flops="4 * 2 * n"
+)

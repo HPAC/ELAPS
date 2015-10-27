@@ -1,0 +1,12 @@
+# single precision triangular inversion (unblocked)
+Signature(
+    "strti2",
+    Uplo(),
+    Diag(),
+    Dim("n"),
+    sData("A", "ldA * n",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    Info(),
+    flops="n * (n + 1) * (2 * n + 1) / 6"
+)

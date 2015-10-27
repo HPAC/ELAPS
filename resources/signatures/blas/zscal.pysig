@@ -1,0 +1,9 @@
+# double precision complex vector scaling
+Signature(
+    "zscal",
+    Dim("n"),
+    zScalar(),
+    zData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    flops="4 * n"
+)

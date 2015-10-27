@@ -1,0 +1,15 @@
+# double precision matrix scaling
+Signature(
+    "dlascl",
+    Flag("type", ["G", "L", "U", "H", "B", "Q", "Z"]),
+    Dim("kl"),
+    Dim("ru"),
+    dScalar("cfrom"),
+    dScalar("cto"),
+    Dim("m"),
+    Dim("n"),
+    dData("A", "ldA * n", "lower if type == 'L' else upper if type == 'L' else None"),
+    Ld("ldA", "m"),
+    Info(),
+    flops="m * n"
+)

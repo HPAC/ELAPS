@@ -1,0 +1,10 @@
+# single precision complex vector-vector inner product
+Signature(
+    "cdotu",
+    Dim("n"),
+    cData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    cData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("incY"),
+    flops="4 * 2 * n"  # checked
+)

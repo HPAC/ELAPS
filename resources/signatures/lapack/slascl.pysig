@@ -1,0 +1,15 @@
+# single precision matrix scaling
+Signature(
+    "slascl",
+    Flag("type", ["G", "L", "U", "H", "B", "Q", "Z"]),
+    Dim("kl"),
+    Dim("ru"),
+    sScalar("cfrom"),
+    sScalar("cto"),
+    Dim("m"),
+    Dim("n"),
+    sData("A", "ldA * n", "lower if type == 'L' else upper if type == 'L' else None"),
+    Ld("ldA", "m"),
+    Info(),
+    flops="m * n"
+)

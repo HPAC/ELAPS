@@ -1,0 +1,12 @@
+# double precision complex symetric vector outer product
+Signature(
+    "zsyr",
+    Uplo(),
+    Dim("n"),
+    zScalar(),
+    zData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    zData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    flops="4 * n * (n + 1)"
+)

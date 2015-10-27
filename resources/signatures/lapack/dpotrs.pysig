@@ -1,4 +1,4 @@
-# double precision linear system solve after cholesky
+# double precision linear system solve after Cholesky
 Signature(
     "dpotrs",
     Uplo(),

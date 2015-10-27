@@ -1,0 +1,12 @@
+# double precision complex matrix row/column swaps
+Signature(
+    "zlaswp",
+    Dim("n"),
+    zData("A", "ldA * n"),
+    Ld("ldA"),
+    Dim("k1"),
+    Dim("k2"),
+    iData("ipiv", "k2 * incx"),
+    Inc("incx"),
+    flops="0"
+)

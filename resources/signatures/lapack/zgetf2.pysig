@@ -1,0 +1,11 @@
+# double precision complex LU factorization with pivoting (unblocked)
+Signature(
+    "zgetf2",
+    Dim("m"),
+    Dim("n"),
+    zData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    iData("ipiv", "min(m, n)"),
+    Info(),
+    flops="4 * min(m, n) * (min(m, n) * (4 * min(m, n) - 6 * m - 6 * n + 3) + 6 * (2 * m - 1) * n - 1) / 6"
+)

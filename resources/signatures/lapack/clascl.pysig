@@ -1,0 +1,15 @@
+# single precision complex matrix scaling
+Signature(
+    "clascl",
+    Flag("type", ["G", "L", "U", "H", "B", "Q", "Z"]),
+    Dim("kl"),
+    Dim("ru"),
+    sScalar("cfrom"),
+    sScalar("cto"),
+    Dim("m"),
+    Dim("n"),
+    cData("A", "ldA * n", "lower if type == 'L' else upper if type == 'L' else None"),
+    Ld("ldA", "m"),
+    Info(),
+    flops="m * n"
+)

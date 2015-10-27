@@ -1,0 +1,12 @@
+# single precision complex symetric vector outer product
+Signature(
+    "csyr",
+    Uplo(),
+    Dim("n"),
+    cScalar(),
+    cData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    cData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    flops="4 * n * (n + 1)"
+)
