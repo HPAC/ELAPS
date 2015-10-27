@@ -298,7 +298,8 @@ class Report(object):
             for rep, rep_data in enumerate(range_val_data):
                 if not (ex.sumrange_parallel or ex.calls_parallel):
                     # transpose rep_data
-                    rep_data = {k: [call_data[k] for call_data in rep_data]
+                    rep_data = {k: [call_data[k] if k in call_data else None
+                                    for call_data in rep_data]
                                 for k in rep_data[0]}
                 try:
                     selector_data = {k: selector(v)
