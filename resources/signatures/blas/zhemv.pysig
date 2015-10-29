@@ -1,6 +1,6 @@
 # double precision complex hermetian matrix-vector product
 Signature(
-    "chemv",
+    "zhemv",
     Uplo(),
     Dim("n"),
     zScalar(),

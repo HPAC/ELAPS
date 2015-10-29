@@ -1,0 +1,8 @@
+# double precision complex vector absolute sum
+Signature(
+    "dzasum",
+    Dim("n"),
+    zData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    flops="2 * n"
+)

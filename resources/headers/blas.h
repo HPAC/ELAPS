@@ -8,8 +8,8 @@ typedef struct {
 } doublec_t;
 void caxpy(const int *, const float *, const float *, const int *, float *, const int *);
 void ccopy(const int *, const float *, const int *, float *, const int *);
-floatc_t cdotc(float *, const int *, const float *, const int *, const float *, const int *);
-floatc_t cdotu(float *, const int *, const float *, const int *, const float *, const int *);
+floatc_t cdotc(const int *, const float *, const int *, const float *, const int *);
+floatc_t cdotu(const int *, const float *, const int *, const float *, const int *);
 void cgbmv(const char *, const int *, const int *, const int *, const int *, const float *, const float *, const int *, const float *, const int *, const float *, float *, const int *);
 void cgemm(const char *, const char *, const int *, const int *, const int *, const float *, const float *, const int *, const float *, const int *, const float *, float *, const int *);
 void cgemv(const char *, const int *, const int *, const float *, const float *, const int *, const float *, const int *, const float *, float *, const int *);
@@ -117,8 +117,8 @@ void strsm(const char *, const char *, const char *, const char *, const int *, 
 void strsv(const char *, const char *, const char *, const int *, const float *, const int *, float *, const int *);
 void zaxpy(const int *, const double *, const double *, const int *, double *, const int *);
 void zcopy(const int *, const double *, const int *, double *, const int *);
-doublec_t zdotc(double *, const int *, const double *, const int *, const double *, const int *);
-doublec_t zdotu(double *, const int *, const double *, const int *, const double *, const int *);
+doublec_t zdotc(const int *, const double *, const int *, const double *, const int *);
+doublec_t zdotu(const int *, const double *, const int *, const double *, const int *);
 void zdscal(const int *, const double *, double *, const int *);
 void zgbmv(const char *, const int *, const int *, const int *, const int *, const double *, const double *, const int *, const double *, const int *, const double *, double *, const int *);
 void zgemm(const char *, const char *, const int *, const int *, const int *, const double *, const double *, const int *, const double *, const int *, const double *, double *, const int *);

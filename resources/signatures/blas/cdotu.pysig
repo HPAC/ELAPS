@@ -1,6 +1,6 @@
-# single precision complex vector-vector conjugate inner product
+# single precision complex vector-vector inner product
 Signature(
-    "cdotc",
+    "cdotu",
     Dim("n"),
     cData("X", "1 + (n - 1) * abs(incX)"),
     Inc("incX"),

@@ -1,10 +1,10 @@
-# single precision complex vector-vector conjugate inner product
+# single precision complex vector copy
 Signature(
-    "cdotc",
+    "ccopy",
     Dim("n"),
     cData("X", "1 + (n - 1) * abs(incX)"),
     Inc("incX"),
     cData("Y", "1 + (n - 1) * abs(incY)"),
     Inc("incY"),
-    flops="4 * 2 * n"  # checked
+    flops="0"  # only memops
 )

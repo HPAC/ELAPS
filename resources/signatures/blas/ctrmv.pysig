@@ -1,0 +1,13 @@
+# single precision complex triangular matrix-vector product
+Signature(
+    "ctrmv",
+    Uplo(),
+    cTrans(),
+    Diag(),
+    Dim("n"),
+    cData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    cData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    flops="4 * n *(n + 1)"  # checked
+)

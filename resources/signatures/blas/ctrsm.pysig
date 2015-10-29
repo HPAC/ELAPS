@@ -3,7 +3,7 @@ Signature(
     "ctrsm",
     Side(),
     Uplo(),
-    Trans("transA"),
+    cTrans("transA"),
     Diag(),
     Dim("m"),
     Dim("n"),

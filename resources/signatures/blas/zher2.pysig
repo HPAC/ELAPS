@@ -1,0 +1,14 @@
+# double precision complex double symmetric vector-vector product
+Signature(
+    "zher2",
+    Uplo(),
+    Dim("n"),
+    zScalar(),
+    zData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    zData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("incY"),
+    zData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    flops="4 * 4 * n ** 2"
+)

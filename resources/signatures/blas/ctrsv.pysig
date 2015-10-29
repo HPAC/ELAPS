@@ -1,0 +1,13 @@
+# single precision complex traiangular matrix linear system solve product
+Signature(
+    "ctrsv",
+    Uplo(),
+    cTrans(),
+    Diag(),
+    Dim("n"),
+    cData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    cData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    flops="4 * n * (n + 1)"
+)

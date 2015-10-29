@@ -1,0 +1,8 @@
+# single precision complex vector 2-norm
+Signature(
+    "scnrm2",
+    Dim("n"),
+    cData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    flops="4 * 2 * n"
+)

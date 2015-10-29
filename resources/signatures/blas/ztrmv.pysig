@@ -1,0 +1,13 @@
+# double precision complex triangular matrix-vector product
+Signature(
+    "ztrmv",
+    Uplo(),
+    cTrans(),
+    Diag(),
+    Dim("n"),
+    zData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    zData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    flops="4 * n *(n + 1)"  # checked
+)

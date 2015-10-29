@@ -1,0 +1,10 @@
+# double precision complex vector swap
+Signature(
+    "zswap",
+    Dim("n"),
+    zData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    zData("Y", "1 + (n - 1) * abs(incY)"),
+    Inc("incY"),
+    flops="0"  # only memops
+)

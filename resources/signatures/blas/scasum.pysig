@@ -1,0 +1,8 @@
+# single precision complex vector absolute sum
+Signature(
+    "scasum",
+    Dim("n"),
+    cData("X", "1 + (n - 1) * abs(incX)"),
+    Inc("incX"),
+    flops="2 * n"
+)
