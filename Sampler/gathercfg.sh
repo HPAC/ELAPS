@@ -35,7 +35,7 @@ fi
 
 if [ "$0" == "$BASH_SOURCE" ]; then
     echo "CPU_MODEL=\"$CPU_MODEL_\""
-    echo "FREQUENCY_HZ=$FREQUENCY_HZ"_
+    echo "FREQUENCY_HZ=$FREQUENCY_HZ_"
     echo "NCORES=$NCORES_"
     echo "THREADS_PER_CORE=$THREADS_PER_CORE_"
     echo "PAPI_COUNTERS_MAX=$PAPI_COUNTERS_MAX_"
