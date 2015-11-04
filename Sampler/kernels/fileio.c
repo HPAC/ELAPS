@@ -19,7 +19,7 @@ void readfile(const char *filename, const int *m, const int *n, char *A, const i
     }
     int j;
     for (j = 0; j < *n; j++)
-        if (fread(A + *m + *n * *ldA, sizeof(char), *m, fin) != *m) {
+        if (fread(A + *m + *n * *ldA, sizeof(char), (size_t) *m, fin) != (size_t) *m) {
             *info = j;
             return;
         }
@@ -35,8 +35,8 @@ void readfile(const char *filename, const int *m, const int *n, char *A, const i
  * \param info Error status, 0 on success.
  */
 void ireadfile(const char *filename, const int *m, const int *n, int *A, const int *ldA, int *info) {
-    int cm = *m * sizeof(int) / sizeof(char);
-    int cldA = *ldA * sizeof(int) / sizeof(char);
+    int cm = *m * (int) (sizeof(int) / sizeof(char));
+    int cldA = *ldA * (int) (sizeof(int) / sizeof(char));
     readfile(filename, &cm, n, (char *) A, &cldA, info);
 }
 
@@ -50,8 +50,8 @@ void ireadfile(const char *filename, const int *m, const int *n, int *A, const i
  * \param info Error status, 0 on success.
  */
 void sreadfile(const char *filename, const int *m, const int *n, float *A, const int *ldA, int *info) {
-    int cm = *m * sizeof(float) / sizeof(char);
-    int cldA = *ldA * sizeof(float) / sizeof(char);
+    int cm = *m * (int) (sizeof(float) / sizeof(char));
+    int cldA = *ldA * (int) (sizeof(float) / sizeof(char));
     readfile(filename, &cm, n, (char *) A, &cldA, info);
 }
 
@@ -65,8 +65,8 @@ void sreadfile(const char *filename, const int *m, const int *n, float *A, const
  * \param info Error status, 0 on success.
  */
 void dreadfile(const char *filename, const int *m, const int *n, double *A, const int *ldA, int *info) {
-    int cm = *m * sizeof(double) / sizeof(char);
-    int cldA = *ldA * sizeof(double) / sizeof(char);
+    int cm = *m * (int) (sizeof(double) / sizeof(char));
+    int cldA = *ldA * (int) (sizeof(double) / sizeof(char));
     readfile(filename, &cm, n, (char *) A, &cldA, info);
 }
 
@@ -80,8 +80,8 @@ void dreadfile(const char *filename, const int *m, const int *n, double *A, cons
  * \param info Error status, 0 on success.
  */
 void creadfile(const char *filename, const int *m, const int *n, float *A, const int *ldA, int *info) {
-    int cm = 2 * *m * sizeof(float) / sizeof(char);
-    int cldA = 2 * *ldA * sizeof(float) / sizeof(char);
+    int cm = *m * (int) (2 * sizeof(float) / sizeof(char));
+    int cldA = *ldA * (int) (2 * sizeof(float) / sizeof(char));
     readfile(filename, &cm, n, (char *) A, &cldA, info);
 }
 
@@ -95,8 +95,8 @@ void creadfile(const char *filename, const int *m, const int *n, float *A, const
  * \param info Error status, 0 on success.
  */
 void zreadfile(const char *filename, const int *m, const int *n, double *A, const int *ldA, int *info) {
-    int cm = 2 * *m * sizeof(double) / sizeof(char);
-    int cldA = 2 * *ldA * sizeof(double) / sizeof(char);
+    int cm = *m * (int) (2 * sizeof(double) / sizeof(char));
+    int cldA = *ldA * (int) (2 * sizeof(double) / sizeof(char));
     readfile(filename, &cm, n, (char *) A, &cldA, info);
 }
 
@@ -118,7 +118,7 @@ void writefile(const char *filename, const int *m, const int *n, const char *A, 
     }
     int j;
     for (j = 0; j < *n; j++)
-        if (fwrite(A + *m + *n * *ldA, sizeof(char), *m, fin) != *m) {
+        if (fwrite(A + *m + *n * *ldA, sizeof(char), (size_t) *m, fin) != (size_t) *m) {
             *info = j;
             return;
         }
@@ -134,8 +134,8 @@ void writefile(const char *filename, const int *m, const int *n, const char *A, 
  * \param info Error status, 0 on success.
  */
 void iwritefile(const char *filename, const int *m, const int *n, const int *A, const int *ldA, int *info) {
-    int cm = *m * sizeof(int) / sizeof(char);
-    int cldA = *ldA * sizeof(int) / sizeof(char);
+    int cm = *m * (int) (sizeof(int) / sizeof(char));
+    int cldA = *ldA * (int) (sizeof(int) / sizeof(char));
     writefile(filename, &cm, n, (const char *) A, &cldA, info);
 }
 
@@ -149,8 +149,8 @@ void iwritefile(const char *filename, const int *m, const int *n, const int *A, 
  * \param info Error status, 0 on success.
  */
 void swritefile(const char *filename, const int *m, const int *n, const float *A, const int *ldA, int *info) {
-    int cm = *m * sizeof(float) / sizeof(char);
-    int cldA = *ldA * sizeof(float) / sizeof(char);
+    int cm = *m * (int) (sizeof(float) / sizeof(char));
+    int cldA = *ldA * (int) (sizeof(float) / sizeof(char));
     writefile(filename, &cm, n, (const char *) A, &cldA, info);
 }
 
@@ -164,8 +164,8 @@ void swritefile(const char *filename, const int *m, const int *n, const float *A
  * \param info Error status, 0 on success.
  */
 void dwritefile(const char *filename, const int *m, const int *n, const double *A, const int *ldA, int *info) {
-    int cm = *m * sizeof(double) / sizeof(char);
-    int cldA = *ldA * sizeof(double) / sizeof(char);
+    int cm = *m * (int) (sizeof(double) / sizeof(char));
+    int cldA = *ldA * (int) (sizeof(double) / sizeof(char));
     writefile(filename, &cm, n, (const char *) A, &cldA, info);
 }
 
@@ -179,8 +179,8 @@ void dwritefile(const char *filename, const int *m, const int *n, const double *
  * \param info Error status, 0 on success.
  */
 void cwritefile(const char *filename, const int *m, const int *n, const float *A, const int *ldA, int *info) {
-    int cm = 2 * *m * sizeof(float) / sizeof(char);
-    int cldA = 2 * *ldA * sizeof(float) / sizeof(char);
+    int cm = *m * (int) (2 * sizeof(float) / sizeof(char));
+    int cldA = *ldA * (int) (2 * sizeof(float) / sizeof(char));
     writefile(filename, &cm, n, (const char *) A, &cldA, info);
 }
 
@@ -194,7 +194,7 @@ void cwritefile(const char *filename, const int *m, const int *n, const float *A
  * \param info Error status, 0 on success.
  */
 void zwritefile(const char *filename, const int *m, const int *n, const double *A, const int *ldA, int *info) {
-    int cm = 2 * *m * sizeof(double) / sizeof(char);
-    int cldA = 2 * *ldA * sizeof(double) / sizeof(char);
+    int cm = *m * (int) (2 * sizeof(double) / sizeof(char));
+    int cldA = *ldA * (int) (2 * sizeof(double) / sizeof(char));
     writefile(filename, &cm, n, (const char *) A, &cldA, info);
 }

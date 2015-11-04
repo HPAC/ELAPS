@@ -17,15 +17,15 @@ void sporand(const char *uplo, const int *n, float *A, const int *ldA) {
         case 'L':
             for (j = 0; j < *n; j++) {
                 for (i = 0; i < j; i++)
-                    A[i + j * *ldA] = ((float) rand()) / RAND_MAX;
-                A[j + j * *ldA] = ((float) rand()) / RAND_MAX + *n;
+                    A[i + j * *ldA] = rand() / (float) RAND_MAX;
+                A[j + j * *ldA] = rand() / (float) RAND_MAX + *n;
             }
             break;
         case 'U':
             for (j = 0; j < *n; j++) {
-                A[j + j * *ldA] = ((float) rand()) / RAND_MAX + *n;
+                A[j + j * *ldA] = rand() / (float) RAND_MAX + *n;
                 for (i = j + 1; i < *n; i++)
-                    A[i + j * *ldA] = ((float) rand()) / RAND_MAX;
+                    A[i + j * *ldA] = rand() / (float) RAND_MAX;
             }
             break;
     }
@@ -46,15 +46,15 @@ void dporand(const char *uplo, const int *n, double *A, const int *ldA) {
         case 'L':
             for (j = 0; j < *n; j++) {
                 for (i = 0; i < j; i++)
-                    A[i + j * *ldA] = ((double) rand()) / RAND_MAX;
-                A[j + j * *ldA] = ((double) rand()) / RAND_MAX + *n;
+                    A[i + j * *ldA] = rand() / (double) RAND_MAX;
+                A[j + j * *ldA] = rand() / (double) RAND_MAX + *n;
             }
             break;
         case 'U':
             for (j = 0; j < *n; j++) {
-                A[j + j * *ldA] = ((double) rand()) / RAND_MAX + *n;
+                A[j + j * *ldA] = rand() / (double) RAND_MAX + *n;
                 for (i = j + 1; i < *n; i++)
-                    A[i + j * *ldA] = ((double) rand()) / RAND_MAX;
+                    A[i + j * *ldA] = rand() / (double) RAND_MAX;
             }
             break;
     }
@@ -75,20 +75,20 @@ void cporand(const char *uplo, const int *n, float *A, const int *ldA) {
         case 'L':
             for (j = 0; j < *n; j++) {
                 for (i = 0; i < j; i++) {
-                    A[2 * (i + j * *ldA)] = ((float) rand()) / RAND_MAX;
-                    A[2 * (i + j * *ldA) + 1] = ((float) rand()) / RAND_MAX;
+                    A[2 * (i + j * *ldA)] = rand() / (float) RAND_MAX;
+                    A[2 * (i + j * *ldA) + 1] = rand() / (float) RAND_MAX;
                 }
-                A[2 * (j + j * *ldA)] = ((float) rand()) / RAND_MAX + 2 * *n;
+                A[2 * (j + j * *ldA)] = rand() / (float) RAND_MAX + 2 * *n;
                 A[2 * (j + j * *ldA) + 1] = 0;
             }
             break;
         case 'U':
             for (j = 0; j < *n; j++) {
-                A[2 * (j + j * *ldA)] = ((float) rand()) / RAND_MAX + 2 * *n;
+                A[2 * (j + j * *ldA)] = rand() / (float) RAND_MAX + 2 * *n;
                 A[2 * (j + j * *ldA) + 1] = 0;
                 for (i = j + 1; i < *n; i++) {
-                    A[2 * (i + j * *ldA)] = ((float) rand()) / RAND_MAX;
-                    A[2 * (i + j * *ldA) + 1] = ((float) rand()) / RAND_MAX;
+                    A[2 * (i + j * *ldA)] = rand() / (float) RAND_MAX;
+                    A[2 * (i + j * *ldA) + 1] = rand() / (float) RAND_MAX;
                 }
             }
             break;
@@ -110,20 +110,20 @@ void zporand(const char *uplo, const int *n, double *A, const int *ldA) {
         case 'L':
             for (j = 0; j < *n; j++) {
                 for (i = 0; i < j; i++) {
-                    A[2 * (i + j * *ldA)] = ((double) rand()) / RAND_MAX;
-                    A[2 * (i + j * *ldA) + 1] = ((double) rand()) / RAND_MAX;
+                    A[2 * (i + j * *ldA)] = rand() / (double) RAND_MAX;
+                    A[2 * (i + j * *ldA) + 1] = rand() / (double) RAND_MAX;
                 }
-                A[2 * (j + j * *ldA)] = ((double) rand()) / RAND_MAX + 2 * *n;
+                A[2 * (j + j * *ldA)] = rand() / (double) RAND_MAX + 2 * *n;
                 A[2 * (j + j * *ldA) + 1] = 0;
             }
             break;
         case 'U':
             for (j = 0; j < *n; j++) {
-                A[2 * (j + j * *ldA)] = ((double) rand()) / RAND_MAX + 2 * *n;
+                A[2 * (j + j * *ldA)] = rand() / (double) RAND_MAX + 2 * *n;
                 A[2 * (j + j * *ldA) + 1] = 0;
                 for (i = j + 1; i < *n; i++) {
-                    A[2 * (i + j * *ldA)] = ((double) rand()) / RAND_MAX;
-                    A[2 * (i + j * *ldA) + 1] = ((double) rand()) / RAND_MAX;
+                    A[2 * (i + j * *ldA)] = rand() / (double) RAND_MAX;
+                    A[2 * (i + j * *ldA) + 1] = rand() / (double) RAND_MAX;
                 }
             }
             break;

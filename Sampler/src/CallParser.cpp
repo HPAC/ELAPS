@@ -9,21 +9,23 @@
 
 using namespace std;
 
-CallParser::CallParser(const vector<string> &tokens, const Signature &signature, MemoryManager &mem)
-: mem(&mem), signature(&signature), tokens(tokens)
+CallParser::CallParser(const vector<string> &tokens_, const Signature &signature_, MemoryManager &mem_)
+: mem(&mem_), signature(&signature_), tokens(tokens_)
 {
+    const size_t nargs = signature->arguments.size();
+    const size_t ntokens = tokens.size();
     // check for too few arguments
-    if (tokens.size() < signature.arguments.size()) {
+    if (ntokens < nargs) {
         cerr << "Too few arguments for kernel " << tokens[0];
-        cerr << ": given " << (tokens.size() - 1);
-        cerr << " expecting " << (signature.arguments.size() - 1) << " (call ignored)" << endl;
+        cerr << ": given " << ntokens - 1;
+        cerr << " expecting " << nargs - 1 << " (call ignored)" << endl;
         throw CallParser::CallParserException();
     }
     // check for too many arguments (warning only)
-    if (tokens.size() > signature.arguments.size()) {
+    if (ntokens > nargs) {
         cerr << "Ignoring excess arguments for kernel " << tokens[0];
-        cerr << ": given " << (tokens.size() - 1);
-        cerr << " expecting " << (signature.arguments.size() - 1) << endl;
+        cerr << ": given " << ntokens - 1;
+        cerr << " expecting " << nargs - 1 << endl;
     }
 
     // process arguments
@@ -33,13 +35,13 @@ CallParser::CallParser(const vector<string> &tokens, const Signature &signature,
 /** Explicit \ref read_static instantiation for `int`. */
 template <> int CallParser::read_static<int>(const char *str) const {
     // TODO: check for conversion errors
-    return atol(str);
+    return static_cast<int>(atol(str));
 }
 
 /** Explicit \ref read_static instantiation for `float`. */
 template <> float CallParser::read_static<float>(const char *str) const {
     // TODO: check for conversion errors
-    return (float) atof(str);
+    return static_cast<float>(atof(str));
 }
 
 /** Explicit \ref read_static instantiation for `double`. */
@@ -68,7 +70,7 @@ template <typename T> void CallParser::register_static(unsigned char argid) {
 
     // register variable
     memtypes[argid] = STATIC;
-    ids[argid] = mem->static_register((void *) &data[0], data.size() * sizeof(T));
+    ids[argid] = mem->static_register(static_cast<void *>(&data[0]), data.size() * sizeof(T));
 }
 
 /** Explicit \ref register_static instantiation for `void`.
@@ -106,7 +108,7 @@ template <typename T> void CallParser::register_dynamic(unsigned char i) {
 
     // register memory accordingly
     memtypes[i] = DYNAMIC;
-    const size_t size = atol(val.c_str() + 1);
+    const size_t size = static_cast<size_t>(atol(val.c_str() + 1));
     ids[i] = mem->dynamic_register<T>(size);
 }
 
@@ -144,6 +146,9 @@ void CallParser::register_args() {
     // process arguments by expected type
     for (unsigned char i = 1; i < argc; i++)
         switch (signature->arguments[i]) {
+            case NONE:
+            case NAME:
+                break;
             case CHARP:
             case CONST_CHARP:
                 register_arg<char>(i);
@@ -171,7 +176,7 @@ KernelCall CallParser::get_call() const {
     KernelCall call;
 
     // set up argument count and function pointer
-    call.argc = signature->arguments.size();
+    call.argc = static_cast<char>(signature->arguments.size());
     call.fptr = signature->fptr;
 
     // get the argument pointers from the MemoryManager

@@ -30,7 +30,7 @@ void sgerand(const int *m, const int *n, float *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
-            A[i + j * *ldA] = ((float) rand()) / RAND_MAX;
+            A[i + j * *ldA] = rand() / (float) RAND_MAX;
 }
 
 /** Randomize a double precision matrix.
@@ -45,7 +45,7 @@ void dgerand(const int *m, const int *n, double *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
-            A[i + j * *ldA] = ((double) rand()) / RAND_MAX;
+            A[i + j * *ldA] = rand() / (double) RAND_MAX;
 }
 
 /** Randomize a single precision complex matrix.
@@ -60,8 +60,8 @@ void cgerand(const int *m, const int *n, float *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++) {
-            A[2 * (i + j * *ldA)] = ((float) rand()) / RAND_MAX;
-            A[2 * (i + j * *ldA)] = ((float) rand()) / RAND_MAX;
+            A[2 * (i + j * *ldA)] = rand() / (float) RAND_MAX;
+            A[2 * (i + j * *ldA) + 1] = rand() / (float) RAND_MAX;
         }
 }
 
@@ -77,7 +77,7 @@ void zgerand(const int *m, const int *n, double *A, const int *ldA) {
     int i, j;
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++) {
-            A[2 * (i + j * *ldA)] = ((double) rand()) / RAND_MAX;
-            A[2 * (i + j * *ldA)] = ((double) rand()) / RAND_MAX;
+            A[2 * (i + j * *ldA)] = rand() / (double) RAND_MAX;
+            A[2 * (i + j * *ldA) + 1] = rand() / (double) RAND_MAX;
         }
 }

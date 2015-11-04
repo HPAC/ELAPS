@@ -18,7 +18,7 @@ extern "C" {
  * \param counters  The PAPI event codes.
  * \param ncounters The number of PAPI events.
  */
-void sample(KernelCall *calls, size_t ncalls, int *counters, int ncounters);
+void sample(KernelCall *calls, size_t ncalls, int *counters, size_t ncounters);
 #else
 void sample(KernelCall *calls, size_t ncalls);
 #endif

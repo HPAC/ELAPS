@@ -23,8 +23,8 @@ int main() {
 
         // static initialization from an include file
         const sigstruct sigs[] = {
-#include SIGS_C_INC
-            {""}  // needed to mark the end
+#include SIGS_CPP_INC
+            { }  // needed to mark the end
         };
 
         // add signatures to the sampler 1 by 1

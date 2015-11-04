@@ -21,10 +21,10 @@ void Sampler::set_counters(const vector<string> &tokens) {
     // ignore excess counters
     const int maxcounters = PAPI_num_counters();
     size_t ncounters = tokens.size() - 1;
-    if (ncounters > maxcounters) {
+    if (static_cast<int>(ncounters) > maxcounters) {
         cerr << "Too many counters specified: given " << ncounters;
         cerr << " maximum " << maxcounters << " (truncating counter list)" << endl;
-        ncounters = maxcounters;
+        ncounters = static_cast<size_t>(maxcounters);
     }
 
     // clear old counters
@@ -35,9 +35,7 @@ void Sampler::set_counters(const vector<string> &tokens) {
 
         // convert string to code
         int code;
-        char str[PAPI_MAX_STR_LEN];  // need to pass a non-const *
-        strcpy(str, tokens[i + 1].c_str());
-        const int check = PAPI_event_name_to_code(str, &code);
+        const int check = PAPI_event_name_to_code(const_cast<char *>(tokens[i + 1].c_str()), &code);
 
         // check for errors
         if (check == PAPI_OK)
@@ -48,9 +46,10 @@ void Sampler::set_counters(const vector<string> &tokens) {
             cerr << "Counter unavailable: " << tokens[i + 1] << " (counter ignored)" << endl;
 
         // check if combination is valid
-        if (PAPI_start_counters(&counters[0], counters.size()) == PAPI_OK) {
-            long long counts[counters.size()];
-            PAPI_stop_counters(counts, counters.size());
+        if (PAPI_start_counters(&counters[0], static_cast<int>(counters.size())) == PAPI_OK) {
+            long long *counts = new long long[counters.size()];
+            PAPI_stop_counters(counts, static_cast<int>(counters.size()));
+            delete[] counts;
         } else {
             counters.pop_back();
             cerr << "Could not add " << tokens[i + 1] << " (counter ignored)" << endl;
@@ -118,7 +117,6 @@ void Sampler::named_malloc(const vector<string> &tokens) {
         cerr << "Variable name must begin with a letter: " << name << " (command ignored)" << endl;
         return;
     }
-
     //TODO: check size conversion error
     // size must be > 0
     if (size < 0) {
@@ -127,7 +125,7 @@ void Sampler::named_malloc(const vector<string> &tokens) {
     }
 
     // malloc the variable
-    mem.named_malloc<T>(name, size);
+    mem.named_malloc<T>(name, static_cast<size_t>(size));
 }
 
 template <typename T>
@@ -154,6 +152,11 @@ void Sampler::named_offset(const vector<string> &tokens) {
         return;
     }
     // TODO: check offset conversion errors
+    // offset must be > 0
+    if (offset < 0) {
+        cerr << "Offset must be >= 0 (command ignored)" << endl;
+        return;
+    }
     // newname must not exist yet
     if (mem.named_exists(newname)) {
         cerr << "Variable already exists: " << newname << " (command ignored)" << endl;
@@ -161,7 +164,7 @@ void Sampler::named_offset(const vector<string> &tokens) {
     }
 
     // alias a new offset
-    mem.named_offset<T>(oldname, offset, newname);
+    mem.named_offset<T>(oldname, static_cast<size_t>(offset), newname);
 }
 
 void Sampler::named_free(const vector<string> &tokens) {
@@ -207,15 +210,15 @@ void Sampler::add_call(const vector<string> &tokens, bool hidden=false) {
         callparser.omp_active = omp_active;
 #endif
         callparsers.push_back(callparser);
-    } catch (CallParser::CallParserException &e) {
+    } catch (CallParser::CallParserException) {
         // the call could not be parsed
         // (failure already reported)
     }
 }
 
 void Sampler::go(const vector<string> &tokens) {
-    // end parallel region if active
 #ifdef OPENMP_ENABLED
+    // end parallel region if active
     if (omp_active) {
         cerr << "Implicitly ending last parallel region" << endl;
         omp_end(vector<string>());
@@ -238,7 +241,7 @@ void Sampler::go(const vector<string> &tokens) {
 
     // print results
     for (size_t i = 0; i < ncalls; i++) {
-        CallParser &callparser = callparsers[i];
+        const CallParser &callparser = callparsers[i];
 
         if (callparser.hidden)
             // call is hidden
@@ -254,7 +257,7 @@ void Sampler::go(const vector<string> &tokens) {
         cout << calls[i].cycles;
 
 #ifdef PAPI_ENABLED
-        // PAPI counters
+        // PAPI counter values
         for (size_t j = 0; j < counters.size(); j++)
             cout << "\t" << calls[i].counters[j];
 #endif
@@ -269,8 +272,10 @@ void Sampler::go(const vector<string> &tokens) {
 }
 
 void Sampler::print(const vector<string> &tokens) {
+    // join tokens with " "
     ostringstream text;
     copy(tokens.begin() + 1, tokens.end(), ostream_iterator<string>(text, " "));
+    // print result
     cout << text.str() << endl;
 }
 
@@ -302,6 +307,9 @@ void Sampler::info(const vector<string> &tokens) {
     const size_t argc = signature.arguments.size();
     for (size_t i = 1; i < argc; i++) {
         switch (signature.arguments[i]) {
+            case NONE:
+            case NAME:
+                break;
             case CHARP:
                 cerr << "char *";
                 break;
@@ -368,8 +376,8 @@ void Sampler::start() {
     commands["info"] = &Sampler::info;
     commands["print"] = &Sampler::print;
 
-    // default: not parallel
 #ifdef OPENMP_ENABLED
+    // initially: not parallel
     omp_active = false;
 #endif
 
@@ -384,6 +392,7 @@ void Sampler::start() {
         if (line.size() == 0)
             continue;
 
+        // hide call output?
         const bool hidden = isspace(line[0]);
 
         // remove leading spaces
@@ -401,8 +410,10 @@ void Sampler::start() {
         // check for commands
         map<string, void (Sampler:: *)(const vector<string> &)>::iterator command = commands.find(tokens[0]);
         if (command != commands.end())
+            // command detected
             (this->*(command->second))(tokens);
         else
+            // interpret call
             add_call(tokens, hidden);
     }
 
