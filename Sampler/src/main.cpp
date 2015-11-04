@@ -24,11 +24,10 @@ int main() {
         // static initialization from an include file
         const sigstruct sigs[] = {
 #include SIGS_CPP_INC
-            { }  // needed to mark the end
         };
 
         // add signatures to the sampler 1 by 1
-        for (size_t i = 0; sigs[i].name[0] != '\0'; i++)
+        for (size_t i = 0; i * sizeof(sigstruct) < sizeof(sigs); i++)
             sampler.add_signature(Signature(sigs[i].name, sigs[i].fptr, sigs[i].args));
     }
 
