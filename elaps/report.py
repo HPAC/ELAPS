@@ -220,7 +220,7 @@ class Report(object):
                         rep_data[intern("flops")] = sum(flops)
                 else:
                     # one result per call
-                    rep_data = tuple({c: 0 for c in counters}
+                    rep_data = tuple(dict((c, 0) for c in counters)
                                      for call in ex.calls)
                     for sumrange_val_fdata in rep_fdata.values():
                         for callid, call_fdata in enumerate(
@@ -298,12 +298,13 @@ class Report(object):
             for rep, rep_data in enumerate(range_val_data):
                 if not (ex.sumrange_parallel or ex.calls_parallel):
                     # transpose rep_data
-                    rep_data = {k: [call_data[k] if k in call_data else None
-                                    for call_data in rep_data]
-                                for k in rep_data[0]}
+                    rep_data = dict((k,
+                                     [call_data[k] if k in call_data else None
+                                      for call_data in rep_data])
+                                    for k in rep_data[0])
                 try:
-                    selector_data = {k: selector(v)
-                                     for k, v in rep_data.items()}
+                    selector_data = dict((k, selector(v))
+                                         for k, v in rep_data.items())
                     metric_val = metric(
                         selector_data, experiment=ex, selector=selector,
                         nthreads=nthreads
