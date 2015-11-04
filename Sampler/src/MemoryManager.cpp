@@ -34,7 +34,6 @@ template <> void MemoryManager::randomize<char>(void *data, size_t size) {
 /** Explicit \ref randomize instantiation for `int`.
  * Random values taken from \f$\{0, 1, \ldots, \min({\tt RAND\_MAX}, {\tt
  * INT\_MAX}) - 1\}\f$.
- *
  */
 template <> void MemoryManager::randomize<int>(void *data, size_t size) {
     for (size_t i = 0; i < size; i++)

@@ -117,7 +117,6 @@ void Sampler::named_malloc(const vector<string> &tokens) {
         cerr << "Variable name must begin with a letter: " << name << " (command ignored)" << endl;
         return;
     }
-
     //TODO: check size conversion error
     // size must be > 0
     if (size < 0) {
@@ -152,12 +151,12 @@ void Sampler::named_offset(const vector<string> &tokens) {
         cerr << "Unknown variable: " << oldname << " (command ignored)" << endl;
         return;
     }
+    // TODO: check offset conversion errors
     // offset must be > 0
     if (offset < 0) {
         cerr << "Offset must be >= 0 (command ignored)" << endl;
         return;
     }
-    // TODO: check offset conversion errors
     // newname must not exist yet
     if (mem.named_exists(newname)) {
         cerr << "Variable already exists: " << newname << " (command ignored)" << endl;
@@ -218,8 +217,8 @@ void Sampler::add_call(const vector<string> &tokens, bool hidden=false) {
 }
 
 void Sampler::go(const vector<string> &tokens) {
-    // end parallel region if active
 #ifdef OPENMP_ENABLED
+    // end parallel region if active
     if (omp_active) {
         cerr << "Implicitly ending last parallel region" << endl;
         omp_end(vector<string>());
@@ -242,7 +241,7 @@ void Sampler::go(const vector<string> &tokens) {
 
     // print results
     for (size_t i = 0; i < ncalls; i++) {
-        CallParser &callparser = callparsers[i];
+        const CallParser &callparser = callparsers[i];
 
         if (callparser.hidden)
             // call is hidden
@@ -258,7 +257,7 @@ void Sampler::go(const vector<string> &tokens) {
         cout << calls[i].cycles;
 
 #ifdef PAPI_ENABLED
-        // PAPI counters
+        // PAPI counter values
         for (size_t j = 0; j < counters.size(); j++)
             cout << "\t" << calls[i].counters[j];
 #endif
@@ -273,8 +272,10 @@ void Sampler::go(const vector<string> &tokens) {
 }
 
 void Sampler::print(const vector<string> &tokens) {
+    // join tokens with " "
     ostringstream text;
     copy(tokens.begin() + 1, tokens.end(), ostream_iterator<string>(text, " "));
+    // print result
     cout << text.str() << endl;
 }
 
@@ -375,8 +376,8 @@ void Sampler::start() {
     commands["info"] = &Sampler::info;
     commands["print"] = &Sampler::print;
 
-    // default: not parallel
 #ifdef OPENMP_ENABLED
+    // initially: not parallel
     omp_active = false;
 #endif
 
@@ -391,6 +392,7 @@ void Sampler::start() {
         if (line.size() == 0)
             continue;
 
+        // hide call output?
         const bool hidden = isspace(line[0]);
 
         // remove leading spaces
@@ -408,8 +410,10 @@ void Sampler::start() {
         // check for commands
         map<string, void (Sampler:: *)(const vector<string> &)>::iterator command = commands.find(tokens[0]);
         if (command != commands.end())
+            // command detected
             (this->*(command->second))(tokens);
         else
+            // interpret call
             add_call(tokens, hidden);
     }
 
