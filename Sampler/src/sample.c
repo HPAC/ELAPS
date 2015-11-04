@@ -161,9 +161,10 @@ static void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef PAPI_ENABLED
 
-#define COUNTERS_START0 PAPI_start_counters(counters, ncounters); get_cycles(ticks0);
-#define COUNTERS_END0   get_cycles(ticks1); PAPI_stop_counters(calls[i].counters, ncounters);
+#define COUNTERS_START0 PAPI_start_counters(counters, (int) ncounters); get_cycles(ticks0);
+#define COUNTERS_END0   get_cycles(ticks1); PAPI_stop_counters(calls[i].counters, (int) ncounters);
 
+#ifndef OPENMP_ENABLED
 /** \ref sample specialization with PAPI but without OpenMP. */
 static void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, size_t ncounters) {
     // for each call
@@ -192,8 +193,7 @@ static void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, s
 #undef COUNTERS_END
     }
 }
-
-#ifdef OPENMP_ENABLED
+#else
 /** \ref sample specialization with PAPI and OpenMP. */
 static void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, size_t ncounters) {
 #pragma omp parallel
