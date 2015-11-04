@@ -123,8 +123,6 @@ class Sampler {
          * Frees a named buffer.  Parses its argument and invokes \ref
          * MemoryManager::named_free.
          *
-         * \tparam T    data type to be allocated.
-         *
          * \param tokens    command + arguments: `free` *name*
          * - *name*: A previously allocated named buffer.
          */
@@ -147,7 +145,6 @@ class Sampler {
          * The obtained measurements are then printed to `stdout`.
          *
          * \param tokens    command + arguments: `go`
-         * \param hidden    whether the output is hidden
          */
         void go(const std::vector<std::string> &tokens);
 

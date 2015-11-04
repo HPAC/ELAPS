@@ -9,12 +9,12 @@
 
 using namespace std;
 
-MemoryManager::MemoryManager(size_t alignment, size_t first_offset)
-: alignment(alignment), dynamic_first_offset(first_offset),
-  dynamic_mem(first_offset)
+MemoryManager::MemoryManager(size_t alignment_, size_t first_offset_)
+: alignment(alignment_), dynamic_first_offset(first_offset_),
+  dynamic_mem(first_offset_)
 {
     // initialize random number generator
-    srand(time(NULL));
+    srand(static_cast<unsigned int>(time(NULL)));
 }
 
 MemoryManager::~MemoryManager() {
@@ -28,7 +28,7 @@ MemoryManager::~MemoryManager() {
  */
 template <> void MemoryManager::randomize<char>(void *data, size_t size) {
     for (size_t i = 0; i < size; i++)
-        ((unsigned char *) data)[i] = rand() % UCHAR_MAX;
+        static_cast<unsigned char *>(data)[i] = rand() % UCHAR_MAX;
 }
 
 /** Explicit \ref randomize instantiation for `int`.
@@ -38,7 +38,7 @@ template <> void MemoryManager::randomize<char>(void *data, size_t size) {
  */
 template <> void MemoryManager::randomize<int>(void *data, size_t size) {
     for (size_t i = 0; i < size; i++)
-        ((unsigned int *) data)[i] = rand() % INT_MAX;
+        static_cast<unsigned int *>(data)[i] = rand() % INT_MAX;
 }
 
 /** Explicit \ref randomize instantiation for `float`.
@@ -46,7 +46,7 @@ template <> void MemoryManager::randomize<int>(void *data, size_t size) {
  */
 template <> void MemoryManager::randomize<float>(void *data, size_t size) {
     for (size_t i = 0; i < size; i++)
-        ((float *) data)[i] = ((float) rand()) / RAND_MAX;
+        static_cast<float *>(data)[i] = rand() / static_cast<float>(RAND_MAX);
 }
 
 /** Explicit \ref randomize instantiation for `double`.
@@ -54,7 +54,7 @@ template <> void MemoryManager::randomize<float>(void *data, size_t size) {
  */
 template <> void MemoryManager::randomize<double>(void *data, size_t size) {
     for (size_t i = 0; i < size; i++)
-        ((double *) data)[i] = ((double) rand()) / RAND_MAX;
+        static_cast<double *>(data)[i] = rand() / static_cast<double>(RAND_MAX);
 }
 
 /** Explicit \ref randomize instantiation for `complex<float>`.
@@ -97,7 +97,7 @@ void MemoryManager::static_reset() {
 }
 
 bool MemoryManager::named_exists(const string &name) const {
-    return (bool) named_map.count(name);
+    return static_cast<bool>(named_map.count(name));
 }
 
 template <typename T>
@@ -108,7 +108,7 @@ void MemoryManager::named_malloc(const string &name, size_t size) {
     named_mem[name] = new char[sizeof(T) * size + alignment];
 
     // aligned memory registered in the mapping
-    named_map[name] = (char *) (((size_t) named_mem[name] / alignment + 1) * alignment);
+    named_map[name] = reinterpret_cast<char *>((reinterpret_cast<size_t>(named_mem[name]) / alignment + 1) * alignment);
 
     // initially empty list of aliases
     named_aliases[name] = vector<string>();
@@ -163,7 +163,7 @@ template void MemoryManager::named_offset<complex<float> >(const string &oldname
 template void MemoryManager::named_offset<complex<double> >(const string &oldname, size_t offset, const string &newname);
 
 void *MemoryManager::named_get(const string &name) {
-    return (void *) named_map[name];
+    return static_cast<void *>(named_map[name]);
 }
 
 void MemoryManager::named_free(const string &name) {
@@ -192,7 +192,7 @@ void MemoryManager::dynamic_newcall() {
 template <typename T>
 size_t MemoryManager::dynamic_register(size_t size) {
     // go to next alignment step
-    const size_t id = ((size_t) dynamic_needed_curr / alignment + 1) * alignment;
+    const size_t id = (dynamic_needed_curr / alignment + 1) * alignment;
 
     // compute new size of needed memory
     dynamic_needed_curr = id + size * sizeof(T);
@@ -231,7 +231,7 @@ template <> size_t MemoryManager::dynamic_register<void>(size_t size) {
 }
 
 void *MemoryManager::dynamic_get(size_t id) {
-    return (void *) &dynamic_mem[id];
+    return static_cast<void *>(&dynamic_mem[id]);
 }
 
 void MemoryManager::dynamic_reset() {

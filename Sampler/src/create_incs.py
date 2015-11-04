@@ -20,7 +20,7 @@ def main():
         return
     cfg_h = sys.argv[1]
     kernel_h = sys.argv[2]
-    sigs_c_inc = sys.argv[3]
+    sigs_cpp_inc = sys.argv[3]
     calls_c_inc = sys.argv[4]
     info_py = sys.argv[5]
     papi_counters_max = int(os.environ["PAPI_COUNTERS_MAX"])
@@ -45,7 +45,7 @@ def main():
         kernels = re.sub(p, s, kernels)
     kernels = kernels.split("\n")[:-1]
 
-    # create sigs.c.inc
+    # create sigs.cpp.inc
     argtypes = {
         "char *": "CHARP",
         "int *": "INTP",
@@ -60,7 +60,7 @@ def main():
     }
     argcmax = 0
     kernelsigs = []
-    with open(sigs_c_inc, "w") as fout:
+    with open(sigs_cpp_inc, "w") as fout:
         for line in kernels:
             match = re.match("(?:extern )?\w+ (\w+)\(([^)]*)\);", line)
             if not match:
@@ -78,7 +78,7 @@ def main():
             kernelsigs.append((name,) + tuple(arg for arg in args))
             enumargs = [argtypes[arg] for arg in args]
             argcmax = max(argcmax, len(enumargs) + 1)
-            print("{\"" + name + "\", (void (*)()) " + symbolname + ", { " +
+            print("{\"" + name + "\", reinterpret_cast<void (*)()>(" + symbolname + "), { " +
                   ", ".join(enumargs) + " } },", file=fout)
 
     # create calls.s.cin
@@ -98,7 +98,7 @@ def main():
         print("#ifndef SAMPLERCFG_H", file=fout)
         print("#define SAMPLERCFG_H", file=fout)
         print("#define KERNEL_H \"" + kernel_h + "\"", file=fout)
-        print("#define SIGS_C_INC \"" + sigs_c_inc + "\"", file=fout)
+        print("#define SIGS_CPP_INC \"" + sigs_cpp_inc + "\"", file=fout)
         print("#define CALLS_C_INC \"" + calls_c_inc + "\"", file=fout)
         print("#define KERNEL_MAX_ARGS", argcmax, file=fout)
         if papi_counters_max > 0:

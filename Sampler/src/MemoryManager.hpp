@@ -148,7 +148,7 @@ class MemoryManager {
          * \param offset    Offset in bytes.
          * \param newname   Name of the new buffer (i.e., pointer).
          */
-        template <typename T> void named_offset(const std::string &oldname, std::size_t offset, const std::string &newname);
+        template <typename T> void named_offset(const std::string &oldname, size_t offset, const std::string &newname);
 
         /** Get a pointer to a Named Memory buffer.
          *

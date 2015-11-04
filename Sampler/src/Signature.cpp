@@ -2,8 +2,8 @@
 
 using namespace std;
 
-Signature::Signature(const char *name, void (*fptr)(), const ArgType *args) 
-: name(name), fptr(fptr) {
+Signature::Signature(const char *name_, void (*fptr_)(), const ArgType *args) 
+: name(name_), fptr(fptr_) {
     // first argument type is the name
     arguments.push_back(NAME);
 
