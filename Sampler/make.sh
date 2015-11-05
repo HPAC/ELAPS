@@ -55,7 +55,7 @@ export CPU_MODEL FREQUENCY_HZ NCORES THREADS_PER_CORE
 # print info
 echo "Building Sampler  $NAME"
 echo "build folder:     $TARGET_DIR"
-echo "system/BLAS:      $SYSTEM_NAME/$BLAS_NAME"
+echo "system / BLAS:    $SYSTEM_NAME / $BLAS_NAME"
 echo "CPU (Hz):         $CPU_MODEL ($FREQUENCY_HZ)"
 echo "#cores:           $NCORES"
 echo "threads/core:     $THREADS_PER_CORE"
@@ -103,20 +103,20 @@ if [ $LINK_ONLY -ne 1 ]; then
     ( $VERBOSE; src/create_header.py > "$kernel_h" ) || exit
     ( $NOVERBOSE; echo -n "." )
 
-    # -------------------- COMPILING --------------------
-    ( $NOVERBOSE; echo -n " compiling " )
-
     # create aux files
     ( $VERBOSE; $CC $CFLAGS -E -I. "$kernel_h" | src/create_incs.py "$cfg_h" "$kernel_h" "$sigs_c_inc" "$calls_c_inc" "$info_py" ) || exit
     ( $NOVERBOSE; echo -n "." )
 
-    # build .o
+    # -------------------- COMPILING --------------------
+    ( $NOVERBOSE; echo -n " compiling " )
+
+    # build C++ .o
     for x in main CallParser MemoryManager Sampler Signature; do
         ( $VERBOSE; $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/$x.cpp -o "$TARGET_DIR/$x.o" ) || exit
         ( $NOVERBOSE; echo -n "." )
     done
 
-    # build kernels
+    # build utility kernels
     ( $VERBOSE; mkdir "$TARGET_DIR/kernels" )
     for file in kernels/*.c; do
         ( $VERBOSE; $CC $CFLAGS -c $file -o "$TARGET_DIR/${file%.c}.o" || exit ) || exit
@@ -133,4 +133,4 @@ fi
 
 # link sampler.x
 ( $VERBOSE; $CXX $CXXFLAGS "$TARGET_DIR/"*.o "$TARGET_DIR/kernels/"*.o -o "$TARGET_DIR/sampler.x" $LINK_FLAGS ) || exit
-( $NOVERBOSE; echo ". Done!" )
+( $NOVERBOSE; echo ". done!" )
