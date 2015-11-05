@@ -100,31 +100,31 @@ if [ $LINK_ONLY -ne 1 ]; then
     ( $NOVERBOSE; echo -n "." )
 
     # create headers file
-    ( $VERBOSE; src/create_header.py > "$kernel_h" )
+    ( $VERBOSE; src/create_header.py > "$kernel_h" ) || exit
     ( $NOVERBOSE; echo -n "." )
 
     # -------------------- COMPILING --------------------
     ( $NOVERBOSE; echo -n " compiling " )
 
     # create aux files
-    ( $VERBOSE; $CC $CFLAGS -E -I. "$kernel_h" | src/create_incs.py "$cfg_h" "$kernel_h" "$sigs_c_inc" "$calls_c_inc" "$info_py" || exit )
+    ( $VERBOSE; $CC $CFLAGS -E -I. "$kernel_h" | src/create_incs.py "$cfg_h" "$kernel_h" "$sigs_c_inc" "$calls_c_inc" "$info_py" ) || exit
     ( $NOVERBOSE; echo -n "." )
 
     # build .o
     for x in main CallParser MemoryManager Sampler Signature; do
-        ( $VERBOSE; $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/$x.cpp -o "$TARGET_DIR/$x.o" || exit )
+        ( $VERBOSE; $CXX $CXXFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/$x.cpp -o "$TARGET_DIR/$x.o" ) || exit
         ( $NOVERBOSE; echo -n "." )
     done
 
     # build kernels
     ( $VERBOSE; mkdir "$TARGET_DIR/kernels" )
     for file in kernels/*.c; do
-        ( $VERBOSE; $CC $CFLAGS -c $file -o "$TARGET_DIR/${file%.c}.o" || exit )
+        ( $VERBOSE; $CC $CFLAGS -c $file -o "$TARGET_DIR/${file%.c}.o" || exit ) || exit
         ( $NOVERBOSE; echo -n "." )
     done
 
     # build sample.o
-    ( $VERBOSE; $CC $CFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/sample.c -o "$TARGET_DIR/sample.o" || exit )
+    ( $VERBOSE; $CC $CFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/sample.c -o "$TARGET_DIR/sample.o" ) || exit
     ( $NOVERBOSE; echo -n "." )
 fi
 
@@ -132,5 +132,5 @@ fi
 ( $NOVERBOSE; echo -n " linking " )
 
 # link sampler.x
-( $VERBOSE; $CXX $CXXFLAGS "$TARGET_DIR/"*.o "$TARGET_DIR/kernels/"*.o -o "$TARGET_DIR/sampler.x" $LINK_FLAGS || exit )
+( $VERBOSE; $CXX $CXXFLAGS "$TARGET_DIR/"*.o "$TARGET_DIR/kernels/"*.o -o "$TARGET_DIR/sampler.x" $LINK_FLAGS ) || exit
 ( $NOVERBOSE; echo ". Done!" )
