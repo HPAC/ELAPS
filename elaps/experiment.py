@@ -438,8 +438,12 @@ class Experiment(object):
         # set new value
         self.range_vals = range_vals
 
-    def set_range(self, range_, force=False, check_only=False):
+    def set_range(self, range_, range_vals=None, force=False,
+                  check_only=False):
         """Set the range."""
+        if range_vals is not None:
+            self.set_range([range_, range_vals])
+            return
         if range_ is None:
             # disabling range
             if check_only:
@@ -576,8 +580,12 @@ class Experiment(object):
         # set new value
         self.sumrange_vals = sumrange_vals
 
-    def set_sumrange(self, sumrange, force=False, check_only=False):
+    def set_sumrange(self, sumrange, sumrange_vals=None, force=False,
+                     check_only=False):
         """Set the sumrange."""
+        if sumrange_vals is not None:
+            self.set_sumrange([sumrange, sumrange_vals])
+            return
         if sumrange is None:
             if check_only:
                 return

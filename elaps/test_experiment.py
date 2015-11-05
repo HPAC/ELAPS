@@ -398,6 +398,7 @@ class TestExperimentSetters(TestExperiment):
         ex = self.ex
 
         # working
+        ex.set_range("i", "100:100:2000")
         ex.set_range(["i", "100:100:2000"])
 
         # disabling
@@ -515,6 +516,7 @@ class TestExperimentSetters(TestExperiment):
         ex, j = self.ex, self.j
 
         # working
+        ex.set_sumrange("j", "1:100")
         ex.set_sumrange(["j", "1:100"])
 
         # disabling
