@@ -11,7 +11,6 @@ Experimental Linear Algebra Performance Studies
 - [Requirements](#requirements)
 - [Overview](#overview)
 - [Installation](#installation)
-- [Bugs](#bugs)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -80,14 +79,3 @@ To use ELAPS:
 - clone the GitHub repository
 - compile one or more `Sampler`s (see [docs/Sampler.md](docs/Sampler.md))
 Now, ELAPS is ready to go.  To get started, run `bin/PlayMat`.
-
-
-Bugs
-----
-
-This project is in a early stage, so bugs are to be expected (especially in the
-GUI parts).  If you found one, please file an issue detailing how you reached
-the problem and the error message or stack trace if any is printed in the
-console.  Thank you!
-
-- [There are currently no known bugs]
