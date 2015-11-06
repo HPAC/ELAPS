@@ -193,6 +193,7 @@ class PlayMat(QtGui.QMainWindow):
             # submit
             self.UI_reportname = QtGui.QLineEdit(
                 textChanged=self.on_reportname_change,
+                returnPressed=self.on_submit,
                 toolTip="Name for the Report."
             )
             self.UI_reportname.setFixedWidth(32)
