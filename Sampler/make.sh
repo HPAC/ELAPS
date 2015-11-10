@@ -78,12 +78,12 @@ echo "backend:          $BACKEND"
 [ -z "$BACKEND_PREFIX" ] || echo "backend prefix:   $BACKEND_PREFIX"
 [ -z "$BACKEND_SUFFIX" ] || echo "backend suffix:   $BACKEND_SUFFIX"
 [ -z "$BACKEND_FOOTER" ] || echo "backend footer:   $BACKEND_FOOTER"
-[ "$VERBOSE" == "" ] || echo ""
+[ -z "$VERBOSE" ] || echo ""
 
 # set paths
 cfg_h="$TARGET_DIR/cfg.h"
-kernel_h="$TARGET_DIR/kernels.h"
-sigs_c_inc="$TARGET_DIR/sigs.c.inc"
+kernels_h="$TARGET_DIR/kernels.h"
+sigs_cpp_inc="$TARGET_DIR/sigs.cpp.inc"
 calls_c_inc="$TARGET_DIR/calls.c.inc"
 info_py="$TARGET_DIR/info.py"
 
@@ -100,11 +100,11 @@ if [ $LINK_ONLY -ne 1 ]; then
     ( $NOVERBOSE; echo -n "." )
 
     # create headers file
-    ( $VERBOSE; src/create_header.py > "$kernel_h" ) || exit
+    ( $VERBOSE; src/create_header.py > "$kernels_h" ) || exit
     ( $NOVERBOSE; echo -n "." )
 
     # create aux files
-    ( $VERBOSE; $CC $CFLAGS -E -I. "$kernel_h" | src/create_incs.py "$cfg_h" "$kernel_h" "$sigs_c_inc" "$calls_c_inc" "$info_py" ) || exit
+    ( $VERBOSE; $CC $CFLAGS -E -I. "$kernels_h" | src/create_incs.py "$cfg_h" "$kernels_h" "$sigs_cpp_inc" "$calls_c_inc" "$info_py" ) || exit
     ( $NOVERBOSE; echo -n "." )
 
     # -------------------- COMPILING --------------------
@@ -119,17 +119,17 @@ if [ $LINK_ONLY -ne 1 ]; then
     # build utility kernels
     ( $VERBOSE; mkdir "$TARGET_DIR/kernels" )
     for file in kernels/*.c; do
-        ( $VERBOSE; $CC $CFLAGS -c $file -o "$TARGET_DIR/${file%.c}.o" || exit ) || exit
+        ( $VERBOSE; $CC $CFLAGS -c $file -o "$TARGET_DIR/${file%.c}.o" ) || exit
         ( $NOVERBOSE; echo -n "." )
     done
 
     # build sample.o
     ( $VERBOSE; $CC $CFLAGS $INCLUDE_FLAGS -I. -c -D CFG_H="\"$cfg_h\"" src/sample.c -o "$TARGET_DIR/sample.o" ) || exit
-    ( $NOVERBOSE; echo -n "." )
+    ( $NOVERBOSE; echo -n ". " )
 fi
 
 # -------------------- LINKING --------------------
-( $NOVERBOSE; echo -n " linking " )
+( $NOVERBOSE; echo -n "linking " )
 
 # link sampler.x
 ( $VERBOSE; $CXX $CXXFLAGS "$TARGET_DIR/"*.o "$TARGET_DIR/kernels/"*.o -o "$TARGET_DIR/sampler.x" $LINK_FLAGS ) || exit

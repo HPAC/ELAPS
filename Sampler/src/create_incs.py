@@ -8,8 +8,6 @@ import re
 from time import time
 from __builtin__ import intern  # fix for pyflake error
 
-buildversion = 1437314152
-
 
 def main():
     """Create include files for the Sampler."""
@@ -91,7 +89,7 @@ def main():
             print("\t((void (*)(" + ",".join(voidlist) + ")) fptr)(" +
                   ",".join(arglist) + ");", file=fout)
             print("\tCOUNTERS_END", file=fout)
-            print("\t break;", file=fout)
+            print("\tbreak;", file=fout)
 
     # create cfg.h
     with open(cfg_h, "w") as fout:
@@ -114,7 +112,6 @@ def main():
             os.environ["TARGET_DIR"], "sampler.x"
         )),
         "buildtime": time(),
-        "buildversion": buildversion,
         "name":  os.environ["NAME"],
         "system_name":  os.environ["SYSTEM_NAME"],
         "blas_name": os.environ["BLAS_NAME"],
