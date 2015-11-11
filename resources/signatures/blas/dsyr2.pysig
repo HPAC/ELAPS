@@ -10,5 +10,5 @@ Signature(
     Inc("incY"),
     dData("A", "ldA * n", "lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
-    flops="4 * n ** 2"
+    flops="2 * n * (n + 1)"  # checked
 )

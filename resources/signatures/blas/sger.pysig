@@ -10,5 +10,5 @@ Signature(
     Inc("incY"),
     sData("A", "ldA * n"),
     Ld("ldA", "m"),
-    flops="2 * m * n"
+    flops="2 * m * n"  # checked
 )

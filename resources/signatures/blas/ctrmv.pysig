@@ -9,5 +9,5 @@ Signature(
     Ld("ldA", "n"),
     cData("X", "1 + (n - 1) * abs(incX)"),
     Inc("incX"),
-    flops="4 * n *(n + 1)"  # checked
+    flops="4 * n * n"
 )

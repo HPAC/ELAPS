@@ -11,5 +11,5 @@ Signature(
     dScalar("beta"),
     dData("Y", "1 + (n - 1) * abs(incY)"),
     Inc("incY"),
-    flops="2 * n ** 2"
+    flops="2 * n * n"  # checked
 )

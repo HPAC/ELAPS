@@ -14,5 +14,5 @@ Signature(
     dScalar("beta"),
     dData("C", "ldC * n"),
     Ld("ldC", "m"),
-    flops="2 * m * n * k"
+    flops="2 * m * n * k"  # checked
 )

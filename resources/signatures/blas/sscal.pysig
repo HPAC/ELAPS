@@ -5,5 +5,5 @@ Signature(
     sScalar(),
     sData("X", "1 + (n - 1) * abs(incX)"),
     Inc("incX"),
-    flops="n"
+    flops="n"  # checked
 )

@@ -8,5 +8,5 @@ Signature(
     Inc("incX"),
     sData("A", "ldA * n", "lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
-    flops="n * (n + 1)"
+    flops="n * (n + 1)"  # checked
 )
