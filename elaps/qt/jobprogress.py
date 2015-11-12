@@ -41,6 +41,7 @@ class QJobProgress(QtGui.QDockWidget):
             itemDoubleClicked=self.on_double_click,
             customContextMenuRequested=self.on_rightclick
         ))
+        self.widget().keyPressEvent = self.on_keypress
         self.widget().setHeaderLabels(
             ("job", "progress", "status")
         )
@@ -145,6 +146,13 @@ class QJobProgress(QtGui.QDockWidget):
         job = item.job
         if job["stat"] == "DONE":
             self.playmat.on_open_viewer(job["reportfile"])
+
+    def on_keypress(self, event):
+        """Event: key pressed."""
+        if event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete):
+            self.on_kill()
+            return
+        QtGui.QTreeWidget.keyPressEvent(self.widget(), event)
 
     @pyqtSlot(QtCore.QPoint)
     def on_rightclick(self, pos):

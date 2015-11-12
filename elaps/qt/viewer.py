@@ -152,6 +152,7 @@ class Viewer(QtGui.QMainWindow):
             """Create the reports list."""
             self.UI_reports = QtGui.QTreeWidget(
                 acceptDrops=True, minimumWidth=300,
+                selectionMode=QtGui.QListWidget.ExtendedSelection,
                 contextMenuPolicy=QtCore.Qt.CustomContextMenu,
                 dragDropMode=QtGui.QTreeWidget.InternalMove,
                 currentItemChanged=self.on_report_select,
@@ -162,6 +163,7 @@ class Viewer(QtGui.QMainWindow):
             self.UI_reports.model().rowsInserted.connect(
                 self.on_reports_reorder
             )
+            self.UI_reports.keyPressEvent = self.on_reports_keypress
             self.UI_reports.setHeaderLabels(("report", "", "color", "label"))
             self.UI_reports.reports = {}
 
@@ -566,6 +568,13 @@ class Viewer(QtGui.QMainWindow):
         self.UI_plot_set()
         self.UI_table_set()
 
+    def on_reports_keypress(self, event):
+        """Event: key pressed."""
+        if event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete):
+            self.on_report_close()
+            return
+        QtGui.QTreeWidget.keyPressEvent(self.UI_reports, event)
+
     @pyqtSlot(QtCore.QPoint)
     def on_reports_rightclick(self, pos):
         """Event: right click on reports."""
@@ -635,10 +644,10 @@ class Viewer(QtGui.QMainWindow):
     @pyqtSlot()
     def on_report_close(self):
         """Event: close Report."""
-        UI_item = self.UI_reports.currentItem()
-        if UI_item.parent():
-            UI_item = UI_item.parent()
-        self.report_close(UI_item)
+        for UI_item in self.UI_reports.selectedItems():
+            if UI_item.parent():
+                UI_item = UI_item.parent()
+            self.report_close(UI_item)
         self.UI_setall()
 
     @pyqtSlot()

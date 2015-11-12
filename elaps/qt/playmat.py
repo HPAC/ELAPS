@@ -412,6 +412,7 @@ class PlayMat(QtGui.QMainWindow):
                 "The list of calls to be measured."
             )
             self.UI_calls.model().layoutChanged.connect(self.on_calls_reorder)
+            self.UI_calls.keyPressEvent = self.on_calls_keypress
 
             self.setCentralWidget(self.UI_calls)
 
@@ -1284,6 +1285,13 @@ class PlayMat(QtGui.QMainWindow):
             if "Incompatible operand types:" in str(e):
                 self.UI_alert(e)
 
+    def on_calls_keypress(self, event):
+        """Event: key pressed."""
+        if event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete):
+            self.on_call_remove()
+            return
+        QtGui.QListWidget.keyPressEvent(self.UI_calls, event)
+
     @pyqtSlot(QtCore.QPoint)
     def on_calls_rightclick(self, pos):
         """Event: right click in calls."""
@@ -1312,14 +1320,11 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot()
     def on_call_remove(self):
         """Event: remove call."""
-        callid = self.UI_calls.currentRow()
-        if callid == -1:
-            return
-        self.experiment.calls.pop(callid)
+        map(self.experiment.calls.pop,
+            sorted(map(self.UI_calls.row, self.UI_calls.selectedItems()),
+                   reverse=True))
         self.UI_submit_setenabled()
         self.UI_calls_set()
-        if callid:
-            self.UI_calls.setCurrentRow(callid - 1)
 
     @pyqtSlot()
     def on_call_clone(self):
