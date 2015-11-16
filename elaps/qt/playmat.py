@@ -66,6 +66,10 @@ class PlayMat(QtGui.QMainWindow):
         if not self.experiment:
             self.experiment_reset()
 
+        # undo stack
+        self.undo_stack = []
+        self.redo_stack = []
+
         self.UI_setall()
 
     def UI_init(self):
@@ -123,6 +127,22 @@ class PlayMat(QtGui.QMainWindow):
                 "Save Experiment ...", self,
                 shortcut=QtGui.QKeySequence.Save,
                 triggered=self.on_experiment_save
+            )
+
+            # EDIT
+
+            # undo
+            self.UIA_undo = QtGui.QAction(
+                "Undo", self, enabled=False,
+                shortcut=QtGui.QKeySequence.Undo,
+                triggered=self.on_undo
+            )
+
+            # redo
+            self.UIA_redo = QtGui.QAction(
+                "Redo", self, enabled=False,
+                shortcut=QtGui.QKeySequence.Redo,
+                triggered=self.on_redo
             )
 
             # VIEWER
@@ -205,17 +225,31 @@ class PlayMat(QtGui.QMainWindow):
             self.UIM_file.addSeparator()
             self.UIM_file.addAction(self.UIA_viewer_start)
 
-            # calls
-            self.UIM_calls = menu.addMenu("Calls")
-            self.UIM_calls.addAction(self.UIA_call_new)
-            self.UIM_calls.addAction(self.UIA_call_cut)
-            self.UIM_calls.addAction(self.UIA_call_copy)
-            self.UIM_calls.addAction(self.UIA_call_paste)
+            # edit
+            self.UIM_edit = menu.addMenu("Edit")
+            self.UIM_edit.addAction(self.UIA_undo)
+            self.UIM_edit.addAction(self.UIA_redo)
+            self.UIM_edit.addSeparator()
+            self.UIM_edit.addAction(self.UIA_call_new)
+            self.UIM_edit.addAction(self.UIA_call_cut)
+            self.UIM_edit.addAction(self.UIA_call_copy)
+            self.UIM_edit.addAction(self.UIA_call_paste)
 
             # view
             self.UIM_view = menu.addMenu("View")
             for UIA_hidearg in self.UIA_hideargs:
                 self.UIM_view.addAction(UIA_hidearg)
+
+            # CONTEXT MENUS
+
+            # calls
+            self.UIM_calls = QtGui.QMenu()
+            self.UIM_calls.addAction(self.UIA_call_new)
+            self.UIM_calls.addAction(self.UIA_call_cut)
+            self.UIM_calls.addAction(self.UIA_call_copy)
+            self.UIM_calls.addAction(self.UIA_call_paste)
+            self.UIM_calls.addSeparator()
+            self.UIM_calls.addMenu(self.UIM_view)
 
         def create_toolbar():
             """Create all toolbars."""
@@ -692,6 +726,12 @@ class PlayMat(QtGui.QMainWindow):
         from viewer import Viewer
         Viewer(*args, app=self.Qapp)
 
+    # undo / redo
+    def undo_stack_push(self):
+        """Push current experiment to undo stack."""
+        self.undo_stack.append(self.experiment.copy())
+        self.UIA_undo.setEnabled(True)
+
     # UI utility
     def UI_dialog(self, msgtype, title, text, callbacks=None):
         """Show a simple user dialog with multiple options."""
@@ -791,7 +831,7 @@ class PlayMat(QtGui.QMainWindow):
         return actions
 
     # UI setters
-    def UI_setall(self):
+    def UI_setall(self, force=False):
         """Set all UI elements."""
         self.UI_hideargs_set()
         self.UI_reportname_set()
@@ -804,7 +844,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_submit_setenabled()
         self.UI_note_set()
         self.UI_counters_set()
-        self.UI_calls_set()
+        self.UI_calls_set(force)
 
     def UI_hideargs_set(self):
         """Set UI element: hideargs options."""
@@ -893,7 +933,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_calls_parallelW.setEnabled(calls_parallel)
         self.UI_setting -= 1
 
-    def UI_calls_set(self):
+    def UI_calls_set(self, force=False):
         """Set UI element: calls."""
         self.UI_setting += 1
         for callid, call in enumerate(self.experiment.calls):
@@ -901,7 +941,7 @@ class PlayMat(QtGui.QMainWindow):
                 UI_call = QCall(self, callid)
                 self.UI_calls.addItem(UI_call)
                 self.UI_calls.setItemWidget(UI_call, UI_call.widget)
-            self.UI_calls.item(callid).setall()
+            self.UI_calls.item(callid).setall(force)
         while self.UI_calls.count() > len(self.experiment.calls):
             self.UI_calls.takeItem(len(self.experiment.calls))
         self.UI_setting -= 1
@@ -999,14 +1039,33 @@ class PlayMat(QtGui.QMainWindow):
                 self.UIA_call_paste.setEnabled(False)
 
     @pyqtSlot()
+    def on_undo(self):
+        """Event: undo."""
+        self.redo_stack.append(self.experiment.copy())
+        self.UIA_redo.setEnabled(True)
+        self.experiment = self.undo_stack.pop()
+        self.UIA_undo.setEnabled(bool(self.undo_stack))
+        self.UI_setall(True)
+
+    @pyqtSlot()
+    def on_redo(self):
+        """Event: undo."""
+        self.undo_stack_push()
+        self.experiment = self.redo_stack.pop()
+        self.UIA_redo.setEnabled(bool(self.redo_stack))
+        self.UI_setall(True)
+
+    @pyqtSlot()
     def on_experiment_reset(self):
         """Event: reset Experiment."""
+        self.undo_stack_push()
         self.experiment_reset()
-        self.UI_setall()
+        self.UI_setall(True)
 
     @pyqtSlot()
     def on_experiment_load(self, report=False):
         """Event: load Experiment."""
+        self.undo_stack_push()
         filename = QtGui.QFileDialog.getOpenFileName(
             self, "Load Experiment",
             elaps.io.reportpath if report else defines.experimentpath,
@@ -1015,7 +1074,7 @@ class PlayMat(QtGui.QMainWindow):
         if not filename:
             return
         self.experiment_load(str(filename))
-        self.UI_setall()
+        self.UI_setall(True)
 
     @pyqtSlot()
     def on_experiment_load_report(self):
@@ -1105,6 +1164,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: changed note."""
         if self.UI_setting:
             return
+        self.undo_stack_push()
         self.experiment.note = self.UI_note.toPlainText()
 
     @pyqtSlot(str)
@@ -1112,11 +1172,13 @@ class PlayMat(QtGui.QMainWindow):
         """Event: change Sampler."""
         if self.UI_setting:
             return
+        self.undo_stack_push()
         try:
             sampler = self.samplers[str(value)]
             self.experiment.set_sampler(sampler, force=force)
             self.UI_setall()
         except Exception as e:
+            self.on_undo()
             self.UI_dialog(
                 "question", "Incompatible Sampler",
                 "Sampler %s is not compatible with the current Experiment\n"
@@ -1129,6 +1191,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: change #threads."""
         if self.UI_setting:
             return
+        self.undo_stack_push()
         self.experiment.set_nthreads(str(value), force=True)
 
     @pyqtSlot(bool)
@@ -1136,6 +1199,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: change if range is used."""
         if self.UI_setting:
             return
+        self.undo_stack_push()
         ex = self.experiment
         if checked:
             range_var = str(self.UI_rangevar.text())
@@ -1152,6 +1216,7 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot(str)
     def on_rangevar_change(self, value):
         """Event: change range variable."""
+        self.undo_stack_push()
         try:
             self.experiment.set_range_var(str(value))
             self.UI_set_invalid(self.UI_rangevar, False)
@@ -1160,26 +1225,31 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_calls_set()
             self.UI_submit_setenabled()
         except:
+            self.on_undo()
             self.UI_set_invalid(self.UI_rangevar)
 
     @pyqtSlot(str)
     def on_rangevals_change(self, value):
         """Event: change range."""
+        self.undo_stack_push()
         try:
             self.experiment.set_range_vals(str(value))
             self.UI_set_invalid(self.UI_rangevals, False)
             self.experiment_infer_update_set()
         except:
+            self.on_undo()
             self.UI_set_invalid(self.UI_rangevals)
 
     @pyqtSlot(str)
     def on_nreps_change(self, value):
         """Event: change #repetitions."""
+        self.undo_stack_push()
         try:
             self.experiment.set_nreps(str(value))
             self.UI_set_invalid(self.UI_nreps, False)
             self.experiment_infer_update_set()
         except:
+            self.on_undo()
             self.UI_set_invalid(self.UI_nreps)
 
     @pyqtSlot(bool)
@@ -1187,6 +1257,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: change if sumrange is used."""
         if self.UI_setting:
             return
+        self.undo_stack_push()
         ex = self.experiment
         if checked:
             sumrange_var = str(self.UI_sumrangevar.text())
@@ -1207,28 +1278,33 @@ class PlayMat(QtGui.QMainWindow):
         """Event: change if sumrange is in parallel."""
         if self.UI_setting:
             return
+        self.undo_stack_push()
         self.experiment.set_sumrange_parallel(bool(value))
         self.UI_sumrange_set()
 
     @pyqtSlot(str)
     def on_sumrangevar_change(self, value):
         """Event: change sumrange variable."""
+        self.undo_stack_push()
         try:
             self.experiment.set_sumrange_var(str(value))
             self.UI_set_invalid(self.UI_sumrangevar, False)
             self.UI_calls_set()
             self.UI_submit_setenabled()
         except:
+            self.on_undo()
             self.UI_set_invalid(self.UI_sumrangevar)
 
     @pyqtSlot(str)
     def on_sumrangevals_change(self, value):
         """Event: change sumrange."""
+        self.undo_stack_push()
         try:
             self.experiment.set_sumrange_vals(str(value))
             self.UI_set_invalid(self.UI_sumrangevals, False)
             self.experiment_infer_update_set()
         except:
+            self.on_undo()
             self.UI_set_invalid(self.UI_sumrangevals)
 
     @pyqtSlot(bool)
@@ -1236,6 +1312,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: change if calls are in parallel."""
         if self.UI_setting:
             return
+        self.undo_stack_push()
         self.experiment.set_calls_parallel(bool(value))
         self.UI_calls_parallel_set()
 
@@ -1251,6 +1328,7 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot()
     def on_calls_reorder(self):
         """Event: change call order."""
+        self.undo_stack_push()
         calls = self.experiment.calls
         self.experiment.calls = []
         for idx in range(self.UI_calls.count()):
@@ -1265,6 +1343,7 @@ class PlayMat(QtGui.QMainWindow):
         if value not in ex.sampler["kernels"]:
             self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
             return
+        self.undo_stack_push()
         sig = self.sig_get(value)
         if not sig:
             try:
@@ -1277,6 +1356,7 @@ class PlayMat(QtGui.QMainWindow):
                                     False)
                 self.experiment_infer_update_set()
             except:
+                self.on_undo()
                 self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
         else:
             try:
@@ -1299,6 +1379,7 @@ class PlayMat(QtGui.QMainWindow):
                                     False)
                 self.experiment_infer_update_set()
             except Exception as e:
+                self.on_undo()
                 import traceback
                 traceback.print_exc()
                 self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
@@ -1310,6 +1391,7 @@ class PlayMat(QtGui.QMainWindow):
         if argid == 0:
             self.on_routine_set(callid, value)
             return
+        self.undo_stack_push()
         try:
             self.experiment.set_arg(callid, argid, value)
             self.UI_set_invalid(self.UI_calls.item(callid).UI_args[argid],
@@ -1327,7 +1409,10 @@ class PlayMat(QtGui.QMainWindow):
                         self.UI_calls.item(callid).UI_args[argid], False
                     )
                     self.experiment_infer_update_set()
+                else:
+                    self.on_undo()
                 return
+            self.on_undo()
             self.UI_set_invalid(self.UI_calls.item(callid).UI_args[argid])
             if "Incompatible operand types:" in str(e):
                 self.UI_alert(e)
@@ -1341,6 +1426,7 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot()
     def on_call_new(self):
         """Event: new call."""
+        self.undo_stack_push()
         callid = self.UI_calls.currentRow()
         if callid == -1:
             callid = len(self.experiment.calls)
@@ -1353,6 +1439,7 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot()
     def on_call_delete(self):
         """Event: delete call(s)."""
+        self.undo_stack_push()
         map(self.experiment.calls.pop,
             sorted(map(self.UI_calls.row, self.UI_calls.selectedItems()),
                    reverse=True))
@@ -1376,6 +1463,7 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot()
     def on_call_paste(self):
         """Event: paste call(s)."""
+        self.undo_stack_push()
         paste_calls = eval(str(self.Qapp.clipboard().text()),
                            signature.__dict__)
         callid = self.UI_calls.currentRow()
@@ -1387,6 +1475,7 @@ class PlayMat(QtGui.QMainWindow):
 
     def on_infer_ld(self, callid, argid):
         """Event: infer ld."""
+        self.undo_stack_push()
         self.experiment.infer_ld(callid, argid)
         self.UI_submit_setenabled()
         self.UI_calls_set()
@@ -1394,6 +1483,7 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot()
     def on_infer_lwork(self, callid, argid):
         """Event: infer lwork."""
+        self.undo_stack_push()
         self.experiment.infer_lwork(callid, argid)
         self.UI_submit_setenabled()
         self.UI_calls_set()
@@ -1401,6 +1491,7 @@ class PlayMat(QtGui.QMainWindow):
     # @pyqtSlot(bool)  # sender() pyqt bug
     def on_vary_with_toggle(self, checked):
         """Event: changed vary with."""
+        self.undo_stack_push()
         sender = self.Qapp.sender()
         ex = self.experiment
         name = sender.name
@@ -1414,6 +1505,7 @@ class PlayMat(QtGui.QMainWindow):
     # @pyqtSlot(bool)  # sender() pyqt bug
     def on_vary_along_toggle(self, checked):
         """Event: changed vary along."""
+        self.undo_stack_push()
         sender = self.Qapp.sender()
         self.experiment.set_vary_along(sender.name, sender.along)
         self.experiment_infer_update_set()
@@ -1421,6 +1513,7 @@ class PlayMat(QtGui.QMainWindow):
     # @pyqtSlot()  # sender() pyqt bug
     def on_vary_offset(self):
         """Event: set vary offset."""
+        self.undo_stack_push()
         sender = self.Qapp.sender()
         ex = self.experiment
         name = sender.name
@@ -1443,6 +1536,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: changed PAPI counter."""
         if self.UI_setting:
             return
+        self.undo_stack_push()
         counternames = [
             str(widget.itemData(widget.currentIndex()).toString())
             for widget in self.UI_countersD.widgets

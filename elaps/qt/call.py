@@ -114,7 +114,7 @@ class QCall(QtGui.QListWidgetItem):
                 self.playmat.UI_set_invalid(UI_arg)
         self.update_size()
 
-    def setall(self):
+    def setall(self, force=False):
         """Set all UI elements."""
         self.playmat.UI_setting += 1
         self.fixcallid = self.callid
@@ -132,7 +132,7 @@ class QCall(QtGui.QListWidgetItem):
             (self.fixcallid, self.fixcallid)
         )
 
-        self.UI_args_set()
+        self.UI_args_set(force)
         self.playmat.UI_setting -= 1
 
     def args_init(self):
