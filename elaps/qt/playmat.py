@@ -105,7 +105,8 @@ class PlayMat(QtGui.QMainWindow):
 
             # reset
             self.UIA_reset = QtGui.QAction(
-                "Reset Experiment", self, triggered=self.on_experiment_reset
+                "Reset Experiment", self,
+                triggered=self.on_experiment_reset
             )
 
             # load
@@ -145,13 +146,6 @@ class PlayMat(QtGui.QMainWindow):
                 triggered=self.on_redo
             )
 
-            # VIEWER
-
-            # start viewer
-            self.UIA_viewer_start = QtGui.QAction(
-                "Start Viewer", self, triggered=self.on_viewer_start
-            )
-
             # CALLS
 
             # new
@@ -164,12 +158,12 @@ class PlayMat(QtGui.QMainWindow):
             # delete (not cut)
             self.UIA_call_delete = QtGui.QAction(
                 "Delete Call(s)", self, enabled=False,
-                shortcut=QtGui.QKeySequence.Delete,
+                shortcut=QtCore.Qt.Key_Backspace,
                 triggered=self.on_call_delete
             )
-            self.UIA_call_delete_backspace = QtGui.QAction(
+            self.UIA_call_delete2 = QtGui.QAction(
                 "Delete Call(s)", self, enabled=False,
-                shortcut=QtCore.Qt.Key_Backspace,
+                shortcut=QtGui.QKeySequence.Delete,
                 triggered=self.on_call_delete
             )
 
@@ -206,10 +200,25 @@ class PlayMat(QtGui.QMainWindow):
                 ("hide infos", (signature.Info,))
             ):
                 UIA_hidearg = QtGui.QAction(
-                    desc, self, checkable=True, toggled=self.on_hideargs_toggle
+                    desc, self, checkable=True,
+                    toggled=self.on_hideargs_toggle
                 )
                 UIA_hidearg.classes = set(classes)
                 self.UIA_hideargs.append(UIA_hidearg)
+
+            # MISC
+
+            # start viewer
+            self.UIA_viewer_start = QtGui.QAction(
+                "Start Viewer", self,
+                triggered=self.on_viewer_start
+            )
+
+            # visit github
+            self.UIA_visit_github = QtGui.QAction(
+                "View ELAPS on GitHub", self,
+                triggered=self.on_visit_github
+            )
 
         def create_menus():
             """Create all menus."""
@@ -234,11 +243,16 @@ class PlayMat(QtGui.QMainWindow):
             self.UIM_edit.addAction(self.UIA_call_cut)
             self.UIM_edit.addAction(self.UIA_call_copy)
             self.UIM_edit.addAction(self.UIA_call_paste)
+            self.UIM_edit.addAction(self.UIA_call_delete)
 
             # view
             self.UIM_view = menu.addMenu("View")
             for UIA_hidearg in self.UIA_hideargs:
                 self.UIM_view.addAction(UIA_hidearg)
+
+            # help
+            self.UIM_help = menu.addMenu("Help")
+            self.UIM_help.addAction(self.UIA_visit_github)
 
             # CONTEXT MENUS
 
@@ -298,7 +312,8 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_reportname.setFixedWidth(32)
             reportname_choose = QtGui.QAction(
                 self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton),
-                "...", self, triggered=self.on_reportname_choose,
+                "...", self,
+                triggered=self.on_reportname_choose,
                 toolTip="Browse Report folder."
             )
 
@@ -514,7 +529,7 @@ class PlayMat(QtGui.QMainWindow):
             # actions
             self.UI_calls.addAction(self.UIA_call_new)
             self.UI_calls.addAction(self.UIA_call_delete)
-            self.UI_calls.addAction(self.UIA_call_delete_backspace)
+            self.UI_calls.addAction(self.UIA_call_delete2)
             self.UI_calls.addAction(self.UIA_call_copy)
             self.UI_calls.addAction(self.UIA_call_cut)
             self.UI_calls.addAction(self.UIA_call_paste)
@@ -808,8 +823,7 @@ class PlayMat(QtGui.QMainWindow):
                     text = "Vary along dim %d" % (along + 1)
 
                 alongA = QtGui.QAction(
-                    text, self,
-                    checkable=True,
+                    text, self, checkable=True,
                     checked=vary["along"] == along,
                     toggled=self.on_vary_along_toggle,
                 )
@@ -821,7 +835,8 @@ class PlayMat(QtGui.QMainWindow):
         actions.append(None)
         text = "Change vary offset (%s)" % vary["offset"]
         offset = QtGui.QAction(
-            text, self, triggered=self.on_vary_offset
+            text, self,
+            triggered=self.on_vary_offset
         )
         offset.name = name
         actions.append(offset)
@@ -1039,6 +1054,11 @@ class PlayMat(QtGui.QMainWindow):
                 self.UIA_call_paste.setEnabled(False)
 
     @pyqtSlot()
+    def on_visit_github(self):
+        """Event: visit GitHub."""
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl(defines.github_url))
+
+    @pyqtSlot()
     def on_undo(self):
         """Event: undo."""
         self.redo_stack.append(self.experiment.copy())
@@ -1085,9 +1105,7 @@ class PlayMat(QtGui.QMainWindow):
     def on_experiment_save(self):
         """Event: save Experiment."""
         filename = QtGui.QFileDialog.getSaveFileName(
-            self,
-            "Save Setup",
-            elaps.io.experimentpath,
+            self, "Save Setup", elaps.io.experimentpath,
             "*." + defines.experiment_extension
         )
         if not filename:
@@ -1321,7 +1339,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: call selection changed."""
         enabled = bool(self.UI_calls.selectedItems())
         self.UIA_call_delete.setEnabled(enabled)
-        self.UIA_call_delete_backspace.setEnabled(enabled)
+        self.UIA_call_delete2.setEnabled(enabled)
         self.UIA_call_cut.setEnabled(enabled)
         self.UIA_call_copy.setEnabled(enabled)
 

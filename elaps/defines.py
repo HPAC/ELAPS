@@ -80,3 +80,5 @@ Experiment(
     ]
 )
 """
+
+github_url = "https://github.com/elmar-peise/ELAPS/"
