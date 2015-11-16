@@ -144,7 +144,7 @@ class QJobProgress(QtGui.QDockWidget):
         if not item:
             return
         job = item.job
-        if job["stat"] == "DONE":
+        if job["stat"] in ("RUN", "DONE"):
             self.playmat.on_open_viewer(job["reportfile"])
 
     def on_keypress(self, event):
@@ -178,7 +178,7 @@ class QJobProgress(QtGui.QDockWidget):
             ))
 
             # open in Viewer
-            if any(job["stat"] == "DONE" for job in jobs):
+            if any(job["stat"] in ("RUN", "DONE") for job in jobs):
                 menu.addAction(QtGui.QAction(
                     "Open in Viewer", menu, triggered=self.on_open_viewer
                 ))
@@ -208,7 +208,7 @@ class QJobProgress(QtGui.QDockWidget):
             ))
 
             # open all in Viewer
-            if any(job["stat"] == "DONE" for job in alljobs):
+            if any(job["stat"] in ("RUN", "DONE") for job in alljobs):
                 menu.addAction(QtGui.QAction(
                     "Open all in Viewer", menu, triggered=self.on_openall_viewer
                 ))
@@ -274,7 +274,7 @@ class QJobProgress(QtGui.QDockWidget):
     def on_open_viewer(self):
         """Event: open job(s) in Viewer."""
         for job in self.selected_jobs():
-            if job["stat"] == "DONE":
+            if job["stat"] in ("RUN", "DONE"):
                 self.playmat.on_open_viewer(job["reportfile"])
 
     @pyqtSlot()

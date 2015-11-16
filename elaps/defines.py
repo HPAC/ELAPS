@@ -81,4 +81,5 @@ Experiment(
 )
 """
 jobprogress_timeout = 1000
+truncatedreload_timeout = 5000
 github_url = "https://github.com/elmar-peise/ELAPS/"

@@ -49,6 +49,12 @@ class Viewer(QtGui.QMainWindow):
             except:
                 pass
 
+        # truncated report reload timer
+        self.truncated_timer = QtCore.QTimer(
+            interval=defines.truncatedreload_timeout,
+            timeout=self.on_truncated_timer
+        )
+
         # load reports
         for filename in filenames:
             self.report_load(filename)
@@ -321,6 +327,10 @@ class Viewer(QtGui.QMainWindow):
                 self.alert("ERROR: Can't load %r" % filename)
             return
 
+        # check if truncated
+        if report.truncated:
+            self.truncated_timer.start()
+
         # add counters
         for counter_name in report.experiment.papi_counters:
             counter_info = self.papi_names[counter_name]
@@ -332,7 +342,10 @@ class Viewer(QtGui.QMainWindow):
             )
 
         if index is None:
-            self.log("Loaded %r" % filename)
+            msg = "Loaded %r"
+            if report.truncated:
+                msg += " (truncated)"
+            self.log(msg % filename)
             index = self.UI_reports.topLevelItemCount()
 
         self.UI_setting += 1
@@ -352,7 +365,7 @@ class Viewer(QtGui.QMainWindow):
         )
         self.UI_setting -= 1
 
-    def report_reload(self, UI_report, UI_alert=False):
+    def report_reload(self, UI_report, UI_alert=False, log=True):
         """Reload a report."""
         showing = [
             UI_item.callid for UI_item in [UI_report] + UI_report.children
@@ -364,7 +377,8 @@ class Viewer(QtGui.QMainWindow):
 
         for UI_item in [UI_report] + UI_report.children:
             UI_item.showing = UI_item.callid in showing
-        self.log("Reloaded %r" % UI_report.filename)
+        if log:
+            self.log("Reloaded %r" % UI_report.filename)
 
     # PlayMat
     def playmat_start(self, filename=None):
@@ -531,6 +545,15 @@ class Viewer(QtGui.QMainWindow):
         settings.setValue("windowState", self.saveState())
         state = self.stats_showing, self.metric_showing, self.discard_firstrep
         settings.setValue("state", repr(state))
+
+    @pyqtSlot()
+    def on_truncated_timer(self):
+        """Event: truncated report timer."""
+        self.truncated_timer.stop()
+        for UI_report in self.UI_reportitems():
+            if UI_report.report.truncated:
+                self.report_reload(UI_report, log=False)
+        self.UI_setall()
 
     @pyqtSlot()
     def on_playmat_start(self):
