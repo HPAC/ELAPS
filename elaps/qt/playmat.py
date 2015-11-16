@@ -79,65 +79,93 @@ class PlayMat(QtGui.QMainWindow):
         self.setCorner(QtCore.Qt.TopRightCorner, QtCore.Qt.TopDockWidgetArea)
         self.statusBar()
 
-        # DEBUG: print Experiment
-        QtGui.QShortcut(
-            QtGui.QKeySequence.Print, self, lambda: print(self.experiment)
-        )
+        # clipboard
+        self.Qapp.clipboard().changed.connect(self.on_clipboard_change)
 
-        def create_menus():
-            """Create all menus."""
-            menu = self.menuBar()
+        def create_actions():
+            """Create all actions."""
+            # EXPERIMENT
 
-            # file
-            fileM = menu.addMenu("File")
+            # DEBUG: print Experiment
+            QtGui.QShortcut(
+                QtGui.QKeySequence.Print, self, lambda: print(self.experiment)
+            )
 
-            # file > submit
-            self.UI_submitA = QtGui.QAction(
-                "Run", self, shortcut=QtGui.QKeySequence("Ctrl+R"),
+            # submit
+            self.UIA_submit = QtGui.QAction(
+                self.style().standardIcon(QtGui.QStyle.SP_DialogOkButton),
+                "Run Experiment", self,
+                shortcut=QtGui.QKeySequence("Ctrl+R"),
                 triggered=self.on_submit
             )
-            fileM.addAction(self.UI_submitA)
 
-            # file
-            fileM.addSeparator()
-
-            # file > reset
-            fileM.addAction(QtGui.QAction(
+            # reset
+            self.UIA_reset = QtGui.QAction(
                 "Reset Experiment", self, triggered=self.on_experiment_reset
-            ))
+            )
 
-            # file > load
-            fileM.addAction(QtGui.QAction(
+            # load
+            self.UIA_load = QtGui.QAction(
+                self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton),
                 "Load Experiment ...", self,
                 shortcut=QtGui.QKeySequence.Open,
                 triggered=self.on_experiment_load
-            ))
-
-            # load Report shortcut
+            )
+            # load report
             QtGui.QShortcut(
                 QtGui.QKeySequence("Ctrl+Shift+O"), self,
                 self.on_experiment_load_report
             )
 
-            # fie > save
-            fileM.addAction(QtGui.QAction(
+            # save
+            self.UIA_save = QtGui.QAction(
+                self.style().standardIcon(QtGui.QStyle.SP_DialogSaveButton),
                 "Save Experiment ...", self,
                 shortcut=QtGui.QKeySequence.Save,
                 triggered=self.on_experiment_save
-            ))
+            )
 
-            # file
-            fileM.addSeparator()
+            # VIEWER
 
-            fileM.addAction(QtGui.QAction(
+            # start viewer
+            self.UIA_viewer_start = QtGui.QAction(
                 "Start Viewer", self, triggered=self.on_viewer_start
-            ))
+            )
 
-            # view
-            self.UI_viewM = menu.addMenu("View")
+            # CALLS
 
-            # view > hideargs
-            self.UI_hideargs = []
+            # new
+            self.UIA_call_new = QtGui.QAction(
+                "New Call", self,
+                shortcut=QtGui.QKeySequence.New,
+                triggered=self.on_call_new
+            )
+
+            # cut
+            self.UIA_call_cut = QtGui.QAction(
+                "Cut call", self,
+                shortcut=QtGui.QKeySequence.Cut,
+                triggered=self.on_call_cut
+            )
+
+            # copy
+            self.UIA_call_copy = QtGui.QAction(
+                "Copy call", self,
+                shortcut=QtGui.QKeySequence.Copy,
+                triggered=self.on_call_copy
+            )
+
+            # paste
+            self.UIA_call_paste = QtGui.QAction(
+                "Paste call", self, enabled=False,
+                shortcut=QtGui.QKeySequence.Paste,
+                triggered=self.on_call_paste
+            )
+
+            # OPTIONS
+
+            # hideargs
+            self.UIA_hideargs = []
             for desc, classes in (
                 ("hide flags", (signature.Flag,)),
                 ("hide scalars", (signature.Scalar,)),
@@ -145,12 +173,34 @@ class PlayMat(QtGui.QMainWindow):
                 ("hide work spaces", (signature.Work, signature.Lwork)),
                 ("hide infos", (signature.Info,))
             ):
-                action = QtGui.QAction(
+                UIA_hidearg = QtGui.QAction(
                     desc, self, checkable=True, toggled=self.on_hideargs_toggle
                 )
-                action.classes = set(classes)
-                self.UI_viewM.addAction(action)
-                self.UI_hideargs.append((action, set(classes)))
+                UIA_hidearg.classes = set(classes)
+                self.UIA_hideargs.append(UIA_hidearg)
+
+        def create_menus():
+            """Create all menus."""
+            menu = self.menuBar()
+
+            # file
+            fileM = menu.addMenu("File")
+            fileM.addAction(self.UIA_submit)
+            fileM.addSeparator()
+            fileM.addAction(self.UIA_reset)
+            fileM.addAction(self.UIA_load)
+            fileM.addAction(self.UIA_save)
+            fileM.addSeparator()
+            fileM.addAction(self.UIA_viewer_start)
+
+            # file
+
+            callsM = menu.addMenu("Calls")
+
+            # view
+            self.UIM_view = menu.addMenu("View")
+            for UIA_hidearg in self.UIA_hideargs:
+                self.UIM_view.addAction(UIA_hidearg)
 
         def create_toolbar():
             """Create all toolbars."""
@@ -202,9 +252,6 @@ class PlayMat(QtGui.QMainWindow):
                 "...", self, triggered=self.on_reportname_choose,
                 toolTip="Browse Report folder."
             )
-            self.UI_submit = QtGui.QAction(self.style().standardIcon(
-                QtGui.QStyle.SP_DialogOkButton
-            ), "Run", self, triggered=self.on_submit)
 
             submitT = self.addToolBar("Submit")
             submitT.pyqtConfigure(movable=False, objectName="Submit")
@@ -212,7 +259,7 @@ class PlayMat(QtGui.QMainWindow):
             submitT.addWidget(QtGui.QLabel("Report name:"))
             submitT.addWidget(self.UI_reportname)
             submitT.addAction(reportname_choose)
-            submitT.addAction(self.UI_submit)
+            submitT.addAction(self.UIA_submit)
 
         def create_ranges():
             """Create the ranges dock widget."""
@@ -413,49 +460,29 @@ class PlayMat(QtGui.QMainWindow):
             )
             self.UI_calls.model().layoutChanged.connect(self.on_calls_reorder)
             self.UI_calls.keyPressEvent = self.on_calls_keypress
-
             self.setCentralWidget(self.UI_calls)
 
-            # shortcuts
-            QtGui.QShortcut(
-                QtGui.QKeySequence.New, self.UI_calls,
-                activated=self.on_call_add
-            )
-            QtGui.QShortcut(
-                QtGui.QKeySequence.Close, self.UI_calls,
-                activated=self.on_call_remove
-            )
+            # actions
+            self.UI_calls.addAction(self.UIA_call_new)
+            self.UI_calls.addAction(self.UIA_call_copy)
+            self.UI_calls.addAction(self.UIA_call_cut)
+            self.UI_calls.addAction(self.UIA_call_paste)
 
-            # context menus
+            # call context menus
             self.UI_call_contextmenu = QtGui.QMenu()
-            self.UI_calls_contextmenu = QtGui.QMenu()
-
-            # add
-            add = QtGui.QAction(
-                "Add call", self, shortcut=QtGui.QKeySequence.New,
-                triggered=self.on_call_add
-
-            )
-            self.UI_call_contextmenu.addAction(add)
-            self.UI_calls_contextmenu.addAction(add)
-
-            # remove
-            self.UI_call_contextmenu.addAction(QtGui.QAction(
-                "Remove call", self,
-                shortcut=QtGui.QKeySequence.Close,
-                triggered=self.on_call_remove
-            ))
-
-            # clone
-            self.UI_call_contextmenu.addAction(QtGui.QAction(
-                "Clone call", self, triggered=self.on_call_clone
-            ))
-
+            self.UI_call_contextmenu.addAction(self.UIA_call_new)
+            self.UI_call_contextmenu.addAction(self.UIA_call_cut)
+            self.UI_call_contextmenu.addAction(self.UIA_call_copy)
+            self.UI_call_contextmenu.addAction(self.UIA_call_paste)
             self.UI_call_contextmenu.addSeparator()
-            self.UI_calls_contextmenu.addSeparator()
+            self.UI_call_contextmenu.addMenu(self.UIM_view)
 
-            self.UI_call_contextmenu.addMenu(self.UI_viewM)
-            self.UI_calls_contextmenu.addMenu(self.UI_viewM)
+            # calls context menus
+            self.UI_calls_contextmenu = QtGui.QMenu()
+            self.UI_calls_contextmenu.addAction(self.UIA_call_new)
+            self.UI_calls_contextmenu.addAction(self.UIA_call_paste)
+            self.UI_calls_contextmenu.addSeparator()
+            self.UI_calls_contextmenu.addMenu(self.UIM_view)
 
         def create_style():
             """Set style options."""
@@ -491,6 +518,7 @@ class PlayMat(QtGui.QMainWindow):
                 "min": windowcolor
             }
 
+        create_actions()
         create_menus()
         create_toolbar()
         create_ranges()
@@ -780,8 +808,8 @@ class PlayMat(QtGui.QMainWindow):
     def UI_hideargs_set(self):
         """Set UI element: hideargs options."""
         self.UI_setting += 1
-        for UI_showarg, classes in self.UI_hideargs:
-            UI_showarg.setChecked(self.hideargs >= classes)
+        for UIA_hidearg in self.UIA_hideargs:
+            UIA_hidearg.setChecked(self.hideargs >= UIA_hidearg.classes)
         self.UI_setting -= 1
 
     def UI_reportname_set(self):
@@ -937,9 +965,8 @@ class PlayMat(QtGui.QMainWindow):
         except Exception as e:
             enabled = False
             tooltip = str(e)
-        self.UI_submitA.setEnabled(enabled)
-        self.UI_submit.setEnabled(enabled)
-        self.UI_submit.setToolTip(tooltip)
+        self.UIA_submit.setEnabled(enabled)
+        self.UIA_submit.setToolTip(tooltip)
 
     # UI events
     def on_console_quit(self, *args):
@@ -959,6 +986,16 @@ class PlayMat(QtGui.QMainWindow):
         settings.setValue("hideargs", repr(self.hideargs))
         settings.setValue("reportname", self.reportname)
         self.log("Experiment saved.")
+
+    @pyqtSlot(QtGui.QClipboard.Mode)
+    def on_clipboard_change(self, mode):
+        """Event: clipboard changed."""
+        if mode == QtGui.QClipboard.Clipboard:
+            try:
+                eval(str(self.Qapp.clipboard().text()), signature.__dict__)
+                self.UIA_call_paste.setEnabled(True)
+            except:
+                self.UIA_call_paste.setEnabled(False)
 
     @pyqtSlot()
     def on_experiment_reset(self):
@@ -1288,7 +1325,7 @@ class PlayMat(QtGui.QMainWindow):
     def on_calls_keypress(self, event):
         """Event: key pressed."""
         if event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete):
-            self.on_call_remove()
+            self.on_call_cut()
             return
         QtGui.QListWidget.keyPressEvent(self.UI_calls, event)
 
@@ -1298,28 +1335,26 @@ class PlayMat(QtGui.QMainWindow):
         globalpos = self.UI_calls.viewport().mapToGlobal(pos)
         item = self.UI_calls.itemAt(pos)
         if item:
-            self.UI_call_contextmenu.item = item
             self.UI_call_contextmenu.exec_(globalpos)
         else:
             self.UI_calls_contextmenu.exec_(globalpos)
 
     @pyqtSlot()
-    def on_call_add(self):
+    def on_call_new(self):
         """Event: add call."""
-        self.experiment.calls.append([""])
+        callid = self.UI_calls.currentRow()
+        if callid == -1:
+            callid = len(self.experiment.calls)
+        self.experiment.calls.insert(callid, [""])
         self.UI_submit_setenabled()
         self.UI_calls_set()
-        callid = len(self.experiment.calls) - 1
+        # focus on routine name of new call
         self.UI_calls.item(callid).UI_args[0].setFocus()
-        selected_callid = self.UI_calls.currentRow()
-        if selected_callid != -1:
-            self.UI_calls.setItemSelected(self.UI_calls.item(selected_callid),
-                                          False)
-            self.UI_calls.setCurrentRow(callid)
 
     @pyqtSlot()
-    def on_call_remove(self):
-        """Event: remove call."""
+    def on_call_cut(self):
+        """Event: cut call."""
+        self.on_call_copy()
         map(self.experiment.calls.pop,
             sorted(map(self.UI_calls.row, self.UI_calls.selectedItems()),
                    reverse=True))
@@ -1327,11 +1362,22 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_calls_set()
 
     @pyqtSlot()
-    def on_call_clone(self):
-        """Event: clone call."""
-        self.experiment.calls.append(
-            self.experiment.calls[self.UI_call_contextmenu.item.callid].copy()
-        )
+    def on_call_copy(self):
+        """Event: copy call."""
+        selected_calls = [self.experiment.calls[callid] for callid in
+                          map(self.UI_calls.row,
+                              self.UI_calls.selectedItems())]
+        self.Qapp.clipboard().setText(repr(selected_calls))
+
+    @pyqtSlot()
+    def on_call_paste(self):
+        """Event: paste call."""
+        paste_calls = eval(str(self.Qapp.clipboard().text()),
+                           signature.__dict__)
+        callid = self.UI_calls.currentRow()
+        calls = self.experiment.calls
+        calls = calls[:callid] + paste_calls + calls[callid:]
+        self.experiment.calls = calls
         self.UI_submit_setenabled()
         self.UI_calls_set()
 
