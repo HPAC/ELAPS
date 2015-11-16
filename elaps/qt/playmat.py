@@ -744,9 +744,14 @@ class PlayMat(QtGui.QMainWindow):
 
     # undo / redo
     def undo_stack_push(self):
-        """Push current experiment to undo stack."""
+        """Push current Experiment to undo stack."""
         self.undo_stack.append(self.experiment.copy())
         self.UIA_undo.setEnabled(True)
+
+    def undo_stack_pop(self):
+        """Pop Experiment from undo stack."""
+        self.UIA_undo.setEnabled(len(self.undo_stack) > 1)
+        return self.undo_stack.pop()
 
     # UI utility
     def UI_dialog(self, msgtype, title, text, callbacks=None):
@@ -1064,8 +1069,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: undo."""
         self.redo_stack.append(self.experiment.copy())
         self.UIA_redo.setEnabled(True)
-        self.experiment = self.undo_stack.pop()
-        self.UIA_undo.setEnabled(bool(self.undo_stack))
+        self.experiment = self.undo_stack_pop()
         self.UI_setall(True)
 
     @pyqtSlot()
@@ -1197,7 +1201,7 @@ class PlayMat(QtGui.QMainWindow):
             self.experiment.set_sampler(sampler, force=force)
             self.UI_setall()
         except Exception as e:
-            self.on_undo()
+            self.undo_stack_pop()
             self.UI_dialog(
                 "question", "Incompatible Sampler",
                 "Sampler %s is not compatible with the current Experiment\n"
@@ -1244,7 +1248,7 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_calls_set()
             self.UI_submit_setenabled()
         except:
-            self.on_undo()
+            self.undo_stack_pop()
             self.UI_set_invalid(self.UI_rangevar)
 
     @pyqtSlot(str)
@@ -1256,7 +1260,7 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_set_invalid(self.UI_rangevals, False)
             self.experiment_infer_update_set()
         except:
-            self.on_undo()
+            self.undo_stack_pop()
             self.UI_set_invalid(self.UI_rangevals)
 
     @pyqtSlot(str)
@@ -1268,7 +1272,7 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_set_invalid(self.UI_nreps, False)
             self.experiment_infer_update_set()
         except:
-            self.on_undo()
+            self.undo_stack_pop()
             self.UI_set_invalid(self.UI_nreps)
 
     @pyqtSlot(bool)
@@ -1311,7 +1315,7 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_calls_set()
             self.UI_submit_setenabled()
         except:
-            self.on_undo()
+            self.undo_stack_pop()
             self.UI_set_invalid(self.UI_sumrangevar)
 
     @pyqtSlot(str)
@@ -1323,7 +1327,7 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_set_invalid(self.UI_sumrangevals, False)
             self.experiment_infer_update_set()
         except:
-            self.on_undo()
+            self.undo_stack_pop()
             self.UI_set_invalid(self.UI_sumrangevals)
 
     @pyqtSlot(bool)
@@ -1375,7 +1379,7 @@ class PlayMat(QtGui.QMainWindow):
                                     False)
                 self.experiment_infer_update_set()
             except:
-                self.on_undo()
+                self.undo_stack_pop()
                 self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
         else:
             try:
@@ -1398,7 +1402,7 @@ class PlayMat(QtGui.QMainWindow):
                                     False)
                 self.experiment_infer_update_set()
             except Exception as e:
-                self.on_undo()
+                self.undo_stack_pop()
                 import traceback
                 traceback.print_exc()
                 self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
@@ -1429,9 +1433,9 @@ class PlayMat(QtGui.QMainWindow):
                     )
                     self.experiment_infer_update_set()
                 else:
-                    self.on_undo()
+                    self.undo_stack_pop()
                 return
-            self.on_undo()
+            self.undo_stack_pop()
             self.UI_set_invalid(self.UI_calls.item(callid).UI_args[argid])
             if "Incompatible operand types:" in str(e):
                 self.UI_alert(e)
