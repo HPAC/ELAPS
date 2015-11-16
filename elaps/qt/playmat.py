@@ -141,23 +141,35 @@ class PlayMat(QtGui.QMainWindow):
                 triggered=self.on_call_new
             )
 
+            # delete (not cut)
+            self.UIA_call_delete = QtGui.QAction(
+                "Delete Call(s)", self, enabled=False,
+                shortcut=QtGui.QKeySequence.Delete,
+                triggered=self.on_call_delete
+            )
+            self.UIA_call_delete_backspace = QtGui.QAction(
+                "Delete Call(s)", self, enabled=False,
+                shortcut=QtCore.Qt.Key_Backspace,
+                triggered=self.on_call_delete
+            )
+
             # cut
             self.UIA_call_cut = QtGui.QAction(
-                "Cut call", self,
+                "Cut Call(s)", self, enabled=False,
                 shortcut=QtGui.QKeySequence.Cut,
                 triggered=self.on_call_cut
             )
 
             # copy
             self.UIA_call_copy = QtGui.QAction(
-                "Copy call", self,
+                "Copy Call(s)", self, enabled=False,
                 shortcut=QtGui.QKeySequence.Copy,
                 triggered=self.on_call_copy
             )
 
             # paste
             self.UIA_call_paste = QtGui.QAction(
-                "Paste call", self, enabled=False,
+                "Paste Call(s)", self, enabled=False,
                 shortcut=QtGui.QKeySequence.Paste,
                 triggered=self.on_call_paste
             )
@@ -184,18 +196,21 @@ class PlayMat(QtGui.QMainWindow):
             menu = self.menuBar()
 
             # file
-            fileM = menu.addMenu("File")
-            fileM.addAction(self.UIA_submit)
-            fileM.addSeparator()
-            fileM.addAction(self.UIA_reset)
-            fileM.addAction(self.UIA_load)
-            fileM.addAction(self.UIA_save)
-            fileM.addSeparator()
-            fileM.addAction(self.UIA_viewer_start)
+            self.UIM_file = menu.addMenu("File")
+            self.UIM_file.addAction(self.UIA_submit)
+            self.UIM_file.addSeparator()
+            self.UIM_file.addAction(self.UIA_reset)
+            self.UIM_file.addAction(self.UIA_load)
+            self.UIM_file.addAction(self.UIA_save)
+            self.UIM_file.addSeparator()
+            self.UIM_file.addAction(self.UIA_viewer_start)
 
-            # file
-
-            callsM = menu.addMenu("Calls")
+            # calls
+            self.UIM_calls = menu.addMenu("Calls")
+            self.UIM_calls.addAction(self.UIA_call_new)
+            self.UIM_calls.addAction(self.UIA_call_cut)
+            self.UIM_calls.addAction(self.UIA_call_copy)
+            self.UIM_calls.addAction(self.UIA_call_paste)
 
             # view
             self.UIM_view = menu.addMenu("View")
@@ -455,34 +470,20 @@ class PlayMat(QtGui.QMainWindow):
                 dragDropMode=QtGui.QListWidget.InternalMove,
                 contextMenuPolicy=QtCore.Qt.CustomContextMenu,
                 customContextMenuRequested=self.on_calls_rightclick,
+                itemSelectionChanged=self.on_calls_selection_change,
                 toolTip="<tt>calls</tt>: "
                 "The list of calls to be measured."
             )
             self.UI_calls.model().layoutChanged.connect(self.on_calls_reorder)
-            self.UI_calls.keyPressEvent = self.on_calls_keypress
             self.setCentralWidget(self.UI_calls)
 
             # actions
             self.UI_calls.addAction(self.UIA_call_new)
+            self.UI_calls.addAction(self.UIA_call_delete)
+            self.UI_calls.addAction(self.UIA_call_delete_backspace)
             self.UI_calls.addAction(self.UIA_call_copy)
             self.UI_calls.addAction(self.UIA_call_cut)
             self.UI_calls.addAction(self.UIA_call_paste)
-
-            # call context menus
-            self.UI_call_contextmenu = QtGui.QMenu()
-            self.UI_call_contextmenu.addAction(self.UIA_call_new)
-            self.UI_call_contextmenu.addAction(self.UIA_call_cut)
-            self.UI_call_contextmenu.addAction(self.UIA_call_copy)
-            self.UI_call_contextmenu.addAction(self.UIA_call_paste)
-            self.UI_call_contextmenu.addSeparator()
-            self.UI_call_contextmenu.addMenu(self.UIM_view)
-
-            # calls context menus
-            self.UI_calls_contextmenu = QtGui.QMenu()
-            self.UI_calls_contextmenu.addAction(self.UIA_call_new)
-            self.UI_calls_contextmenu.addAction(self.UIA_call_paste)
-            self.UI_calls_contextmenu.addSeparator()
-            self.UI_calls_contextmenu.addMenu(self.UIM_view)
 
         def create_style():
             """Set style options."""
@@ -1239,6 +1240,15 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_calls_parallel_set()
 
     @pyqtSlot()
+    def on_calls_selection_change(self):
+        """Event: call selection changed."""
+        enabled = bool(self.UI_calls.selectedItems())
+        self.UIA_call_delete.setEnabled(enabled)
+        self.UIA_call_delete_backspace.setEnabled(enabled)
+        self.UIA_call_cut.setEnabled(enabled)
+        self.UIA_call_copy.setEnabled(enabled)
+
+    @pyqtSlot()
     def on_calls_reorder(self):
         """Event: change call order."""
         calls = self.experiment.calls
@@ -1322,26 +1332,15 @@ class PlayMat(QtGui.QMainWindow):
             if "Incompatible operand types:" in str(e):
                 self.UI_alert(e)
 
-    def on_calls_keypress(self, event):
-        """Event: key pressed."""
-        if event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete):
-            self.on_call_cut()
-            return
-        QtGui.QListWidget.keyPressEvent(self.UI_calls, event)
-
     @pyqtSlot(QtCore.QPoint)
     def on_calls_rightclick(self, pos):
         """Event: right click in calls."""
         globalpos = self.UI_calls.viewport().mapToGlobal(pos)
-        item = self.UI_calls.itemAt(pos)
-        if item:
-            self.UI_call_contextmenu.exec_(globalpos)
-        else:
-            self.UI_calls_contextmenu.exec_(globalpos)
+        self.UIM_calls.exec_(globalpos)
 
     @pyqtSlot()
     def on_call_new(self):
-        """Event: add call."""
+        """Event: new call."""
         callid = self.UI_calls.currentRow()
         if callid == -1:
             callid = len(self.experiment.calls)
@@ -1352,9 +1351,8 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_calls.item(callid).UI_args[0].setFocus()
 
     @pyqtSlot()
-    def on_call_cut(self):
-        """Event: cut call."""
-        self.on_call_copy()
+    def on_call_delete(self):
+        """Event: delete call(s)."""
         map(self.experiment.calls.pop,
             sorted(map(self.UI_calls.row, self.UI_calls.selectedItems()),
                    reverse=True))
@@ -1362,8 +1360,14 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_calls_set()
 
     @pyqtSlot()
+    def on_call_cut(self):
+        """Event: cut call(s)."""
+        self.on_call_copy()
+        self.on_call_delete()
+
+    @pyqtSlot()
     def on_call_copy(self):
-        """Event: copy call."""
+        """Event: copy call(s)."""
         selected_calls = [self.experiment.calls[callid] for callid in
                           map(self.UI_calls.row,
                               self.UI_calls.selectedItems())]
@@ -1371,7 +1375,7 @@ class PlayMat(QtGui.QMainWindow):
 
     @pyqtSlot()
     def on_call_paste(self):
-        """Event: paste call."""
+        """Event: paste call(s)."""
         paste_calls = eval(str(self.Qapp.clipboard().text()),
                            signature.__dict__)
         callid = self.UI_calls.currentRow()
