@@ -106,6 +106,7 @@ class PlayMat(QtGui.QMainWindow):
             # reset
             self.UIA_reset = QtGui.QAction(
                 "Reset Experiment", self,
+                shortcut=QtGui.QKeySequence("Ctrl+Shift+N"),
                 triggered=self.on_experiment_reset
             )
 
@@ -155,7 +156,7 @@ class PlayMat(QtGui.QMainWindow):
                 triggered=self.on_call_new
             )
 
-            # delete (not cut)
+            # delete
             self.UIA_call_delete = QtGui.QAction(
                 "Delete Call(s)", self, enabled=False,
                 shortcut=QtCore.Qt.Key_Backspace,

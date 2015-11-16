@@ -24,7 +24,7 @@ class QJobProgress(QtGui.QDockWidget):
         self.playmat = playmat
 
         self.timer = QtCore.QTimer(
-            interval=1000,
+            interval=defines.jobprogress_timeout,
             timeout=self.on_timer
         )
 

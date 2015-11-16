@@ -80,5 +80,5 @@ Experiment(
     ]
 )
 """
-
+jobprogress_timeout = 1000
 github_url = "https://github.com/elmar-peise/ELAPS/"
