@@ -1,0 +1,18 @@
+# single precision complex sylvester solver
+Signature(
+    "ctrsyl",
+    Trans("transA"),
+    Trans("transB"),
+    iScalar("isgn"),
+    Dim("m"),
+    Dim("n"),
+    cData("A", "ldA * m", "upper"),
+    Ld("ldA", "m"),
+    cData("B", "ldB * n", "upper"),
+    Ld("ldB", "n"),
+    cData("C", "ldC * n"),
+    Ld("ldC", "m"),
+    sScalar("scale"),
+    Info(),
+    flops="4 * m * n * (m + n + 4)"
+)
