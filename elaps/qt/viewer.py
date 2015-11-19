@@ -185,20 +185,24 @@ class Viewer(QtGui.QMainWindow):
 
         def create_plot():
             """Create the plot."""
+            # plot
             self.UI_figure = Figure()
             self.UI_canvas = FigureCanvasQTAgg(self.UI_figure)
 
             # toolbar
             toolbar = NavigationToolbar2QT(self.UI_canvas, self)
 
+            # layout
             plotL = QtGui.QVBoxLayout(spacing=0)
             plotL.setContentsMargins(0, 0, 0, 0)
             plotL.addWidget(self.UI_canvas, 1)
             plotL.addWidget(toolbar)
 
+            # widget
             plotW = QtGui.QWidget()
             plotW.setLayout(plotL)
 
+            # dock
             plotD = QtGui.QDockWidget(
                 "Plot", objectName="Plot",
                 features=(QtGui.QDockWidget.DockWidgetFloatable |
@@ -210,18 +214,42 @@ class Viewer(QtGui.QMainWindow):
 
         def create_table():
             """Create the table."""
+            # table
             self.UI_table = QtGui.QTableWidget()
-            self.UI_table.setColumnCount(5)
-            self.UI_table.setHorizontalHeaderLabels(
-                ["min", "med", "max", "avg", "std"]
-            )
 
+            # toolbar
+            toolbar = QtGui.QToolBar(
+                movable=False, objectName="TableToolbar"
+            )
+            spacer = QtGui.QWidget()
+            spacer.setSizePolicy(QtGui.QSizePolicy.Expanding,
+                                 QtGui.QSizePolicy.Expanding)
+            save = QtGui.QAction(
+                self.style().standardIcon(QtGui.QStyle.SP_DialogSaveButton),
+                "Save ...", self,
+                shortcut=QtGui.QKeySequence.Save,
+                triggered=self.on_table_save
+            )
+            toolbar.addWidget(spacer)
+            toolbar.addAction(save)
+
+            # layout
+            tableL = QtGui.QVBoxLayout(spacing=0)
+            tableL.setContentsMargins(0, 0, 0, 0)
+            tableL.addWidget(self.UI_table, 1)
+            tableL.addWidget(toolbar)
+
+            # widget
+            tableW = QtGui.QWidget()
+            tableW.setLayout(tableL)
+
+            # dock
             tableD = QtGui.QDockWidget(
                 "Table", objectName="Table",
                 features=(QtGui.QDockWidget.DockWidgetFloatable |
                           QtGui.QDockWidget.DockWidgetMovable)
             )
-            tableD.setWidget(self.UI_table)
+            tableD.setWidget(tableW)
 
             return tableD
 
@@ -488,37 +516,46 @@ class Viewer(QtGui.QMainWindow):
     def UI_table_set(self):
         """Set UI element: table."""
         self.UI_setting += 1
-        current = self.UI_reports.currentItem()
-        if current is None:
-            self.UI_table.setRowCount(0)
-            self.UI_setting -= 1
-            return
 
-        # compute data
-        report = current.report
-        if self.discard_firstrep:
-            report = report.discard_first_repetitions()
-        stat_names = ("min", "med", "max", "avg", "std")
-        table_data = {}
-        for metric_name, metric in self.metrics.items():
-            metric_data = report.evaluate(current.callid, metric)
-            metric_values = [value for values in metric_data.values()
-                             for value in values if value is not None]
-            if not metric_values:
+        # get metric
+        metric = self.metrics[self.metric_showing]
+
+        # collect table data
+        table_data = []
+        range_vars = []
+        range_vals = set()
+        for UI_report in self.UI_reportitems():
+            UI_items = [UI_report] + UI_report.children
+            if not any(UI_item.showing for UI_item in UI_items):
                 continue
-            table_data[metric_name] = dict(
-                (stat_name, apply_stat(stat_name, metric_values))
-                for stat_name in stat_names
-            )
+            report = UI_report.report
+            ex = report.experiment
+            if self.discard_firstrep:
+                report = report.discard_first_repetitions()
+            range_vals |= set(ex.range_vals)
+            for UI_item in UI_items:
+                if UI_item.showing:
+                    for stat in self.stats_showing:
+                        table_data.append((
+                            UI_item.plotlabel, stat,
+                            report.evaluate(UI_item.callid, metric, stat)
+                        ))
+        range_vals = sorted(range_vals)
 
         # display data
-        self.UI_table.setRowCount(len(table_data))
-        self.UI_table.setVerticalHeaderLabels(sorted(table_data))
-        for i, metric_name in enumerate(sorted(table_data)):
-            for j, stat_name in enumerate(stat_names):
-                self.UI_table.setItem(i, j, QtGui.QTableWidgetItem(
-                    str(table_data[metric_name][stat_name])
-                ))
+        self.UI_table.setColumnCount(len(table_data))
+        if len(self.stats_showing) > 1:
+            headers = ["%s(%s)" % (stat, label)
+                       for label, stat, data in table_data]
+        else:
+            headers = [label for label, stat, data in table_data]
+        self.UI_table.setHorizontalHeaderLabels(headers)
+        self.UI_table.setRowCount(len(range_vals))
+        self.UI_table.setVerticalHeaderLabels(map(str, range_vals))
+        for row, range_val in enumerate(range_vals):
+            for col, (label, stat, data) in enumerate(table_data):
+                val = str(data.get(range_val, float("NaN")))
+                self.UI_table.setItem(row, col, QtGui.QTableWidgetItem(val))
 
         self.UI_setting -= 1
 
@@ -571,6 +608,7 @@ class Viewer(QtGui.QMainWindow):
             return
         self.metric_showing = str(value)
         self.UI_plot_set()
+        self.UI_table_set()
 
     @pyqtSlot(bool)
     def on_stat_toggle(self, checked):
@@ -700,12 +738,12 @@ class Viewer(QtGui.QMainWindow):
             return
         self.UI_reports_set()
         self.UI_plot_set()
+        self.UI_table_set()
 
     @pyqtSlot()
     def on_report_select(self):
         """Event: select Report."""
         self.UI_info_set()
-        self.UI_table_set()
 
     @pyqtSlot(QtGui.QTreeWidgetItem)
     def on_report_expand(self, item):
@@ -716,3 +754,36 @@ class Viewer(QtGui.QMainWindow):
     def on_report_collapse(self, item):
         """Event: collapse Report."""
         self.UI_reports_resizecolumns()
+
+    @pyqtSlot()
+    def on_table_save(self):
+        """Event: save table."""
+        filename = QtGui.QFileDialog.getSaveFileName(
+            self, "Save Table", "",
+            "Commar-separated values (*.csv);;Plain Table (*.dat)"
+        )
+
+        # extract table data
+        table = self.UI_table
+        nrows = table.rowCount()
+        ncols = table.columnCount()
+        colnames = [str(table.horizontalHeaderItem(col).text())
+                    for col in range(ncols)]
+        rownames = [str(table.verticalHeaderItem(row).text())
+                    for row in range(nrows)]
+        contents = [[str(table.item(row, col).text()) for col in range(ncols)]
+                    for row in range(nrows)]
+        data_cols = [["n"] + rownames] + zip(*([colnames] + contents))
+        data_rows = zip(*data_cols)
+
+        if filename[-4:] == ".dat":
+            colwidths = [max(map(len, col)) for col in data_cols]
+            with open(filename, "w") as fout:
+                for row in data_rows:
+                    row = [val.ljust(colwidths[col])
+                           for col, val in enumerate(row)]
+                    print(*row, file=fout, sep="\t")
+        elif filename[-4:] == ".csv":
+            with open(filename, "w") as fout:
+                for row in data_rows:
+                    print(*row, file=fout, sep=",")

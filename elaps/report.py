@@ -17,6 +17,7 @@ stat_funs = {
     "avg": lambda l: sum(l) / len(l),
     "std": lambda l: sqrt(max(sum(x ** 2 for x in l) / len(l) -
                               (sum(l) / len(l)) ** 2, 0)),
+    "all": lambda l: l,
     None: lambda l: l
 }
 

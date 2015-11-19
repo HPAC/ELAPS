@@ -97,6 +97,7 @@ class QReportItem(QtGui.QTreeWidgetItem):
             return
         self.showing = checked
         self.viewer.UI_plot_set()
+        self.viewer.UI_table_set()
 
     @pyqtSlot()
     def on_color_change(self):
