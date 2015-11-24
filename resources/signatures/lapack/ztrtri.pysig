@@ -4,7 +4,7 @@ Signature(
     Uplo(),
     Diag(),
     Dim("n"),
-    dData("A", "ldA * n",
+    zData("A", "ldA * n",
           "lower if uplo == 'L' else upper"),
     Ld("ldA", "n"),
     Info(),
