@@ -1,10 +1,10 @@
-# write double precision complex binary file
+# write integer precision binary file
 Signature(
-    "zwritefile",
+    "iwritefile",
     String("filename"),
     Dim("m"),
     Dim("n"),
-    zData("A", "ldA * n"),
+    iData("A", "ldA * n"),
     Ld("ldA", "m"),
     Info(),
     flops="0"

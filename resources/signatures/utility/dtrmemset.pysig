@@ -1,0 +1,12 @@
+# double precision triangular memset
+Signature(
+    "dtrmemset",
+    Uplo(),
+    Diag(),
+    Dim("n"),
+    dScalar(),
+    dData("A", "ldA * n",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    flops="0"
+)

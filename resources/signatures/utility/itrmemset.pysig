@@ -1,0 +1,12 @@
+# integer precision triangular memset
+Signature(
+    "itrmemset",
+    Uplo(),
+    Diag(),
+    Dim("n"),
+    iScalar(),
+    iData("A", "ldA * n",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    flops="0"
+)

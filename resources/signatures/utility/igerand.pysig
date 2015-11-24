@@ -1,0 +1,9 @@
+# integer precision randomize
+Signature(
+    "igerand",
+    Dim("m"),
+    Dim("n"),
+    iData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    flops="m * n"
+)

@@ -1,0 +1,12 @@
+# single precision comples triangular memset
+Signature(
+    "ctrmemset",
+    Uplo(),
+    Diag(),
+    Dim("n"),
+    cScalar(),
+    cData("A", "ldA * n",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    flops="0"
+)

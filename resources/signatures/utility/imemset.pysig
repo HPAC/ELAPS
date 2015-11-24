@@ -1,0 +1,10 @@
+# integer precision memset
+Signature(
+    "imemset",
+    Dim("m"),
+    Dim("n"),
+    iScalar(),
+    iData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    flops="0"
+)

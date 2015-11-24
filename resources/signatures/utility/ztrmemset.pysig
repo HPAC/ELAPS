@@ -1,0 +1,12 @@
+# double precision comples triangular memset
+Signature(
+    "ztrmemset",
+    Uplo(),
+    Diag(),
+    Dim("n"),
+    zScalar(),
+    zData("A", "ldA * n",
+          "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    flops="0"
+)

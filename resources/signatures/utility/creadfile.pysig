@@ -7,4 +7,5 @@ Signature(
     cData("A", "ldA * n"),
     Ld("ldA", "m"),
     Info(),
+    flops="0"
 )
