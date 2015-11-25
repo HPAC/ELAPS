@@ -39,7 +39,6 @@
 #define COUNTERS_START0 get_cycles(ticks0);
 #define COUNTERS_END0   get_cycles(ticks1);
 
-#ifndef OPENMP_ENABLED
 /** \ref sample specialization without PAPI and without OpenMP. */
 static void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
     // for each call
@@ -68,7 +67,8 @@ static void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
 #undef COUNTERS_END
     }
 }
-#else
+
+#ifdef OPENMP_ENABLED
 /** \ref sample specialization with OpenMP but without PAPI. */
 static void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 #pragma omp parallel
@@ -150,7 +150,7 @@ static void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
         }
     }
 }
-#endif /* OPENMP_ENABLED */
+#endif /* OMP */
 
 // clean macros
 #undef COUNTERS_START0
@@ -164,7 +164,6 @@ static void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 #define COUNTERS_START0 PAPI_start_counters(counters, (int) ncounters); get_cycles(ticks0);
 #define COUNTERS_END0   get_cycles(ticks1); PAPI_stop_counters(calls[i].counters, (int) ncounters);
 
-#ifndef OPENMP_ENABLED
 /** \ref sample specialization with PAPI but without OpenMP. */
 static void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, size_t ncounters) {
     // for each call
@@ -193,7 +192,8 @@ static void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, s
 #undef COUNTERS_END
     }
 }
-#else
+
+#ifndef OPENMP_ENABLED
 /** \ref sample specialization with PAPI and OpenMP. */
 static void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, size_t ncounters) {
 #pragma omp parallel
@@ -275,7 +275,7 @@ static void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, siz
         }
     }
 }
-#endif /* OPENMP_ENABLED */
+#endif /* OMP */
 
 #endif /* PAPI */
 
@@ -288,8 +288,14 @@ static void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, siz
  * */
 static void sample_nopapi(KernelCall *calls, size_t ncalls) {
 #ifdef OPENMP_ENABLED
-    // TODO: branch to noomp if no parallel is set
-    sample_nopapi_omp(calls, ncalls);
+    size_t i;
+    for (i = 0; i < ncalls; i++)
+        if (calls[i].parallel)
+            break;
+    if (i < ncalls)
+        sample_nopapi_omp(calls, ncalls);
+    else
+        sample_nopapi_noomp(calls, ncalls);
 #else
     sample_nopapi_noomp(calls, ncalls);
 #endif /* OPENMP_ENABLED */
@@ -301,8 +307,14 @@ static void sample_nopapi(KernelCall *calls, size_t ncalls) {
  * */
 static void sample_papi(KernelCall *calls, size_t ncalls, int *counters, size_t ncounters) {
 #ifdef OPENMP_ENABLED
-    // TODO: branch to noomp if no parallel is set
-    sample_papi_omp(calls, ncalls, counters, ncounters);
+    size_t i;
+    for (i = 0; i < ncalls; i++)
+        if (calls[i].parallel)
+            break;
+    if (i < ncalls)
+        sample_papi_omp(calls, ncalls, counters, ncounters);
+    else
+        sample_papi_noomp(calls, ncalls, counters, ncounters);
 #else
     sample_papi_noomp(calls, ncalls, counters, ncounters);
 #endif /* OPENMP_ENABLED */
