@@ -29,9 +29,9 @@ CFG_FILE=$1
 : ${NCORES:=1}
 : ${THREADS_PER_CORE:=1}
 : ${CC:=gcc}
-[ "$CC" == "gcc" ] && : ${CFLAGS:="-fopenmp"} || : {$CFLAGS:=""}
+[ "$CC" == "gcc" ] && : ${CFLAGS:="-fopenmp -O3"} || : {$CFLAGS:="-O3"}
 : ${CXX:=g++}
-[ "$CXX" == "g++" ] && : ${CXXFLAGS:="-fopenmp"} || : ${CXXFLAGS:=""}
+[ "$CXX" == "g++" ] && : ${CXXFLAGS:="-fopenmp -O3"} || : ${CXXFLAGS:="-O3"}
 : ${LINK_FLAGS:=""}
 : ${INCLUDE_FLAGS:=""}
 : ${KERNEL_HEADERS:=`echo ../resources/headers/{blas_,lapack_,utility}.h`}
