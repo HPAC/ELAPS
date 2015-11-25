@@ -20,10 +20,8 @@ PlayMat
 
 Viewer
 ------
+* Option to disable periodic reload
 * Tooltips
-* Further improve speed
 
 * (hide unavailable metrics)
-* (periodical reload of truncated reports)
-* (legend placement)
 * (memory metrics)

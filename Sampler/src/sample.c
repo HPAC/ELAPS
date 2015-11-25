@@ -71,83 +71,57 @@ static void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
 #ifdef OPENMP_ENABLED
 /** \ref sample specialization with OpenMP but without PAPI. */
 static void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
-#pragma omp parallel
-    {
-#pragma omp single
-        {
-            unsigned long ticks0 = 0, ticks1 = 0;
-            char lastparallel = 0;
-            // for each call
-            size_t i;
-            for (i = 0; i < ncalls; i++) {
+    unsigned long ticks0 = 0, ticks1 = 0;
+    // for each call
+    size_t i, npar;
+    for (i = 0; i < ncalls; i++) {
+
+        // count how many calls are executed in parallel
+        for (npar = 1; calls[i + npar - 1].parallel; npar++);
+
+        if (npar > 1) {
+            // parallel calls
+#define COUNTERS_START
+#define COUNTERS_END
+
+            // time parallel for loop
+            const int i_start = i, i_end = i + npar;
+            COUNTERS_START0
+#pragma omp parallel for
+            for (i = i_start; i < i_end; i++) {
                 void (*fptr)() = calls[i].fptr;
                 void **argv = calls[i].argv;
-                if (lastparallel) {
-                    if (calls[i].parallel) {
-                        // start task, no counters
-#define COUNTERS_START _Pragma("omp task")
-#define COUNTERS_END
 
-                        // branch depending on #arguments
-                        switch (calls[i].argc) {
+                // branch depending on #arguments
+                switch (calls[i].argc) {
 #include CALLS_C_INC
-                        }
+                }
+            }
+            COUNTERS_END0
 
-                        // clean macros
+            // clean macros
 #undef COUNTERS_START
 #undef COUNTERS_END
-                    } else {
-                        // wait for tasks, end counters
-#define COUNTERS_START
-#define COUNTERS_END   _Pragma("omp taskwait") COUNTERS_END0
-
-                        // branch depending on #arguments
-                        switch (calls[i].argc) {
-#include CALLS_C_INC
-                        }
-
-                        // compute cycle count difference (time)
-                        calls[i].cycles = ticks1 - ticks0;
-
-                        // clean macros
-#undef COUNTERS_START
-#undef COUNTERS_END
-                    }
-                } else {
-                    if (calls[i].parallel) {
-                        // start tasks, start counters
-#define COUNTERS_START COUNTERS_START0 _Pragma("omp task")
-#define COUNTERS_END
-
-                        // branch depending on #arguments
-                        switch (calls[i].argc) {
-#include CALLS_C_INC
-                        }
-
-                        // clean macros
-#undef COUNTERS_START
-#undef COUNTERS_END
-                    } else {
-                        // no tasks, start and end counters
+        } else {
+            // sequential call
 #define COUNTERS_START COUNTERS_START0
 #define COUNTERS_END   COUNTERS_END0
 
-                        // branch depending on #arguments
-                        switch (calls[i].argc) {
+            void (*fptr)() = calls[i].fptr;
+            void **argv = calls[i].argv;
+
+            // branch depending on #arguments
+            switch (calls[i].argc) {
 #include CALLS_C_INC
-                        }
+            }
 
-                        // compute cycle count difference (time)
-                        calls[i].cycles = ticks1 - ticks0;
-
-                        // clean macros
+            // clean macros
 #undef COUNTERS_START
 #undef COUNTERS_END
-                    }
-                }
-                lastparallel = calls[i].parallel;
-            }
         }
+
+        // compute cycle count difference (time)
+        calls[i].cycles = ticks1 - ticks0;
     }
 }
 #endif /* OMP */
@@ -196,83 +170,57 @@ static void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, s
 #ifndef OPENMP_ENABLED
 /** \ref sample specialization with PAPI and OpenMP. */
 static void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, size_t ncounters) {
-#pragma omp parallel
-    {
-#pragma omp single
-        {
-            unsigned long ticks0 = 0, ticks1 = 0;
-            char lastparallel = 0;
-            // for each call
-            size_t i;
-            for (i = 0; i < ncalls; i++) {
+    unsigned long ticks0 = 0, ticks1 = 0;
+    // for each call
+    size_t i;
+    for (i = 0; i < ncalls; i++) {
+
+        // count how many calls are executed in parallel
+        for (npar = 1; calls[i + npar - 1].parallel; npar++);
+
+        if (npar > 1) {
+            // parallel calls
+#define COUNTERS_START
+#define COUNTERS_END
+
+            // time parallel for loop
+            const int i_start = i, i_end = i + npar;
+            COUNTERS_START0
+#pragma omp parallel for
+            for (i = i_start; i < i_end; i++) {
                 void (*fptr)() = calls[i].fptr;
                 void **argv = calls[i].argv;
-                if (lastparallel) {
-                    if (calls[i].parallel) {
-                        // start task, no counters
-#define COUNTERS_START _Pragma("omp task")
-#define COUNTERS_END
 
-                        // branch depending on #arguments
-                        switch (calls[i].argc) {
+                // branch depending on #arguments
+                switch (calls[i].argc) {
 #include CALLS_C_INC
-                        }
+                }
+            }
+            COUNTERS_END0
 
-                        // clean macros
+            // clean macros
 #undef COUNTERS_START
 #undef COUNTERS_END
-                    } else {
-                        // wait for tasks, end counters
-#define COUNTERS_START
-#define COUNTERS_END   _Pragma("omp taskwait") COUNTERS_END0
-
-                        // branch depending on #arguments
-                        switch (calls[i].argc) {
-#include CALLS_C_INC
-                        }
-
-                        // compute cycle count difference (time)
-                        calls[i].cycles = ticks1 - ticks0;
-
-                        // clean macros
-#undef COUNTERS_START
-#undef COUNTERS_END
-                    }
-                } else {
-                    if (calls[i].parallel) {
-                        // start tasks, start counters
-#define COUNTERS_START COUNTERS_START0 _Pragma("omp task")
-#define COUNTERS_END
-
-                        // branch depending on #arguments
-                        switch (calls[i].argc) {
-#include CALLS_C_INC
-                        }
-
-                        // clean macros
-#undef COUNTERS_START
-#undef COUNTERS_END
-                    } else {
-                        // no tasks, start and end counters
+        } else {
+            // sequential call
 #define COUNTERS_START COUNTERS_START0
 #define COUNTERS_END   COUNTERS_END0
 
-                        // branch depending on #arguments
-                        switch (calls[i].argc) {
+            void (*fptr)() = calls[i].fptr;
+            void **argv = calls[i].argv;
+
+            // branch depending on #arguments
+            switch (calls[i].argc) {
 #include CALLS_C_INC
-                        }
+            }
 
-                        // compute cycle count difference (time)
-                        calls[i].cycles = ticks1 - ticks0;
-
-                        // clean macros
+            // clean macros
 #undef COUNTERS_START
 #undef COUNTERS_END
-                    }
-                }
-                lastparallel = calls[i].parallel;
-            }
         }
+
+        // compute cycle count difference (time)
+        calls[i].cycles = ticks1 - ticks0;
     }
 }
 #endif /* OMP */
