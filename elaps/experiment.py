@@ -1514,7 +1514,7 @@ class Experiment(object):
                 for name in sorted(self.operands):
                     cmdprefix = cmdprefixes[self.get_operand(name)["type"]]
                     size = operand_range_sizes[name][range_val]
-                    cmds.append([cmdprefix + "gerand", size, 1, name, size])
+                    cmds.append([" %sgerand" % cmdprefix, size, 1, name, size])
 
             # set up sumrange values
             sumrange_vals = self.sumrange_vals_at(range_val)
@@ -1927,8 +1927,6 @@ class Experiment(object):
         """How many results the current experiment would produce."""
         nresults = 0
         for range_val in self.range_vals:
-            if self.range_randomize_data:
-                nresults += len(self.operands)
             for rep in range(self.nreps):
                 if self.sumrange and self.sumrange_parallel:
                     nresults += 1
