@@ -22,6 +22,9 @@ typedef struct {
 #ifdef OPENMP_ENABLED
     /** Call is in parallel with next call. */
     char parallel;
+
+    /** Call is sequential before the next in a parallel region. */
+    char sequential;
 #endif
 
     /** After execution: measured number of clock cycles. */

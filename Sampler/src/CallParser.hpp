@@ -107,6 +107,9 @@ class CallParser {
 #ifdef OPENMP_ENABLED
         /** Is this call in parallel with the next? */
         bool omp_active;
+
+        /** Is this call sequential before the next inside a parallel region? */
+        bool seq_active;
 #endif
 
         /** Constructor.

@@ -36,6 +36,12 @@ class Sampler {
          * previous.
          */
         bool omp_active;
+
+        /** Next call is sequential in a parallel region?
+         * If `true`, the next recorded call is executed sequentially after the
+         * previous in a parallel region
+         */
+        bool seq_active;
 #endif
 
 #ifdef PAPI_ENABLED
@@ -68,15 +74,25 @@ class Sampler {
          */
         void omp_start(const std::vector<std::string> &tokens);
 
-        /** Command `}`: End an OpenMP parallel region.
-         * End the current parallel region.  If not in a parallel region,
-         * nothing happens.
+        /** Command `{seq`: Begin a sequential region.
+         * Start a new sequential region.  If already in a sequential region,
+         * the last region is closed and a new is opened.
+         *
+         * Only available when compiled with OpenMP enabled.
+         *
+         * \param tokens    command + arguments: `{seq`
+         */
+        void seq_start(const std::vector<std::string> &tokens);
+
+        /** Command `}`: End an OpenMP parallel or sequential region.
+         * End the current parallel or sequential region.  If not in a parallel
+         * region, nothing happens.
          *
          * Only available when compiled with OpenMP enabled.
          *
          * \param tokens    command + arguments: `}`
          */
-        void omp_end(const std::vector<std::string> &tokens);
+        void region_end(const std::vector<std::string> &tokens);
 
         /** Command `*malloc` *name size*: allocate a named buffer.
          * Allocates a new named buffer of specified size.  Parses its

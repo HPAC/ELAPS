@@ -73,37 +73,52 @@ static void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
 static void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
     unsigned long ticks0 = 0, ticks1 = 0;
     // for each call
-    size_t i, npar;
+    size_t i, nseq, lastpar, j;
     for (i = 0; i < ncalls; i++) {
 
-        // count how many calls are executed in parallel
-        for (npar = 1; calls[i + npar - 1].parallel; npar++);
+        // count how many sequential regions are executed in parallel
+        nseq = 1;
+        for (lastpar = i; calls[lastpar].parallel; lastpar++)
+            nseq += !calls[lastpar].sequential;
 
-        if (npar > 1) {
+        if (lastpar > i) {
             // parallel calls
 #define COUNTERS_START
 #define COUNTERS_END
 
             // time parallel for loop
-            const int i_start = i, i_end = i + npar;
+            const int i_start = i;
             COUNTERS_START0
 #pragma omp parallel for
-            for (i = i_start; i < i_end; i++) {
-                void (*fptr)() = calls[i].fptr;
-                void **argv = calls[i].argv;
+            for (j = 1; j <= nseq; j++) {
+                int seqcounter = 1;
 
-                // branch depending on #arguments
-                switch (calls[i].argc) {
+                // each thread checks all calls
+                for (i = i_start; i <= lastpar; i++) {
+                    if (j == seqcounter) {
+                        // thread needs to execute this call
+                        void (*fptr)() = calls[i].fptr;
+                        void **argv = calls[i].argv;
+
+                        // branch depending on #arguments
+                        switch (calls[i].argc) {
 #include CALLS_C_INC
+                        }
+                    }
+
+                    // increment sequential region counter
+                    seqcounter += !calls[i].sequential;
                 }
             }
             COUNTERS_END0
+
+            i = lastpar;
 
             // clean macros
 #undef COUNTERS_START
 #undef COUNTERS_END
         } else {
-            // sequential call
+            // normal call
 #define COUNTERS_START COUNTERS_START0
 #define COUNTERS_END   COUNTERS_END0
 
@@ -175,28 +190,43 @@ static void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, siz
     size_t i;
     for (i = 0; i < ncalls; i++) {
 
-        // count how many calls are executed in parallel
-        for (npar = 1; calls[i + npar - 1].parallel; npar++);
+        // count how many sequential regions are executed in parallel
+        nseq = 1;
+        for (lastpar = i; calls[lastpar].parallel; lastpar++)
+            nseq += !calls[lastpar].sequential;
 
-        if (npar > 1) {
+        if (lastpar > i) {
             // parallel calls
 #define COUNTERS_START
 #define COUNTERS_END
 
             // time parallel for loop
-            const int i_start = i, i_end = i + npar;
+            const int i_start = i;
             COUNTERS_START0
 #pragma omp parallel for
-            for (i = i_start; i < i_end; i++) {
-                void (*fptr)() = calls[i].fptr;
-                void **argv = calls[i].argv;
+            for (j = 1; j <= nseq; j++) {
+                int seqcounter = 1;
 
-                // branch depending on #arguments
-                switch (calls[i].argc) {
+                // each thread checks all calls
+                for (i = i_start; i <= lastpar; i++) {
+                    if (j == seqcounter) {
+                        // thread needs to execute this call
+                        void (*fptr)() = calls[i].fptr;
+                        void **argv = calls[i].argv;
+
+                        // branch depending on #arguments
+                        switch (calls[i].argc) {
 #include CALLS_C_INC
+                        }
+                    }
+
+                    // increment sequential region counter
+                    seqcounter += !calls[i].sequential;
                 }
             }
             COUNTERS_END0
+
+            i = lastpar;
 
             // clean macros
 #undef COUNTERS_START

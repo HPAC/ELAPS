@@ -64,9 +64,14 @@ void Sampler::omp_start(const vector<string>&tokens) {
 #ifdef OPENMP_ENABLED
     if (tokens.size() > 1)
         cerr << "Ignoring arguments for " << tokens[0] << endl;
+    if (seq_active) {
+        cerr << "Implicitly ending last sequential and parallel region, starting a new one" << endl;
+        region_end(vector<string>());
+        region_end(vector<string>());
+    }
     if (omp_active) {
         cerr << "Implicitly ending last parallel region, starting a new one" << endl;
-        omp_end(vector<string>());
+        region_end(vector<string>());
     }
     omp_active = true;
 #else
@@ -74,7 +79,25 @@ void Sampler::omp_start(const vector<string>&tokens) {
 #endif
 }
 
-void Sampler::omp_end(const vector<string>&tokens) {
+void Sampler::seq_start(const vector<string>&tokens) {
+#ifdef OPENMP_ENABLED
+    if (!omp_active) {
+        cerr << "Not inside a parallel region (command ignored)" << endl;
+        return;
+    }
+    if (tokens.size() > 1)
+        cerr << "Ignoring arguments for " << tokens[0] << endl;
+    if (seq_active) {
+        cerr << "Implicitly ending last sequential region, starting a new one" << endl;
+        region_end(vector<string>());
+    }
+    seq_active = true;
+#else
+    cerr << "Not inside a parallel region (command ignored)" << endl;
+#endif
+}
+
+void Sampler::region_end(const vector<string>&tokens) {
 #ifdef OPENMP_ENABLED
     if (tokens.size() > 1)
         cerr << "Ignoring arguments for " << tokens[0] << endl;
@@ -82,9 +105,15 @@ void Sampler::omp_end(const vector<string>&tokens) {
         cerr << "Not in parallel region (command ignored)" << endl;
         return;
     }
-    omp_active = false;
-    if (!callparsers.empty())
-        callparsers.back().omp_active = false;
+    if (seq_active) {
+        seq_active = false;
+        if (!callparsers.empty())
+            callparsers.back().seq_active = false;
+    } else {
+        omp_active = false;
+        if (!callparsers.empty())
+            callparsers.back().omp_active = false;
+    }
 #else
     cerr << "OpenMP support not enabled (command ignored)" << endl;
 #endif
@@ -208,6 +237,7 @@ void Sampler::add_call(const vector<string> &tokens, bool hidden=false) {
         callparser.hidden = hidden;
 #ifdef OPENMP_ENABLED
         callparser.omp_active = omp_active;
+        callparser.seq_active = seq_active;
 #endif
         callparsers.push_back(callparser);
     } catch (CallParser::CallParserException) {
@@ -220,8 +250,13 @@ void Sampler::go(const vector<string> &tokens) {
 #ifdef OPENMP_ENABLED
     // end parallel region if active
     if (omp_active) {
+        cerr << "Implicitly ending last sequential and parallel region" << endl;
+        region_end(vector<string>());
+        region_end(vector<string>());
+    }
+    if (omp_active) {
         cerr << "Implicitly ending last parallel region" << endl;
-        omp_end(vector<string>());
+        region_end(vector<string>());
     }
 #endif
 
@@ -358,7 +393,8 @@ void Sampler::start() {
     map<string, void (Sampler:: *)(const vector<string> &)> commands;
     commands["set_counters"] = &Sampler::set_counters;
     commands["{omp"] = &Sampler::omp_start;
-    commands["}"] = &Sampler::omp_end;
+    commands["{seq"] = &Sampler::seq_start;
+    commands["}"] = &Sampler::region_end;
     commands["malloc"] = &Sampler::named_malloc<char>;
     commands["imalloc"] = &Sampler::named_malloc<int>;
     commands["smalloc"] = &Sampler::named_malloc<float>;
@@ -379,6 +415,7 @@ void Sampler::start() {
 #ifdef OPENMP_ENABLED
     // initially: not parallel
     omp_active = false;
+    seq_active = false;
 #endif
 
     // read stdin by lines

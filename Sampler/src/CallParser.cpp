@@ -195,6 +195,7 @@ KernelCall CallParser::get_call() const {
 
 #ifdef OPENMP_ENABLED
     call.parallel = omp_active;
+    call.sequential = seq_active;
 #endif
 
     return call;
