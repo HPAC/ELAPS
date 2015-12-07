@@ -9,22 +9,21 @@ features functionality to support their design and handling.
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [ELAPS Experiment](#elaps-experiment)
-  - [Setup and Attributes](#setup-and-attributes)
-    - [`sampler`](#sampler)
-    - [`papi_counters`](#papi_counters)
-    - [`nthreads`](#nthreads)
-    - [`range`](#range)
-    - [`nreps`](#nreps)
-    - [`sumrange`](#sumrange)
-    - [`sumrange_parallel`](#sumrange_parallel)
-    - [`calls_parallel`](#calls_parallel)
-    - [`calls`](#calls)
-      - [Calls with a `Signature` (`Call`)](#calls-with-a-signature-call)
-      - [Calls without a `Signature` (`BasicCall`)](#calls-without-a-signature-basiccall)
-    - [`vary`](#vary)
-  - [Execution and Job Submission](#execution-and-job-submission)
-  - [Storing and Loading Experiments](#storing-and-loading-experiments)
+- [Setup and Attributes](#setup-and-attributes)
+  - [`sampler`](#sampler)
+  - [`papi_counters`](#papi_counters)
+  - [`nthreads`](#nthreads)
+  - [`range`](#range)
+  - [`nreps`](#nreps)
+  - [`sumrange`](#sumrange)
+  - [`sumrange_parallel`](#sumrange_parallel)
+  - [`calls_parallel`](#calls_parallel)
+  - [`calls`](#calls)
+    - [Calls with a `Signature` (`Call`)](#calls-with-a-signature-call)
+    - [Calls without a `Signature` (`BasicCall`)](#calls-without-a-signature-basiccall)
+  - [`vary`](#vary)
+- [Execution and Job Submission](#execution-and-job-submission)
+- [Storing and Loading Experiments](#storing-and-loading-experiments)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 

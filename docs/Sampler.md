@@ -12,6 +12,7 @@ ELAPS Sampler
     - [`go`](#go)
     - [`set_counters [` *counter* `[...]]`](#set_counters--counter-)
     - [`{omp` and `}`](#omp-and-)
+    - [`{seq` and `}`](#seq-and-)
     - [`info` *kernel_name*](#info-kernel_name)
     - [`print` *text*](#print-text)
   - [Named Buffer](#named-buffer)

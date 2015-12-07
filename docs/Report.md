@@ -9,14 +9,13 @@ executed [`Experiment`](Experiment.md) as well as the resulting measurements.
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [ELAPS Report](#elaps-report)
-  - [Measurement results](#measurement-results)
-    - [`rawdata`](#rawdata)
-    - [`fulldata`](#fulldata)
-    - [`data`](#data)
-  - [Dropping first repetitions](#dropping-first-repetitions)
-  - [Applying metrics](#applying-metrics)
-  - [Computing statistics](#computing-statistics)
+- [Measurement results](#measurement-results)
+  - [`rawdata`](#rawdata)
+  - [`fulldata`](#fulldata)
+  - [`data`](#data)
+- [Dropping first repetitions](#dropping-first-repetitions)
+- [Applying metrics](#applying-metrics)
+- [Computing statistics](#computing-statistics)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 

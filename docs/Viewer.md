@@ -4,6 +4,17 @@ ELAPS Viewer
 The *Viewer* in `bin/Viewer` is a PyQt4- and matplotlib-based graphical user
 interface to view and plot [`Report`](Report.md).s.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [ELAPS Viewer](#elaps-viewer)
+  - [Startup](#startup)
+  - [Handling Reports](#handling-reports)
+  - [Metrics and Statistics](#metrics-and-statistics)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 
 Startup
 -------

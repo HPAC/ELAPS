@@ -9,12 +9,11 @@ elements closely resemble the `Experiment`'s attributes.
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [ELAPS PlayMat](#elaps-playmat)
-  - [Startup](#startup)
-  - [Interface Elements](#interface-elements)
-    - [Calls](#calls)
-    - [Vary](#vary)
-  - [Execution](#execution)
+- [Startup](#startup)
+- [Interface Elements](#interface-elements)
+  - [Calls](#calls)
+  - [Vary](#vary)
+- [Execution](#execution)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
