@@ -1736,7 +1736,7 @@ class Experiment(object):
             nthreads = symbolic.max(self.range_vals)
         backend = self.sampler["backend"]
         jobname = os.path.basename(filebase)
-        return(backend.submit(script, nt=nthreads, jobname=jobname))
+        return backend.submit(script, nt=nthreads, jobname=jobname)
 
     # primarily internal routines
     def ranges_vardict(self, dorange=True, dosumrange=True):
