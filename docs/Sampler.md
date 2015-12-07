@@ -100,8 +100,12 @@ phases.
 
 #### `{omp` and `}`
 Start and end an OpenMP parallel region.  Calls registered between these
-commands are executed in parallel in OpenMP tasks and only return one total
-measurement result.
+commands are executed in parallel in an OpenMP for-loop and only return one
+total measurement result.
+
+#### `{seq` and `}`
+Start and end a sequential region in an OpenMP parallel region.  Calls
+registered between these commands are executed sequentially by the same thread.
 
 #### `info` *kernel_name*
 Print the signature of a kernel to `stderr` immediately.

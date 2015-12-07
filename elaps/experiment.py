@@ -1525,15 +1525,21 @@ class Experiment(object):
                     # comment
                     cmds += [[], ["#", "repetition",  rep]]
 
+                # open parallel constructs
                 if self.sumrange and self.sumrange_parallel:
-                    # begin omp range
+                    # begin omp range (parallel region)
                     cmds.append(["{omp"])
 
                 # go over sumrange
                 for sumrange_val in sumrange_vals:
+
+                    # open parallel constructs
                     if self.calls_parallel and not self.sumrange_parallel:
                         # begin parallel calls
                         cmds.append(["{omp"])
+                    elif self.sumrange_parallel and not self.calls_parallel:
+                        # begin sequential calls (in parallel region)
+                        cmds.append(["{seq"])
 
                     # go over calls
                     for call in self.calls:
@@ -1578,12 +1584,17 @@ class Experiment(object):
                         # add created call
                         cmds.append(cmd)
 
+                    # close parallel constructs
                     if self.calls_parallel and not self.sumrange_parallel:
-                        # begin parallel calls
+                        # end parallel calls (parallel region)
+                        cmds.append(["}"])
+                    elif self.sumrange_parallel and not self.calls_parallel:
+                        # end sequential calls (in parallel region)
                         cmds.append(["}"])
 
+                # close parallel constructs
                 if self.sumrange and self.sumrange_parallel:
-                    # end omp range
+                    # end omp range (parallel region)
                     cmds.append(["}"])
 
             # execute range iteration
@@ -1669,7 +1680,8 @@ class Experiment(object):
                         )
                 else:
                     sumrangelen = len(self.sumrange_vals)
-                ompthreads = sumrangelen * len(self.calls)
+                if self.calls_parallel:
+                    ompthreads = sumrangelen * len(self.calls)
             elif self.calls_parallel:
                 ompthreads = len(self.calls)
             # limit threads to #cores * #hyperthreads/core

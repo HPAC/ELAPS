@@ -132,8 +132,7 @@ Setter: `set_sumrange_parallel(sumrange_parallel)`
 
 ### `calls_parallel`
 Wether the calls for one sum-range iteration shall be executed in parallel.  The
-used Sampler must support OpenMP for this option.  The option is automatically
-implied when `sumrange_parallel == True`.
+used Sampler must support OpenMP for this option.
 
 Setter: `set_calls_parallel(calls_parallel)`
 
