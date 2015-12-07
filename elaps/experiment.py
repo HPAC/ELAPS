@@ -1672,16 +1672,16 @@ class Experiment(object):
             if self.sumrange and self.sumrange_parallel:
                 if self.range:
                     if len(nthreads_vals) > 1:
-                        sumrangelen = len(self.sumrange_vals_at(nthreads))
+                        ompthreads = len(self.sumrange_vals_at(nthreads))
                     else:
-                        sumrangelen = max(
+                        ompthreads = max(
                             len(self.sumrange_vals_at(range_val))
                             for range_val in self.range_vals
                         )
                 else:
-                    sumrangelen = len(self.sumrange_vals)
+                    ompthreads = len(self.sumrange_vals)
                 if self.calls_parallel:
-                    ompthreads = sumrangelen * len(self.calls)
+                    ompthreads *= len(self.calls)
             elif self.calls_parallel:
                 ompthreads = len(self.calls)
             # limit threads to #cores * #hyperthreads/core
