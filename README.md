@@ -76,6 +76,7 @@ Installation
 ------------
 
 To use ELAPS:
-- clone the GitHub repository
-- compile one or more `Sampler`s (see [docs/Sampler.md](docs/Sampler.md))
+- clone the GitHub repository, and
+- compile one or more `Sampler`s (see [docs/Sampler.md](docs/Sampler.md)).
+
 Now, ELAPS is ready to go.  To get started, run `bin/PlayMat`.
