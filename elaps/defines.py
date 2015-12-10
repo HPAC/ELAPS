@@ -58,4 +58,4 @@ default_dim = 1000
 default_reportname = "default"
 jobprogress_timeout = 1000
 truncatedreload_timeout = 5000
-github_url = "https://github.com/elmar-peise/ELAPS/"
+github_url = "https://github.com/HPAC/ELAPS/"
