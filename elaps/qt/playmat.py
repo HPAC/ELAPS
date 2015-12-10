@@ -64,7 +64,7 @@ class PlayMat(QtGui.QMainWindow):
             except:
                 pass
         if not self.experiment:
-            self.experiment_reset()
+            self.experiment_new()
 
         # undo stack
         self.undo_stack = []
@@ -684,7 +684,7 @@ class PlayMat(QtGui.QMainWindow):
     def experiment_new(self):
         """Reset Experiment."""
         self.experiment_set(elaps.Experiment())
-        self.on_call_new()
+        self.experiment.calls.append([""])
         self.log("Reset Experiment")
 
     def experiment_qt_load(self):
