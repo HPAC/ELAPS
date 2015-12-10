@@ -90,24 +90,25 @@ class PlayMat(QtGui.QMainWindow):
             """Create all actions."""
             # EXPERIMENT
 
-            # DEBUG: print Experiment
+            # print
             QtGui.QShortcut(
                 QtGui.QKeySequence.Print, self, lambda: print(self.experiment)
             )
 
             # submit
             self.UIA_submit = QtGui.QAction(
-                self.style().standardIcon(QtGui.QStyle.SP_DialogOkButton),
+                self.style().standardIcon(QtGui.QStyle.SP_MediaPlay),
                 "Run Experiment", self,
                 shortcut=QtGui.QKeySequence("Ctrl+R"),
                 triggered=self.on_submit
             )
 
-            # reset
-            self.UIA_reset = QtGui.QAction(
-                "Reset Experiment", self,
+            # new
+            self.UIA_new = QtGui.QAction(
+                self.style().standardIcon(QtGui.QStyle.SP_FileIcon),
+                "New Experiment", self,
                 shortcut=QtGui.QKeySequence("Ctrl+Shift+N"),
-                triggered=self.on_experiment_reset
+                triggered=self.on_experiment_new
             )
 
             # load
@@ -229,7 +230,7 @@ class PlayMat(QtGui.QMainWindow):
             self.UIM_file = menu.addMenu("File")
             self.UIM_file.addAction(self.UIA_submit)
             self.UIM_file.addSeparator()
-            self.UIM_file.addAction(self.UIA_reset)
+            self.UIM_file.addAction(self.UIA_new)
             self.UIM_file.addAction(self.UIA_load)
             self.UIM_file.addAction(self.UIA_save)
             self.UIM_file.addSeparator()
@@ -266,39 +267,14 @@ class PlayMat(QtGui.QMainWindow):
             self.UIM_calls.addSeparator()
             self.UIM_calls.addMenu(self.UIM_view)
 
-        def create_toolbar():
+        def create_toolbars():
             """Create all toolbars."""
-            # Sampler
-            self.UI_sampler = QtGui.QComboBox()
-            self.UI_sampler.addItems(sorted(self.samplers.keys()))
-            self.UI_sampler.currentIndexChanged[str].connect(
-                self.on_sampler_change
-            )
-
-            samplerT = self.addToolBar("Sampler")
-            samplerT.pyqtConfigure(
-                movable=False, objectName="Sampler",
-                toolTip="<tt>sampler</tt>: "
-                "The Sampler on which to run the Experiment."
-            )
-            samplerT.addWidget(QtGui.QLabel("Sampler:"))
-            samplerT.addWidget(self.UI_sampler)
-
-            # #threads
-            self.UI_nthreads = QtGui.QComboBox()
-            self.UI_nthreads.currentIndexChanged[str].connect(
-                self.on_nthreads_change
-            )
-
-            nthreadsT = self.addToolBar("#threads")
-            nthreadsT.pyqtConfigure(
-                movable=False, objectName="#threads",
-                toolTip="<tt>nthreads</tt>: "
-                "The number of threads for the kernel (BLAS) library."
-                "\nCan be linked to the range variable."
-            )
-            nthreadsT.addWidget(QtGui.QLabel("#threads:"))
-            nthreadsT.addWidget(self.UI_nthreads)
+            # new/load/save experiment
+            fileT = self.addToolBar("File")
+            fileT.pyqtConfigure(movable=False, objectName="File")
+            fileT.addAction(self.UIA_new)
+            fileT.addAction(self.UIA_load)
+            fileT.addAction(self.UIA_save)
 
             # spacer
             spacer = QtGui.QWidget()
@@ -310,7 +286,6 @@ class PlayMat(QtGui.QMainWindow):
                 returnPressed=self.on_submit,
                 toolTip="Name for the Report."
             )
-            self.UI_reportname.setFixedWidth(32)
             reportname_choose = QtGui.QAction(
                 self.style().standardIcon(QtGui.QStyle.SP_DialogOpenButton),
                 "...", self,
@@ -326,22 +301,30 @@ class PlayMat(QtGui.QMainWindow):
             submitT.addAction(reportname_choose)
             submitT.addAction(self.UIA_submit)
 
-        def create_ranges():
+        def create_setup():
             """Create the ranges dock widget."""
-            # checkboxes
+            # sampler
+            self.UI_sampler = QtGui.QComboBox(
+                toolTip="<tt>sampler</tt>: "
+                "The Sampler on which to run the Experiment."
+            )
+            self.UI_sampler.addItems(sorted(self.samplers.keys()))
+            self.UI_sampler.currentIndexChanged[str].connect(
+                self.on_sampler_change
+            )
+
+            samplerL = QtGui.QHBoxLayout(spacing=0)
+            samplerL.setContentsMargins(0, 0, 0, 0)
+            samplerL.addWidget(QtGui.QLabel("Sampler = "))
+            samplerL.addWidget(self.UI_sampler)
+            samplerL.addStretch(1)
+            samplerW = QtGui.QWidget()
+            samplerW.setLayout(samplerL)
+
+            # range
             self.UI_userange = QtGui.QCheckBox(
                 " ", toggled=self.on_userange_toggle
             )
-
-            self.UI_usesumrange = QtGui.QCheckBox(
-                " ", toggled=self.on_usesumrange_toggle
-            )
-
-            self.UI_calls_parallel = QtGui.QCheckBox(
-                " ", toggled=self.on_calls_parallel_toggle
-            )
-
-            # range
             self.UI_rangevar = QtGui.QLineEdit(
                 textEdited=self.on_rangevar_change,
                 editingFinished=self.UI_range_set,
@@ -352,14 +335,13 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_rangevar.setValidator(QtGui.QRegExpValidator(
                 QtCore.QRegExp("[a-zA-Z]+"), self.UI_rangevar
             ))
-            self.UI_rangevar.setFixedWidth(32)
             self.UI_rangevals = QtGui.QLineEdit(
                 minimumWidth=32,
                 textEdited=self.on_rangevals_change,
                 editingFinished=self.UI_range_set,
                 toolTip="<tt>range_vals</tt> (<tt>range[1]</tt>): "
-                "Values for the range.\nSyntax: <tt>start:step:stop</tt>, a "
-                "comma separated list of values, or a combination of both."
+                "Values for the range.\nSyntax: <tt>start[[:step]:stop]</tt>, "
+                "a comma separated list of values, or a combination of both."
             )
 
             rangeL = QtGui.QHBoxLayout(spacing=0)
@@ -377,6 +359,22 @@ class PlayMat(QtGui.QMainWindow):
             )
             self.UI_rangeW.setLayout(rangeL)
 
+            # #threads
+            self.UI_nthreads = QtGui.QLineEdit(
+                textEdited=self.on_nthreads_change,
+                editingFinished=self.UI_nthreads_set,
+                toolTip="<tt>nthreads</tt>: "
+                "The number of threads for the kernel (BLAS) library."
+            )
+
+            nthreadsL = QtGui.QHBoxLayout(spacing=0)
+            nthreadsL.setContentsMargins(0, 0, 0, 0)
+            nthreadsL.addWidget(QtGui.QLabel("#threads = "))
+            nthreadsL.addWidget(self.UI_nthreads)
+            nthreadsL.addStretch(1)
+            self.UI_nthreadsW = QtGui.QWidget()
+            self.UI_nthreadsW.setLayout(nthreadsL)
+
             # reps
             self.UI_nreps = QtGui.QLineEdit(
                 textEdited=self.on_nreps_change,
@@ -384,11 +382,9 @@ class PlayMat(QtGui.QMainWindow):
                 toolTip="<tt>nreps</tt>: "
                 "Number of repetitions for statistical evaluation."
             )
-            self.UI_nreps.setValidator(QtGui.QIntValidator(1, 1000000, self))
-            self.UI_nreps.setFixedWidth(32)
 
             nrepsL = QtGui.QHBoxLayout(spacing=0)
-            nrepsL.setContentsMargins(16, 4, 0, 0)
+            nrepsL.setContentsMargins(0, 0, 0, 0)
             nrepsL.addWidget(QtGui.QLabel("repeat "))
             nrepsL.addWidget(self.UI_nreps)
             nrepsL.addWidget(QtGui.QLabel(" times:"))
@@ -397,6 +393,9 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_nrepsW.setLayout(nrepsL)
 
             # sumrange
+            self.UI_usesumrange = QtGui.QCheckBox(
+                " ", toggled=self.on_usesumrange_toggle
+            )
             self.UI_sumrange_parallel = QtGui.QComboBox(
                 toolTip="<tt>sumrange_parallel</tt>:\n"
                 "<i>sum over</i>: the calls are executed sequentially and "
@@ -417,7 +416,6 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_sumrangevar.setValidator(QtGui.QRegExpValidator(
                 QtCore.QRegExp("[a-zA-Z]+"), self.UI_sumrangevar
             ))
-            self.UI_sumrangevar.setFixedWidth(32)
             self.UI_sumrangevals = QtGui.QLineEdit(
                 minimumWidth=32,
                 textEdited=self.on_sumrangevals_change,
@@ -428,7 +426,7 @@ class PlayMat(QtGui.QMainWindow):
             )
 
             sumrangeL = QtGui.QHBoxLayout(spacing=0)
-            sumrangeL.setContentsMargins(32, 0, 0, 0)
+            sumrangeL.setContentsMargins(0, 0, 0, 0)
             sumrangeL.addWidget(self.UI_sumrange_parallel)
             sumrangeL.addWidget(QtGui.QLabel(" "))
             sumrangeL.addWidget(self.UI_sumrangevar)
@@ -444,8 +442,12 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_sumrangeW.setLayout(sumrangeL)
 
             # calls_parallel
+            self.UI_calls_parallel = QtGui.QCheckBox(
+                " ", toggled=self.on_calls_parallel_toggle
+            )
+
             calls_parallelL = QtGui.QHBoxLayout()
-            calls_parallelL.setContentsMargins(48, 0, 0, 0)
+            calls_parallelL.setContentsMargins(0, 0, 0, 0)
             calls_parallelL.addWidget(QtGui.QLabel("in parallel:"))
             calls_parallelL.addStretch(1)
             self.UI_calls_parallelW = QtGui.QWidget(
@@ -454,26 +456,44 @@ class PlayMat(QtGui.QMainWindow):
             )
             self.UI_calls_parallelW.setLayout(calls_parallelL)
 
-            rangesL = QtGui.QGridLayout(spacing=0)
-            rangesL.addWidget(self.UI_userange, 0, 0)
-            rangesL.addWidget(self.UI_rangeW, 0, 1)
-            rangesL.addWidget(self.UI_nrepsW, 1, 1)
-            rangesL.addWidget(self.UI_usesumrange, 2, 0)
-            rangesL.addWidget(self.UI_sumrangeW, 2, 1)
-            rangesL.addWidget(self.UI_calls_parallel, 3, 0)
-            rangesL.addWidget(self.UI_calls_parallelW, 3, 1)
-            rangesL.setRowStretch(4, 1)
+            setupL = QtGui.QGridLayout(spacing=0)
+            for col in range(6):
+                setupL.setColumnMinimumWidth(col, 8)
+            setupL.addWidget(samplerW,
+                             0, 0, 1, 8)
+            setupL.addWidget(self.UI_userange,
+                             1, 0, 1, 2)
+            setupL.addWidget(self.UI_rangeW,
+                             1, 2, 1, 6)
+            setupL.addWidget(QtGui.QFrame(frameShape=QtGui.QFrame.VLine),
+                             2, 1, 4, 1)
+            setupL.addWidget(self.UI_nthreadsW,
+                             2, 2, 1, 6)
+            setupL.addWidget(self.UI_nrepsW,
+                             3, 2, 1, 6)
+            setupL.addWidget(QtGui.QFrame(frameShape=QtGui.QFrame.VLine),
+                             4, 3, 2, 1)
+            setupL.addWidget(self.UI_usesumrange,
+                             4, 4, 1, 2)
+            setupL.addWidget(self.UI_sumrangeW,
+                             4, 6, 1, 4)
+            setupL.addWidget(QtGui.QFrame(frameShape=QtGui.QFrame.VLine),
+                             5, 5, 1, 1)
+            setupL.addWidget(self.UI_calls_parallel,
+                             5, 6, 1, 1)
+            setupL.addWidget(self.UI_calls_parallelW,
+                             5, 7, 1, 1)
 
-            rangesW = QtGui.QWidget()
-            rangesW.setLayout(rangesL)
+            setupW = QtGui.QWidget()
+            setupW.setLayout(setupL)
 
-            rangesD = QtGui.QDockWidget(
-                "Ranges", objectName="Ranges",
+            setupD = QtGui.QDockWidget(
+                "Sampler && Ranges", objectName="Setup",
                 features=QtGui.QDockWidget.DockWidgetVerticalTitleBar,
             )
-            rangesD.setWidget(rangesW)
+            setupD.setWidget(setupW)
 
-            self.addDockWidget(QtCore.Qt.TopDockWidgetArea, rangesD)
+            self.addDockWidget(QtCore.Qt.TopDockWidgetArea, setupD)
 
         def create_note():
             """Create the note input."""
@@ -571,8 +591,8 @@ class PlayMat(QtGui.QMainWindow):
 
         create_actions()
         create_menus()
-        create_toolbar()
-        create_ranges()
+        create_toolbars()
+        create_setup()
         create_note()
         create_counters()
         create_calls()
@@ -628,6 +648,17 @@ class PlayMat(QtGui.QMainWindow):
         widget.style().polish(widget)
         widget.update()
 
+    def UI_edit_autowidth(self, widget, ratio=1):
+        """Set a LineEdit's width according to the content."""
+        value = str(widget.text())
+        width = widget.fontMetrics().width(value) + 4
+        width += widget.minimumSizeHint().width()
+        margins = widget.getTextMargins()
+        width += margins[0] + margins[2]
+        width = min(width, widget.sizeHint().width())
+        width = max(width, widget.sizeHint().height() * ratio)
+        widget.setFixedWidth(width)
+
     # Experiment routines
     def experiment_set(self, ex):
         """Insert own/new objects into loaded Experiment."""
@@ -650,12 +681,11 @@ class PlayMat(QtGui.QMainWindow):
 
         self.experiment = ex
 
-    def experiment_reset(self):
-        """Reset Experiment to default."""
-        self.experiment_set(elaps.io.load_experiment_string(
-            defines.default_experiment_str
-        ))
-        self.log("Loaded default Experiment")
+    def experiment_new(self):
+        """Reset Experiment."""
+        self.experiment_set(elaps.Experiment())
+        self.on_call_new()
+        self.log("Reset Experiment")
 
     def experiment_qt_load(self):
         """Load Experiment from Qt setting."""
@@ -890,20 +920,6 @@ class PlayMat(QtGui.QMainWindow):
         )
         self.UI_setting -= 1
 
-    def UI_nthreads_set(self):
-        """Set UI element: #threads."""
-        self.UI_setting += 1
-        self.UI_nthreads.clear()
-        self.UI_nthreads.addItems(
-            map(str, range(1, self.experiment.sampler["nt_max"] + 1))
-        )
-        if self.experiment.range:
-            self.UI_nthreads.addItem(str(self.experiment.range_var))
-        self.UI_nthreads.setCurrentIndex(
-            self.UI_nthreads.findText(str(self.experiment.nthreads))
-        )
-        self.UI_setting -= 1
-
     @pyqtSlot()
     def UI_range_set(self):
         """Set UI element: range."""
@@ -914,9 +930,20 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_rangeW.setEnabled(userange)
         if userange:
             self.UI_rangevar.setText(str(ex.range_var))
-            self.UI_set_invalid(self.UI_rangevar, False)
             self.UI_rangevals.setText(str(ex.range_vals))
-            self.UI_set_invalid(self.UI_rangevals, False)
+        self.UI_edit_autowidth(self.UI_rangevar)
+        self.UI_set_invalid(self.UI_rangevar, False)
+        self.UI_edit_autowidth(self.UI_rangevals, 2)
+        self.UI_set_invalid(self.UI_rangevals, False)
+        self.UI_setting -= 1
+
+    @pyqtSlot()
+    def UI_nthreads_set(self):
+        """Set UI element: #threads."""
+        self.UI_setting += 1
+        self.UI_nthreads.setText(str(self.experiment.nthreads))
+        self.UI_edit_autowidth(self.UI_nthreads)
+        self.UI_set_invalid(self.UI_nthreads, False)
         self.UI_setting -= 1
 
     @pyqtSlot()
@@ -924,6 +951,7 @@ class PlayMat(QtGui.QMainWindow):
         """Set UI element: nreps."""
         self.UI_setting += 1
         self.UI_nreps.setText(str(self.experiment.nreps))
+        self.UI_edit_autowidth(self.UI_nreps)
         self.UI_set_invalid(self.UI_nreps, False)
         self.UI_setting -= 1
 
@@ -937,11 +965,15 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_sumrangeW.setEnabled(usesumrange)
         if usesumrange:
             self.UI_sumrange_parallel.setEnabled(ex.sampler["omp_enabled"])
-            self.UI_sumrange_parallel.setCurrentIndex(int(ex.sumrange_parallel))
+            self.UI_sumrange_parallel.setCurrentIndex(
+                int(ex.sumrange_parallel)
+            )
             self.UI_sumrangevar.setText(str(ex.sumrange_var))
-            self.UI_set_invalid(self.UI_sumrangevar, False)
             self.UI_sumrangevals.setText(str(ex.sumrange_vals))
-            self.UI_set_invalid(self.UI_sumrangevals, False)
+        self.UI_edit_autowidth(self.UI_sumrangevar)
+        self.UI_set_invalid(self.UI_sumrangevar, False)
+        self.UI_edit_autowidth(self.UI_sumrangevals, 2)
+        self.UI_set_invalid(self.UI_sumrangevals, False)
         self.UI_setting -= 1
 
     def UI_calls_parallel_set(self):
@@ -1081,10 +1113,10 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_setall(True)
 
     @pyqtSlot()
-    def on_experiment_reset(self):
+    def on_experiment_new(self):
         """Event: reset Experiment."""
         self.undo_stack_push()
-        self.experiment_reset()
+        self.experiment_new()
         self.UI_setall(True)
 
     @pyqtSlot()
@@ -1144,18 +1176,10 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot(str)
     def on_reportname_change(self, value):
         """Event: change Report name."""
-        value = str(value)
-        sender = self.UI_reportname
-        width = sender.fontMetrics().width(value) + 4
-        width += sender.minimumSizeHint().width()
-        margins = sender.getTextMargins()
-        width += margins[0] + margins[2]
-        width = min(width, sender.sizeHint().width())
-        width = max(width, sender.sizeHint().height())
-        sender.setFixedWidth(width)
+        self.UI_edit_autowidth(self.UI_reportname, 2)
         if self.UI_setting:
             return
-        self.reportname_set(value)
+        self.reportname_set(str(value))
         self.UI_submit_setenabled()
 
     @pyqtSlot()
@@ -1209,14 +1233,6 @@ class PlayMat(QtGui.QMainWindow):
                 {"Ok": (self.on_sampler_change, (value, True)), "Cancel": None}
             )
 
-    @pyqtSlot(str)
-    def on_nthreads_change(self, value):
-        """Event: change #threads."""
-        if self.UI_setting:
-            return
-        self.undo_stack_push()
-        self.experiment.set_nthreads(str(value), force=True)
-
     @pyqtSlot(bool)
     def on_userange_toggle(self, checked):
         """Event: change if range is used."""
@@ -1239,6 +1255,9 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot(str)
     def on_rangevar_change(self, value):
         """Event: change range variable."""
+        self.UI_edit_autowidth(self.UI_rangevar)
+        if self.UI_setting:
+            return
         self.undo_stack_push()
         try:
             self.experiment.set_range_var(str(value))
@@ -1254,6 +1273,9 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot(str)
     def on_rangevals_change(self, value):
         """Event: change range."""
+        self.UI_edit_autowidth(self.UI_rangevals, 2)
+        if self.UI_setting:
+            return
         self.undo_stack_push()
         try:
             self.experiment.set_range_vals(str(value))
@@ -1264,13 +1286,29 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_set_invalid(self.UI_rangevals)
 
     @pyqtSlot(str)
+    def on_nthreads_change(self, value):
+        """Event: change #threads."""
+        self.UI_edit_autowidth(self.UI_nthreads)
+        if self.UI_setting:
+            return
+        self.undo_stack_push()
+        try:
+            self.experiment.set_nthreads(str(value))
+            self.UI_set_invalid(self.UI_nthreads, False)
+        except:
+            self.undo_stack_pop()
+            self.UI_set_invalid(self.UI_nthreads)
+
+    @pyqtSlot(str)
     def on_nreps_change(self, value):
-        """Event: change #repetitions."""
+        """Event: change #threads."""
+        self.UI_edit_autowidth(self.UI_nreps)
+        if self.UI_setting:
+            return
         self.undo_stack_push()
         try:
             self.experiment.set_nreps(str(value))
             self.UI_set_invalid(self.UI_nreps, False)
-            self.experiment_infer_update_set()
         except:
             self.undo_stack_pop()
             self.UI_set_invalid(self.UI_nreps)
@@ -1308,6 +1346,9 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot(str)
     def on_sumrangevar_change(self, value):
         """Event: change sumrange variable."""
+        self.UI_edit_autowidth(self.UI_sumrangevar)
+        if self.UI_setting:
+            return
         self.undo_stack_push()
         try:
             self.experiment.set_sumrange_var(str(value))
@@ -1321,6 +1362,9 @@ class PlayMat(QtGui.QMainWindow):
     @pyqtSlot(str)
     def on_sumrangevals_change(self, value):
         """Event: change sumrange."""
+        self.UI_edit_autowidth(self.UI_sumrangevals, 2)
+        if self.UI_setting:
+            return
         self.undo_stack_push()
         try:
             self.experiment.set_sumrange_vals(str(value))

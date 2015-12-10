@@ -56,30 +56,6 @@ plot_styles = {
 viz_scale = 100
 default_dim = 1000
 default_reportname = "default"
-default_experiment_str = """
-Experiment(
-    range=[Symbol("i"), Range((100, 100, 2000))],
-    nreps=10,
-    calls=[
-        Signature(
-            "dgemm",
-            Trans("transA"), Trans("transB"),
-            Dim("m"), Dim("n"), Dim("k"),
-            dScalar(),
-            dData("A", "ldA * (k if transA == 'N' else m)"),
-            Ld("ldA", "m if transA == 'N' else k"),
-            dData("B", "ldB * (n if transB == 'N' else k)"),
-            Ld("ldB", "k if transB == 'N' else n"),
-            dScalar("beta"),
-            dData("C", "ldC * n"), Ld("ldC", "m"),
-            flops="2 * m * n * k"
-        )(
-            "N", "N", Symbol("i"), Symbol("i"), Symbol("i"),
-            1, "A", Symbol("i"), "B", Symbol("i"), 1, "C", Symbol("i")
-        )
-    ]
-)
-"""
 jobprogress_timeout = 1000
 truncatedreload_timeout = 5000
 github_url = "https://github.com/elmar-peise/ELAPS/"

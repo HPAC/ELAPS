@@ -225,16 +225,7 @@ class QCall(QtGui.QListWidgetItem):
         if isinstance(sender, QtGui.QLineEdit) and not isinstance(sender,
                                                                   QDataArg):
             # adjust width no matter where the change came from
-            width = sender.fontMetrics().width(value) + 4
-            width += sender.minimumSizeHint().width()
-            margins = sender.getTextMargins()
-            width += margins[0] + margins[2]
-            width = min(width, sender.sizeHint().width())
-            width = max(width, sender.sizeHint().height())
-            if argid == 0:
-                sender.setMinimumWidth(width)
-            else:
-                sender.setFixedWidth(width)
+            self.playmat.UI_edit_autowidth(sender, 1 + (argid == 0))
         if self.playmat.UI_setting:
             return
         self.playmat.on_arg_set(self.callid, argid, value)

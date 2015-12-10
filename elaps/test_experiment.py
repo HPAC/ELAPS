@@ -293,34 +293,6 @@ class TestExperimentSetters(TestExperiment):
         ex.set_papi_counters(["C1", "C2"], check_only=True)
         self.assertEqual(ex.papi_counters, [])
 
-    def test_set_nthreads(self):
-        """Test for set_nthreads()."""
-        ex, i = self.ex, self.i
-        nt_max = ex.sampler["nt_max"]
-
-        # working
-        ex.set_nthreads(nt_max)
-        self.assertEqual(ex.nthreads, nt_max)
-        ex.set_nthreads("1")
-        self.assertEqual(ex.nthreads, 1)
-        ex.set_nthreads("i")
-        self.assertEqual(ex.nthreads, i)
-
-        # type
-        self.assertRaises(TypeError, ex.set_nthreads, None)
-
-        # bound
-        self.assertRaises(ValueError, ex.set_nthreads, nt_max + 1)
-        ex.set_nthreads(nt_max + 1, force=True)
-        self.assertEqual(ex.nthreads, nt_max)
-
-        # var
-        self.assertRaises(NameError, ex.set_nthreads, "j")
-
-        # check_only
-        ex.set_nthreads(1, check_only=True)
-        self.assertEqual(ex.nthreads, nt_max)
-
     def test_set_range_var(self):
         """Test for set_range_var()."""
         ex, i, j = self.ex, self.i, self.j
@@ -409,15 +381,45 @@ class TestExperimentSetters(TestExperiment):
         ex.set_range(["i", "100:100:2000"], check_only=True)
         self.assertEqual(ex.range, None)
 
+    def test_set_nthreads(self):
+        """Test for set_nthreads()."""
+        ex, i = self.ex, self.i
+        nt_max = ex.sampler["nt_max"]
+
+        # working
+        ex.set_nthreads(nt_max)
+        self.assertEqual(ex.nthreads, nt_max)
+        ex.set_nthreads("1")
+        self.assertEqual(ex.nthreads, 1)
+        ex.set_nthreads("min(i, %d)" % nt_max)
+        self.assertEqual(ex.nthreads, symbolic.Min(i, nt_max))
+
+        # type
+        self.assertRaises(TypeError, ex.set_nthreads, None)
+
+        # bound
+        self.assertRaises(ValueError, ex.set_nthreads, nt_max + 1)
+        ex.set_nthreads(nt_max + 1, force=True)
+        self.assertEqual(ex.nthreads, nt_max)
+
+        # var
+        self.assertRaises(NameError, ex.set_nthreads, "j")
+
+        # check_only
+        ex.set_nthreads(1, check_only=True)
+        self.assertEqual(ex.nthreads, nt_max)
+
     def test_set_nreps(self):
         """Test for set_nreps()."""
-        ex = self.ex
+        ex, i = self.ex, self.i
 
         # working
         ex.set_nreps(10)
         self.assertEqual(ex.nreps, 10)
         ex.set_nreps("20")
         self.assertEqual(ex.nreps, 20)
+        ex.set_nreps("2 * i")
+        self.assertEqual(ex.nreps, 2 * i)
 
         # empty
         self.assertRaises(ValueError, ex.set_nreps, "")

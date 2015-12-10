@@ -90,19 +90,14 @@ class Experiment(object):
         if self.note:
             result += "Note:\t%s\n" % self.note
         if self.sampler:
-            result += "Sampler:\t%s (%s, %s)\n" % (self.sampler["name"],
-                                                   self.sampler["system_name"],
-                                                   self.sampler["blas_name"])
-        if isinstance(self.nthreads, int):
-            result += "#threads:\t%s\n" % self.nthreads
+            result += "Sampler:\t%s\n" % self.sampler["name"]
         if self.script_header:
             result += "Header:\t%s\n" % self.script_header
         indent = ""
         if self.range:
             result += "for %s = %s :\n" % tuple(self.range)
             indent += "    "
-        if not isinstance(self.nthreads, int):
-            result += indent + "#threads = %s\n" % self.nthreads
+        result += indent + "#threads = %s\n" % self.nthreads
         result += indent + "repeat %s times:\n" % self.nreps
         indent += "    "
         if self.sumrange:
@@ -338,31 +333,6 @@ class Experiment(object):
         # set new values
         self.papi_counters = papi_counters
 
-    def set_nthreads(self, nthreads, force=False, check_only=False):
-        """Set number of threads."""
-        if isinstance(nthreads, str):
-            nthreads = self.ranges_parse(nthreads, dosumrange=False)
-        if isinstance(nthreads, int):
-            # check bounds
-            nt_max = self.sampler["nt_max"]
-            if nthreads > nt_max:
-                if not force:
-                    raise ValueError("Sampler only supports %s threads." %
-                                     nt_max)
-                nthreads = nt_max
-        elif isinstance(nthreads, symbolic.Symbol):
-            # check if == range_var
-            if not self.range or nthreads != self.range_var:
-                raise NameError("Invalid thread count: %s" % nthreads)
-        else:
-            raise TypeError("Invalid thread count: %s" % nthreads)
-
-        if check_only:
-            return
-
-        # set new values
-        self.nthreads = nthreads
-
     def set_range_var(self, range_var, force=False, check_only=False):
         """Set the range variable."""
         # turn str to symbol
@@ -372,11 +342,13 @@ class Experiment(object):
                     raise ValueError("Invalid range variable: %r" % range_var)
                 range_var = "i"
             range_var = symbolic.Symbol(range_var)
+
         # check type
         if not isinstance(range_var, symbolic.Symbol):
             if not force:
                 raise TypeError("Invalid range variable: %r" % range_var)
             range_var = symbolic.Symbol("i")
+
         # check conflict with sumrange
         if self.sumrange and range_var == self.sumrange_var:
             if not force:
@@ -408,7 +380,7 @@ class Experiment(object):
                 range_vals = "1"
             range_vals = symbolic.Range(range_vals)
 
-        # check for type
+        # check type
         if not isinstance(range_vals, (list, tuple, symbolic.Range)):
             if not force:
                 raise TypeError("Invalid range: %r" % range_vals)
@@ -420,7 +392,7 @@ class Experiment(object):
                 raise ValueError("Unknown symbols in range: %s" % range_vals)
             range_vals = symbolic.Range("1")
 
-        # check for length
+        # check length
         if len(range_vals) == 0:
             if not force:
                 raise ValueError("Empty range: %s" % range_vals)
@@ -442,8 +414,10 @@ class Experiment(object):
                   check_only=False):
         """Set the range."""
         if range_vals is not None:
+            # two argument version
             self.set_range([range_, range_vals])
             return
+
         if range_ is None:
             # disabling range
             if check_only:
@@ -469,31 +443,66 @@ class Experiment(object):
         self.set_range_var(range_var, force=force)
         self.set_range_vals(range_vals, force=force)
 
+    def set_nthreads(self, nthreads, force=False, check_only=False):
+        """Set number of threads."""
+        # parse string
+        if isinstance(nthreads, str):
+            if not nthreads:
+                if not force:
+                    raise ValueError("Empty value for #threads")
+                nthreads = "1"
+            nthreads = self.ranges_parse(nthreads, dosumrange=False)
+
+        # check type
+        if not isinstance(nthreads, (int, symbolic.Expression)):
+            if not force:
+                raise TypeError("Invalid type for #threads: %s" % nthreads)
+            nthreads = 1
+
+        # check range
+        min_, max_ = self.ranges_eval_minmax(nthreads, dosumrange=False)
+        if min_ < 1:
+            if not force:
+                raise ValueError("#threads must be positive")
+            nthreads = symbolic.max(1, nthreads)
+        if max_ > self.sampler["nt_max"]:
+            if not force:
+                raise ValueError("#threads too large for sampler")
+            nthreads = symbolic.min(self.sampler["nt_max"], nthreads)
+
+        if check_only:
+            return
+
+        # set new value
+        self.nthreads = nthreads
+
     def set_nreps(self, nreps, force=False, check_only=False):
         """Set repetition count."""
         # parse string
         if isinstance(nreps, str):
             if not nreps:
                 if not force:
-                    raise ValueError("Invalid repetition count: %r" % int)
+                    raise ValueError("Empty repetition count")
                 nreps = "1"
-            nreps = int(nreps)
+            nreps = self.ranges_parse(nreps, dosumrange=False)
 
         # check type
-        if not isinstance(nreps, int):
+        if not isinstance(nreps, (int, symbolic.Expression)):
             if not force:
-                raise TypeError("Invalid repetition count: %r" % int)
+                raise TypeError("Invalid repetition count: %s" % nreps)
             nreps = 1
 
         # ensure > 0
-        if nreps <= 0:
+        min_ = self.ranges_eval_minmax(nreps, dosumrange=False)[0]
+        if min_ < 1:
             if not force:
                 raise ValueError("Invalid repetition count: %r" % int)
-            nreps = 1
+            nreps = symbolic.max(1, nreps)
 
         if check_only:
             return
 
+        # set new value
         self.nreps = nreps
 
     def set_sumrange_var(self, sumrange_var, force=False, check_only=False):
@@ -1415,11 +1424,6 @@ class Experiment(object):
                 continue
             # operand varies
 
-            # set up some reused variables
-            rep_vals = None,
-            if "rep" in vary["with"]:
-                rep_vals = range(self.nreps)
-
             # init result variables
             offsetcmds = []
             size_max = 0
@@ -1433,6 +1437,10 @@ class Experiment(object):
                 sumrange_vals = self.sumrange_vals_at(range_val)
 
                 offset = 0
+
+                rep_vals = None,
+                if "rep" in vary["with"]:
+                    rep_vals = range(self.nreps_at(range_val))
 
                 # go over repetitions
                 for rep in rep_vals:
@@ -1520,7 +1528,7 @@ class Experiment(object):
             sumrange_vals = self.sumrange_vals_at(range_val)
 
             # go over repetitions
-            for rep in range(self.nreps):
+            for rep in range(self.nreps_at(range_val)):
                 if self.sumrange:
                     # comment
                     cmds += [[], ["#", "repetition",  rep]]
@@ -1615,9 +1623,9 @@ class Experiment(object):
         if os.path.isfile(errfile):
             os.remove(errfile)
 
-        nthreads_vals = self.nthreads,
-        if self.range and self.range_var == self.nthreads:
-            nthreads_vals = tuple(self.range_vals)
+        # maximum thread count
+        nthreads_max = self.ranges_eval_minmax(self.nthreads,
+                                               dosumrange=False)[1]
 
         script = ""
 
@@ -1629,11 +1637,11 @@ class Experiment(object):
 
         # backend header
         if b_header:
-            script += "%s\n" % b_header.format(nt=max(nthreads_vals))
+            script += "%s\n" % b_header.format(nt=nthreads_max)
 
         # script header (from GUI)
         if self.script_header:
-            script += "%s\n" % self.script_header.format(nt=max(nthreads_vals))
+            script += "%s\n" % self.script_header.format(nt=nthreads_max)
 
         # experiment as part of the
         selfrepr = repr(self)
@@ -1650,29 +1658,33 @@ class Experiment(object):
         # timing
         script += "date +%%s >> \"%s\"\n" % reportfile
 
+        # check for varying #threads
+        range_vals = None,
+        if isinstance(self.nthreads, symbolic.Expression):
+            range_vals = tuple(self.range_vals)
+
         # go over #threads range
-        for nthreads in nthreads_vals:
+        for range_val in range_vals:
             # filename for commands
             callfile = "%s.%s" % (filebase, defines.calls_extension)
-            if len(nthreads_vals) > 1:
-                callfile = "%s.%d.%s" % (filebase, nthreads,
+            if len(range_vals) > 1:
+                callfile = "%s.%d.%s" % (filebase, range_val,
                                          defines.calls_extension)
 
-            # generate commands file
-            if len(nthreads_vals) > 1:
-                cmds = self.generate_cmds(nthreads)
-            else:
-                cmds = self.generate_cmds()
+            # commands file
             with open(callfile, "w") as fout:
-                for cmd in cmds:
+                for cmd in self.generate_cmds(range_val):
                     print(*cmd, file=fout)
 
-            # compute omp thread count
+            # kernel thread count
+            nthreads = self.nthreads_at(range_val)
+
+            # omp thread count
             ompthreads = 1
             if self.sumrange and self.sumrange_parallel:
                 if self.range:
-                    if len(nthreads_vals) > 1:
-                        ompthreads = len(self.sumrange_vals_at(nthreads))
+                    if len(range_vals) > 1:
+                        ompthreads = len(self.sumrange_vals_at(range_val))
                     else:
                         ompthreads = max(
                             len(self.sumrange_vals_at(range_val))
@@ -1757,6 +1769,15 @@ class Experiment(object):
             valdict[str(self.sumrange_var)] = sumrange_val
         return valdict
 
+    def nthreads_at(self, range_val):
+        """Evaluete the #threads at a range value."""
+        return symbolic.simplify(self.nthreads,
+                                 **self.ranges_valdict(range_val))
+
+    def nreps_at(self, range_val):
+        """Evaluete the repetition count at a range value."""
+        return symbolic.simplify(self.nreps, **self.ranges_valdict(range_val))
+
     def sumrange_vals_at(self, range_val):
         """Evaluate the sumrange at a range value."""
         if self.range:
@@ -1803,14 +1824,11 @@ class Experiment(object):
                     expr, **self.ranges_valdict(range_val, sumrange_val)
                 )
 
-    def ranges_eval_minmax(self, expr, range_val=None, sumrange_val=None):
+    def ranges_eval_minmax(self, expr, dorange=True, dosumrange=True):
         """Get the minimum for an symbolic expression for the ranges."""
-        range_val_fixed = range_val
-        sumrange_val_fixed = sumrange_val
-
         # range values
-        range_vals = range_val_fixed,
-        if range_val_fixed is None:
+        range_vals = None,
+        if dorange:
             range_vals = (symbolic.min(self.range_vals),
                           symbolic.max(self.range_vals))
 
@@ -1820,8 +1838,8 @@ class Experiment(object):
         for range_val in range_vals:
 
             # sumrange values
-            sumrange_vals = sumrange_val_fixed,
-            if sumrange_val_fixed is None:
+            sumrange_vals = None,
+            if dosumrange:
                 sumrange_vals = self.sumrange_vals_at(range_val)
                 sumrange_vals = (symbolic.min(sumrange_vals),
                                  symbolic.max(sumrange_vals))
@@ -1927,7 +1945,7 @@ class Experiment(object):
         """How many results the current experiment would produce."""
         nresults = 0
         for range_val in self.range_vals:
-            for rep in range(self.nreps):
+            for rep in range(self.nreps_at(range_val)):
                 if self.sumrange and self.sumrange_parallel:
                     nresults += 1
                 else:

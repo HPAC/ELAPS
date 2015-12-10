@@ -123,7 +123,7 @@ class Report(object):
         for range_val in ex.range_vals:
             # results for each repetition
             range_val_fdata = []
-            for rep in range(ex.nreps):
+            for rep in range(ex.nreps_at(range_val)):
                 if ex.sumrange_parallel:
                     # only one result per repetition
                     values = getints(nvalues)
@@ -286,11 +286,9 @@ class Report(object):
             range_val_result = []
 
             # set up nthreads
-            nthreads = ex.nthreads
-            if ex.range and nthreads == ex.range[0]:
-                nthreads = range_val
+            nthreads = ex.nthreads_at(range_val)
             if ex.sumrange_parallel:
-                nthreads *= len(ex.sumrange_vals_at(range_val)) * len(ex.calls)
+                nthreads *= len(ex.sumrange_vals_at(range_val))
             elif ex.calls_parallel:
                 nthreads *= len(ex.calls)
             nthreads = min(nthreads, ex.sampler["nt_max"])
@@ -299,10 +297,11 @@ class Report(object):
             for rep, rep_data in enumerate(range_val_data):
                 if not (ex.sumrange_parallel or ex.calls_parallel):
                     # transpose rep_data
-                    rep_data = dict((k,
-                                     [call_data[k] if k in call_data else None
-                                      for call_data in rep_data])
-                                    for k in rep_data[0])
+                    rep_data = dict(
+                        (k, [call_data[k] if k in call_data else None
+                             for call_data in rep_data])
+                        for k in rep_data[0]
+                    )
                 try:
                     selector_data = dict((k, selector(v))
                                          for k, v in rep_data.items())
@@ -324,14 +323,13 @@ class Report(object):
             return self.first_repetitions_discarded
         report = self.copy()
         nreps = self.experiment.nreps
-        if nreps > 1:
-            fulldata = {}
-            for range_val, range_val_data in self.fulldata.iteritems():
-                if len(range_val_data) > 1:
-                    # do not take away last one
-                    range_val_data = range_val_data[1:]
-                fulldata[range_val] = range_val_data
-            report.fulldata = fulldata
-            report.data_fromfull()
+        fulldata = {}
+        for range_val, range_val_data in self.fulldata.iteritems():
+            if len(range_val_data) > 1:
+                # do not take away last one
+                range_val_data = range_val_data[1:]
+            fulldata[range_val] = range_val_data
+        report.fulldata = fulldata
+        report.data_fromfull()
         self.first_repetitions_discarded = report
         return report
