@@ -27,7 +27,7 @@ def main():
                         help="ELAPS Report (.%s)" % defines.report_extension)
     args = parser.parse_args()
 
-    # start Viewr
+    # start Viewer
     Viewer(*args.report, reset=args.reset).start()
 
 
