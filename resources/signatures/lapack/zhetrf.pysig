@@ -1,0 +1,12 @@
+# double precision complex LDL factorization
+Signature(
+    "zhetrf",
+    Uplo(),
+    Dim("n"),
+    zData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    Ld("ldA", "n"),
+    iData("ipiv", "n"),
+    zWork("Work", "lWork"),
+    Lwork("lWork", "ldA * n"),
+    Info(),
+)
