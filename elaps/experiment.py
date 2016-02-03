@@ -752,7 +752,21 @@ class Experiment(object):
             if isinstance(value, str):
                 value = self.ranges_parse(value)
 
-            # check type
+            if isinstance(arg, signature.Scalar):
+                # ensure type
+                if not isinstance(value, (Number, symbolic.Expression)):
+                    if not force:
+                        raise TypeError("Invalid argument type: %s" % value)
+                    value = 1
+
+                if check_only:
+                    return
+
+                # set new value
+                call[argid] = value
+                return
+
+            # ensure integer
             if not isinstance(value, (int, symbolic.Expression)):
                 if not force:
                     raise TypeError("Invalid argument type: %s" % value)
