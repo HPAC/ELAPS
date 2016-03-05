@@ -3,7 +3,7 @@ Signature(
     "dpotf2",
     Uplo(),
     Dim("n"),
-    dData("A", "ldA * n", "lower if uplo == 'L' else upper"),
+    dData("A", "ldA * n", "lower if uplo == 'L' else upper, spd"),
     Ld("ldA", "n"),
     Info(),
     flops="n * (n + 1) * (2 * n + 1) / 6"

@@ -6,7 +6,7 @@ import numbers
 import symbolic
 
 
-named_attributes = ("lower", "upper", "symm", "herm", "work")
+named_attributes = ("lower", "upper", "symm", "herm", "spd", "hpd")
 
 
 class Signature(list):
