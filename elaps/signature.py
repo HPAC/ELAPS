@@ -477,12 +477,7 @@ class Work(Data):
 
     """Work space argument."""
 
-    def __init__(self, name, min_=None, attr=None):
-        """Set the "work" attribute."""
-        if not attr:
-            Data.__init__(self, name, min_, "work")
-        else:
-            Data.__init__(self, name, min_, "work, " + attr)
+    pass
 
 
 def _create_Work(classname, dataclass):
