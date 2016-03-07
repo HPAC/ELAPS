@@ -53,7 +53,7 @@ def main():
             continue
         print("Loaded %r" % filename)
 
-        for key, value in replace:
+        for key, value in replace.items():
             setattr(ex, key, value)
 
         if "sampler" not in replace:
