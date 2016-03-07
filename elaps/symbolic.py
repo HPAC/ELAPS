@@ -7,6 +7,7 @@ import math
 from collections import Iterable
 import __builtin__
 from copy import deepcopy
+from inspect import isgenerator
 
 
 class Expression(object):
@@ -990,6 +991,9 @@ def min(*args, **kwargs):
     # 1 argument: iterable
     if isinstance(args[0], Range):
         return args[0].min()
+    if isgenerator(args[0]):
+        # don't process generators
+        return __builtin__.min(*args, **kwargs)
     if any(isinstance(arg, Expression) for arg in args[0]):
         return Min(*args[0])
     return __builtin__.min(*args, **kwargs)
@@ -999,8 +1003,12 @@ def max(*args, **kwargs):
     """Symbolic maximum."""
     if len(args) > 1:
         return max(args, **kwargs)
+    # 1 argument: iterable
     if isinstance(args[0], Range):
         return args[0].max()
+    if isgenerator(args[0]):
+        # don't process geneartors
+        return __builtin__.max(*args, **kwargs)
     if any(isinstance(arg, Expression) for arg in args[0]):
         return Max(*args[0])
     return __builtin__.max(*args, **kwargs)

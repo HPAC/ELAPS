@@ -182,12 +182,12 @@ static void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, s
     }
 }
 
-#ifndef OPENMP_ENABLED
+#ifdef OPENMP_ENABLED
 /** \ref sample specialization with PAPI and OpenMP. */
 static void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, size_t ncounters) {
     unsigned long ticks0 = 0, ticks1 = 0;
     // for each call
-    size_t i;
+    size_t i, nseq, lastpar, j;
     for (i = 0; i < ncalls; i++) {
 
         // count how many sequential regions are executed in parallel
@@ -254,6 +254,7 @@ static void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, siz
     }
 }
 #endif /* OMP */
+
 
 #endif /* PAPI */
 

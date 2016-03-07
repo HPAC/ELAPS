@@ -366,7 +366,7 @@ class Viewer(QtGui.QMainWindow):
             if metric_name in self.metrics:
                 continue
             self.metrics[metric_name] = elaps.io.get_counter_metric(
-                counter_name, counter_info["long"]
+                counter_name, metric_name, counter_info["long"]
             )
 
         if index is None:
