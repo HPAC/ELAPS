@@ -1,0 +1,13 @@
+# double precision form triangular factor of block reflector
+Signature(
+    "dlarft",
+    Flag("direct", ["F", "B"]),
+    Flag("storev", ["C", "R"]),
+    Dim("n"),
+    Dim("k"),
+    dData("V", "ldV * (k if storev == 'C' else n)"),
+    Ld("ldV", "n if storev == 'C' else k"),
+    dData("Tau", "k"),
+    dData("T", "ldT * k"),
+    Ld("ldT", "k")
+)
