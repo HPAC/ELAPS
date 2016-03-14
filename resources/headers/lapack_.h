@@ -27,7 +27,6 @@ void cgelss_(const int *, const int *, const int *, float *, const int *, float 
 void cgelsy_(const int *, const int *, const int *, float *, const int *, float *, const int *, int *, const float *, int *, float *, const int *, float *, int *);
 void cgeqlf_(const int *, const int *, float *, const int *, float *, float *, const int *, int *);
 void cgeqp3_(const int *, const int *, float *, const int *, int *, float *, float *, const int *, float *, int *);
-void cgeqpf_(const int *, const int *, float *, const int *, int *, float *, float *, float *, int *);
 void cgeqr2_(const int *, const int *, float *, const int *, float *, float *, int *);
 void cgeqrf_(const int *, const int *, float *, const int *, float *, float *, const int *, int *);
 void cgerfs_(const char *, const int *, const int *, const float *, const int *, const float *, const int *, const int *, const float *, const int *, float *, const int *, float *, float *, float *, float *, int *);
@@ -49,8 +48,6 @@ void cgghrd_(const char *, const char *, const int *, const int *, const int *, 
 void cgglse_(const int *, const int *, const int *, float *, const int *, float *, const int *, float *, float *, float *, float *, const int *, int *);
 void cggqrf_(const int *, const int *, const int *, float *, const int *, float *, float *, const int *, float *, float *, const int *, int *);
 void cggrqf_(const int *, const int *, const int *, float *, const int *, float *, float *, const int *, float *, float *, const int *, int *);
-void cggsvd_(const char *, const char *, const char *, const int *, const int *, const int *, int *, int *, float *, const int *, float *, const int *, float *, float *, float *, const int *, float *, const int *, float *, const int *, float *, float *, int *, int *);
-void cggsvp_(const char *, const char *, const char *, const int *, const int *, const int *, float *, const int *, float *, const int *, const float *, const float *, int *, int *, float *, const int *, float *, const int *, float *, const int *, int *, float *, float *, float *, int *);
 void cgtcon_(const char *, const int *, const float *, const float *, const float *, const float *, const int *, const float *, float *, float *, int *);
 void cgtrfs_(const char *, const int *, const int *, const float *, const float *, const float *, const float *, const float *, const float *, const float *, const int *, const float *, const int *, float *, const int *, float *, float *, float *, float *, int *);
 void cgtsv_(const int *, const int *, float *, float *, float *, float *, const int *, int *);
@@ -258,7 +255,6 @@ void dgelss_(const int *, const int *, const int *, double *, const int *, doubl
 void dgelsy_(const int *, const int *, const int *, double *, const int *, double *, const int *, int *, const double *, int *, double *, const int *, int *);
 void dgeqlf_(const int *, const int *, double *, const int *, double *, double *, const int *, int *);
 void dgeqp3_(const int *, const int *, double *, const int *, int *, double *, double *, const int *, int *);
-void dgeqpf_(const int *, const int *, double *, const int *, int *, double *, double *, int *);
 void dgeqr2_(const int *, const int *, double *, const int *, double *, double *, int *);
 void dgeqrf_(const int *, const int *, double *, const int *, double *, double *, const int *, int *);
 void dgerfs_(const char *, const int *, const int *, const double *, const int *, const double *, const int *, const int *, const double *, const int *, double *, const int *, double *, double *, double *, int *, int *);
@@ -281,8 +277,6 @@ void dgghrd_(const char *, const char *, const int *, const int *, const int *, 
 void dgglse_(const int *, const int *, const int *, double *, const int *, double *, const int *, double *, double *, double *, double *, const int *, int *);
 void dggqrf_(const int *, const int *, const int *, double *, const int *, double *, double *, const int *, double *, double *, const int *, int *);
 void dggrqf_(const int *, const int *, const int *, double *, const int *, double *, double *, const int *, double *, double *, const int *, int *);
-void dggsvd_(const char *, const char *, const char *, const int *, const int *, const int *, int *, int *, double *, const int *, double *, const int *, double *, double *, double *, const int *, double *, const int *, double *, const int *, double *, int *, int *);
-void dggsvp_(const char *, const char *, const char *, const int *, const int *, const int *, double *, const int *, double *, const int *, const double *, const double *, int *, int *, double *, const int *, double *, const int *, double *, const int *, int *, double *, double *, int *);
 void dgtcon_(const char *, const int *, const double *, const double *, const double *, const double *, const int *, const double *, double *, double *, int *, int *);
 void dgtrfs_(const char *, const int *, const int *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const int *, const double *, const int *, double *, const int *, double *, double *, double *, int *, int *);
 void dgtsv_(const int *, const int *, double *, double *, double *, double *, const int *, int *);
@@ -484,7 +478,6 @@ void sgelss_(const int *, const int *, const int *, float *, const int *, float 
 void sgelsy_(const int *, const int *, const int *, float *, const int *, float *, const int *, int *, const float *, int *, float *, const int *, int *);
 void sgeqlf_(const int *, const int *, float *, const int *, float *, float *, const int *, int *);
 void sgeqp3_(const int *, const int *, float *, const int *, int *, float *, float *, const int *, int *);
-void sgeqpf_(const int *, const int *, float *, const int *, int *, float *, float *, int *);
 void sgeqr2_(const int *, const int *, float *, const int *, float *, float *, int *);
 void sgeqrf_(const int *, const int *, float *, const int *, float *, float *, const int *, int *);
 void sgerfs_(const char *, const int *, const int *, const float *, const int *, const float *, const int *, const int *, const float *, const int *, float *, const int *, float *, float *, float *, int *, int *);
@@ -507,8 +500,6 @@ void sgghrd_(const char *, const char *, const int *, const int *, const int *, 
 void sgglse_(const int *, const int *, const int *, float *, const int *, float *, const int *, float *, float *, float *, float *, const int *, int *);
 void sggqrf_(const int *, const int *, const int *, float *, const int *, float *, float *, const int *, float *, float *, const int *, int *);
 void sggrqf_(const int *, const int *, const int *, float *, const int *, float *, float *, const int *, float *, float *, const int *, int *);
-void sggsvd_(const char *, const char *, const char *, const int *, const int *, const int *, int *, int *, float *, const int *, float *, const int *, float *, float *, float *, const int *, float *, const int *, float *, const int *, float *, int *, int *);
-void sggsvp_(const char *, const char *, const char *, const int *, const int *, const int *, float *, const int *, float *, const int *, const float *, const float *, int *, int *, float *, const int *, float *, const int *, float *, const int *, int *, float *, float *, int *);
 void sgtcon_(const char *, const int *, const float *, const float *, const float *, const float *, const int *, const float *, float *, float *, int *, int *);
 void sgtrfs_(const char *, const int *, const int *, const float *, const float *, const float *, const float *, const float *, const float *, const float *, const int *, const float *, const int *, float *, const int *, float *, float *, float *, int *, int *);
 void sgtsv_(const int *, const int *, float *, float *, float *, float *, const int *, int *);
@@ -704,7 +695,6 @@ void zgelss_(const int *, const int *, const int *, double *, const int *, doubl
 void zgelsy_(const int *, const int *, const int *, double *, const int *, double *, const int *, int *, const double *, int *, double *, const int *, double *, int *);
 void zgeqlf_(const int *, const int *, double *, const int *, double *, double *, const int *, int *);
 void zgeqp3_(const int *, const int *, double *, const int *, int *, double *, double *, const int *, double *, int *);
-void zgeqpf_(const int *, const int *, double *, const int *, int *, double *, double *, double *, int *);
 void zgeqr2_(const int *, const int *, double *, const int *, double *, double *, int *);
 void zgeqrf_(const int *, const int *, double *, const int *, double *, double *, const int *, int *);
 void zgerfs_(const char *, const int *, const int *, const double *, const int *, const double *, const int *, const int *, const double *, const int *, double *, const int *, double *, double *, double *, double *, int *);
@@ -726,8 +716,6 @@ void zgghrd_(const char *, const char *, const int *, const int *, const int *, 
 void zgglse_(const int *, const int *, const int *, double *, const int *, double *, const int *, double *, double *, double *, double *, const int *, int *);
 void zggqrf_(const int *, const int *, const int *, double *, const int *, double *, double *, const int *, double *, double *, const int *, int *);
 void zggrqf_(const int *, const int *, const int *, double *, const int *, double *, double *, const int *, double *, double *, const int *, int *);
-void zggsvd_(const char *, const char *, const char *, const int *, const int *, const int *, int *, int *, double *, const int *, double *, const int *, double *, double *, double *, const int *, double *, const int *, double *, const int *, double *, double *, int *, int *);
-void zggsvp_(const char *, const char *, const char *, const int *, const int *, const int *, double *, const int *, double *, const int *, const double *, const double *, int *, int *, double *, const int *, double *, const int *, double *, const int *, int *, double *, double *, double *, int *);
 void zgtcon_(const char *, const int *, const double *, const double *, const double *, const double *, const int *, const double *, double *, double *, int *);
 void zgtrfs_(const char *, const int *, const int *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const int *, const double *, const int *, double *, const int *, double *, double *, double *, double *, int *);
 void zgtsv_(const int *, const int *, double *, double *, double *, double *, const int *, int *);
