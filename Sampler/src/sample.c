@@ -45,6 +45,7 @@ static void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
     size_t i;
     for (i = 0; i < ncalls; i++) {
         void (*fptr)() = calls[i].fptr;
+        const size_t argc = calls[i].argc;
         void **argv = calls[i].argv;
         unsigned long ticks0 = 0, ticks1 = 0;
 
@@ -55,7 +56,7 @@ static void sample_nopapi_noomp(KernelCall *calls, size_t ncalls) {
         // branch depending on #arguments
         // (actual routine invocations are automatically generated depending on
         // the number of arguments)
-        switch (calls[i].argc) {
+        switch (argc) {
 #include CALLS_C_INC
         }
 
@@ -98,10 +99,11 @@ static void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
                     if (j == seqcounter) {
                         // thread needs to execute this call
                         void (*fptr)() = calls[i].fptr;
+                        const size_t argc = calls[i].argc;
                         void **argv = calls[i].argv;
 
                         // branch depending on #arguments
-                        switch (calls[i].argc) {
+                        switch (argc) {
 #include CALLS_C_INC
                         }
                     }
@@ -123,10 +125,11 @@ static void sample_nopapi_omp(KernelCall *calls, size_t ncalls) {
 #define COUNTERS_END   COUNTERS_END0
 
             void (*fptr)() = calls[i].fptr;
+            const size_t argc = calls[i].argc;
             void **argv = calls[i].argv;
 
             // branch depending on #arguments
-            switch (calls[i].argc) {
+            switch (argc) {
 #include CALLS_C_INC
             }
 
@@ -159,6 +162,7 @@ static void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, s
     size_t i;
     for (i = 0; i < ncalls; i++) {
         void (*fptr)() = calls[i].fptr;
+        const size_t argc = calls[i].argc;
         void **argv = calls[i].argv;
         unsigned long ticks0 = 0, ticks1 = 0;
 
@@ -169,7 +173,7 @@ static void sample_papi_noomp(KernelCall *calls, size_t ncalls, int *counters, s
         // branch depending on #arguments
         // actual routine invocations are
         // automatically generated depending on the number of arguments
-        switch (calls[i].argc) {
+        switch (argc) {
 #include CALLS_C_INC
         }
 
@@ -212,10 +216,11 @@ static void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, siz
                     if (j == seqcounter) {
                         // thread needs to execute this call
                         void (*fptr)() = calls[i].fptr;
+                        const size_t argc = calls[i].argc;
                         void **argv = calls[i].argv;
 
                         // branch depending on #arguments
-                        switch (calls[i].argc) {
+                        switch (argc) {
 #include CALLS_C_INC
                         }
                     }
@@ -237,10 +242,11 @@ static void sample_papi_omp(KernelCall *calls, size_t ncalls, int *counters, siz
 #define COUNTERS_END   COUNTERS_END0
 
             void (*fptr)() = calls[i].fptr;
+            const size_t argc = calls[i].argc;
             void **argv = calls[i].argv;
 
             // branch depending on #arguments
-            switch (calls[i].argc) {
+            switch (argc) {
 #include CALLS_C_INC
             }
 
