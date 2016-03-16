@@ -16,13 +16,13 @@
 #ifdef __x86_64__
 #define get_cycles(var) { \
     unsigned long int lower, upper; \
-    asm volatile("rdtsc" : "=a" (lower), "=d" (upper)); \
+    __asm__ volatile ("rdtsc" : "=a" (lower), "=d" (upper)); \
     var = ((unsigned long long) lower) | (((unsigned long long) upper) << 32); \
 } while(0)
 #elif defined(__powerpc__)
 #define get_cycles(var) { \
     unsigned long int lower, upper, tmp; \
-    asm volatile( \
+    __asm__ volatile ( \
         "0:\n" \
         "\tmftbu   %0\n" \
         "\tmftb    %1\n" \
