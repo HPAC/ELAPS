@@ -86,8 +86,8 @@ def main():
             print("\tCOUNTERS_START", file=fout)
             voidlist = (argc - 1) * ["void *"]
             arglist = ["argv[" + str(n) + "]" for n in range(argc - 1)]
-            print("\t((void (*)(" + ",".join(voidlist) + ")) fptr)(" +
-                  ",".join(arglist) + ");", file=fout)
+            print("\t((void (*)(" + ", ".join(voidlist) + ")) fptr)(" +
+                  ", ".join(arglist) + ");", file=fout)
             print("\tCOUNTERS_END", file=fout)
             print("\tbreak;", file=fout)
 
