@@ -76,8 +76,8 @@ def main():
             kernelsigs.append((name,) + tuple(arg for arg in args))
             enumargs = [argtypes[arg] for arg in args]
             argcmax = max(argcmax, len(enumargs) + 1)
-            print("{\"" + name + "\", reinterpret_cast<void (*)()>(" + symbolname + "), { " +
-                  ", ".join(enumargs) + " } },", file=fout)
+            print("{\"%s\", reinterpret_cast<void (*)()>(%s), { %s } }," %
+                  (name, symbolname, ", ".join(enumargs)), file=fout)
 
     # create calls.s.cin
     with open(calls_c_inc, "w") as fout:
@@ -113,8 +113,6 @@ def main():
         )),
         "buildtime": time(),
         "name":  os.environ["NAME"],
-        "system_name":  os.environ["SYSTEM_NAME"],
-        "blas_name": os.environ["BLAS_NAME"],
         "backend_name": os.environ["BACKEND"],
         "backend_header": os.environ["BACKEND_HEADER"],
         "backend_prefix": os.environ["BACKEND_PREFIX"],

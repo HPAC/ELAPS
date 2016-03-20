@@ -24,8 +24,6 @@ CFG_FILE=$1
 # set default values
 : ${NAME:=`basename "$1" .cfg`}
 : ${TARGET_DIR:="build/$NAME"}
-[ -z "$BLAS_NAME" ] && echo "BLAS_NAME is not set" && exit
-: ${SYSTEM_NAME:="local"}
 : ${NCORES:=1}
 : ${THREADS_PER_CORE:=1}
 : ${CC:=gcc}
@@ -52,7 +50,7 @@ CFG_FILE=$1
 
 # use absolute paths
 TARGET_DIR="`realpath \"$TARGET_DIR\"`"
-KERNEL_HEADERS="`for f in $KERNEL_HEADERS; do realpath $f; done | tr '\r\n' ' '`"
+KERNEL_HEADERS="`realpath $KERNEL_HEADERS | tr '\r\n' ' '`"
 
 
 export TARGET_DIR NAME KERNEL_HEADERS 
@@ -66,7 +64,6 @@ export CPU_MODEL FREQUENCY_HZ NCORES THREADS_PER_CORE
 # print info
 echo "Building Sampler  $NAME"
 echo "build folder:     $TARGET_DIR"
-echo "system / BLAS:    $SYSTEM_NAME / $BLAS_NAME"
 echo "CPU (Hz):         $CPU_MODEL ($FREQUENCY_HZ)"
 echo "#cores:           $NCORES"
 echo "threads/core:     $THREADS_PER_CORE"
