@@ -4,6 +4,11 @@ Sampler
 * (about command)
 
 
+Signature
+---------
+* handle different return value conventions for complex functions
+
+
 Experiment
 ----------
 * Test randomization
