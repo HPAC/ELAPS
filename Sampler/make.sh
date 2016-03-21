@@ -24,8 +24,6 @@ CFG_FILE=$1
 # set default values
 : ${NAME:=`basename "$1" .cfg`}
 : ${TARGET_DIR:="build/$NAME"}
-[ -z "$BLAS_NAME" ] && echo "BLAS_NAME is not set" && exit
-: ${SYSTEM_NAME:="local"}
 : ${NCORES:=1}
 : ${THREADS_PER_CORE:=1}
 : ${CC:=gcc}
@@ -34,7 +32,11 @@ CFG_FILE=$1
 [ "$CXX" == "g++" ] && : ${CXXFLAGS:="-fopenmp -O3"} || : ${CXXFLAGS:="-O3"}
 : ${LINK_FLAGS:=""}
 : ${INCLUDE_FLAGS:=""}
-: ${KERNEL_HEADERS:=`echo ../resources/headers/{blas_,lapack_,utility}.h`}
+: ${KERNEL_HEADERS:=`echo ../resources/headers/{blas,lapack,utility}.h`}
+: ${BLAS_UNDERSCORE:=1}
+: ${BLAS_COMPLEX_FUNCTIONS_AS_ROUTINES:=0}
+: ${LAPACK_UNDERSCORE:=1}
+: ${LAPACK_COMPLEX_FUNCTIONS_AS_ROUTINES:=0}
 : ${OPENMP:=1}
 : ${PAPI_COUNTERS_MAX:=0}
 : ${PAPI_COUNTERS_AVAIL:=""}
@@ -46,7 +48,14 @@ CFG_FILE=$1
 [ -n "$DFLOPS_PER_CYCLE" ] && : ${SFLOPS_PER_CYCLE:=$((DFLOPS_PER_CYCLE * 2))}
 [ -n "$SFLOPS_PER_CYCLE" ] && : ${DFLOPS_PER_CYCLE:=$((SFLOPS_PER_CYCLE / 2))}
 
-export TARGET_DIR NAME BLAS_NAME SYSTEM_NAME KERNEL_HEADERS
+# use absolute paths
+TARGET_DIR="`realpath \"$TARGET_DIR\"`"
+KERNEL_HEADERS="`realpath $KERNEL_HEADERS | tr '\r\n' ' '`"
+
+
+export TARGET_DIR NAME KERNEL_HEADERS 
+export BLAS_UNDERSCORE BLAS_COMPLEX_FUNCTIONS_AS_ROUTINES
+export LAPACK_UNDERSCORE LAPACK_COMPLEX_FUNCTIONS_AS_ROUTINES
 export BACKEND BACKEND_HEADER BACKEND_PREFIX BACKEND_SUFFIX BACKEND_FOOTER
 export PAPI_COUNTERS_MAX PAPI_COUNTERS_AVAIL OPENMP
 export DFLOPS_PER_CYCLE SFLOPS_PER_CYCLE 
@@ -55,18 +64,29 @@ export CPU_MODEL FREQUENCY_HZ NCORES THREADS_PER_CORE
 # print info
 echo "Building Sampler  $NAME"
 echo "build folder:     $TARGET_DIR"
-echo "system / BLAS:    $SYSTEM_NAME / $BLAS_NAME"
 echo "CPU (Hz):         $CPU_MODEL ($FREQUENCY_HZ)"
 echo "#cores:           $NCORES"
 echo "threads/core:     $THREADS_PER_CORE"
 echo "flops/cycle:      $SFLOPS_PER_CYCLE (single) / $DFLOPS_PER_CYCLE (double)"
-echo "kernels:          $KERNEL_HEADERS"
-echo -n "OpenMP:           "
-[ $OPENMP -eq 1 ] && echo "Enabled" || echo "Disabled"
+echo "headers:          $KERNEL_HEADERS"
+if [ "${KERNEL_HEADERS/blas}" != "$KERNEL_HEADERS" ]; then
+    echo -n "BLAS format:      "
+    [ $BLAS_UNDERSCORE == 1 ] && echo "dgemm_" || echo "dgemm"
+    [ $BLAS_COMPLEX_FUNCTIONS_AS_ROUTINES == 1 ] && \
+        echo "                  complex functions are routines (e.g., cladiv)"
+fi
+if [ "${KERNEL_HEADERS/lapack}" != "$KERNEL_HEADERS" ]; then
+    echo -n "LAPACK format:    "
+    [ $LAPACK_UNDERSCORE == 1 ] && echo "dgetrf_" || echo "dgetrf"
+    [ $LAPACK_COMPLEX_FUNCTIONS_AS_ROUTINES == 1 ] && \
+        echo "                  complex functions are routines (e.g., cladiv)"
+fi
 echo "C compiler:       $CC $CFLAGS"
 echo "C++ compiler:     $CXX $CXXFLAGS"
 echo "include flags:    $INCLUDE_FLAGS"
 echo "linker flags:     $LINK_FLAGS"
+echo -n "OpenMP:           "
+[ $OPENMP -eq 1 ] && echo "Enabled" || echo "Disabled"
 if [ $PAPI_COUNTERS_MAX -eq 0 ]; then
     echo "PAPI:             Disabled"
 else

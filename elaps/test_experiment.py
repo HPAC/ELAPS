@@ -20,8 +20,6 @@ class TestExperiment(unittest.TestCase):
         """Set up an empty sampler."""
         self.sampler = {
             "name": "samplername",
-            "system_name": "system",
-            "blas_name": "blas",
             "backend_name": "",
             "backend_header": "",
             "backend_prefix": "",
