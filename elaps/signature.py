@@ -8,6 +8,14 @@ import symbolic
 
 named_attributes = ("lower", "upper", "symm", "herm", "spd", "hpd", "work")
 
+datatype_prefixes = {
+    "i": "integer",
+    "s": "single precision",
+    "d": "double precision",
+    "c": "single precision complex",
+    "z": "double precision complex"
+}
+
 
 class Signature(list):
 
@@ -401,9 +409,8 @@ class Scalar(Arg):
         """Default: 1."""
         return 1
 
-
-def _create_Scalar(classname, typename):
-    """Class factory Scalar arguments."""
+for prefix, typename in datatype_prefixes.items():
+    classname = prefix + "Scalar"
     attributes = {"typename": typename}
     if "complex" in typename:
         def format_sampler(self, val):
@@ -413,12 +420,6 @@ def _create_Scalar(classname, typename):
             return val
         attributes["format_sampler"] = format_sampler
     globals()[classname] = type(classname, (Scalar,), attributes)
-
-_create_Scalar("iScalar", "integer")
-_create_Scalar("sScalar", "single precision")
-_create_Scalar("dScalar", "double precision")
-_create_Scalar("cScalar", "single precision complex")
-_create_Scalar("zScalar", "double precision complex")
 
 
 class Data(ArgWithMin):
@@ -433,24 +434,18 @@ class Data(ArgWithMin):
             return "[" + str(val) + "]"
         return val
 
-
-def _create_Data(classname, typename):
-    """Class factory Data arguments."""
+for prefix, typename in datatype_prefixes.items():
+    classname = prefix + "Data"
     attributes = {"typename": typename}
     if "complex" in typename:
         def format_sampler(self, val):
-            """Request 2x space (for real, complex parts)."""
+            """Format surrounded by [] for the sampler.
+            2x space (for real and complex parts)."""
             if isinstance(val, int):
-                val *= 2
+                return "[" + str(2 * val) + "]"
             return val
         attributes["format_sampler"] = format_sampler
     globals()[classname] = type(classname, (Data,), attributes)
-
-_create_Data("iData", "integer")
-_create_Data("sData", "single precision")
-_create_Data("dData", "double precision")
-_create_Data("cData", "single precision complex")
-_create_Data("zData", "double precision complex")
 
 
 class Ld(ArgWithMin):
@@ -479,16 +474,10 @@ class Work(Data):
 
     pass
 
-
-def _create_Work(classname, dataclass):
-    """Class factory Work arguments."""
+for prefix in datatype_prefixes:
+    classname = prefix + "Work"
+    dataclass = globals()[prefix + "Data"]
     globals()[classname] = type(classname, (Work, dataclass), {})
-
-_create_Work("iWork", iData)
-_create_Work("sWork", sData)
-_create_Work("dWork", dData)
-_create_Work("cWork", cData)
-_create_Work("zWork", zData)
 
 
 class Lwork(ArgWithMin):

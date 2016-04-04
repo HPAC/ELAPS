@@ -48,7 +48,7 @@ class TestArgs(unittest.TestCase):
 
     def test_Data(self):
         """Test for Data."""
-        self.assertEqual(cData("name").format_sampler(2), 4)
+        self.assertEqual(cData("name").format_sampler(2), "[%s]" % 4)
 
         self.assertTrue(issubclass(sData, Data))
 
