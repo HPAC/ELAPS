@@ -22,7 +22,7 @@ CFG_FILE=$1
 . "$CFG_FILE"
 
 # set default values
-: ${NAME:=`basename "$1" .cfg`}
+: ${NAME:="`basename \"$1\" .cfg`"}
 : ${TARGET_DIR:="build/$NAME"}
 : ${NCORES:=1}
 : ${THREADS_PER_CORE:=1}
@@ -32,7 +32,7 @@ CFG_FILE=$1
 [ "$CXX" == "g++" ] && : ${CXXFLAGS:="-fopenmp -O3"} || : ${CXXFLAGS:="-O3"}
 : ${LINK_FLAGS:=""}
 : ${INCLUDE_FLAGS:=""}
-: ${KERNEL_HEADERS:=`echo ../resources/headers/{blas,lapack,utility}.h`}
+: ${KERNEL_HEADERS:="`echo ../resources/headers/{blas,lapack,utility}.h`"}
 : ${BLAS_UNDERSCORE:=1}
 : ${BLAS_COMPLEX_FUNCTIONS_AS_ROUTINES:=0}
 : ${LAPACK_UNDERSCORE:=1}
@@ -48,10 +48,10 @@ CFG_FILE=$1
 [ -n "$DFLOPS_PER_CYCLE" ] && : ${SFLOPS_PER_CYCLE:=$((DFLOPS_PER_CYCLE * 2))}
 [ -n "$SFLOPS_PER_CYCLE" ] && : ${DFLOPS_PER_CYCLE:=$((SFLOPS_PER_CYCLE / 2))}
 
-# use absolute paths
-TARGET_DIR="`realpath \"$TARGET_DIR\"`"
-KERNEL_HEADERS="`realpath $KERNEL_HEADERS | tr '\r\n' ' '`"
-
+# use absolute paths and remove newlines
+TARGET_DIR="`readlink -f \"$TARGET_DIR\"`"
+KERNEL_HEADERS="`for f in $KERNEL_HEADERS; do readlink -f $f; done | tr '\r\n' ' '`"
+LINK_FLAGS="`echo $LINK_FLAGS | tr '\r\n' ' '`"
 
 export TARGET_DIR NAME KERNEL_HEADERS 
 export BLAS_UNDERSCORE BLAS_COMPLEX_FUNCTIONS_AS_ROUTINES

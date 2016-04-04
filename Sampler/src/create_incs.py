@@ -37,6 +37,7 @@ def main():
             (" ?\( ?", "("),  # remove spaces before openingparentheses
             (" \)", ")"),  # remove spaces before closing parentheses
             (" \*", "*"),  # remove spaces before asterisks
+            ("\* ", "*"),  # remove spaces after asterisks
             ("\*", " *"),  # add spaces before asterisks
             ("\*\w+", "*"),  # remove variable names
             ("; ?", ";\n")):  # reintroduce newlines
