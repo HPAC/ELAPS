@@ -19,22 +19,7 @@ class TestArgs(unittest.TestCase):
         """Test for Flag."""
         self.assertEqual(Flag("name", [1, 2]).default(), 1)
 
-    def test_create_Flag(self):
-        """Test for create_Flag."""
-        from signature import _create_Flag
-        _create_Flag("MyFlag", "defaultname", [1, 2, 3])
-        from signature import MyFlag
-
-        self.assertEqual(type(MyFlag()), MyFlag)
-        self.assertEqual(type(MyFlag()).__name__, "MyFlag")
-
-        self.assertTrue(issubclass(MyFlag, Flag))
-
-        self.assertEqual(MyFlag().name, "defaultname")
-        self.assertEqual(MyFlag().flags, [1, 2, 3])
-
-        self.assertEqual(eval(repr(MyFlag("name"))), MyFlag("name"))
-        self.assertEqual(eval(repr(MyFlag(attr=1))), MyFlag(attr=1))
+        self.assertTrue(issubclass(Trans, Flag))
 
     def test_Scalar(self):
         """Test for Scalar."""

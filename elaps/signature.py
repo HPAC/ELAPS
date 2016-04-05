@@ -314,9 +314,13 @@ class Flag(Arg):
         """Default: first possible flag."""
         return self.flags[0]
 
+for classname, defaultname, flags in (("Side", "side", "LR"),
+                                      ("Uplo", "uplo", "LU"),
+                                      ("Trans", "trans", "NT"),
+                                      ("cTrans", "trans", "NTC"),
+                                      ("Diag", "diag", "NU")):
+    flags = tuple(flags)
 
-def _create_Flag(classname, defaultname, flags):
-    """Class factory for Flag arguments."""
     def __init__(self, name=defaultname, attr=None):
         """Initialize custom Flag."""
         Flag.__init__(self, name, flags, attr)
@@ -325,9 +329,10 @@ def _create_Flag(classname, defaultname, flags):
         """Format as python parsable string."""
         args = []
         if self.name != defaultname:
-            args.append(repr(self.name))
+            args.append(self.name)
             if self.propertiesstr:
-                args.append(repr(self.propertiesstr))
+                args.append(self.propertiesstr)
+            args = map(repr, args)
         elif self.propertiesstr:
             args.append("attr=%r" % self.propertiesstr)
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
@@ -336,12 +341,6 @@ def _create_Flag(classname, defaultname, flags):
         "__init__": __init__,
         "__repr__": __repr__
     })
-
-_create_Flag("Side", "side", ("L", "R"))
-_create_Flag("Uplo", "uplo", ("L", "U"))
-_create_Flag("Trans", "trans", ("N", "T"))
-_create_Flag("cTrans", "trans", ("N", "T", "C"))
-_create_Flag("Diag", "diag", ("N", "U"))
 
 
 class ArgWithMin(Arg):
