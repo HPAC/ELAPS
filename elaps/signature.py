@@ -89,9 +89,9 @@ class Signature(list):
 
     def __repr__(self):
         """Format as python parsable string."""
-        args = [repr(self[0].name)] + map(repr, self[1:])
+        args = map(repr, [self[0].name] + self[1:])
         if self.flops:
-            args.append("flops=" + repr(self.flopsstr))
+            args.append("flops=%r" % self.flopsstr)
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __call__(self, *args):
@@ -413,7 +413,9 @@ for prefix, typename in datatype_prefixes.items():
     classname = prefix + "Scalar"
     attributes = {"typename": typename}
     if "complex" in typename:
+
         def format_sampler(self, val):
+            """Format complex number as tuple of two reals."""
             if isinstance(val, numbers.Number):
                 val = complex(val)
                 return "%s,%s" % (val.real, val.imag)
@@ -440,7 +442,9 @@ for prefix, typename in datatype_prefixes.items():
     if "complex" in typename:
         def format_sampler(self, val):
             """Format surrounded by [] for the sampler.
-            2x space (for real and complex parts)."""
+
+            2x space (for real and complex parts).
+            """
             if isinstance(val, int):
                 return "[" + str(2 * val) + "]"
             return val
