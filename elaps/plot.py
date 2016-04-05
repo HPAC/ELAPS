@@ -71,7 +71,8 @@ def range_plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
     fig = figure
 
     axes = fig.gca()
-    axes.set_xlabel(xlabel)
+    if xlabel:
+        axes.set_xlabel(xlabel)
 
     # plots
     colorpool = (colors + defines.colors)[::-1]
@@ -141,15 +142,16 @@ def range_plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
         legend_stat_names.remove("min")
         legend_stat_names.remove("max")
     color = styles["legend"]["color"]
-    for stat_name in legend_stat_names:
-        legend_style = styles["legend"].copy()
-        if stat_name == "min-max":
-            legend_elem = Patch(edgecolor=color, **styles[stat_name])
-        elif stat_name == "std":
-            legend_elem = Patch(color=color, **styles[stat_name])
-        else:
-            legend_elem = Line2D([], [], color=color, **styles[stat_name])
-        legend.append((legend_elem, stat_name))
+    if len(legend_stat_names) > 1:
+        for stat_name in legend_stat_names:
+            legend_style = styles["legend"].copy()
+            if stat_name == "min-max":
+                legend_elem = Patch(edgecolor=color, **styles[stat_name])
+            elif stat_name == "std":
+                legend_elem = Patch(color=color, **styles[stat_name])
+            else:
+                legend_elem = Line2D([], [], color=color, **styles[stat_name])
+            legend.append((legend_elem, stat_name))
     if legend:
         args = {"loc": 0, "numpoints": 3}
         args.update(legendargs)
