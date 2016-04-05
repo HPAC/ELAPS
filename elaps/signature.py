@@ -314,13 +314,9 @@ class Flag(Arg):
         """Default: first possible flag."""
         return self.flags[0]
 
-for classname, defaultname, flags in (("Side", "side", "LR"),
-                                      ("Uplo", "uplo", "LU"),
-                                      ("Trans", "trans", "NT"),
-                                      ("cTrans", "trans", "NTC"),
-                                      ("Diag", "diag", "NU")):
-    flags = tuple(flags)
 
+def _create_Flag(classname, defaultname, flags):
+    """Class factory for Flag arguments."""
     def __init__(self, name=defaultname, attr=None):
         """Initialize custom Flag."""
         Flag.__init__(self, name, flags, attr)
@@ -341,6 +337,12 @@ for classname, defaultname, flags in (("Side", "side", "LR"),
         "__init__": __init__,
         "__repr__": __repr__
     })
+
+_create_Flag("Side", "side", ("L", "R"))
+_create_Flag("Uplo", "uplo", ("L", "U"))
+_create_Flag("Trans", "trans", ("N", "T"))
+_create_Flag("cTrans", "trans", ("N", "T", "C"))
+_create_Flag("Diag", "diag", ("N", "U"))
 
 
 class ArgWithMin(Arg):
@@ -408,8 +410,9 @@ class Scalar(Arg):
         """Default: 1."""
         return 1
 
-for prefix, typename in datatype_prefixes.items():
-    classname = prefix + "Scalar"
+
+def _create_Scalar(classname, typename):
+    """Class factory Scalar arguments."""
     attributes = {"typename": typename}
     if "complex" in typename:
 
@@ -421,6 +424,12 @@ for prefix, typename in datatype_prefixes.items():
             return val
         attributes["format_sampler"] = format_sampler
     globals()[classname] = type(classname, (Scalar,), attributes)
+
+_create_Scalar("iScalar", "integer")
+_create_Scalar("sScalar", "single precision")
+_create_Scalar("dScalar", "double precision")
+_create_Scalar("cScalar", "single precision complex")
+_create_Scalar("zScalar", "double precision complex")
 
 
 class Data(ArgWithMin):
@@ -435,8 +444,9 @@ class Data(ArgWithMin):
             return "[" + str(val) + "]"
         return val
 
-for prefix, typename in datatype_prefixes.items():
-    classname = prefix + "Data"
+
+def _create_Data(classname, typename):
+    """Class factory Data arguments."""
     attributes = {"typename": typename}
     if "complex" in typename:
         def format_sampler(self, val):
@@ -449,6 +459,12 @@ for prefix, typename in datatype_prefixes.items():
             return val
         attributes["format_sampler"] = format_sampler
     globals()[classname] = type(classname, (Data,), attributes)
+
+_create_Data("iData", "integer")
+_create_Data("sData", "single precision")
+_create_Data("dData", "double precision")
+_create_Data("cData", "single precision complex")
+_create_Data("zData", "double precision complex")
 
 
 class Ld(ArgWithMin):
@@ -477,10 +493,16 @@ class Work(Data):
 
     pass
 
-for prefix in datatype_prefixes:
-    classname = prefix + "Work"
-    dataclass = globals()[prefix + "Data"]
+
+def _create_Work(classname, dataclass):
+    """Class factory Work arguments."""
     globals()[classname] = type(classname, (Work, dataclass), {})
+
+_create_Work("iWork", iData)
+_create_Work("sWork", sData)
+_create_Work("dWork", dData)
+_create_Work("cWork", cData)
+_create_Work("zWork", zData)
 
 
 class Lwork(ArgWithMin):
