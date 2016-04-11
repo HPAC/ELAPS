@@ -185,7 +185,8 @@ def bar_plot(datas, stat_names=["med"], colors=[], styles={}, ylabel=None,
             left = statid + dataid * width
             if stat_name == "all":
                 dl = len(data)
-                xs = [statid + groupwidth * i / (dl + 1) for i in range(dl)]
+                xs = [statid + groupwidth * (i + 1) / (dl + 1)
+                      for i in range(dl)]
                 ys = data
                 axes.plot(xs, ys, color=color, **styles["all"])
             elif stat_name == "min-max":
