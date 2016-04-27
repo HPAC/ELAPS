@@ -198,6 +198,23 @@ class Call(BasicCall):
         """Create a dictionary of the calls arguments."""
         return dict((arg.name, val) for arg, val in zip(self.sig, self))
 
+    def restrict_once(self):
+        """Restrict integer arguments with mimum expressions once."""
+        l = list(self)
+        for i, arg in enumerate(self.sig):
+            if self[i] is not None and arg.min:
+                try:
+                    self[i] = min(self[i], arg.min(*l))
+                except TypeError:
+                    pass  # probably a None
+
+    def restrict(self):
+        """Restrict integer arguments with mimum expressions."""
+        calls = []
+        while self[1:] not in calls:
+            calls.append(self[1:])
+            self.restrict_once()
+
     def complete_once(self):
         """Attempt to complete arguments with minimum expressions once."""
         l = list(self)
