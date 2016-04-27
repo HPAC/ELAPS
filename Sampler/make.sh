@@ -49,8 +49,10 @@ CFG_FILE=$1
 [ -n "$SFLOPS_PER_CYCLE" ] && : ${DFLOPS_PER_CYCLE:=$((SFLOPS_PER_CYCLE / 2))}
 
 # use absolute paths and remove newlines
-TARGET_DIR="`readlink -f \"$TARGET_DIR\"`"
-KERNEL_HEADERS="`for f in $KERNEL_HEADERS; do readlink -f $f; done | tr '\r\n' ' '`"
+if readlink -m .; then
+    TARGET_DIR="`readlink -m \"$TARGET_DIR\"`"
+    KERNEL_HEADERS="`for f in $KERNEL_HEADERS; do readlink -m $f; done | tr '\r\n' ' '`"
+fi
 LINK_FLAGS="`echo $LINK_FLAGS | tr '\r\n' ' '`"
 
 export TARGET_DIR NAME KERNEL_HEADERS 
