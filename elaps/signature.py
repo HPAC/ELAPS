@@ -44,8 +44,12 @@ class Signature(list):
             self.flops = eval("lambda %s: %s" % (lambdaargs, kwargs["flops"]))
         for arg in self:
             arg.min = None
+            arg.max = None
             if isinstance(arg, ArgWithMin) and arg.minstr:
                 arg.min = eval("lambda %s: %s" % (lambdaargs, arg.minstr),
+                               symbolic.__dict__)
+            if isinstance(arg, ArgWithMin) and arg.maxstr:
+                arg.max = eval("lambda %s: %s" % (lambdaargs, arg.maxstr),
                                symbolic.__dict__)
             arg.properties = lambda *args: ()
             if arg.propertiesstr:
@@ -73,6 +77,12 @@ class Signature(list):
                     arg.min(*args)
                 except NameError as e:
                     raise NameError("Unknown argument %r used in min for %s" %
+                                    (str(e).split("'")[1], arg))
+            if arg.max:
+                try:
+                    arg.max(*args)
+                except NameError as e:
+                    raise NameError("Unknown argument %r used in max for %s" %
                                     (str(e).split("'")[1], arg))
             if arg.properties:
                 try:
@@ -205,6 +215,11 @@ class Call(BasicCall):
             if self[i] is not None and arg.min:
                 try:
                     self[i] = max(self[i], arg.min(*l))
+                except TypeError:
+                    pass  # probably a None
+            if self[i] is not None and arg.max:
+                try:
+                    self[i] = min(self[i], arg.max(*l))
                 except TypeError:
                     pass  # probably a None
 
@@ -366,10 +381,11 @@ class ArgWithMin(Arg):
 
     """Base class for Arguments with a minstr."""
 
-    def __init__(self, name, min_=None, attr=None):
+    def __init__(self, name, min=None, attr=None, max=None):
         """Optional minimum expression."""
         Arg.__init__(self, name, attr)
-        self.minstr = min_
+        self.minstr = min
+        self.maxstr = max
 
     def __repr__(self):
         """Format as python parsable string."""
@@ -380,12 +396,19 @@ class ArgWithMin(Arg):
             if not self.minstr:
                 args.append(None)
             args.append(self.propertiesstr)
+        if self.maxstr:
+            if not self.minstr:
+                args.append(None)
+            if not self.propertiesstr:
+                args.append(None)
+            args.append(self.maxstr)
         args = map(repr, args)
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __eq__(self, other):
         """Compare for equality."""
-        return Arg.__eq__(self, other) and self.minstr == other.minstr
+        return Arg.__eq__(self, other) and (self.minstr == other.minstr and
+                                            self.maxstr == other.maxstr)
 
     def default(self):
         """Default: 1."""
