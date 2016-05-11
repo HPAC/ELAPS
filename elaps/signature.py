@@ -204,7 +204,7 @@ class Call(BasicCall):
         for i, arg in enumerate(self.sig):
             if self[i] is not None and arg.min:
                 try:
-                    self[i] = min(self[i], arg.min(*l))
+                    self[i] = max(self[i], arg.min(*l))
                 except TypeError:
                     pass  # probably a None
 
