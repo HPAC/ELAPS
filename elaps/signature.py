@@ -30,8 +30,11 @@ class Signature(list):
         if not isinstance(self[0], Name):
             self[0] = Name(self[0])
 
-        # infer and compile flops, min, attr
+        # infer and compile flops, min, max, attr
         self.init_lambdas(kwargs)
+
+        # lookup for fast argument selection
+        self.argtypelookup = {}
 
     def init_lambdas(self, kwargs):
         """Initialize lambda expressions."""
@@ -44,8 +47,12 @@ class Signature(list):
             self.flops = eval("lambda %s: %s" % (lambdaargs, kwargs["flops"]))
         for arg in self:
             arg.min = None
+            arg.max = None
             if isinstance(arg, ArgWithMin) and arg.minstr:
                 arg.min = eval("lambda %s: %s" % (lambdaargs, arg.minstr),
+                               symbolic.__dict__)
+            if isinstance(arg, ArgWithMin) and arg.maxstr:
+                arg.max = eval("lambda %s: %s" % (lambdaargs, arg.maxstr),
                                symbolic.__dict__)
             arg.properties = lambda *args: ()
             if arg.propertiesstr:
@@ -73,6 +80,12 @@ class Signature(list):
                     arg.min(*args)
                 except NameError as e:
                     raise NameError("Unknown argument %r used in min for %s" %
+                                    (str(e).split("'")[1], arg))
+            if arg.max:
+                try:
+                    arg.max(*args)
+                except NameError as e:
+                    raise NameError("Unknown argument %r used in max for %s" %
                                     (str(e).split("'")[1], arg))
             if arg.properties:
                 try:
@@ -115,10 +128,18 @@ class Signature(list):
                 return argid
         raise IndexError("Unknown argument: %s" % name)
 
+    def argsbytype(self, type_, *types):
+        """Return a list of argument posisions."""
+        if types:
+            return list(set(self.argsbytype(type_) + self.argsbytype(*types)))
+        if type_ not in self.argtypelookup:
+            self.argtypelookup[type_] = [i for i, arg in enumerate(self)
+                                         if isinstance(arg, type_)]
+        return self.argtypelookup[type_]
+
     def dataargs(self):
         """Return a list of data argument positions."""
-        return [argid for argid, arg in enumerate(self)
-                if isinstance(arg, Data)]
+        return self.argsbytype(Data)
 
     def datatype(self):
         """Deduce type of operands (single, double, complex, ...)."""
@@ -205,6 +226,11 @@ class Call(BasicCall):
             if self[i] is not None and arg.min:
                 try:
                     self[i] = max(self[i], arg.min(*l))
+                except TypeError:
+                    pass  # probably a None
+            if self[i] is not None and arg.max:
+                try:
+                    self[i] = min(self[i], arg.max(*l))
                 except TypeError:
                     pass  # probably a None
 
@@ -366,10 +392,11 @@ class ArgWithMin(Arg):
 
     """Base class for Arguments with a minstr."""
 
-    def __init__(self, name, min_=None, attr=None):
+    def __init__(self, name, min=None, attr=None, max=None):
         """Optional minimum expression."""
         Arg.__init__(self, name, attr)
-        self.minstr = min_
+        self.minstr = min
+        self.maxstr = max
 
     def __repr__(self):
         """Format as python parsable string."""
@@ -380,12 +407,19 @@ class ArgWithMin(Arg):
             if not self.minstr:
                 args.append(None)
             args.append(self.propertiesstr)
+        if self.maxstr:
+            if not self.minstr:
+                args.append(None)
+            if not self.propertiesstr:
+                args.append(None)
+            args.append(self.maxstr)
         args = map(repr, args)
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __eq__(self, other):
         """Compare for equality."""
-        return Arg.__eq__(self, other) and self.minstr == other.minstr
+        return Arg.__eq__(self, other) and (self.minstr == other.minstr and
+                                            self.maxstr == other.maxstr)
 
     def default(self):
         """Default: 1."""

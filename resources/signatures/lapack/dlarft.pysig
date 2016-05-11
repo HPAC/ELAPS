@@ -4,7 +4,7 @@ Signature(
     Flag("direct", ["F", "B"]),
     Flag("storev", ["C", "R"]),
     Dim("n"),
-    Dim("k", "n"),
+    Dim("k", max="n"),
     dData("V", "ldV * (k if storev == 'C' else n)"),
     Ld("ldV", "n if storev == 'C' else k"),
     dData("Tau", "k"),
