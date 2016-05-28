@@ -379,7 +379,8 @@ class Viewer(QtGui.QMainWindow):
         self.UI_setting += 1
         UI_report = QReportItem(self, filename, report)
         self.UI_reports.insertTopLevelItem(index, UI_report)
-        self.UI_reports.setCurrentItem(UI_report)
+        if index is None:
+            self.UI_reports.setCurrentItem(UI_report)
         self.UI_setting -= 1
 
         return UI_report
