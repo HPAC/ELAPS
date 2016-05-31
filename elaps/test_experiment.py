@@ -2,9 +2,18 @@
 """Unittest for experiment.py."""
 from __future__ import division, print_function
 
-from signature import *
-import symbolic
-from experiment import *
+try:
+    import elaps
+except:
+    import os
+    import sys
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+
+from elaps.signature import *
+from elaps.symbolic import Symbol, Range, Min
+from elaps.experiment import *
 
 import unittest
 import random
@@ -39,9 +48,9 @@ class TestExperiment(unittest.TestCase):
             "nt_max": random.randint(1, 10),
             "exe": "x"
         }
-        self.i = symbolic.Symbol("i")
-        self.j = symbolic.Symbol("j")
-        self.k = symbolic.Symbol("k")
+        self.i = Symbol("i")
+        self.j = Symbol("j")
+        self.k = Symbol("k")
         self.ns = [random.randint(1, 100) for _ in range(5)]
 
     def test_init(self):
@@ -329,8 +338,8 @@ class TestExperimentSetters(TestExperiment):
     def test_set_range_vals(self):
         """Test for set_range_vals()."""
         ex = self.ex
-        defrange = symbolic.Range("100:100:2000")
-        onerange = symbolic.Range("1")
+        defrange = Range("100:100:2000")
+        onerange = Range("1")
 
         # working
         ex.set_range_vals(defrange)
@@ -390,7 +399,7 @@ class TestExperimentSetters(TestExperiment):
         ex.set_nthreads("1")
         self.assertEqual(ex.nthreads, 1)
         ex.set_nthreads("min(i, %d)" % nt_max)
-        self.assertEqual(ex.nthreads, symbolic.Min(i, nt_max))
+        self.assertEqual(ex.nthreads, Min(i, nt_max))
 
         # type
         self.assertRaises(TypeError, ex.set_nthreads, None)
@@ -476,8 +485,8 @@ class TestExperimentSetters(TestExperiment):
     def test_set_sumrange_vals(self):
         """Test for set_sumrange_vals()."""
         ex = self.ex
-        defrange = symbolic.Range("1:100")
-        onerange = symbolic.Range("1")
+        defrange = Range("1:100")
+        onerange = Range("1")
         ex.set_sumrange(["j", "1:100"])
 
         # working
@@ -845,8 +854,8 @@ class TestExperimentCmds(unittest.TestCase):
         self.ex = ex = Experiment()
         ex.calls = [sig(m, n, "X", None, "Y", None, "Z", None)]
         ex.infer_lds()
-        self.i = symbolic.Symbol("i")
-        self.j = symbolic.Symbol("j")
+        self.i = Symbol("i")
+        self.j = Symbol("j")
 
     def test_cmd_order(self):
         """Test for generate_cmds()."""

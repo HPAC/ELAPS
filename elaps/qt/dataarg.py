@@ -2,7 +2,7 @@
 """Representation of data arguments in QCalls in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
-import elaps.defines as defines
+from .. import defines
 
 from numbers import Number
 

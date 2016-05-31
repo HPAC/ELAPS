@@ -2,9 +2,18 @@
 """Unittest for report.py."""
 from __future__ import division, print_function
 
-from signature import *
-from experiment import Experiment
-from report import Report
+try:
+    import elaps
+except:
+    import os
+    import sys
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+
+from elaps.signature import *
+from elaps.experiment import Experiment
+from elaps.report import Report
 
 import unittest
 import random

@@ -2,9 +2,18 @@
 """Unittest for io.py."""
 from __future__ import division, print_function
 
-from io import *
-from signature import *
-from experiment import Experiment
+try:
+    import elaps
+except:
+    import os
+    import sys
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+
+from elaps.io import *
+from elaps.signature import *
+from elaps.experiment import Experiment
 
 import unittest
 import glob
@@ -53,7 +62,8 @@ class TestLoaders(unittest.TestCase):
 
     def test_load_doc(self):
         """Test for load_doc()."""
-        # TODO
+        doc = load_doc("dtrsm")
+        self.assertEqual(doc[0][0], "dtrsm")
 
     def test_load_backend(self):
         """Test for load_experiment()."""
@@ -83,6 +93,11 @@ class TestLoaders(unittest.TestCase):
         """Test for load_metric()."""
         metric = load_metric("efficiency")
         self.assertTrue(hasattr(metric, "name"))
+
+    def test_papinames(self):
+        """Test for load_papinames()."""
+        papinames = load_papinames()
+        self.assertIn("PAPI_TOT_CYC", papinames)
 
 
 if __name__ == "__main__":

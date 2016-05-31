@@ -2,14 +2,14 @@
 """Central ELAPS:Experiment."""
 from __future__ import division, print_function
 
-import defines
-import symbolic
-import signature
+from . import defines
+from . import symbolic
+from . import signature
 
+import os
+import warnings
 from collections import Iterable, defaultdict
 from itertools import chain
-import warnings
-import os
 from copy import deepcopy
 from numbers import Number
 

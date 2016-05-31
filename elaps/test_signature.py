@@ -2,7 +2,16 @@
 """Unittest for signature.py."""
 from __future__ import division, print_function
 
-from signature import *
+try:
+    import elaps
+except:
+    import os
+    import sys
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+
+from elaps.signature import *
 
 import unittest
 

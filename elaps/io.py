@@ -2,11 +2,9 @@
 """Utility routines to load ELAPS objects."""
 from __future__ import division, print_function
 
-from signature import *
-from symbolic import *
-from experiment import Experiment
-from report import Report
-from defines import *
+from . import defines, Experiment, Report
+from .symbolic import *
+from .signature import *
 
 import os
 import imp
@@ -35,8 +33,8 @@ def load_signature_file(filename):
 
 def load_signature(name):
     """Find and load a Signature."""
-    for dirname in os.listdir(sigpath):
-        dirpath = os.path.join(sigpath, dirname)
+    for dirname in os.listdir(defines.sigpath):
+        dirpath = os.path.join(defines.sigpath, dirname)
         if not os.path.isdir(dirpath):
             continue
         filename = os.path.join(dirpath, name + ".pysig")
@@ -50,14 +48,14 @@ def load_signature(name):
 
 def load_all_signatures():
     """Load all Signatures."""
-    if not os.path.isdir(sigpath):
+    if not os.path.isdir(defines.sigpath):
         return {}
     sigs = {}
-    for dirname in os.listdir(sigpath):
-        dirpath = os.path.join(sigpath, dirname)
+    for dirname in os.listdir(defines.sigpath):
+        dirpath = os.path.join(defines.sigpath, dirname)
         if not os.path.isdir(dirpath):
             continue
-        for filename in os.listdir(os.path.join(sigpath, dirname)):
+        for filename in os.listdir(os.path.join(defines.sigpath, dirname)):
             if not filename[-6:] == ".pysig":
                 continue
             filepath = os.path.join(dirpath, filename)
@@ -95,7 +93,7 @@ def load_experiment_string(string):
 def load_experiment(filename):
     """Load an Experiment."""
     with open(filename) as fin:
-        if filename[-4:] == "." + experiment_extension:
+        if filename[-4:] == "." + defines.experiment_extension:
             return load_experiment_string(fin.read())
         return load_experiment_string(fin.readline())
 
@@ -108,8 +106,8 @@ def load_doc_file(filename):
 
 def load_doc(name):
     """Load documentation for name."""
-    for dirname in os.listdir(docpath):
-        dirpath = os.path.join(docpath, dirname)
+    for dirname in os.listdir(defines.docpath):
+        dirpath = os.path.join(defines.docpath, dirname)
         if not os.path.isdir(dirpath):
             continue
         filepath = os.path.join(dirpath, name + ".pydoc")
@@ -120,11 +118,11 @@ def load_doc(name):
 
 def load_all_docs():
     """Load all documentations."""
-    if not os.path.isdir(docpath):
+    if not os.path.isdir(defines.docpath):
         return {}
     docs = {}
-    for dirname in os.listdir(docpath):
-        dirpath = os.path.join(docpath, dirname)
+    for dirname in os.listdir(defines.docpath):
+        dirpath = os.path.join(defines.docpath, dirname)
         if not os.path.isdir(dirpath):
             continue
         for filename in os.listdir(sigpath):
@@ -153,7 +151,7 @@ def load_sampler_file(filename):
 
 def load_sampler(name):
     """Find and load a Sampler."""
-    filename = os.path.join(samplerpath, name, "info.py")
+    filename = os.path.join(defines.samplerpath, name, "info.py")
     if os.path.isfile(filename):
         return load_sampler_file(filename)
     raise IOError("Sampler %s not found" % name)
@@ -161,11 +159,11 @@ def load_sampler(name):
 
 def load_all_samplers():
     """Load all Samplers."""
-    if not os.path.isdir(samplerpath):
+    if not os.path.isdir(defines.samplerpath):
         return {}
     samplers = {}
-    for dirname in os.listdir(samplerpath):
-        filename = os.path.join(samplerpath, dirname, "info.py")
+    for dirname in os.listdir(defines.samplerpath):
+        filename = os.path.join(defines.samplerpath, dirname, "info.py")
         if os.path.isfile(filename):
             try:
                 samplers[dirname] = load_sampler_file(filename)
@@ -183,7 +181,7 @@ def load_backend_file(filename):
 
 def load_backend(name):
     """Load a backend."""
-    filename = os.path.join(backendpath, name + ".py")
+    filename = os.path.join(defines.backendpath, name + ".py")
     if os.path.isfile(filename):
         return load_backend_file(filename)
     raise IOError("Backend %s not found" % name)
@@ -191,13 +189,13 @@ def load_backend(name):
 
 def load_all_backends():
     """Load all backends."""
-    if not os.path.isdir(backendpath):
+    if not os.path.isdir(defines.backendpath):
         return {}
     backends = {}
-    for filename in os.listdir(backendpath):
+    for filename in os.listdir(defines.backendpath):
         if filename[-3:] != ".py":
             continue
-        filepath = os.path.join(backendpath, filename)
+        filepath = os.path.join(defines.backendpath, filename)
         if not os.path.isfile(filepath):
             continue
         try:
@@ -213,7 +211,7 @@ def load_papinames():
         def __missing__(self, key):
             self[key] = self.default_factory(key)
             return self[key]
-    with open(papinamespath) as fin:
+    with open(defines.papinamespath) as fin:
         return keydefaultdict(lambda key: {"short": key, "long": key},
                               eval(fin.read()))
 
@@ -235,7 +233,7 @@ def load_report(filename, discard_first_repetitions=False):
     report = Report(experiment, rawdata)
     if discard_first_repetitions:
         return report.discard_first_repetitions()
-    errfile = "%s.%s" % (filename[:-4], error_extension)
+    errfile = "%s.%s" % (filename[:-4], defines.error_extension)
     if os.path.isfile(errfile) and os.path.getsize(errfile):
         report.error = True
     return report
@@ -251,7 +249,7 @@ def load_metric_file(filename):
 
 def load_metric(name):
     """Load a metric."""
-    filename = os.path.join(metricpath, name + ".py")
+    filename = os.path.join(defines.metricpath, name + ".py")
     if os.path.isfile(filename):
         return load_metric_file(filename)
     raise IOError("Metric %s not found" % name)
@@ -259,13 +257,13 @@ def load_metric(name):
 
 def load_all_metrics():
     """Load all metrics."""
-    if not os.path.isdir(metricpath):
+    if not os.path.isdir(defines.metricpath):
         return {}
     metrics = {}
-    for filename in os.listdir(metricpath):
+    for filename in os.listdir(defines.metricpath):
         if filename[-3:] != ".py":
             continue
-        filepath = os.path.join(metricpath, filename)
+        filepath = os.path.join(defines.metricpath, filename)
         if not os.path.isfile(filepath):
             continue
         try:
