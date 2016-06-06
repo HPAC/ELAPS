@@ -1,0 +1,14 @@
+# double precision partial reduction to hessenberg (unblocked)
+Signature(
+    "dlahr2",
+    Dim("n"),
+    Dim("k", max="n - nb"),
+    Dim("nb"),
+    dData("A", "ldA * (n - k + 1)"),
+    Ld("ldA", "n"),
+    dData("Tau", "n"),
+    dData("T", "ldT * nb"),
+    Ld("ldT", "nb"),
+    dData("Y", "ldY * nb"),
+    Ld("ldY", "n")
+)
