@@ -2,8 +2,8 @@
 """Plotting routines for reports."""
 from __future__ import division, print_function
 
-import defines
-from report import Report, apply_stat
+from . import defines
+from .report import Report, apply_stat
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch

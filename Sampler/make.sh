@@ -49,7 +49,7 @@ CFG_FILE=$1
 [ -n "$SFLOPS_PER_CYCLE" ] && : ${DFLOPS_PER_CYCLE:=$((SFLOPS_PER_CYCLE / 2))}
 
 # use absolute paths and remove newlines
-if readlink -m .; then
+if readlink -m . &> /dev/null; then
     TARGET_DIR="`readlink -m \"$TARGET_DIR\"`"
     KERNEL_HEADERS="`for f in $KERNEL_HEADERS; do readlink -m $f; done | tr '\r\n' ' '`"
 fi
@@ -113,11 +113,11 @@ if [ $LINK_ONLY -ne 1 ]; then
     # -------------------- CONFIGURING --------------------
     ( $NOVERBOSE; echo -n "configuring " )
 
-    # clean previous build
+    # remove previous build
     ( $VERBOSE; rm -rf "$TARGET_DIR" )
     ( $NOVERBOSE; echo -n "." )
 
-    # craete buld directory
+    # create build directory
     ( $VERBOSE; mkdir -p "$TARGET_DIR" )
     ( $NOVERBOSE; echo -n "." )
 

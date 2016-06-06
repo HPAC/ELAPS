@@ -2,7 +2,16 @@
 """Unittest for symbolic.py."""
 from __future__ import division, print_function
 
-from symbolic import *
+try:
+    import elaps
+except:
+    import os
+    import sys
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+
+from elaps.symbolic import *
 
 import unittest
 import random

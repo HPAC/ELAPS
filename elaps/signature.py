@@ -131,7 +131,8 @@ class Signature(list):
     def argsbytype(self, type_, *types):
         """Return a list of argument posisions."""
         if types:
-            return sorted(set(self.argsbytype(type_) + self.argsbytype(*types)))
+            return sorted(set(self.argsbytype(type_) +
+                              self.argsbytype(*types)))
         if type_ not in self.argtypelookup:
             self.argtypelookup[type_] = [i for i, arg in enumerate(self)
                                          if isinstance(arg, type_)]

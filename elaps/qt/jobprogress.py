@@ -2,9 +2,10 @@
 """Job progress tracker in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
-from elaps import defines
+from .. import defines
 
 import os
+
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import pyqtSlot
 

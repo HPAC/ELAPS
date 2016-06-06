@@ -2,8 +2,8 @@
 """Result for an ELAPS:Experiment."""
 from __future__ import division, print_function
 
-import signature
-from experiment import Experiment
+from . import signature
+from .experiment import Experiment
 
 from math import sqrt
 from collections import Iterable

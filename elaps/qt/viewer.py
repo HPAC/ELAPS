@@ -2,20 +2,21 @@
 """GUI for Reports."""
 from __future__ import division, print_function
 
-import elaps.defines as defines
-import elaps.io
-import elaps.plot
-from elaps.report import apply_stat
+from .. import defines
+from .. import io as elapsio
+from ..plot import plot
+from ..report import apply_stat
+from .reportitem import QReportItem
 
 import sys
 import os
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot
+
 from matplotlib.backends.backend_qt4agg import (FigureCanvasQTAgg,
                                                 NavigationToolbar2QT)
 from matplotlib.figure import Figure
-
-from reportitem import QReportItem
 
 
 class Viewer(QtGui.QMainWindow):
@@ -38,8 +39,8 @@ class Viewer(QtGui.QMainWindow):
         self.colors = defines.colors[::-1]
 
         # load some stuff
-        self.papi_names = elaps.io.load_papinames()
-        self.metrics = elaps.io.load_all_metrics()
+        self.papi_names = elapsio.load_papinames()
+        self.metrics = elapsio.load_all_metrics()
 
         # set up UI
         self.UI_init()
@@ -347,7 +348,7 @@ class Viewer(QtGui.QMainWindow):
 
         # load report
         try:
-            report = elaps.io.load_report(filename)
+            report = elapsio.load_report(filename)
         except:
             if UI_alert:
                 self.UI_alert("ERROR: Can't load %r" % filename)
@@ -365,7 +366,7 @@ class Viewer(QtGui.QMainWindow):
             metric_name = counter_info["short"]
             if metric_name in self.metrics:
                 continue
-            self.metrics[metric_name] = elaps.io.get_counter_metric(
+            self.metrics[metric_name] = elapsio.get_counter_metric(
                 counter_name, metric_name, counter_info["long"]
             )
 
@@ -379,7 +380,8 @@ class Viewer(QtGui.QMainWindow):
         self.UI_setting += 1
         UI_report = QReportItem(self, filename, report)
         self.UI_reports.insertTopLevelItem(index, UI_report)
-        self.UI_reports.setCurrentItem(UI_report)
+        if index is None:
+            self.UI_reports.setCurrentItem(UI_report)
         self.UI_setting -= 1
 
         return UI_report
@@ -508,8 +510,8 @@ class Viewer(QtGui.QMainWindow):
                     colors.append(UI_item.color)
 
         xlabel = " = ".join(map(str, range_vars))
-        elaps.plot.plot(plot_data, self.stats_showing, colors, {}, xlabel,
-                        metric.name, {}, self.UI_figure)
+        plot(plot_data, self.stats_showing, colors, {}, xlabel, metric.name,
+             {}, self.UI_figure)
         self.UI_canvas.draw()
         self.UI_setting -= 1
 
@@ -677,7 +679,7 @@ class Viewer(QtGui.QMainWindow):
     def on_report_load(self):
         """Event: load Report."""
         filenames = QtGui.QFileDialog.getOpenFileNames(
-            self, "Load Experiment", elaps.io.reportpath,
+            self, "Load Experiment", elapsio.reportpath,
             " ".join("*." + ext for ext in defines.report_extensions)
         )
         if not filenames:
