@@ -679,7 +679,7 @@ class Viewer(QtGui.QMainWindow):
     def on_report_load(self):
         """Event: load Report."""
         filenames = QtGui.QFileDialog.getOpenFileNames(
-            self, "Load Experiment", elapsio.reportpath,
+            self, "Load Experiment", defines.reportpath,
             " ".join("*." + ext for ext in defines.report_extensions)
         )
         if not filenames:

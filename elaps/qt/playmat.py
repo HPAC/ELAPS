@@ -673,7 +673,7 @@ class PlayMat(QtGui.QMainWindow):
         # own Signatures
         newcalls = []
         for call in ex.calls:
-            sig = self.sig_get(call[0])
+            sig = elapsio.load_signature(call[0])
             if sig:
                 newcalls.append(sig(*call[1:]))
             else:
@@ -741,31 +741,6 @@ class PlayMat(QtGui.QMainWindow):
         else:
             self.reportname = defines.default_reportname
         self.UI_reportname_set()
-
-    # loaders
-    def sig_get(self, routine):
-        """(Try to) get the Signature for a routine."""
-        if routine not in self.sigs:
-            try:
-                sig = elapsio.load_signature(routine)
-                sig()  # try the signature
-                self.sigs[routine] = sig
-                self.log("Loaded Signature for %r." % routine)
-            except:
-                self.sigs[routine] = None
-                self.log("Can't load Signature for %r." % routine)
-        return self.sigs[routine]
-
-    def docs_get(self, routine):
-        """(Try to) get the documentation for a routine."""
-        if routine not in self.docs:
-            try:
-                self.docs[routine] = elapsio.load_doc(routine)
-                self.log("Loaded documentation for %r." % routine)
-            except:
-                self.docs[routine] = None
-                self.log("Can't load documentation for %r." % routine)
-        return self.docs[routine]
 
     # viewer
     def viewer_start(self, *args):
@@ -1412,7 +1387,7 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
             return
         self.undo_stack_push()
-        sig = self.sig_get(value)
+        sig = elapsio.load_signature(value)
         if not sig:
             try:
                 # prepare call
