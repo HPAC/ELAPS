@@ -1388,21 +1388,8 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
             return
         self.undo_stack_push()
-        sig = elapsio.load_signature(value)
-        if not sig:
-            try:
-                # prepare call
-                call = [value]
-
-                # set call
-                ex.set_call(callid, call)
-                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0],
-                                    False)
-                self.experiment_infer_update_set()
-            except:
-                self.undo_stack_pop()
-                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
-        else:
+        try:
+            sig = elapsio.load_signature(value)
             try:
                 # prepare call
                 call = sig()
@@ -1426,6 +1413,19 @@ class PlayMat(QtGui.QMainWindow):
                 self.undo_stack_pop()
                 import traceback
                 traceback.print_exc()
+                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
+        except:
+            try:
+                # prepare call
+                call = [value]
+
+                # set call
+                ex.set_call(callid, call)
+                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0],
+                                    False)
+                self.experiment_infer_update_set()
+            except:
+                self.undo_stack_pop()
                 self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
 
     def on_arg_set(self, callid, argid, value):
