@@ -1189,7 +1189,7 @@ class PlayMat(QtGui.QMainWindow):
         if self.UI_setting:
             return
         self.undo_stack_push()
-        self.experiment.note = self.UI_note.toPlainText()
+        self.experiment.note = str(self.UI_note.toPlainText())
 
     @pyqtSlot(str)
     def on_sampler_change(self, value, force=False):
