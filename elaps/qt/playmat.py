@@ -6,6 +6,7 @@ from .. import defines
 from .. import io as elapsio
 from .. import symbolic
 from .. import signature
+from ..experiment import Experiment
 from .call import QCall
 from .jobprogress import QJobProgress
 
@@ -684,7 +685,7 @@ class PlayMat(QtGui.QMainWindow):
 
     def experiment_new(self):
         """Reset Experiment."""
-        self.experiment_set(elaps.Experiment())
+        self.experiment_set(Experiment())
         self.experiment.calls.append([""])
         self.log("Reset Experiment")
 
