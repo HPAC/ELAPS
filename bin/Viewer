@@ -9,7 +9,7 @@ filepath = os.path.dirname(os.path.realpath(__file__))
 rootpath = os.path.abspath(os.path.join(filepath, ".."))
 sys.path.append(rootpath)
 
-from elaps.bin.viewr import main
+from elaps.bin.viewer import main
 
 if __name__ == "__main__":
     main()
