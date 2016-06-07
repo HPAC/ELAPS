@@ -1,12 +1,16 @@
 #!/usr/bin/env python
-"""Time in seconds metric."""
+"""Time metric in seconds."""
 from __future__ import division, print_function
 
 
 def metric(data, experiment, **kwargs):
-    """Seconds spent during the operations.
+    """Execution time in seconds.
 
-    Obtained form the CPU's time stamp counter and information on the system.
+    Computed as:
+        cycles / freq
+
+    cycles: execution time in cycles (from time step counter)
+    freq:   CPU frequency
     """
     cycles = data.get("cycles")
     freq = experiment.sampler.get("frequency")

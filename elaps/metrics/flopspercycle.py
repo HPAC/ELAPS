@@ -1,13 +1,16 @@
 #!/usr/bin/env python
-"""Flops/cycle metric."""
+"""Performance metric in flops/cycle metric."""
 from __future__ import division, print_function
 
 
 def metric(data, **kwargs):
-    """Floating point operations per cycle.
+    """Performance in floating-point operations (flops) per cycle.
 
-    Counting mathematically required operations.
-    Not accounting for Turbo Boost.
+    Computed as:
+        flops / cycles
+
+    flops:  minimal required mathematical flop count
+    cycles: execution time in cycles (from time step counter)
     """
     nops = data.get("flops")
     cycles = data.get("cycles")
@@ -15,4 +18,4 @@ def metric(data, **kwargs):
         return None
     return nops / cycles
 
-metric.name = "flops/cycle"
+metric.name = "performance [flops/cycle]"

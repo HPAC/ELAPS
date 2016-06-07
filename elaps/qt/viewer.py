@@ -440,10 +440,10 @@ class Viewer(QtGui.QMainWindow):
             self.UI_metric.clear()
             for i, metric_name in enumerate(sorted(self.metrics)):
                 self.UI_metric.addItem(metric_name)
-                self.UI_metric.setItemData(
-                    i, self.metrics[metric_name].__doc__.strip(),
-                    QtCore.Qt.ToolTipRole
-                )
+                lines = self.metrics[metric_name].__doc__.strip().splitlines()
+                lines[0] = "    " + lines[0]
+                doc = "\n".join(line[4:] for line in lines)
+                self.UI_metric.setItemData(i, doc, QtCore.Qt.ToolTipRole)
         self.UI_metric.setCurrentIndex(
             self.UI_metric.findText(self.metric_showing)
         )
