@@ -94,6 +94,7 @@ void LAPACK(cheev)(const char *, const char *, const int *, float *, const int *
 void LAPACK(cheevd)(const char *, const char *, const int *, float *, const int *, float *, float *, const int *, float *, const int *, int *, const int *, int *);
 void LAPACK(cheevr)(const char *, const char *, const char *, const int *, float *, const int *, const float *, const float *, const int *, const int *, const float *, int *, float *, float *, const int *, int *, float *, const int *, float *, const int *, int *, const int *, int *);
 void LAPACK(cheevx)(const char *, const char *, const char *, const int *, float *, const int *, const float *, const float *, const int *, const int *, const float *, int *, float *, float *, const int *, float *, const int *, float *, int *, int *, int *);
+void LAPACK(chegs2)(const int *, const char *, const int *, float *, const int *, const float *, const int *, int *);
 void LAPACK(chegst)(const int *, const char *, const int *, float *, const int *, const float *, const int *, int *);
 void LAPACK(chegv)(const int *, const char *, const char *, const int *, float *, const int *, float *, const int *, float *, float *, const int *, float *, int *);
 void LAPACK(chegvd)(const int *, const char *, const char *, const int *, float *, const int *, float *, const int *, float *, float *, const int *, float *, const int *, int *, const int *, int *);
@@ -433,6 +434,7 @@ void LAPACK(dsyev)(const char *, const char *, const int *, double *, const int 
 void LAPACK(dsyevd)(const char *, const char *, const int *, double *, const int *, double *, double *, const int *, int *, const int *, int *);
 void LAPACK(dsyevr)(const char *, const char *, const char *, const int *, double *, const int *, const double *, const double *, const int *, const int *, const double *, int *, double *, double *, const int *, int *, double *, const int *, int *, const int *, int *);
 void LAPACK(dsyevx)(const char *, const char *, const char *, const int *, double *, const int *, const double *, const double *, const int *, const int *, const double *, int *, double *, double *, const int *, double *, const int *, int *, int *, int *);
+void LAPACK(dsygs2)(const int *, const char *, const int *, double *, const int *, const double *, const int *, int *);
 void LAPACK(dsygst)(const int *, const char *, const int *, double *, const int *, const double *, const int *, int *);
 void LAPACK(dsygv)(const int *, const char *, const char *, const int *, double *, const int *, double *, const int *, double *, double *, const int *, int *);
 void LAPACK(dsygvd)(const int *, const char *, const char *, const int *, double *, const int *, double *, const int *, double *, double *, const int *, int *, const int *, int *);
@@ -658,6 +660,7 @@ void LAPACK(ssyev)(const char *, const char *, const int *, float *, const int *
 void LAPACK(ssyevd)(const char *, const char *, const int *, float *, const int *, float *, float *, const int *, int *, const int *, int *);
 void LAPACK(ssyevr)(const char *, const char *, const char *, const int *, float *, const int *, const float *, const float *, const int *, const int *, const float *, int *, float *, float *, const int *, int *, float *, const int *, int *, const int *, int *);
 void LAPACK(ssyevx)(const char *, const char *, const char *, const int *, float *, const int *, const float *, const float *, const int *, const int *, const float *, int *, float *, float *, const int *, float *, const int *, int *, int *, int *);
+void LAPACK(ssygs2)(const int *, const char *, const int *, float *, const int *, const float *, const int *, int *);
 void LAPACK(ssygst)(const int *, const char *, const int *, float *, const int *, const float *, const int *, int *);
 void LAPACK(ssygv)(const int *, const char *, const char *, const int *, float *, const int *, float *, const int *, float *, float *, const int *, int *);
 void LAPACK(ssygvd)(const int *, const char *, const char *, const int *, float *, const int *, float *, const int *, float *, float *, const int *, int *, const int *, int *);
@@ -771,6 +774,7 @@ void LAPACK(zheev)(const char *, const char *, const int *, double *, const int 
 void LAPACK(zheevd)(const char *, const char *, const int *, double *, const int *, double *, double *, const int *, double *, const int *, int *, const int *, int *);
 void LAPACK(zheevr)(const char *, const char *, const char *, const int *, double *, const int *, const double *, const double *, const int *, const int *, const double *, int *, double *, double *, const int *, int *, double *, const int *, double *, const int *, int *, const int *, int *);
 void LAPACK(zheevx)(const char *, const char *, const char *, const int *, double *, const int *, const double *, const double *, const int *, const int *, const double *, int *, double *, double *, const int *, double *, const int *, double *, int *, int *, int *);
+void LAPACK(zhegs2)(const int *, const char *, const int *, double *, const int *, const double *, const int *, int *);
 void LAPACK(zhegst)(const int *, const char *, const int *, double *, const int *, const double *, const int *, int *);
 void LAPACK(zhegv)(const int *, const char *, const char *, const int *, double *, const int *, double *, const int *, double *, double *, const int *, double *, int *);
 void LAPACK(zhegvd)(const int *, const char *, const char *, const int *, double *, const int *, double *, const int *, double *, double *, const int *, double *, const int *, int *, const int *, int *);
