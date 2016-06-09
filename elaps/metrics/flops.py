@@ -13,4 +13,4 @@ def metric(data, **kwargs):
     """
     return data.get("flops")
 
-metric.name = "flops"
+metric.name = "cost [flops]"

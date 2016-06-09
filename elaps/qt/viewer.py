@@ -61,7 +61,7 @@ class Viewer(QtGui.QMainWindow):
             self.report_load(filename)
 
         if self.metric_showing not in self.metrics:
-            self.metric_showing = "Gflops/s"
+            self.metric_showing = "performance [Gflops/s]"
 
         self.UI_setall()
 
