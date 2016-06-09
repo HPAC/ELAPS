@@ -93,6 +93,7 @@ class QJobProgress(QtGui.QDockWidget):
 
         self.resize_columns()
         self.show()
+        self.widget().scrollToBottom()
         self.timer.start()
 
     def autohide(self):
