@@ -45,6 +45,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_init()
         self.hideargs = set([signature.Ld, signature.Inc, signature.Work,
                              signature.Lwork, signature.Info])
+        self.viz_scale = defines.viz_scale
         self.reportname_set()
         if not reset:
             try:
@@ -210,6 +211,18 @@ class PlayMat(QtGui.QMainWindow):
                 UIA_hidearg.classes = set(classes)
                 self.UIA_hideargs.append(UIA_hidearg)
 
+            # zoom
+            self.UIA_zoom_in = QtGui.QAction(
+                "Zoom in", self,
+                shortcut=QtGui.QKeySequence.ZoomIn,
+                triggered=self.on_zoom_in
+            )
+            self.UIA_zoom_out = QtGui.QAction(
+                "Zoom out", self,
+                shortcut=QtGui.QKeySequence.ZoomOut,
+                triggered=self.on_zoom_out
+            )
+
             # MISC
 
             # start viewer
@@ -253,6 +266,8 @@ class PlayMat(QtGui.QMainWindow):
             self.UIM_view = menu.addMenu("View")
             for UIA_hidearg in self.UIA_hideargs:
                 self.UIM_view.addAction(UIA_hidearg)
+            self.UIM_view.addAction(self.UIA_zoom_in)
+            self.UIM_view.addAction(self.UIA_zoom_out)
 
             # help
             self.UIM_help = menu.addMenu("Help")
@@ -1148,6 +1163,18 @@ class PlayMat(QtGui.QMainWindow):
         else:
             self.hideargs -= classes
         self.UI_hideargs_set()
+        self.UI_calls_set()
+
+    @pyqtSlot()
+    def on_zoom_in(self):
+        """Event: Zoom in."""
+        self.viz_scale *= 1.5
+        self.UI_calls_set()
+
+    @pyqtSlot()
+    def on_zoom_out(self):
+        """Event: Zoom out."""
+        self.viz_scale /= 1.5
         self.UI_calls_set()
 
     @pyqtSlot(str)
