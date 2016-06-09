@@ -1411,8 +1411,6 @@ class PlayMat(QtGui.QMainWindow):
                 self.experiment_infer_update_set()
             except Exception as e:
                 self.undo_stack_pop()
-                import traceback
-                traceback.print_exc()
                 self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
         except:
             try:

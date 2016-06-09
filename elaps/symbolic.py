@@ -508,8 +508,8 @@ class Min(Operation):
             newargs.insert(0, num)
 
         if len(newargs) == 0:
-            # empty Min == -inf
-            return float("-inf")
+            # empty Min == None
+            return None
 
         if len(newargs) == 1:
             # single argument
@@ -552,8 +552,8 @@ class Max(Operation):
             newargs.insert(0, num)
 
         if len(newargs) == 0:
-            # empty Max = inf
-            return float("inf")
+            # empty Max = None
+            return None
 
         if len(newargs) == 1:
             # single argument
@@ -881,7 +881,10 @@ class Range(object):
         """compute the minimum."""
         if self.findsymbols():
             raise TypeError("Not numeric: %s" % self)
-        # default minimum: inf
+        # empty range: None
+        if not self.subranges:
+            return None
+        # initial minimum: inf
         result = float("inf")
         # consider all subranges
         for subrange in self.subranges:
@@ -907,7 +910,10 @@ class Range(object):
         """Compute the maximum."""
         if self.findsymbols():
             raise TypeError("Not numeric: %s" % self)
-        # default maximum: -inf
+        # empty range: None
+        if not self.subranges:
+            return None
+        # initial minimum: -inf
         result = -float("inf")
         # consider all subranges
         for subrange in self.subranges:
