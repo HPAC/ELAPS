@@ -91,8 +91,8 @@ Computing statistics
 The method `apply_stat(stat_name, data)` applies a statistics to a data
 structure as returned by a `Report`'s `apply_metric()`.  The following
 `stat_name`'s are available:
-- `"min"`: Minimum.
-- `"med"`: Median
-- `"max"`: Maximum.
-- `"avg"`: Average or Mean.
-- `"std"`: Standard deviation (square root of the variance).
+- `"min"`: minimum,
+- `"med"`: median,
+- `"max"`: maximum,
+- `"avg"`: average or mean, and
+- `"std"`: standard deviation (square root of the variance).

@@ -53,7 +53,7 @@ The Framework consists for three layers:
   See [docs/Sampler.md](docs/Sampler.md).
 
   The Sampler comes with a set of utility routines that cover basic tasks of
-  experiment setups, such as matrix initializations and file-IO.
+  experiment setups, such as matrix initializations and file-I/O.
   See [docs/Utility.md](docs/Utility.md).
 
 - The second, "middle" layer is the Python library `elaps`, which centers

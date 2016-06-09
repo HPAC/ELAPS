@@ -156,8 +156,7 @@ Setters:
 #### Calls with a `Signature` (`Call`)
 `Signature`s can be loaded through `elaps.io`'s `load_signature(name)` or
 `load_all_signatures()`.  Calling such a Signature, results in a corresponding
-`Call` instance.  For more details on `Signature`s see
-[Signature.md](Signature.md).
+`Call` instance.
 
 Within an `Experiment`, a `Call`'s values have to conform with its `Signature`
 and possibly other calls' in the `Experiment`:
