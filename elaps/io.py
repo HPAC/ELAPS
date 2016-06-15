@@ -31,12 +31,10 @@ def load_signature_file(filename):
         return load_signature_string(fin.read())
 
 
-def load_signature(name, cache={}):
+def load_signature(name, _cache={}):
     """Find and load a Signature."""
-    if isinstance(cache, dict):
-        if name not in cache:
-            cache[name] = load_signature(name, False)
-        return cache[name]
+    if name in _cache:
+        return _cache[name]
     for dirname in os.listdir(defines.sigpath):
         dirpath = os.path.join(defines.sigpath, dirname)
         if not os.path.isdir(dirpath):
@@ -46,6 +44,7 @@ def load_signature(name, cache={}):
             sig = load_signature_file(filename)
             if str(sig[0]) != name:
                 raise IOError("Routine mismatch for Signature %s" % name)
+            _cache[name] = sig
             return sig
     raise IOError("No signature found for %s" % name)
 
@@ -108,19 +107,19 @@ def load_doc_file(filename):
         return eval(fin.read())
 
 
-def load_doc(name, cache={}):
+def load_doc(name, _cache={}):
     """Load documentation for name."""
-    if isinstance(cache, dict):
-        if name not in cache:
-            cache[name] = load_doc(name, False)
-        return cache[name]
+    if name in _cache:
+        return _cache[name]
     for dirname in os.listdir(defines.docpath):
         dirpath = os.path.join(defines.docpath, dirname)
         if not os.path.isdir(dirpath):
             continue
         filepath = os.path.join(dirpath, name + ".pydoc")
         if os.path.isfile(filepath):
-            return load_doc_file(filepath)
+            doc = load_doc_file(filepath)
+            _cache[name] = doc
+            return doc
     raise IOError("No documentation found for %s" % name)
 
 
@@ -157,15 +156,15 @@ def load_sampler_file(filename):
     return sampler
 
 
-def load_sampler(name, cache={}):
+def load_sampler(name, _cache={}):
     """Find and load a Sampler."""
-    if isinstance(cache, dict):
-        if name not in cache:
-            cache[name] = load_sampler(name, False)
-        return cache[name]
+    if name in _cache:
+        return _cache[name]
     filename = os.path.join(defines.samplerpath, name, "info.py")
     if os.path.isfile(filename):
-        return load_sampler_file(filename)
+        sampler = load_sampler_file(filename)
+        _cache[name] = sampler
+        return sampler
     raise IOError("Sampler %s not found" % name)
 
 
@@ -191,15 +190,15 @@ def load_backend_file(filename):
     return module.Backend()
 
 
-def load_backend(name, cache={}):
+def load_backend(name, _cache={}):
     """Load a backend."""
-    if isinstance(cache, dict):
-        if name not in cache:
-            cache[name] = load_backend(name, False)
-        return cache[name]
+    if name in _cache:
+        return _cache[name]
     filename = os.path.join(defines.backendpath, name + ".py")
     if os.path.isfile(filename):
-        return load_backend_file(filename)
+        backend = load_backend_file(filename)
+        _cache[name] = backend
+        return backend
     raise IOError("Backend %s not found" % name)
 
 
@@ -263,15 +262,15 @@ def load_metric_file(filename):
     return metric
 
 
-def load_metric(name, cache={}):
+def load_metric(name, _cache={}):
     """Load a metric."""
-    if isinstance(cache, dict):
-        if name not in cache:
-            cache[name] = load_metric(name, False)
-        return cache[name]
+    if name in _cache:
+        return _cache[name]
     filename = os.path.join(defines.metricpath, name + ".py")
     if os.path.isfile(filename):
-        return load_metric_file(filename)
+        metric = load_metric_file(filename)
+        _cache[name] = metric
+        return metric
     raise IOError("Metric %s not found" % name)
 
 
