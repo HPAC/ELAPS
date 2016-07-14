@@ -778,14 +778,14 @@ class Viewer(QtGui.QMainWindow):
         data_cols = [["n"] + rownames] + zip(*([colnames] + contents))
         data_rows = zip(*data_cols)
 
+        sep = "\t"
         if filename[-4:] == ".dat":
-            colwidths = [max(map(len, col)) for col in data_cols]
-            with open(filename, "w") as fout:
-                for row in data_rows:
-                    row = [val.ljust(colwidths[col])
-                           for col, val in enumerate(row)]
-                    print(*row, file=fout, sep="\t")
+            widths = [max(map(len, col)) for col in data_cols]
+            data_rows = [[v.ljust(widths[i]) for i, v in enumerate(row)]
+                         for row in data_rows]
         elif filename[-4:] == ".csv":
-            with open(filename, "w") as fout:
-                for row in data_rows:
-                    print(*row, file=fout, sep=",")
+            sep = ","
+
+        with open(filename, "w") as fout:
+            for row in data_rows:
+                print(*row, file=fout, sep=sep)
