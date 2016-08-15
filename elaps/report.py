@@ -262,6 +262,8 @@ class Report(object):
         if isinstance(callselector, list):
             # list of callids
             def selector(data):
+                if any(data[v] is None for v in callselector):
+                    return None
                 return sum(data[v] for v in callselector)
         elif hasattr(callselector, "__call__"):
             # function
@@ -296,7 +298,6 @@ class Report(object):
             # compute results
             for rep, rep_data in enumerate(range_val_data):
                 if not (ex.sumrange_parallel or ex.calls_parallel):
-                    # transpose rep_data
                     rep_data = dict(
                         (k, [call_data[k] if k in call_data else None
                              for call_data in rep_data])
