@@ -1,0 +1,12 @@
+# double generation of Q from QR (unblocked)
+Signature(
+    "dorg2r",
+    Dim("m"),
+    Dim("n", max="m"),
+    Dim("k", max="n"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    dData("Tau", "k"),
+    dWork("Work", "n"),
+    Info()
+)

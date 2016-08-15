@@ -2,7 +2,16 @@
 """Unittest for signature.py."""
 from __future__ import division, print_function
 
-from signature import *
+try:
+    import elaps
+except:
+    import os
+    import sys
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+
+from elaps.signature import *
 
 import unittest
 
@@ -19,22 +28,7 @@ class TestArgs(unittest.TestCase):
         """Test for Flag."""
         self.assertEqual(Flag("name", [1, 2]).default(), 1)
 
-    def test_create_Flag(self):
-        """Test for create_Flag."""
-        from signature import _create_Flag
-        _create_Flag("MyFlag", "defaultname", [1, 2, 3])
-        from signature import MyFlag
-
-        self.assertEqual(type(MyFlag()), MyFlag)
-        self.assertEqual(type(MyFlag()).__name__, "MyFlag")
-
-        self.assertTrue(issubclass(MyFlag, Flag))
-
-        self.assertEqual(MyFlag().name, "defaultname")
-        self.assertEqual(MyFlag().flags, [1, 2, 3])
-
-        self.assertEqual(eval(repr(MyFlag("name"))), MyFlag("name"))
-        self.assertEqual(eval(repr(MyFlag(attr=1))), MyFlag(attr=1))
+        self.assertTrue(issubclass(Trans, Flag))
 
     def test_Scalar(self):
         """Test for Scalar."""
@@ -48,7 +42,7 @@ class TestArgs(unittest.TestCase):
 
     def test_Data(self):
         """Test for Data."""
-        self.assertEqual(cData("name").format_sampler(2), 4)
+        self.assertEqual(cData("name").format_sampler(2), "[%s]" % 4)
 
         self.assertTrue(issubclass(sData, Data))
 

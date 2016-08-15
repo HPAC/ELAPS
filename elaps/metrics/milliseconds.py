@@ -1,12 +1,17 @@
 #!/usr/bin/env python
-"""Time in milliseconds metric."""
+"""Time metric in milliseconds."""
 from __future__ import division, print_function
 
 
 def metric(data, experiment, **kwargs):
-    """Milliseconds spent during the operations.
+    """Execution time in milliseconds.
 
-    Obtained form the CPU's time stamp counter and information on the system.
+    Computed as:
+        1000 * cycles / freq
+
+    1000:   Milli prefix
+    cycles: execution time in cycles (from time step counter)
+    freq:   CPU frequency
     """
     cycles = data.get("cycles")
     freq = experiment.sampler.get("frequency")

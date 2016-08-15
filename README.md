@@ -52,6 +52,10 @@ The Framework consists for three layers:
   the system); ELAPS can interface with any number of Samplers.
   See [docs/Sampler.md](docs/Sampler.md).
 
+  The Sampler comes with a set of utility routines that cover basic tasks of
+  experiment setups, such as matrix initializations and file-I/O.
+  See [docs/Utility.md](docs/Utility.md).
+
 - The second, "middle" layer is the Python library `elaps`, which centers
   around the class `Experiment` that implements the previously introduced
   experiments.  An Experiment can be executed on different Samplers, both

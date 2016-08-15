@@ -2,8 +2,8 @@
 """Plotting routines for reports."""
 from __future__ import division, print_function
 
-import defines
-from report import Report, apply_stat
+from . import defines
+from .report import Report, apply_stat
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
@@ -71,7 +71,8 @@ def range_plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
     fig = figure
 
     axes = fig.gca()
-    axes.set_xlabel(xlabel)
+    if xlabel:
+        axes.set_xlabel(xlabel)
 
     # plots
     colorpool = (colors + defines.colors)[::-1]
@@ -141,15 +142,16 @@ def range_plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
         legend_stat_names.remove("min")
         legend_stat_names.remove("max")
     color = styles["legend"]["color"]
-    for stat_name in legend_stat_names:
-        legend_style = styles["legend"].copy()
-        if stat_name == "min-max":
-            legend_elem = Patch(edgecolor=color, **styles[stat_name])
-        elif stat_name == "std":
-            legend_elem = Patch(color=color, **styles[stat_name])
-        else:
-            legend_elem = Line2D([], [], color=color, **styles[stat_name])
-        legend.append((legend_elem, stat_name))
+    if len(legend_stat_names) > 1:
+        for stat_name in legend_stat_names:
+            legend_style = styles["legend"].copy()
+            if stat_name == "min-max":
+                legend_elem = Patch(edgecolor=color, **styles[stat_name])
+            elif stat_name == "std":
+                legend_elem = Patch(color=color, **styles[stat_name])
+            else:
+                legend_elem = Line2D([], [], color=color, **styles[stat_name])
+            legend.append((legend_elem, stat_name))
     if legend:
         args = {"loc": 0, "numpoints": 3}
         args.update(legendargs)
@@ -182,7 +184,9 @@ def bar_plot(datas, stat_names=["med"], colors=[], styles={}, ylabel=None,
         for statid, stat_name in enumerate(stat_names):
             left = statid + dataid * width
             if stat_name == "all":
-                xs = len(data) * [left + width / 2]
+                dl = len(data)
+                xs = [statid + groupwidth * (i + 1) / (dl + 1)
+                      for i in range(dl)]
                 ys = data
                 axes.plot(xs, ys, color=color, **styles["all"])
             elif stat_name == "min-max":

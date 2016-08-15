@@ -9,16 +9,6 @@ extern "C" {
 
 /** Minimal kernel call structure for the sampling process. */
 typedef struct {
-
-    /** Function pointer. */
-    void (*fptr)();
-
-    /** Number of arguments (including routine name). */
-    char argc;
-
-    /** Argument pointers. */
-    void *argv[KERNEL_MAX_ARGS];
-
 #ifdef OPENMP_ENABLED
     /** Call is in parallel with next call. */
     char parallel;
@@ -26,6 +16,15 @@ typedef struct {
     /** Call is sequential before the next in a parallel region. */
     char sequential;
 #endif
+
+    /** Number of arguments (including routine name). */
+    char argc;
+
+    /** Function pointer. */
+    void (*fptr)();
+
+    /** Argument pointers. */
+    void *argv[KERNEL_MAX_ARGS];
 
     /** After execution: measured number of clock cycles. */
     unsigned long cycles;

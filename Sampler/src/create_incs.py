@@ -37,6 +37,7 @@ def main():
             (" ?\( ?", "("),  # remove spaces before openingparentheses
             (" \)", ")"),  # remove spaces before closing parentheses
             (" \*", "*"),  # remove spaces before asterisks
+            ("\* ", "*"),  # remove spaces after asterisks
             ("\*", " *"),  # add spaces before asterisks
             ("\*\w+", "*"),  # remove variable names
             ("; ?", ";\n")):  # reintroduce newlines
@@ -76,8 +77,8 @@ def main():
             kernelsigs.append((name,) + tuple(arg for arg in args))
             enumargs = [argtypes[arg] for arg in args]
             argcmax = max(argcmax, len(enumargs) + 1)
-            print("{\"" + name + "\", reinterpret_cast<void (*)()>(" + symbolname + "), { " +
-                  ", ".join(enumargs) + " } },", file=fout)
+            print("{\"%s\", reinterpret_cast<void (*)()>(%s), { %s } }," %
+                  (name, symbolname, ", ".join(enumargs)), file=fout)
 
     # create calls.s.cin
     with open(calls_c_inc, "w") as fout:
@@ -86,8 +87,8 @@ def main():
             print("\tCOUNTERS_START", file=fout)
             voidlist = (argc - 1) * ["void *"]
             arglist = ["argv[" + str(n) + "]" for n in range(argc - 1)]
-            print("\t((void (*)(" + ",".join(voidlist) + ")) fptr)(" +
-                  ",".join(arglist) + ");", file=fout)
+            print("\t((void (*)(" + ", ".join(voidlist) + ")) fptr)(" +
+                  ", ".join(arglist) + ");", file=fout)
             print("\tCOUNTERS_END", file=fout)
             print("\tbreak;", file=fout)
 
@@ -113,8 +114,6 @@ def main():
         )),
         "buildtime": time(),
         "name":  os.environ["NAME"],
-        "system_name":  os.environ["SYSTEM_NAME"],
-        "blas_name": os.environ["BLAS_NAME"],
         "backend_name": os.environ["BACKEND"],
         "backend_header": os.environ["BACKEND_HEADER"],
         "backend_prefix": os.environ["BACKEND_PREFIX"],

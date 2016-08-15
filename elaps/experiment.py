@@ -2,14 +2,14 @@
 """Central ELAPS:Experiment."""
 from __future__ import division, print_function
 
-import defines
-import symbolic
-import signature
+from . import defines
+from . import symbolic
+from . import signature
 
+import os
+import warnings
 from collections import Iterable, defaultdict
 from itertools import chain
-import warnings
-import os
 from copy import deepcopy
 from numbers import Number
 
@@ -1855,6 +1855,8 @@ class Experiment(object):
             sumrange_vals = None,
             if dosumrange:
                 sumrange_vals = self.sumrange_vals_at(range_val)
+                if not sumrange_vals:
+                    continue
                 sumrange_vals = (symbolic.min(sumrange_vals),
                                  symbolic.max(sumrange_vals))
 
@@ -1863,6 +1865,8 @@ class Experiment(object):
                 values.append(symbolic.simplify(
                     expr, **self.ranges_valdict(range_val, sumrange_val)
                 ))
+        if not values:
+            return None, None
         return min(values), max(values)
 
     def substitute(self, **kwargs):

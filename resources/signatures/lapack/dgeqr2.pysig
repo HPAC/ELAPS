@@ -5,7 +5,7 @@ Signature(
     Dim("n"),
     dData("A", "ldA * n"),
     Ld("ldA", "m"),
-    dData("Tau", "m if m < n else n"),
-    dWork("Work", "min(m, n)"),
+    dData("Tau", "min(m, n)"),
+    dWork("Work", "n"),
     Info()
 )

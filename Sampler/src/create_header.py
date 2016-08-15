@@ -9,8 +9,14 @@ def main():
     """Generate C kernel include directives."""
     print("#ifndef KERNELS_H")
     print("#define KERNELS_H")
+    print()
+    for var in ("BLAS_UNDERSCORE", "BLAS_COMPLEX_FUNCTIONS_AS_ROUTINES",
+                "LAPACK_UNDERSCORE", "LAPACK_COMPLEX_FUNCTIONS_AS_ROUTINES"):
+        print("#define", var, os.environ[var])
+    print()
     for f in os.environ["KERNEL_HEADERS"].split():
         print("#include \"" + f + "\"")
+    print()
     print("#endif /* KERNELS_H */")
 
 

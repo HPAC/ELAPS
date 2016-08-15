@@ -2,7 +2,16 @@
 """Unittest for symbolic.py."""
 from __future__ import division, print_function
 
-from symbolic import *
+try:
+    import elaps
+except:
+    import os
+    import sys
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+
+from elaps.symbolic import *
 
 import unittest
 import random
@@ -281,7 +290,7 @@ class TestMin(TestSymbolic):
         self.assertEqual(min(min(A, B), C)(), min(A, min(B, C))())
         self.assertEqual(Min(A)(), A)
 
-        self.assertEqual(Min()(), float("-inf"))
+        self.assertEqual(Min()(), None)
         self.assertEqual(Min(n1, n2)(), __builtin__.min(n1, n2))
 
 
@@ -302,7 +311,7 @@ class TestMax(TestSymbolic):
         self.assertEqual(max(max(A, B), C)(), max(A, max(B, C))())
         self.assertEqual(Max(A)(), A)
 
-        self.assertEqual(Max()(), float("inf"))
+        self.assertEqual(Max()(), None)
         self.assertEqual(Max(n1, n2)(), __builtin__.max(n1, n2))
 
 
@@ -440,8 +449,8 @@ class TestRange(TestSymbolic):
 
         self.assertRaises(TypeError, Range((A, n2, n3)).min)
         self.assertRaises(TypeError, Range((n1, A, n3)).max)
-        self.assertEqual(Range().min(), float("inf"))
-        self.assertEqual(Range().max(), float("-inf"))
+        self.assertEqual(Range().min(), None)
+        self.assertEqual(Range().max(), None)
 
         self.assertEqual(Range("1:2:8,-1:5").min(), -1)
         self.assertEqual(Range("1:2:8,-1:5").max(), 7)

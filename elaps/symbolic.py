@@ -5,9 +5,9 @@ from __future__ import division, print_function
 from numbers import Number
 import math
 from collections import Iterable
-import __builtin__
 from copy import deepcopy
 from inspect import isgenerator
+import __builtin__
 
 
 class Expression(object):
@@ -32,11 +32,11 @@ class Expression(object):
 
     def __sub__(self, other):
         """Expression - Other ."""
-        return Plus(self, -(other))
+        return Plus(self, -other)
 
     def __rsub__(self, other):
         """Other - Expression ."""
-        return Plus(other, -(self))
+        return Plus(other, -self)
 
     def __mul__(self, other):
         """Expression * Other ."""
@@ -105,8 +105,7 @@ class Symbol(Expression):
         """Substitute: return value if matching."""
         if self.name in kwargs:
             return kwargs[self.name]
-        else:
-            return self
+        return self
 
     def findsymbols(self):
         """Find all contained symbols: self is a symbol."""
@@ -121,8 +120,7 @@ class Operation(Expression, list):
         """If any argument is None, the operation is None."""
         if any(arg is None for arg in args):
             return None
-        else:
-            return list.__new__(cls)
+        return list.__new__(cls)
 
     def __init__(self, *args):
         """Initialize as a list with the operation as first element."""
@@ -510,8 +508,8 @@ class Min(Operation):
             newargs.insert(0, num)
 
         if len(newargs) == 0:
-            # empty Min == -inf
-            return float("-inf")
+            # empty Min == None
+            return None
 
         if len(newargs) == 1:
             # single argument
@@ -554,8 +552,8 @@ class Max(Operation):
             newargs.insert(0, num)
 
         if len(newargs) == 0:
-            # empty Max = inf
-            return float("inf")
+            # empty Max = None
+            return None
 
         if len(newargs) == 1:
             # single argument
@@ -785,10 +783,10 @@ class Range(object):
 
     def substitute(self, **kwargs):
         """Substitute Symbols."""
-        return type(self)(*[
+        return type(self)(*(
             tuple(substitute(val, **kwargs) for val in subrange)
             for subrange in self.subranges
-        ])
+        ))
 
     def simplify(self, **kwargs):
         """Simplify the range."""
@@ -883,7 +881,10 @@ class Range(object):
         """compute the minimum."""
         if self.findsymbols():
             raise TypeError("Not numeric: %s" % self)
-        # default minimum: inf
+        # empty range: None
+        if not self.subranges:
+            return None
+        # initial minimum: inf
         result = float("inf")
         # consider all subranges
         for subrange in self.subranges:
@@ -909,7 +910,10 @@ class Range(object):
         """Compute the maximum."""
         if self.findsymbols():
             raise TypeError("Not numeric: %s" % self)
-        # default maximum: -inf
+        # empty range: None
+        if not self.subranges:
+            return None
+        # initial minimum: -inf
         result = -float("inf")
         # consider all subranges
         for subrange in self.subranges:
@@ -1025,7 +1029,7 @@ def log(*args):
 
 
 def floor(arg):
-    """Symbolic ceiling."""
+    """Symbolic floor."""
     if isinstance(arg, Expression):
         return Floor(arg)
     return int(math.ceil(arg))

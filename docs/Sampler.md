@@ -46,6 +46,11 @@ description of these parameters and their effects.  Many of these configuration
 parameters can be detected automatically by running `Sampler/gathercfg.sh` on
 the target system.
 
+For example, to build a Sampler linked to Apple's Accelerate Framework, inside
+`Sampler/` run
+
+    ./make.sh cfgs/examples/Mac_Accelerate.cfg
+
 
 Usage
 -----

@@ -4,11 +4,13 @@ from __future__ import division, print_function
 
 
 def metric(data, **kwargs):
-    """Number of cycles spent during the operations.
+    """Execution time in cycles.
 
-    Obtained form the CPU's time stamp counter.
-    Not accounting for Turbo Boost.
+    Computed as:
+        cycles  (atomic metric)
+
+    cycles: execution time in cycles (from time stamp counter)
     """
     return data.get("cycles")
 
-metric.name = "cycles"
+metric.name = "time [cycles]"

@@ -2,17 +2,19 @@
 """GUI for Experiments."""
 from __future__ import division, print_function
 
-import elaps.defines as defines
-import elaps.io
-import elaps.symbolic as symbolic
-import elaps.signature as signature
-
-from elaps.qt import QCall, QJobProgress
+from .. import defines
+from .. import io as elapsio
+from .. import symbolic
+from .. import signature
+from ..experiment import Experiment
+from .call import QCall
+from .jobprogress import QJobProgress
 
 import sys
 import os
 import string
 import itertools
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot
 
@@ -30,19 +32,20 @@ class PlayMat(QtGui.QMainWindow):
             self.Qapp.viewer = None
         self.Qapp.playmat = self
         QtGui.QMainWindow.__init__(self)
-        self.samplers = elaps.io.load_all_samplers()
+        self.samplers = elapsio.load_all_samplers()
         if not self.samplers:
             self.alert("ERROR: No Samplers found!")
             sys.exit()
         self.docs = {}
         self.sigs = {}
-        self.papi_names = elaps.io.load_papinames()
+        self.papi_names = elapsio.load_papinames()
         self.last_filebase = None
 
         # set up UI
         self.UI_init()
         self.hideargs = set([signature.Ld, signature.Inc, signature.Work,
                              signature.Lwork, signature.Info])
+        self.viz_scale = defines.viz_scale
         self.reportname_set()
         if not reset:
             try:
@@ -208,6 +211,18 @@ class PlayMat(QtGui.QMainWindow):
                 UIA_hidearg.classes = set(classes)
                 self.UIA_hideargs.append(UIA_hidearg)
 
+            # zoom
+            self.UIA_zoom_in = QtGui.QAction(
+                "Zoom in", self,
+                shortcut=QtGui.QKeySequence.ZoomIn,
+                triggered=self.on_zoom_in
+            )
+            self.UIA_zoom_out = QtGui.QAction(
+                "Zoom out", self,
+                shortcut=QtGui.QKeySequence.ZoomOut,
+                triggered=self.on_zoom_out
+            )
+
             # MISC
 
             # start viewer
@@ -251,6 +266,8 @@ class PlayMat(QtGui.QMainWindow):
             self.UIM_view = menu.addMenu("View")
             for UIA_hidearg in self.UIA_hideargs:
                 self.UIM_view.addAction(UIA_hidearg)
+            self.UIM_view.addAction(self.UIA_zoom_in)
+            self.UIM_view.addAction(self.UIA_zoom_out)
 
             # help
             self.UIM_help = menu.addMenu("Help")
@@ -672,7 +689,7 @@ class PlayMat(QtGui.QMainWindow):
         # own Signatures
         newcalls = []
         for call in ex.calls:
-            sig = self.sig_get(call[0])
+            sig = elapsio.load_signature(call[0])
             if sig:
                 newcalls.append(sig(*call[1:]))
             else:
@@ -683,14 +700,14 @@ class PlayMat(QtGui.QMainWindow):
 
     def experiment_new(self):
         """Reset Experiment."""
-        self.experiment_set(elaps.Experiment())
+        self.experiment_set(Experiment())
         self.experiment.calls.append([""])
         self.log("Reset Experiment")
 
     def experiment_qt_load(self):
         """Load Experiment from Qt setting."""
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
-        self.experiment_set(elaps.io.load_experiment_string(str(
+        self.experiment_set(elapsio.load_experiment_string(str(
             settings.value("Experiment", type=str)
         )))
         self.reportname_set(str(settings.value("reportname", type=str)))
@@ -698,14 +715,14 @@ class PlayMat(QtGui.QMainWindow):
 
     def experiment_load(self, filename):
         """Load Experiment from a file."""
-        ex = elaps.io.load_experiment(filename)
+        ex = elapsio.load_experiment(filename)
         self.experiment_set(ex)
         self.reportname_set(filename=filename)
         self.log("Loaded Experiment from %r." % os.path.relpath(filename))
 
     def experiment_write(self, filename):
         """Write Experiment to a file."""
-        elaps.io.wrte_experiment(self.experiment, filename)
+        elapsio.wrte_experiment(self.experiment, filename)
         self.log("Written Experiment to %r." % os.path.relpath(filename))
 
     def experiment_infer_update_set(self, callid=None):
@@ -740,31 +757,6 @@ class PlayMat(QtGui.QMainWindow):
         else:
             self.reportname = defines.default_reportname
         self.UI_reportname_set()
-
-    # loaders
-    def sig_get(self, routine):
-        """(Try to) get the Signature for a routine."""
-        if routine not in self.sigs:
-            try:
-                sig = elaps.io.load_signature(routine)
-                sig()  # try the signature
-                self.sigs[routine] = sig
-                self.log("Loaded Signature for %r." % routine)
-            except:
-                self.sigs[routine] = None
-                self.log("Can't load Signature for %r." % routine)
-        return self.sigs[routine]
-
-    def docs_get(self, routine):
-        """(Try to) get the documentation for a routine."""
-        if routine not in self.docs:
-            try:
-                self.docs[routine] = elaps.io.load_doc(routine)
-                self.log("Loaded documentation for %r." % routine)
-            except:
-                self.docs[routine] = None
-                self.log("Can't load documentation for %r." % routine)
-        return self.docs[routine]
 
     # viewer
     def viewer_start(self, *args):
@@ -1125,7 +1117,7 @@ class PlayMat(QtGui.QMainWindow):
         self.undo_stack_push()
         filename = QtGui.QFileDialog.getOpenFileName(
             self, "Load Experiment",
-            elaps.io.reportpath if report else defines.experimentpath,
+            defines.reportpath if report else defines.experimentpath,
             " ".join("*." + ext for ext in defines.experiment_extensions)
         )
         if not filename:
@@ -1142,7 +1134,7 @@ class PlayMat(QtGui.QMainWindow):
     def on_experiment_save(self):
         """Event: save Experiment."""
         filename = QtGui.QFileDialog.getSaveFileName(
-            self, "Save Setup", elaps.io.experimentpath,
+            self, "Save Setup", defines.experimentpath,
             "*." + defines.experiment_extension
         )
         if not filename:
@@ -1151,7 +1143,7 @@ class PlayMat(QtGui.QMainWindow):
         if filebase[-4:] == "." + defines.experiment_extension:
             filebase = filebase[:-4]
         filename = "%s.%s" % (filebase, defines.experiment_extension)
-        elaps.io.write_experiment(self.experiment, filename)
+        elapsio.write_experiment(self.experiment, filename)
 
     @pyqtSlot()
     def on_viewer_start(self):
@@ -1171,6 +1163,18 @@ class PlayMat(QtGui.QMainWindow):
         else:
             self.hideargs -= classes
         self.UI_hideargs_set()
+        self.UI_calls_set()
+
+    @pyqtSlot()
+    def on_zoom_in(self):
+        """Event: Zoom in."""
+        self.viz_scale *= 1.5
+        self.UI_calls_set()
+
+    @pyqtSlot()
+    def on_zoom_out(self):
+        """Event: Zoom out."""
+        self.viz_scale /= 1.5
         self.UI_calls_set()
 
     @pyqtSlot(str)
@@ -1212,7 +1216,7 @@ class PlayMat(QtGui.QMainWindow):
         if self.UI_setting:
             return
         self.undo_stack_push()
-        self.experiment.note = self.UI_note.toPlainText()
+        self.experiment.note = str(self.UI_note.toPlainText())
 
     @pyqtSlot(str)
     def on_sampler_change(self, value, force=False):
@@ -1411,21 +1415,8 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
             return
         self.undo_stack_push()
-        sig = self.sig_get(value)
-        if not sig:
-            try:
-                # prepare call
-                call = [value]
-
-                # set call
-                ex.set_call(callid, call)
-                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0],
-                                    False)
-                self.experiment_infer_update_set()
-            except:
-                self.undo_stack_pop()
-                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
-        else:
+        try:
+            sig = elapsio.load_signature(value)
             try:
                 # prepare call
                 call = sig()
@@ -1447,8 +1438,19 @@ class PlayMat(QtGui.QMainWindow):
                 self.experiment_infer_update_set()
             except Exception as e:
                 self.undo_stack_pop()
-                import traceback
-                traceback.print_exc()
+                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
+        except:
+            try:
+                # prepare call
+                call = [value]
+
+                # set call
+                ex.set_call(callid, call)
+                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0],
+                                    False)
+                self.experiment_infer_update_set()
+            except:
+                self.undo_stack_pop()
                 self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
 
     def on_arg_set(self, callid, argid, value):

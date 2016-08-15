@@ -24,13 +24,8 @@ Startup
 When started, the *PlayMat* by default reloads its last state before closing,
 i.e., the last designed `Experiment`.  When an `Experiment` file (`.elr`) is
 passed as an argument, that experiment is loaded instead.  When `--reset` is
-passed, the *PlayMat* is reset to the following default `Experiment`:
-
-    Sampler:    first found
-    #threads:   1
-    for i = 100:100:2000 :
-        repeat 10 times:
-            dgemm(N, N, i, i, i, 1, A, i, B, i, 1, C, i)
+passed, the *PlayMat* is reset to an empty `Experiment` with the first found
+Sampler.
 
 The *PlayMat* automatically detects and loads all available Samplers.  
 
