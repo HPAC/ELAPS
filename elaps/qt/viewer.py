@@ -320,13 +320,13 @@ class Viewer(QtGui.QMainWindow):
         """Log a message to stdout and statusbar."""
         msg = " ".join(map(str, args))
         self.statusBar().showMessage(msg, 2000)
-        print(msg)
+        print("Viewer:", msg)
 
     def alert(self, *args):
         """Log a message to stderr and statusbar."""
         msg = " ".join(map(str, args))
         self.statusBar().showMessage(msg)
-        print("\033[31m%s\033[0m" % msg, file=sys.stderr)
+        print("Viewer:", "\033[31m%s\033[0m" % msg, file=sys.stderr)
 
     def UI_alert(self, *args, **kwargs):
         """Alert a messagebox."""
