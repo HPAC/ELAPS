@@ -3,6 +3,7 @@
 from __future__ import division, print_function
 
 from .. import signature
+from .. import io as elapsio
 from .dataarg import QDataArg
 
 from PyQt4 import QtCore, QtGui
@@ -140,7 +141,10 @@ class QCall(QtGui.QListWidgetItem):
         Qroutine = self.UI_args[0]
         assert(isinstance(self.call, signature.BasicCall))
         sig = self.call.sig
-        doc = self.playmat.docs_get(self.call[0])
+        try:
+            doc = elapsio.load_doc(self.call[0])
+        except:
+            doc = None
         if doc:
             Qroutine.setToolTip(doc[0][1])
         for argid, arg in enumerate(sig):

@@ -1,13 +1,16 @@
 #!/usr/bin/env python
-"""Flops (complexity) metric."""
+"""Flop-count metric."""
 from __future__ import division, print_function
 
 
 def metric(data, **kwargs):
-    """Number of floating point operations necessary to perform the operation.
+    """Minimum required number of floating-point operations (flops).
 
-    Counting mathematically required operations.
+    Computed as:
+        flops (atomic metric)
+
+    flops:  minimal required mathematical flop count
     """
     return data.get("flops")
 
-metric.name = "flops"
+metric.name = "cost [flops]"

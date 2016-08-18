@@ -4,10 +4,15 @@ from __future__ import division, print_function
 
 
 def metric(data, experiment, nthreads, selector, **kwargs):
-    """Performance of the operations relative to peak.
+    """Relative utilization of the hardware's floating point units.
 
-    Comparing the flops/cycle to the system's peak.
-    Not accounting for Turbo Boost.
+    Computed as:
+        flops / (ipc * cycles * ncores)
+
+    flops:  minimal required mathematical flop count
+    ipc:    maximum instructions per cycle and core (hardware limit)
+    cycles: execution time in cycles (from time stamp counter)
+    ncores: number of cores used
     """
     nops = data.get("flops")
     cycles = data.get("cycles")

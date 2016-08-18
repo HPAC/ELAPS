@@ -6,6 +6,7 @@ from .. import defines
 from .. import io as elapsio
 from .. import symbolic
 from .. import signature
+from ..experiment import Experiment
 from .call import QCall
 from .jobprogress import QJobProgress
 
@@ -44,6 +45,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_init()
         self.hideargs = set([signature.Ld, signature.Inc, signature.Work,
                              signature.Lwork, signature.Info])
+        self.viz_scale = defines.viz_scale
         self.reportname_set()
         if not reset:
             try:
@@ -209,6 +211,18 @@ class PlayMat(QtGui.QMainWindow):
                 UIA_hidearg.classes = set(classes)
                 self.UIA_hideargs.append(UIA_hidearg)
 
+            # zoom
+            self.UIA_zoom_in = QtGui.QAction(
+                "Zoom in", self,
+                shortcut=QtGui.QKeySequence.ZoomIn,
+                triggered=self.on_zoom_in
+            )
+            self.UIA_zoom_out = QtGui.QAction(
+                "Zoom out", self,
+                shortcut=QtGui.QKeySequence.ZoomOut,
+                triggered=self.on_zoom_out
+            )
+
             # MISC
 
             # start viewer
@@ -252,6 +266,8 @@ class PlayMat(QtGui.QMainWindow):
             self.UIM_view = menu.addMenu("View")
             for UIA_hidearg in self.UIA_hideargs:
                 self.UIM_view.addAction(UIA_hidearg)
+            self.UIM_view.addAction(self.UIA_zoom_in)
+            self.UIM_view.addAction(self.UIA_zoom_out)
 
             # help
             self.UIM_help = menu.addMenu("Help")
@@ -634,13 +650,13 @@ class PlayMat(QtGui.QMainWindow):
         """Log a message to stdout and statusbar."""
         msg = " ".join(map(str, args))
         self.statusBar().showMessage(msg, 2000)
-        print(msg)
+        print("PlayMat:", msg)
 
     def alert(self, *args):
         """Log a message to stderr and statusbar."""
         msg = " ".join(map(str, args))
         self.statusBar().showMessage(msg)
-        print("\033[31m%s\033[0m" % msg, file=sys.stderr)
+        print("PlayMat:", "\033[31m%s\033[0m" % msg, file=sys.stderr)
 
     def UI_set_invalid(self, widget, state=True):
         """Set a widget's "invalid" property."""
@@ -673,7 +689,7 @@ class PlayMat(QtGui.QMainWindow):
         # own Signatures
         newcalls = []
         for call in ex.calls:
-            sig = self.sig_get(call[0])
+            sig = elapsio.load_signature(call[0])
             if sig:
                 newcalls.append(sig(*call[1:]))
             else:
@@ -684,7 +700,7 @@ class PlayMat(QtGui.QMainWindow):
 
     def experiment_new(self):
         """Reset Experiment."""
-        self.experiment_set(elaps.Experiment())
+        self.experiment_set(Experiment())
         self.experiment.calls.append([""])
         self.log("Reset Experiment")
 
@@ -741,31 +757,6 @@ class PlayMat(QtGui.QMainWindow):
         else:
             self.reportname = defines.default_reportname
         self.UI_reportname_set()
-
-    # loaders
-    def sig_get(self, routine):
-        """(Try to) get the Signature for a routine."""
-        if routine not in self.sigs:
-            try:
-                sig = elapsio.load_signature(routine)
-                sig()  # try the signature
-                self.sigs[routine] = sig
-                self.log("Loaded Signature for %r." % routine)
-            except:
-                self.sigs[routine] = None
-                self.log("Can't load Signature for %r." % routine)
-        return self.sigs[routine]
-
-    def docs_get(self, routine):
-        """(Try to) get the documentation for a routine."""
-        if routine not in self.docs:
-            try:
-                self.docs[routine] = elapsio.load_doc(routine)
-                self.log("Loaded documentation for %r." % routine)
-            except:
-                self.docs[routine] = None
-                self.log("Can't load documentation for %r." % routine)
-        return self.docs[routine]
 
     # viewer
     def viewer_start(self, *args):
@@ -1174,6 +1165,18 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_hideargs_set()
         self.UI_calls_set()
 
+    @pyqtSlot()
+    def on_zoom_in(self):
+        """Event: Zoom in."""
+        self.viz_scale *= 1.5
+        self.UI_calls_set()
+
+    @pyqtSlot()
+    def on_zoom_out(self):
+        """Event: Zoom out."""
+        self.viz_scale /= 1.5
+        self.UI_calls_set()
+
     @pyqtSlot(str)
     def on_reportname_change(self, value):
         """Event: change Report name."""
@@ -1213,7 +1216,7 @@ class PlayMat(QtGui.QMainWindow):
         if self.UI_setting:
             return
         self.undo_stack_push()
-        self.experiment.note = self.UI_note.toPlainText()
+        self.experiment.note = str(self.UI_note.toPlainText())
 
     @pyqtSlot(str)
     def on_sampler_change(self, value, force=False):
@@ -1412,21 +1415,8 @@ class PlayMat(QtGui.QMainWindow):
             self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
             return
         self.undo_stack_push()
-        sig = self.sig_get(value)
-        if not sig:
-            try:
-                # prepare call
-                call = [value]
-
-                # set call
-                ex.set_call(callid, call)
-                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0],
-                                    False)
-                self.experiment_infer_update_set()
-            except:
-                self.undo_stack_pop()
-                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
-        else:
+        try:
+            sig = elapsio.load_signature(value)
             try:
                 # prepare call
                 call = sig()
@@ -1448,8 +1438,19 @@ class PlayMat(QtGui.QMainWindow):
                 self.experiment_infer_update_set()
             except Exception as e:
                 self.undo_stack_pop()
-                import traceback
-                traceback.print_exc()
+                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
+        except:
+            try:
+                # prepare call
+                call = [value]
+
+                # set call
+                ex.set_call(callid, call)
+                self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0],
+                                    False)
+                self.experiment_infer_update_set()
+            except:
+                self.undo_stack_pop()
                 self.UI_set_invalid(self.UI_calls.item(callid).UI_args[0])
 
     def on_arg_set(self, callid, argid, value):
