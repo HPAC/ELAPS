@@ -650,13 +650,13 @@ class PlayMat(QtGui.QMainWindow):
         """Log a message to stdout and statusbar."""
         msg = " ".join(map(str, args))
         self.statusBar().showMessage(msg, 2000)
-        print(msg)
+        print("PlayMat:", msg)
 
     def alert(self, *args):
         """Log a message to stderr and statusbar."""
         msg = " ".join(map(str, args))
         self.statusBar().showMessage(msg)
-        print("\033[31m%s\033[0m" % msg, file=sys.stderr)
+        print("PlayMat:", "\033[31m%s\033[0m" % msg, file=sys.stderr)
 
     def UI_set_invalid(self, widget, state=True):
         """Set a widget's "invalid" property."""

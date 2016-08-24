@@ -159,7 +159,7 @@ class BasicCall(list):
         if len(sig) != 1 + len(args):
             raise TypeError("%s takes %d arguments (%d given)" %
                             (sig[0], len(sig) - 1, len(args)))
-        list.__init__(self, (str(sig[0]),) + args)
+        list.__init__(self, (sig[0].name,) + args)
         self.__dict__["sig"] = sig
 
     def __str__(self):

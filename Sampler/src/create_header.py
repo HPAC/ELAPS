@@ -11,7 +11,8 @@ def main():
     print("#define KERNELS_H")
     print()
     for var in ("BLAS_UNDERSCORE", "BLAS_COMPLEX_FUNCTIONS_AS_ROUTINES",
-                "LAPACK_UNDERSCORE", "LAPACK_COMPLEX_FUNCTIONS_AS_ROUTINES"):
+                "LAPACK_UNDERSCORE", "LAPACK_COMPLEX_FUNCTIONS_AS_ROUTINES",
+                "LAPACK_VERSION"):
         print("#define", var, os.environ[var])
     print()
     for f in os.environ["KERNEL_HEADERS"].split():

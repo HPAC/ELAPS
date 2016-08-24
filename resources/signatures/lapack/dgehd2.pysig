@@ -1,0 +1,12 @@
+# double precision reduction to hessenberg (unblocked)
+Signature(
+    "dgehd2",
+    Dim("n"),
+    Dim("ilo", max="ihi"),
+    Dim("ihi", max="n"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "n"),
+    dData("Tau", "n"),
+    dWork("Work", "n"),
+    Info(),
+)

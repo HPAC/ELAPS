@@ -1,0 +1,17 @@
+# double precision partial reduction to bidiagonal (unblocked)
+Signature(
+    "dlabrd",
+    Dim("m"),
+    Dim("n"),
+    Dim("nb", max="min(m, n)"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    dData("D", "nb"),
+    dData("E", "nb"),
+    dData("TauQ", "nb"),
+    dData("TauP", "nb"),
+    dData("X", "ldX * nb"),
+    Ld("ldX", "m"),
+    dData("Y", "ldY * nb"),
+    Ld("ldY", "n")
+)

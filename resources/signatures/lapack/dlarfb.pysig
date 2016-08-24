@@ -14,6 +14,6 @@ Signature(
     Ld("ldT", "k"),
     dData("C", "ldC * n"),
     Ld("ldC", "m"),
-    dWork("Work", "lWork"),
-    Lwork("lWork", "n if side == 'L' else m")
+    dWork("Work", "ldWork * k"),
+    Ld("ldWork", "n if side == 'L' else m")
 )

@@ -1,0 +1,14 @@
+# double precision reduction to bidiagonal (unblocked)
+Signature(
+    "dgebd2",
+    Dim("m"),
+    Dim("n"),
+    dData("A", "ldA * n"),
+    Ld("ldA", "m"),
+    dData("D", "min(m, n)"),
+    dData("E", "min(m, n) - 1"),
+    dData("TauQ", "min(m, n)"),
+    dData("TauP", "min(m, n)"),
+    dWork("Work", "max(m, n)"),
+    Info()
+)
