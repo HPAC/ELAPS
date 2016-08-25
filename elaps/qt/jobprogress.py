@@ -44,7 +44,7 @@ class QJobProgress(QtGui.QDockWidget):
         ))
         self.widget().keyPressEvent = self.on_keypress
         self.widget().setHeaderLabels(
-            ("job", "progress", "status")
+            ("job", "progress", "status", "actions")
         )
 
     def resize_columns(self):
@@ -60,7 +60,10 @@ class QJobProgress(QtGui.QDockWidget):
 
     def selected_jobs(self):
         """Get selected jobs."""
-        return [item.job for item in self.widget().selectedItems()]
+        try:
+            return [self.playmat.sender().parent().job]
+        except:
+            return [item.job for item in self.widget().selectedItems()]
 
     def add_job(self, filebase, jobid, experiment):
         """Add a job to track."""
@@ -78,7 +81,7 @@ class QJobProgress(QtGui.QDockWidget):
 
         # item
         item = QtGui.QTreeWidgetItem(
-            (job["name"], "", "pending")
+            (job["name"], "", "pending", "")
         )
         self.widget().addTopLevelItem(item)
 
@@ -90,6 +93,30 @@ class QJobProgress(QtGui.QDockWidget):
             maximum=job["nresults"], value=0
         )
         self.widget().setItemWidget(item, 1, job["progressbar"])
+
+        # actions
+        actions = {}
+        job["actions"] = actions
+        actionsT = QtGui.QToolBar()
+        actions["kill"] = QtGui.QAction(
+            self.playmat.style().standardIcon(QtGui.QStyle.SP_BrowserStop),
+            "Kill", actionsT, triggered=self.on_kill
+        )
+        actions["rerun"] = QtGui.QAction(
+            self.playmat.style().standardIcon(QtGui.QStyle.SP_BrowserReload),
+            "Rerun", actionsT, triggered=self.on_rerun
+        )
+        actions["rerun"].setDisabled(True)
+        actions["remove"] = QtGui.QAction(
+            self.playmat.style().standardIcon(QtGui.QStyle.SP_TrashIcon),
+            "Remove", actionsT, triggered=self.on_remove
+        )
+        actions["remove"].setDisabled(True)
+        actionsT.job = job
+        actionsT.addAction(job["actions"]["kill"])
+        actionsT.addAction(job["actions"]["rerun"])
+        actionsT.addAction(job["actions"]["remove"])
+        self.widget().setItemWidget(item, 3, actionsT)
 
         self.resize_columns()
         self.show()
@@ -123,6 +150,10 @@ class QJobProgress(QtGui.QDockWidget):
             if os.path.isfile(job["errorfile"]):
                 if os.path.getsize(job["errorfile"]):
                     job["stat"] = "ERROR"
+            if job["stat"] in ("ERROR", "DONE"):
+                job["actions"]["kill"].setDisabled(True)
+                job["actions"]["rerun"].setDisabled(False)
+                job["actions"]["remove"].setDisabled(False)
 
         for itemid in range(self.widget().topLevelItemCount()):
             item = self.widget().topLevelItem(itemid)
@@ -174,6 +205,12 @@ class QJobProgress(QtGui.QDockWidget):
                     "Kill", menu, triggered=self.on_kill
                 ))
 
+            # rerun
+            if any(job["stat"] in ("ERROR", "DONE") for job in jobs):
+                menu.addAction(QtGui.QAction(
+                    "Rerun", menu, triggered=self.on_rerun
+                ))
+
             # clear
             menu.addAction(QtGui.QAction(
                 "Clear", menu, triggered=self.on_remove
@@ -217,12 +254,26 @@ class QJobProgress(QtGui.QDockWidget):
 
         menu.exec_(globalpos)
 
-    @pyqtSlot()
+    # @pyqtSlot()  # sender() pyqt bug
     def on_kill(self):
         """Event: kill job(s)."""
         for job in self.selected_jobs():
             if job["stat"] in ("PEND", "RUN"):
                 job["experiment"].sampler["backend"].kill(job["jobid"])
+        self.on_remove()
+
+    # @pyqtSlot()  # sender() pyqt bug
+    def on_rerun(self):
+        """Event: rerun job(s)."""
+        for job in self.selected_jobs():
+            if job["stat"] in ("ERROR", "DONE"):
+                ex = job["experiment"]
+                backend = ex.sampler["backend"]
+                filebase = job["filebase"]
+                jobid = ex.submit(filebase)
+                filename = "%s.%s" % (filebase, defines.report_extension)
+                self.playmat.log("Resubmitted job for %r to %r." % (filename, backend.name))
+                self.add_job(filebase, jobid, ex)
         self.on_remove()
 
     @pyqtSlot()
@@ -243,7 +294,7 @@ class QJobProgress(QtGui.QDockWidget):
                 job["experiment"].sampler["backend"].kill(job["jobid"])
         self.on_removeall()
 
-    @pyqtSlot()
+    # @pyqtSlot()  # sender() pyqt bug
     def on_remove(self):
         """Event: remove job(s)."""
         for job in self.selected_jobs():
