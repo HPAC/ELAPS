@@ -135,7 +135,7 @@ class QJobProgress(QtGui.QDockWidget):
         # read data
         for itemid in range(self.widget().topLevelItemCount()):
             job = self.widget().topLevelItem(itemid).job
-            if job["stat"] in ("ERROR", "DONE"):
+            if job["stat"] in ("ERROR", "DONE", "KILL"):
                 # job is done
                 continue
             if not os.path.isfile(job["reportfile"]):
@@ -143,14 +143,16 @@ class QJobProgress(QtGui.QDockWidget):
                 continue
             with open(job["reportfile"]) as fin:
                 job["progress"] = len(fin.readlines()) - 2
-            if job["progress"] >= 0:
+            if job["stat"] == "TOKILL":
+                job["stat"] = "KILL"
+            elif job["progress"] >= 0:
                 job["stat"] = "RUN"
             if job["progress"] >= job["nresults"]:
                 job["stat"] = "DONE"
             if os.path.isfile(job["errorfile"]):
                 if os.path.getsize(job["errorfile"]):
                     job["stat"] = "ERROR"
-            if job["stat"] in ("ERROR", "DONE"):
+            if job["stat"] in ("ERROR", "DONE", "KILL"):
                 job["actions"]["kill"].setDisabled(True)
                 job["actions"]["rerun"].setDisabled(False)
                 job["actions"]["remove"].setDisabled(False)
@@ -166,6 +168,8 @@ class QJobProgress(QtGui.QDockWidget):
                 )
             elif job["stat"] == "ERROR":
                 item.setText(2, "error")
+            elif job["stat"] == "KILL":
+                item.setText(2, "killed")
             elif job["stat"] == "DONE":
                 item.setText(2, "done")
 
@@ -260,13 +264,13 @@ class QJobProgress(QtGui.QDockWidget):
         for job in self.selected_jobs():
             if job["stat"] in ("PEND", "RUN"):
                 job["experiment"].sampler["backend"].kill(job["jobid"])
-        self.on_remove()
+                job["stat"] = "TOKILL"
 
     # @pyqtSlot()  # sender() pyqt bug
     def on_rerun(self):
         """Event: rerun job(s)."""
         for job in self.selected_jobs():
-            if job["stat"] in ("ERROR", "DONE"):
+            if job["stat"] in ("ERROR", "DONE", "KILL"):
                 ex = job["experiment"]
                 backend = ex.sampler["backend"]
                 filebase = job["filebase"]
@@ -292,7 +296,7 @@ class QJobProgress(QtGui.QDockWidget):
         for job in self.jobs():
             if job["stat"] in ("PEND", "RUN"):
                 job["experiment"].sampler["backend"].kill(job["jobid"])
-        self.on_removeall()
+                job["stat"] = "TOKILL"
 
     # @pyqtSlot()  # sender() pyqt bug
     def on_remove(self):
