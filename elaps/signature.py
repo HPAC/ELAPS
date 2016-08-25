@@ -459,8 +459,8 @@ class Scalar(Arg):
 
     @staticmethod
     def default():
-        """Default: 1."""
-        return 1
+        """Default: 1.0."""
+        return 1.0
 
 
 def _create_Scalar(classname, typename):
@@ -475,6 +475,13 @@ def _create_Scalar(classname, typename):
                 return "%s,%s" % (val.real, val.imag)
             return val
         attributes["format_sampler"] = format_sampler
+    if typename == "integer":
+
+        @staticmethod
+        def default():
+            """Default: 1."""
+            return 1
+        attributes["default"] = default
     globals()[classname] = type(classname, (Scalar,), attributes)
 
 _create_Scalar("iScalar", "integer")
