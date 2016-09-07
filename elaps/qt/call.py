@@ -1,13 +1,11 @@
-#!/usr/bin/env python
 """Representation of calls in ELAPS:PlayMat."""
-from __future__ import division, print_function
+
+from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import pyqtSlot
 
 from .. import signature
 from .. import io as elapsio
 from .dataarg import QDataArg
-
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import pyqtSlot
 
 
 class QCall(QtGui.QListWidgetItem):

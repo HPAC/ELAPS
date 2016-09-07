@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 """Backend for running ELAPS:Mat jobs locally."""
-from __future__ import division, print_function
 
 import os
 import subprocess

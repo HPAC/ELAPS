@@ -1,10 +1,6 @@
-#!/usr/bin/env python
 """Central ELAPS:Experiment."""
-from __future__ import division, print_function
 
-from . import defines
-from . import symbolic
-from . import signature
+from __future__ import print_function
 
 import os
 import warnings
@@ -12,6 +8,10 @@ from collections import Iterable, defaultdict
 from itertools import chain
 from copy import deepcopy
 from numbers import Number
+
+from . import defines
+from . import symbolic
+from . import signature
 
 
 class Experiment(object):

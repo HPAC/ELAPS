@@ -1,13 +1,13 @@
-#!/usr/bin/env python
 """Result for an ELAPS:Experiment."""
-from __future__ import division, print_function
 
-from . import signature
-from .experiment import Experiment
+from __future__ import division
 
 from math import sqrt
 from collections import Iterable
 from copy import deepcopy
+
+from . import signature
+from .experiment import Experiment
 
 stat_funs = {
     "min": min,

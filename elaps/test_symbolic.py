@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 """Unittest for symbolic.py."""
-from __future__ import division, print_function
+
+from __future__ import division
+
+import __builtin__
+import random
+import math
+import unittest
 
 try:
     import elaps
@@ -12,11 +18,6 @@ except:
     )
 
 from elaps.symbolic import *
-
-import unittest
-import random
-import math
-import __builtin__
 
 
 class TestSymbolic(unittest.TestCase):

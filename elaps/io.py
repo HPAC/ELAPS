@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 """Utility routines to load ELAPS objects."""
-from __future__ import division, print_function
 
 from . import defines, Experiment, Report
 from .symbolic import *

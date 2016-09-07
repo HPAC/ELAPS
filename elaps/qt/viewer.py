@@ -1,12 +1,6 @@
-#!/usr/bin/env python
 """GUI for Reports."""
-from __future__ import division, print_function
 
-from .. import defines
-from .. import io as elapsio
-from ..plot import plot
-from ..report import apply_stat
-from .reportitem import QReportItem
+from __future__ import print_function
 
 import sys
 import os
@@ -17,6 +11,12 @@ from PyQt4.QtCore import pyqtSlot
 from matplotlib.backends.backend_qt4agg import (FigureCanvasQTAgg,
                                                 NavigationToolbar2QT)
 from matplotlib.figure import Figure
+
+from .. import defines
+from .. import io as elapsio
+from ..plot import plot
+from ..report import apply_stat
+from .reportitem import QReportItem
 
 
 class Viewer(QtGui.QMainWindow):
@@ -295,7 +295,7 @@ class Viewer(QtGui.QMainWindow):
     def UI_settings_load(self):
         """Load Qt settings."""
         settings = QtCore.QSettings("HPAC", "ELAPS:Viewer")
-        state = eval(str(settings.value("state", type=str)))
+        state = eval(str(settings.value("state", type=str)), {})
         self.stats_showing, self.metric_showing, self.discard_firstrep = state
         self.UI_setting += 1
         self.restoreGeometry(settings.value("geometry",

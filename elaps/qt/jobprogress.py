@@ -1,13 +1,11 @@
-#!/usr/bin/env python
 """Job progress tracker in ELAPS:PlayMat."""
-from __future__ import division, print_function
-
-from .. import defines
 
 import os
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import pyqtSlot
+
+from .. import defines
 
 
 class QJobProgress(QtGui.QDockWidget):

@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 """Backend for running ELAPS:Mat jobs through LSF."""
-from __future__ import division, print_function
 
 import subprocess
 import re

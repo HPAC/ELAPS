@@ -1,24 +1,23 @@
 #!/usr/bin/env python
 """Unittest for experiment.py."""
-from __future__ import division, print_function
+
+import os
+import random
+import glob
+import unittest
 
 try:
     import elaps
 except:
-    import os
     import sys
     sys.path.append(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     )
 
-from elaps.signature import *
+from elaps.signature import (Signature, Trans, Dim, dScalar, iData, sData,
+                             dData, cData, Ld, dWork, Lwork, Info, BasicCall)
 from elaps.symbolic import Symbol, Range, Min
 from elaps.experiment import *
-
-import unittest
-import random
-import os
-import glob
 
 
 class TestExperiment(unittest.TestCase):

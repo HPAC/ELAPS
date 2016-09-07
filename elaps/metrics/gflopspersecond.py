@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 """Performance metric in Gflops/second."""
-from __future__ import division, print_function
+
+from __future__ import division
 
 
 def metric(data, experiment, **kwargs):

@@ -1,13 +1,13 @@
-#!/usr/bin/env python
 """Simple symbolic expression engine."""
-from __future__ import division, print_function
 
-from numbers import Number
+from __future__ import division
+
+import __builtin__
 import math
+from numbers import Number
 from collections import Iterable
 from copy import deepcopy
 from inspect import isgenerator
-import __builtin__
 
 
 class Expression(object):

@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 """Time metric in milliseconds."""
-from __future__ import division, print_function
+
+from __future__ import division
 
 
 def metric(data, experiment, **kwargs):

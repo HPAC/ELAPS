@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 """Python representations of kernel signatures."""
-from __future__ import division, print_function
 
 import numbers
-import symbolic
 
+import symbolic
 
 named_attributes = ("lower", "upper", "symm", "herm", "spd", "hpd", "work")
 

@@ -1,12 +1,12 @@
-#!/usr/bin/env python
 """Plotting routines for reports."""
-from __future__ import division, print_function
 
-from . import defines
-from .report import Report, apply_stat
+from __future__ import print_function
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
+
+from . import defines
+from .report import Report, apply_stat
 
 
 def plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,

@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 """Wrapper for ELAPS:Viewer."""
-from __future__ import division, print_function
+
+import argparse
 
 from .. import defines
 from ..qt import Viewer
-
-import argparse
 
 
 def main():

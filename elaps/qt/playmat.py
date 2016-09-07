@@ -1,14 +1,6 @@
-#!/usr/bin/env python
 """GUI for Experiments."""
-from __future__ import division, print_function
 
-from .. import defines
-from .. import io as elapsio
-from .. import symbolic
-from .. import signature
-from ..experiment import Experiment
-from .call import QCall
-from .jobprogress import QJobProgress
+from __future__ import print_function
 
 import sys
 import os
@@ -17,6 +9,13 @@ import itertools
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot
+
+from .. import defines
+from .. import io as elapsio
+from .. import signature
+from ..experiment import Experiment
+from .call import QCall
+from .jobprogress import QJobProgress
 
 
 class PlayMat(QtGui.QMainWindow):
