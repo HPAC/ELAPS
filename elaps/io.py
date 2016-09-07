@@ -153,7 +153,7 @@ def load_all_samplers():
     for dirname in os.listdir(defines.samplerpath):
         filepath = os.path.join(defines.samplerpath, dirname, "info.py")
         exepath = os.path.join(defines.samplerpath, dirname, "sampler.x")
-        if os.path.isfile(filepath) and os.path.isfile(exfilepath):
+        if os.path.isfile(filepath) and os.path.isfile(exepath):
             try:
                 samplers[dirname] = load_sampler_file(filepath)
             except:
