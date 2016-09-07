@@ -105,6 +105,13 @@ class QJobProgress(QtGui.QDockWidget):
             "Rerun", actionsT, triggered=self.on_rerun
         )
         actions["rerun"].setDisabled(True)
+        actions["view"] = QtGui.QAction(
+            self.playmat.style().standardIcon(
+                QtGui.QStyle.SP_FileDialogContentsView
+            ),
+            "Open in Viewer", actionsT, triggered=self.on_open_viewer
+        )
+        actions["view"].setDisabled(True)
         actions["remove"] = QtGui.QAction(
             self.playmat.style().standardIcon(QtGui.QStyle.SP_TrashIcon),
             "Remove", actionsT, triggered=self.on_remove
@@ -113,6 +120,7 @@ class QJobProgress(QtGui.QDockWidget):
         actionsT.job = job
         actionsT.addAction(job["actions"]["kill"])
         actionsT.addAction(job["actions"]["rerun"])
+        actionsT.addAction(job["actions"]["view"])
         actionsT.addAction(job["actions"]["remove"])
         self.widget().setItemWidget(item, 3, actionsT)
 
@@ -150,10 +158,13 @@ class QJobProgress(QtGui.QDockWidget):
             if os.path.isfile(job["errorfile"]):
                 if os.path.getsize(job["errorfile"]):
                     job["stat"] = "ERROR"
+                job["actions"]["view"].setDisabled(True)
             if job["stat"] in ("ERROR", "DONE", "KILL"):
                 job["actions"]["kill"].setDisabled(True)
                 job["actions"]["rerun"].setDisabled(False)
                 job["actions"]["remove"].setDisabled(False)
+            if job["stat"] in ("RUN", "DONE"):
+                job["actions"]["view"].setDisabled(False)
 
         for itemid in range(self.widget().topLevelItemCount()):
             item = self.widget().topLevelItem(itemid)
@@ -325,7 +336,7 @@ class QJobProgress(QtGui.QDockWidget):
                 )
         self.autohide()
 
-    @pyqtSlot()
+    # @pyqtSlot()  # sender() pyqt bug
     def on_open_viewer(self):
         """Event: open job(s) in Viewer."""
         for job in self.selected_jobs():
