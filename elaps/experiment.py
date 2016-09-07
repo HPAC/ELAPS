@@ -1011,7 +1011,7 @@ class Experiment(object):
 
         # parse string
         if isinstance(along, str):
-            along = eval(along)
+            along = eval(along, {})
 
         # type check
         if not isinstance(along, int):

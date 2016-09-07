@@ -42,7 +42,8 @@ class Signature(list):
             kwargs["flops"] = kwargs["complexity"]
         if "flops" in kwargs:
             self.flopsstr = kwargs["flops"]
-            self.flops = eval("lambda %s: %s" % (lambdaargs, kwargs["flops"]))
+            self.flops = eval("lambda %s: %s" % (lambdaargs, kwargs["flops"]),
+                              {})
         for arg in self:
             arg.min = None
             arg.max = None

@@ -1,12 +1,15 @@
 """Utility routines to load ELAPS objects."""
 
-from . import defines, Experiment, Report
-from .symbolic import *
-from .signature import *
-
 import os
 import imp
 from collections import defaultdict
+
+from . import defines, Report
+import experiment
+import symbolic
+import signature
+from signature import Signature
+from experiment import Experiment
 
 
 def write_signature(sig, filepath):
@@ -17,7 +20,7 @@ def write_signature(sig, filepath):
 
 def load_signature_string(string, name=None):
     """Load a Signature from a string."""
-    sig = eval(string)
+    sig = eval(string, signature.__dict__)
     if not isinstance(sig, Signature):
         raise TypeError("Excpected a Signature but loaded a %s" % type(sig))
     if name and str(sig[0]) != name:
@@ -64,9 +67,13 @@ def write_experiment(experiment, filepath):
         fout.write(repr(experiment))
 
 
-def load_experiment_string(string):
+def load_experiment_string(string, _globals={}):
     """Load a Experiment from a string."""
-    ex = eval(string)
+    if not _globals:
+        _globals.update(symbolic.__dict__)
+        _globals.update(signature.__dict__)
+        _globals.update(experiment.__dict__)
+    ex = eval(string, _globals)
     if not isinstance(ex, Experiment):
         raise TypeError("not an Experiment")
     try:
@@ -88,7 +95,7 @@ def load_experiment(filepath):
 def load_doc_file(filepath):
     """Load a documentation."""
     with open(filepath) as fin:
-        return eval(fin.read())
+        return eval(fin.read(), {})
 
 
 def load_doc(name, _cache={}):
@@ -121,7 +128,7 @@ def load_all_docs():
 def load_sampler_file(filepath):
     """Load a Sampler from a file."""
     with open(filepath) as fin:
-        sampler = eval(fin.read())
+        sampler = eval(fin.read(), {})
     try:
         sampler["backend"] = load_backend(sampler["backend_name"])
     except:
@@ -194,13 +201,13 @@ def load_papinames():
             return self[key]
     with open(defines.papinamespath) as fin:
         return keydefaultdict(lambda key: {"short": key, "long": key},
-                              eval(fin.read()))
+                              eval(fin.read(), {}))
 
 
 def load_report(filepath, discard_first_repetitions=False):
     """Load a Report from a file."""
     with open(filepath) as fin:
-        experiment = eval(fin.readline())
+        experiment = load_experiment_string(fin.readline())
         rawdata = []
         for line in fin:
             vals = []
