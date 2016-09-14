@@ -1,4 +1,4 @@
-# double generation of Q from QR (unblocked)
+# double precision generation of Q from QR (unblocked)
 Signature(
     "dorg2r",
     Dim("m"),
@@ -8,5 +8,6 @@ Signature(
     Ld("ldA", "m"),
     dData("Tau", "k"),
     dWork("Work", "n"),
-    Info()
+    Info(),
+    flops="k * (8 * k * k + 12 * n + 6 * m * (4 * n - 1) - 3 * k * (4 * m + 4 * n + 1) - 5) / 6"
 )

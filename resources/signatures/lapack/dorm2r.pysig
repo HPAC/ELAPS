@@ -12,5 +12,6 @@ Signature(
     dData("C", "ldC * n"),
     Ld("ldC", "m"),
     dWork("Work", "n if side == 'L' else m"),
-    Info()
+    Info(),
+    flops="2 * m * n * k + k * (1 - k) * (n if side == 'L' else m)"
 )

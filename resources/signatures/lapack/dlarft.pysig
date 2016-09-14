@@ -9,5 +9,6 @@ Signature(
     Ld("ldV", "n if storev == 'C' else k"),
     dData("Tau", "k"),
     dData("T", "ldT * k"),
-    Ld("ldT", "k")
+    Ld("ldT", "k"),
+    flops="k * (k - 1) * (6 * n - 2 * k + 1)"
 )

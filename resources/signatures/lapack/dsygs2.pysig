@@ -8,5 +8,6 @@ Signature(
     Ld("ldA", "n"),
     dData("B", "ldB * n", "symm, lower if uplo == 'L' else upper"),
     Ld("ldB", "n"),
-    Info()
+    Info(),
+    flops="n * n * n + n * n - n"  # checked
 )
