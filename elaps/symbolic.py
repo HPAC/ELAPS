@@ -172,7 +172,7 @@ class Minus(Operation):
 
     def __str__(self):
         """Format as human readable."""
-        return "-" + str(self[1])
+        return "-%s" % self[1]
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
@@ -196,7 +196,7 @@ class Abs(Operation):
 
     def __str__(self):
         """Format as human readable."""
-        return "abs(" + str(self[1]) + ")"
+        return "abs(%s)" % self[1]
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
@@ -280,7 +280,7 @@ class Times(Operation):
         for i, arg in enumerate(self[1:]):
             if isinstance(arg, Plus):
                 # parentheses around sums
-                strs[i] = "(" + strs[i] + ")"
+                strs[i] = "(%s)" % strs[i]
         return " * ".join(strs)
 
     def simplify(self, **kwargs):
@@ -333,8 +333,8 @@ class Div(Operation):
         for i, arg in enumerate(self[1:]):
             if isinstance(arg, Operation):
                 # parentheses around any Operation
-                strs[i] = "(" + strs[i] + ")"
-        return strs[0] + " / " + strs[1]
+                strs[i] = "(%s)" % strs[i]
+        return "%s / %s " % strs
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
@@ -370,8 +370,8 @@ class Power(Operation):
         for i, arg in enumerate(self[1:]):
             if isinstance(arg, Operation):
                 # parentheses around any Operation
-                strs[i] = "(" + strs[i] + ")"
-        return strs[0] + " ^ " + strs[1]
+                strs[i] = "(%s)" % strs[i]
+        return "%s / %s " % strs
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
@@ -403,7 +403,7 @@ class Log(Operation):
 
     def __str__(self):
         """Format as human readable."""
-        return "log(" + str(self[1]) + ")"
+        return "log(%s)" % self[1]
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
@@ -430,7 +430,7 @@ class Floor(Operation):
 
     def __str__(self):
         """Format as human readable."""
-        return "floor(" + str(self[1]) + ")"
+        return "floor(%s)" % self[1]
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
@@ -457,7 +457,7 @@ class Ceil(Operation):
 
     def __str__(self):
         """Format as human readable."""
-        return "ceil(" + str(self[1]) + ")"
+        return "ceil(%s)" % self[1]
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
@@ -480,7 +480,7 @@ class Min(Operation):
 
     def __str__(self):
         """Format as human readable."""
-        return "min(" + ", ".join(map(str, self[1:])) + ")"
+        return "min(%s)" % ", ".join(map(str, self[1:]))
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""
@@ -524,7 +524,7 @@ class Max(Operation):
 
     def __str__(self):
         """Format as human readable."""
-        return "max(" + ", ".join(map(str, self[1:])) + ")"
+        return "max(%s)" % ", ".join(map(str, self[1:]))
 
     def simplify(self, **kwargs):
         """(Substitute in and) Simplify the operation."""

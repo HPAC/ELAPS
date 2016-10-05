@@ -20,7 +20,7 @@ class Backend(object):
         p = subprocess.Popen(["bsub"], stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         header = self.header + header
-        header += "#BSUB -J " + str(jobname) + "\n"
+        header += "#BSUB -J %s\n" % jobname
         (out, err) = p.communicate(header + script)
         match = re.search("Job <(\d+)> is submitted to queue <.*>\.", out)
         if not match:

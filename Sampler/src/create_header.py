@@ -16,7 +16,7 @@ def main():
         print("#define", var, os.environ[var])
     print()
     for f in os.environ["KERNEL_HEADERS"].split():
-        print("#include \"" + f + "\"")
+        print("#include \"%s\"" % f)
     print()
     print("#endif /* KERNELS_H */")
 

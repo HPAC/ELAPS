@@ -98,8 +98,8 @@ class Report(object):
 
         def getints(count, iterator=iter(self.rawdata)):
             try:
-                values = iterator.next()
-            except:
+                values = next(iterator)
+            except StopIteration:
                 self.truncated = True
                 return None
             try:

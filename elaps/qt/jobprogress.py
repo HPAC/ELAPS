@@ -41,9 +41,7 @@ class QJobProgress(QtGui.QDockWidget):
             customContextMenuRequested=self.on_rightclick
         ))
         self.widget().keyPressEvent = self.on_keypress
-        self.widget().setHeaderLabels(
-            ("job", "progress", "status", "actions")
-        )
+        self.widget().setHeaderLabels(("job", "progress", "status", "actions"))
 
     def resize_columns(self):
         """Resize all columns."""
@@ -78,9 +76,7 @@ class QJobProgress(QtGui.QDockWidget):
         }
 
         # item
-        item = QtGui.QTreeWidgetItem(
-            (job["name"], "", "pending", "")
-        )
+        item = QtGui.QTreeWidgetItem((job["name"], "", "pending", ""))
         self.widget().addTopLevelItem(item)
 
         job["item"] = item
@@ -296,7 +292,7 @@ class QJobProgress(QtGui.QDockWidget):
                  if job["stat"] in ("PEND", "RUN")]
         self.playmat.UI_dialog(
             "question", "Confirm job termination",
-            "I will kill the following jobs: " + " ".join(names),
+            "I will kill the following jobs: " + ", ".join(names),
             {"Ok": (self.on_killall_confirmed, ()), "Cancel": None}
         )
 
