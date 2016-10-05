@@ -5,7 +5,7 @@ import os
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import pyqtSlot
 
-from .. import defines
+from elaps import defines
 
 
 class QJobProgress(QtGui.QDockWidget):

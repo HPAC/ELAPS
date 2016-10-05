@@ -3,9 +3,9 @@
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import pyqtSlot
 
-from .. import signature
-from .. import io as elapsio
-from .dataarg import QDataArg
+import elaps
+from elaps import signature
+from elaps.qt.dataarg import QDataArg
 
 
 class QCall(QtGui.QListWidgetItem):
@@ -140,7 +140,7 @@ class QCall(QtGui.QListWidgetItem):
         assert(isinstance(self.call, signature.BasicCall))
         sig = self.call.sig
         try:
-            doc = elapsio.load_doc(self.call[0])
+            doc = elaps.io.load_doc(self.call[0])
         except:
             doc = None
         if doc:

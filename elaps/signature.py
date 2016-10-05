@@ -2,7 +2,7 @@
 
 import numbers
 
-import symbolic
+from elaps import symbolic
 
 named_attributes = ("lower", "upper", "symm", "herm", "spd", "hpd", "work")
 

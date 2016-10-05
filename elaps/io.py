@@ -4,12 +4,11 @@ import os
 import imp
 from collections import defaultdict
 
-from . import defines, Report
-import experiment
-import symbolic
-import signature
-from signature import Signature
-from experiment import Experiment
+from elaps import defines
+from elaps import symbolic
+from elaps import signature
+from elaps import experiment
+from elaps import report
 
 
 def write_signature(sig, filepath):
@@ -21,7 +20,7 @@ def write_signature(sig, filepath):
 def load_signature_string(string, name=None):
     """Load a Signature from a string."""
     sig = eval(string, signature.__dict__)
-    if not isinstance(sig, Signature):
+    if not isinstance(sig, signature.Signature):
         raise TypeError("Excpected a Signature but loaded a %s" % type(sig))
     if name and str(sig[0]) != name:
         raise IOError("Routine mismatch for Signature %s" % name)
@@ -74,7 +73,7 @@ def load_experiment_string(string, _globals={}):
         _globals.update(signature.__dict__)
         _globals.update(experiment.__dict__)
     ex = eval(string, _globals)
-    if not isinstance(ex, Experiment):
+    if not isinstance(ex, experiment.Experiment):
         raise TypeError("not an Experiment")
     try:
         ex.sampler["backend"] = None
@@ -218,13 +217,13 @@ def load_report(filepath, discard_first_repetitions=False):
                     pass
                 vals.append(val)
             rawdata.append(vals)
-    report = Report(experiment, rawdata)
+    rep = report.Report(experiment, rawdata)
     if discard_first_repetitions:
-        return report.discard_first_repetitions()
+        return rep.discard_first_repetitions()
     errfile = "%s.%s" % (filepath[:-4], defines.error_extension)
     if os.path.isfile(errfile) and os.path.getsize(errfile):
-        report.error = True
-    return report
+        rep.error = True
+    return rep
 
 
 def load_metric_file(filepath):

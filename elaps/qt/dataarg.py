@@ -6,7 +6,7 @@ from numbers import Number
 
 from PyQt4 import QtCore, QtGui
 
-from .. import defines
+from elaps import defines
 
 
 class QDataArg(QtGui.QLineEdit):

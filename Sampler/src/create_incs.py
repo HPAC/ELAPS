@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 """Create include files for the Sampler."""
-from __future__ import division, print_function
+from __future__ import print_function
 
 import sys
 import os
 import re
 from time import time
-from __builtin__ import intern  # fix for pyflake error
 
 
 def main():

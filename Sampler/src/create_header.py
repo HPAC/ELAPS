@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """Dynamic include header."""
-from __future__ import division, print_function
+from __future__ import print_function
 
 import os
 

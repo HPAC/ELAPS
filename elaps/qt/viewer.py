@@ -12,11 +12,10 @@ from matplotlib.backends.backend_qt4agg import (FigureCanvasQTAgg,
                                                 NavigationToolbar2QT)
 from matplotlib.figure import Figure
 
-from .. import defines
-from .. import io as elapsio
-from ..plot import plot
-from ..report import apply_stat
-from .reportitem import QReportItem
+import elaps
+from elaps import defines
+from elaps import plot
+from elaps.qt.reportitem import QReportItem
 
 
 class Viewer(QtGui.QMainWindow):
@@ -39,8 +38,8 @@ class Viewer(QtGui.QMainWindow):
         self.colors = defines.colors[::-1]
 
         # load some stuff
-        self.papi_names = elapsio.load_papinames()
-        self.metrics = elapsio.load_all_metrics()
+        self.papi_names = elaps.io.load_papinames()
+        self.metrics = elaps.io.load_all_metrics()
 
         # set up UI
         self.UI_init()
@@ -348,7 +347,7 @@ class Viewer(QtGui.QMainWindow):
 
         # load report
         try:
-            report = elapsio.load_report(filename)
+            report = elaps.io.load_report(filename)
         except:
             if UI_alert:
                 self.UI_alert("ERROR: Can't load %r" % filename)
@@ -366,7 +365,7 @@ class Viewer(QtGui.QMainWindow):
             metric_name = counter_info["short"]
             if metric_name in self.metrics:
                 continue
-            self.metrics[metric_name] = elapsio.get_counter_metric(
+            self.metrics[metric_name] = elaps.io.get_counter_metric(
                 counter_name, metric_name, counter_info["long"]
             )
 
@@ -510,8 +509,8 @@ class Viewer(QtGui.QMainWindow):
                     colors.append(UI_item.color)
 
         xlabel = " = ".join(map(str, range_vars))
-        plot(plot_data, self.stats_showing, colors, {}, xlabel, metric.name,
-             {}, self.UI_figure)
+        plot.plot(plot_data, self.stats_showing, colors, {}, xlabel,
+                  metric.name, {}, self.UI_figure)
         self.UI_canvas.draw()
         self.UI_setting -= 1
 

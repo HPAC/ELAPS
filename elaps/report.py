@@ -6,8 +6,8 @@ from math import sqrt
 from collections import Iterable
 from copy import deepcopy
 
-from . import signature
-from .experiment import Experiment
+from elaps import signature
+from elaps.experiment import Experiment
 
 stat_funs = {
     "min": min,

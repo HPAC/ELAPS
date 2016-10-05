@@ -4,14 +4,14 @@ from __future__ import print_function
 
 import os
 import warnings
-from collections import Iterable, defaultdict
+from collections import defaultdict
 from itertools import chain
 from copy import deepcopy
 from numbers import Number
 
-from . import defines
-from . import symbolic
-from . import signature
+from elaps import defines
+from elaps import symbolic
+from elaps import signature
 
 
 class Experiment(object):
