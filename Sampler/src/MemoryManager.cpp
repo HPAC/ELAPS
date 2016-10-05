@@ -11,10 +11,13 @@ using namespace std;
 
 MemoryManager::MemoryManager(size_t alignment_, size_t first_offset_)
 : alignment(alignment_), dynamic_first_offset(first_offset_),
-  dynamic_mem(first_offset_)
+    dynamic_needed_total(first_offset_), dynamic_size(0)
 {
     // initialize random number generator
     srand(static_cast<unsigned int>(time(NULL)));
+
+    // malloc empty dynamic memory
+    dynamic_mem = new char[dynamic_size];
 }
 
 MemoryManager::~MemoryManager() {
@@ -196,17 +199,9 @@ size_t MemoryManager::dynamic_register(size_t size) {
     // compute new size of needed memory
     dynamic_needed_curr = id + size * sizeof(T);
 
-    // check if resize is required
-    const size_t oldsize = dynamic_mem.size();
-    const size_t newsize = dynamic_needed_curr + alignment;
-    if (newsize > oldsize) {
+    if (dynamic_needed_curr > dynamic_needed_total)
+        dynamic_needed_total = dynamic_needed_curr;
 
-        // extend size
-        dynamic_mem.resize(newsize);
-
-        // randomize with currently requested type
-        randomize<T>(&dynamic_mem[oldsize], (newsize - oldsize) / sizeof(T));
-    }
     return id;
 }
 
@@ -230,9 +225,24 @@ template <> size_t MemoryManager::dynamic_register<void>(size_t size) {
 }
 
 void *MemoryManager::dynamic_get(size_t id) {
-    return static_cast<void *>(&dynamic_mem[id]);
+    // need to allocate (more) Dynamic Memory?
+    if (dynamic_size < dynamic_needed_total) {
+
+        // free old memory
+        delete dynamic_mem;
+
+        // set new size
+        dynamic_size = dynamic_needed_total;
+
+        // allocate new memory 
+        dynamic_mem = new char[dynamic_size];
+
+        // randomize new memory
+        randomize<int>(dynamic_mem, dynamic_size);
+    }
+    return static_cast<void *>(dynamic_mem + id);
 }
 
 void MemoryManager::dynamic_reset() {
-    dynamic_mem.resize(0);
+    delete dynamic_mem;
 }
