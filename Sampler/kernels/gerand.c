@@ -1,6 +1,26 @@
 #include "gerand.h"
 
 #include <stdlib.h>
+#include <limits.h>
+
+
+/** Randomize an char matrix.
+ * Random values taken from \f$\{0, 1, \ldots, {\tt UCHAR\_MAX} - 1\}\f$.
+ *
+ * \param m Number of rows.
+ * \param n Number of columns.
+ * \param A Matrix pointer.
+ * \param ldA Leading dimension.
+ */
+void gerand(const int *m, const int *n, char *A, const int *ldA) {
+	int i, j;
+	#ifdef _OPENMP
+	#pragma omp parallel for private(i,j) schedule(static)
+	#endif
+	for (j = 0; j < *n; j++)
+		for (i = 0; i < *m; i++)
+			A[i + j * *ldA] = rand() % UCHAR_MAX;
+}
 
 /** Randomize an integer matrix.
  * Random values taken from \f$\{0, 1, \ldots, \min({\tt RAND\_MAX}, {\tt
@@ -13,6 +33,9 @@
  */
 void igerand(const int *m, const int *n, int *A, const int *ldA) {
     int i, j;
+		#ifdef _OPENMP
+		#pragma omp parallel for private(i,j) schedule(static)
+		#endif
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
             A[i + j * *ldA] = rand() % (*m * *n);
@@ -28,6 +51,9 @@ void igerand(const int *m, const int *n, int *A, const int *ldA) {
  */
 void sgerand(const int *m, const int *n, float *A, const int *ldA) {
     int i, j;
+		#ifdef _OPENMP
+		#pragma omp parallel for private(i,j) schedule(static)
+		#endif
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
             A[i + j * *ldA] = rand() / (float) RAND_MAX;
@@ -43,6 +69,9 @@ void sgerand(const int *m, const int *n, float *A, const int *ldA) {
  */
 void dgerand(const int *m, const int *n, double *A, const int *ldA) {
     int i, j;
+		#ifdef _OPENMP
+		#pragma omp parallel for private(i,j) schedule(static)
+		#endif
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++)
             A[i + j * *ldA] = rand() / (double) RAND_MAX;
@@ -58,6 +87,9 @@ void dgerand(const int *m, const int *n, double *A, const int *ldA) {
  */
 void cgerand(const int *m, const int *n, float *A, const int *ldA) {
     int i, j;
+		#ifdef _OPENMP
+		#pragma omp parallel for private(i,j) schedule(static)
+		#endif
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++) {
             A[2 * (i + j * *ldA)] = rand() / (float) RAND_MAX;
@@ -75,6 +107,9 @@ void cgerand(const int *m, const int *n, float *A, const int *ldA) {
  */
 void zgerand(const int *m, const int *n, double *A, const int *ldA) {
     int i, j;
+		#ifdef _OPENMP
+		#pragma omp parallel for private(i,j) schedule(static)
+		#endif
     for (j = 0; j < *n; j++)
         for (i = 0; i < *m; i++) {
             A[2 * (i + j * *ldA)] = rand() / (double) RAND_MAX;
