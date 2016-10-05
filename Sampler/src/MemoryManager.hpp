@@ -63,13 +63,22 @@ class MemoryManager {
         std::map<const std::string, std::vector<std::string> > named_aliases;
 
         /** Dynamic Memory buffer. */
-        std::vector<char> dynamic_mem;
+        char *dynamic_mem;
+
+        /** Size of the current Dynamic Memory `buffer_mem`. */
+        size_t dynamic_size;
 
         /** Amount of Dynamic Memory already occupied by the current call.
          * This is needed to ensure there is no aliasing between Dynamic Memory
          * buffers within a kernel call.
          */
         std::size_t dynamic_needed_curr;
+
+        /** Amount of Dynamic Memory needed by any currently registered call.
+         * This is needed to allocate enough memory before handing out pointers
+         * to Dynamic Memory.
+         */
+        size_t dynamic_needed_total;
 
         /** Randomize a buffer.
          * Fill a buffer with random elements of a data type \p T.  Uses
@@ -78,7 +87,7 @@ class MemoryManager {
          * \tparam T    Data type for which to generate random numbers.
          * \param data  Buffer of type \p T.
          * \param size  Number of elements of type \p T to randomize.
-        */
+         */
         template <typename T> void randomize(void *data, std::size_t size);
 
         /** Prohibit default copy constructor */
