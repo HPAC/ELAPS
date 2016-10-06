@@ -11,19 +11,20 @@ using namespace std;
 
 MemoryManager::MemoryManager(size_t alignment_, size_t first_offset_)
 : alignment(alignment_), dynamic_first_offset(first_offset_),
-    dynamic_needed_total(first_offset_), dynamic_size(0)
+    dynamic_needed_total(first_offset_), dynamic_size(0), dynamic_mem(0)
 {
     // initialize random number generator
     srand(static_cast<unsigned int>(time(NULL)));
-
-    // malloc empty dynamic memory
-    dynamic_mem = new char[dynamic_size];
 }
 
 MemoryManager::~MemoryManager() {
     // delete named variables
     while (named_mem.size())
         named_free(named_mem.begin()->first);
+
+    // delete dynamic memory
+    if (dynamic_mem)
+        delete dynamic_mem;
 }
 
 /** Explicit \ref randomize instantiation for `char`.
@@ -224,12 +225,15 @@ template <> size_t MemoryManager::dynamic_register<void>(size_t size) {
     return dynamic_register<char>(size);
 }
 
+#include <stdio.h>
+
 void *MemoryManager::dynamic_get(size_t id) {
-    // need to allocate (more) Dynamic Memory?
+    // need to allocate (more) dynamic memory?
     if (dynamic_size < dynamic_needed_total) {
 
         // free old memory
-        delete dynamic_mem;
+        if (dynamic_mem)
+            delete dynamic_mem;
 
         // set new size
         dynamic_size = dynamic_needed_total;
@@ -238,8 +242,9 @@ void *MemoryManager::dynamic_get(size_t id) {
         dynamic_mem = new char[dynamic_size];
 
         // randomize new memory
-        randomize<int>(dynamic_mem, dynamic_size);
+        randomize<int>(dynamic_mem, dynamic_size / sizeof(int));
     }
+
     return static_cast<void *>(dynamic_mem + id);
 }
 
