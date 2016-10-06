@@ -1,4 +1,7 @@
 #include "MemoryManager.hpp"
+extern "C"{
+#include "../kernels/gerand.h"
+}
 
 #include <iostream>
 #include <climits>
@@ -31,8 +34,8 @@ MemoryManager::~MemoryManager() {
  * Random values taken from \f$\{0, 1, \ldots, {\tt UCHAR\_MAX} - 1\}\f$.
  */
 template <> void MemoryManager::randomize<char>(void *data, size_t size) {
-    for (size_t i = 0; i < size; i++)
-        static_cast<unsigned char *>(data)[i] = rand() % UCHAR_MAX;
+    const int one = 1;
+    gerand((const int*) &size, &one, (char*) data, &one);
 }
 
 /** Explicit \ref randomize instantiation for `int`.
@@ -40,38 +43,40 @@ template <> void MemoryManager::randomize<char>(void *data, size_t size) {
  * INT\_MAX}) - 1\}\f$.
  */
 template <> void MemoryManager::randomize<int>(void *data, size_t size) {
-    for (size_t i = 0; i < size; i++)
-        static_cast<unsigned int *>(data)[i] = rand() % INT_MAX;
+    const int one = 1;
+    igerand((const int*) &size, &one, (int*) data, &one);
 }
 
 /** Explicit \ref randomize instantiation for `float`.
  * Random values taken from \f$[0, 1)\f$.
  */
 template <> void MemoryManager::randomize<float>(void *data, size_t size) {
-    for (size_t i = 0; i < size; i++)
-        static_cast<float *>(data)[i] = rand() / static_cast<float>(RAND_MAX);
+    const int one = 1;
+    sgerand((const int*) &size, &one, (float*) data, &one);
 }
 
 /** Explicit \ref randomize instantiation for `double`.
  * Random values taken from \f$[0, 1)\f$.
  */
 template <> void MemoryManager::randomize<double>(void *data, size_t size) {
-    for (size_t i = 0; i < size; i++)
-        static_cast<double *>(data)[i] = rand() / static_cast<double>(RAND_MAX);
+    const int one = 1;
+    dgerand((const int*) &size, &one, (double*) data, &one);
 }
 
 /** Explicit \ref randomize instantiation for `complex<float>`.
  * Random values taken from \f$[0, 1) + [0, 1) i\f$.
  */
 template <> void MemoryManager::randomize<complex<float> >(void *data, size_t size) {
-    randomize<float>(data, 2 * size);
+    const int one = 1;
+    cgerand((const int*) &size, &one, (float*) data, &one);
 }
 
 /** Explicit \ref randomize instantiation for `complex<double>`.
  * Random values taken from \f$[0, 1) + [0, 1) i\f$.
  */
 template <> void MemoryManager::randomize<complex<double> >(void *data, size_t size) {
-    randomize<double>(data, 2 * size);
+    const int one = 1;
+    zgerand((const int*) &size, &one, (double*) data, &one);
 }
 
 size_t MemoryManager::static_register(const void *value, size_t size) {
