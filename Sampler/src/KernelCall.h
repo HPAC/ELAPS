@@ -11,14 +11,14 @@ extern "C" {
 typedef struct {
 #ifdef OPENMP_ENABLED
     /** Call is in parallel with next call. */
-    char parallel;
+    unsigned char parallel;
 
     /** Call is sequential before the next in a parallel region. */
-    char sequential;
+    unsigned char sequential;
 #endif
 
     /** Number of arguments (including routine name). */
-    char argc;
+    unsigned char argc;
 
     /** Function pointer. */
     void (*fptr)();
