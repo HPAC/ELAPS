@@ -19,7 +19,7 @@ void gerand(const int *m, const int *n, char *A, const int *ldA) {
 	#endif
 	for (j = 0; j < *n; j++)
 		for (i = 0; i < *m; i++)
-			A[i + j * *ldA] = rand() % UCHAR_MAX;
+			A[i + j * *ldA] = (char) (rand() % UCHAR_MAX);
 }
 
 /** Randomize an integer matrix.

@@ -193,9 +193,6 @@ class MemoryManager {
          * \param id  Id of the buffer as returned by \ref dynamic_register.
          */
         void *dynamic_get(std::size_t id);
-
-        /** Reset the total Dynamic Buffer size to 0 bytes. */
-        void dynamic_reset();
 };
 
 #endif /* MEMORYMANAGER_HPP */
