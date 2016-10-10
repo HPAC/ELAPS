@@ -36,7 +36,7 @@ MemoryManager::~MemoryManager() {
 template <> void MemoryManager::randomize<char>(void *data, size_t size) {
     const int one = 1;
     const int count = static_cast<int>(size);
-    gerand(&count, &one, static_cast<char *>(data), &one);
+    gerand(&one, &count, static_cast<char *>(data), &one);
 }
 
 /** Explicit \ref randomize instantiation for `int`.
@@ -46,7 +46,7 @@ template <> void MemoryManager::randomize<char>(void *data, size_t size) {
 template <> void MemoryManager::randomize<int>(void *data, size_t size) {
     const int one = 1;
     const int count = static_cast<int>(size);
-    igerand(&count, &one, static_cast<int *>(data), &one);
+    igerand(&one, &count, static_cast<int *>(data), &one);
 }
 
 /** Explicit \ref randomize instantiation for `float`.
@@ -55,7 +55,7 @@ template <> void MemoryManager::randomize<int>(void *data, size_t size) {
 template <> void MemoryManager::randomize<float>(void *data, size_t size) {
     const int one = 1;
     const int count = static_cast<int>(size);
-    sgerand(&count, &one, static_cast<float *>(data), &one);
+    sgerand(&one, &count, static_cast<float *>(data), &one);
 }
 
 /** Explicit \ref randomize instantiation for `double`.
@@ -64,7 +64,7 @@ template <> void MemoryManager::randomize<float>(void *data, size_t size) {
 template <> void MemoryManager::randomize<double>(void *data, size_t size) {
     const int one = 1;
     const int count = static_cast<int>(size);
-    dgerand(&count, &one, static_cast<double *>(data), &one);
+    dgerand(&one, &count, static_cast<double *>(data), &one);
 }
 
 /** Explicit \ref randomize instantiation for `complex<float>`.
@@ -73,7 +73,7 @@ template <> void MemoryManager::randomize<double>(void *data, size_t size) {
 template <> void MemoryManager::randomize<complex<float> >(void *data, size_t size) {
     const int one = 1;
     const int count = static_cast<int>(size);
-    cgerand(&count, &one, static_cast<float *>(data), &one);
+    cgerand(&one, &count, static_cast<float *>(data), &one);
 }
 
 /** Explicit \ref randomize instantiation for `complex<double>`.
@@ -82,7 +82,7 @@ template <> void MemoryManager::randomize<complex<float> >(void *data, size_t si
 template <> void MemoryManager::randomize<complex<double> >(void *data, size_t size) {
     const int one = 1;
     const int count = static_cast<int>(size);
-    zgerand(&count, &one, static_cast<double *>(data), &one);
+    zgerand(&one, &count, static_cast<double *>(data), &one);
 }
 
 size_t MemoryManager::static_register(const void *value, size_t size) {
