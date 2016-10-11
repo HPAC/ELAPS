@@ -1499,6 +1499,8 @@ class PlayMat(QtGui.QMainWindow):
         callid = self.UI_calls.currentRow()
         if callid == -1:
             callid = len(self.experiment.calls)
+        else:
+            callid += 1
         self.experiment.calls.insert(callid, [""])
         self.UI_submit_setenabled()
         self.UI_calls_set()
