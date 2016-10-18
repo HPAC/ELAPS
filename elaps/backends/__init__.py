@@ -2,3 +2,4 @@
 
 import local
 import lsf
+import slurm

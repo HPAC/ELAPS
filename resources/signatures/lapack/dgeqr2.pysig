@@ -7,5 +7,6 @@ Signature(
     Ld("ldA", "m"),
     dData("Tau", "min(m, n)"),
     dWork("Work", "n"),
-    Info()
+    Info(),
+    flops="min(m, n) * (8 * min(m, n) * min(m, n) - 3 * (4 * m + 4 * n + 3) * min(m, n) + 6 * m * (4 * n + 1) + 12 * n + 55) / 6"
 )

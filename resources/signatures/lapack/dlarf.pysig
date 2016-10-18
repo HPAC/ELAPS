@@ -1,0 +1,14 @@
+# double precision apply elementary reflector
+Signature(
+    "dlarf",
+    Side(),
+    Dim("m"),
+    Dim("n"),
+    dData("V", "1 + ((m if side == 'L' else n) - 1) * abs(incV)"),
+    Inc("incV"),
+    dScalar("Tau"),
+    dData("C", "ldC * n"),
+    Ld("ldC", "m"),
+    dWork("Work", "n if side == 'L' else m"),
+    flops="4 * m * n"
+)

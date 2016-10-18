@@ -1,0 +1,10 @@
+# double precision generate elementary reflector
+Signature(
+    "dlarfg",
+    Dim("n"),
+    dScalar(),
+    dData("X", "1 + (n - 2) * abs(incX)"),
+    Inc("incX"),
+    dScalar("Tau"),
+    flops="3 * n + 9"
+)
