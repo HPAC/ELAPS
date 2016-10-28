@@ -46,9 +46,17 @@ class Expression(object):
         """Other * Expression ."""
         return Times(other, self)
 
+    def __div__(self, other):
+        """Expression / Other ."""
+        return Div(self, other)
+
     def __truediv__(self, other):
         """Expression / Other ."""
         return Div(self, other)
+
+    def __rdiv__(self, other):
+        """Other / Expression ."""
+        return Div(other, self)
 
     def __rtruediv__(self, other):
         """Other / Expression ."""
