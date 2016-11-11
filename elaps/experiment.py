@@ -122,7 +122,7 @@ class Experiment(object):
                 self.update_vary(name)
                 with_ = list(self.vary[name]["with"])
                 if len(with_) == 1:
-                    name += "_%s" + with_[0]
+                    name += "_%s" % with_[0]
                 elif len(with_) > 1:
                     name += "_(%s)" % ",".join(with_)
                 call[argid] = name
