@@ -700,6 +700,7 @@ class PlayMat(QtGui.QMainWindow):
     def experiment_new(self):
         """Reset Experiment."""
         self.experiment_set(Experiment())
+        self.reportname_set()
         self.experiment.calls.append([""])
         self.log("Reset Experiment")
 
@@ -755,6 +756,13 @@ class PlayMat(QtGui.QMainWindow):
             self.reportname = name
         else:
             self.reportname = defines.default_reportname
+            i = 0
+            while os.path.exists(os.path.join(defines.reportpath, "%s.%s" %
+                                              (self.reportname,
+                                               defines.report_extension))):
+                i += 1
+                self.reportname = defines.default_reportname + str(i)
+
         self.UI_reportname_set()
 
     # viewer
