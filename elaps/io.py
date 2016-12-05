@@ -1,10 +1,9 @@
-#!/usr/bin/env python
 """Utility routines to load ELAPS objects."""
 from __future__ import division, print_function
 
-from . import defines, Experiment, Report
-from .symbolic import *
-from .signature import *
+from elaps import defines, Experiment, Report
+from elaps.symbolic import *
+from elaps.signature import *
 
 import os
 import imp

@@ -1,9 +1,8 @@
-#!/usr/bin/env python
 """Result for an ELAPS:Experiment."""
 from __future__ import division, print_function
 
-from . import signature
-from .experiment import Experiment
+from elaps import signature
+from elaps.experiment import Experiment
 
 from math import sqrt
 from collections import Iterable

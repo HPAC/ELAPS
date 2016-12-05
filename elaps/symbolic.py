@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Simple symbolic expression engine."""
 from __future__ import division, print_function
 

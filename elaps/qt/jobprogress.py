@@ -1,8 +1,7 @@
-#!/usr/bin/env python
 """Job progress tracker in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
-from .. import defines
+from elaps import defines
 
 import os
 

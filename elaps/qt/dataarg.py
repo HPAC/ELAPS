@@ -1,8 +1,7 @@
-#!/usr/bin/env python
 """Representation of data arguments in QCalls in ELAPS:PlayMat."""
 from __future__ import division, print_function
 
-from .. import defines
+from elaps import defines
 
 from numbers import Number
 

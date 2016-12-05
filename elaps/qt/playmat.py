@@ -1,14 +1,11 @@
-#!/usr/bin/env python
 """GUI for Experiments."""
 from __future__ import division, print_function
 
-from .. import defines
-from .. import io as elapsio
-from .. import symbolic
-from .. import signature
-from ..experiment import Experiment
-from .call import QCall
-from .jobprogress import QJobProgress
+import elaps
+from elaps import defines, symbolic, signature
+from elaps.experiment import Experiment
+from elaps.qt.call import QCall
+from elaps.qt.jobprogress import QJobProgress
 
 import sys
 import os
@@ -32,13 +29,13 @@ class PlayMat(QtGui.QMainWindow):
             self.Qapp.viewer = None
         self.Qapp.playmat = self
         QtGui.QMainWindow.__init__(self)
-        self.samplers = elapsio.load_all_samplers()
+        self.samplers = elaps.io.load_all_samplers()
         if not self.samplers:
             self.alert("ERROR: No Samplers found!")
             sys.exit()
         self.docs = {}
         self.sigs = {}
-        self.papi_names = elapsio.load_papinames()
+        self.papi_names = elaps.io.load_papinames()
         self.last_filebase = None
 
         # set up UI
@@ -689,7 +686,7 @@ class PlayMat(QtGui.QMainWindow):
         # own Signatures
         newcalls = []
         for call in ex.calls:
-            sig = elapsio.load_signature(call[0])
+            sig = elaps.io.load_signature(call[0])
             if sig:
                 newcalls.append(sig(*call[1:]))
             else:
@@ -707,7 +704,7 @@ class PlayMat(QtGui.QMainWindow):
     def experiment_qt_load(self):
         """Load Experiment from Qt setting."""
         settings = QtCore.QSettings("HPAC", "ELAPS:PlayMat")
-        self.experiment_set(elapsio.load_experiment_string(str(
+        self.experiment_set(elaps.io.load_experiment_string(str(
             settings.value("Experiment", type=str)
         )))
         self.reportname_set(str(settings.value("reportname", type=str)))
@@ -715,14 +712,14 @@ class PlayMat(QtGui.QMainWindow):
 
     def experiment_load(self, filename):
         """Load Experiment from a file."""
-        ex = elapsio.load_experiment(filename)
+        ex = elaps.io.load_experiment(filename)
         self.experiment_set(ex)
         self.reportname_set(filename=filename)
         self.log("Loaded Experiment from %r." % os.path.relpath(filename))
 
     def experiment_write(self, filename):
         """Write Experiment to a file."""
-        elapsio.wrte_experiment(self.experiment, filename)
+        elaps.io.wrte_experiment(self.experiment, filename)
         self.log("Written Experiment to %r." % os.path.relpath(filename))
 
     def experiment_infer_update_set(self, callid=None):
@@ -1143,7 +1140,7 @@ class PlayMat(QtGui.QMainWindow):
         if filebase[-4:] == "." + defines.experiment_extension:
             filebase = filebase[:-4]
         filename = "%s.%s" % (filebase, defines.experiment_extension)
-        elapsio.write_experiment(self.experiment, filename)
+        elaps.io.write_experiment(self.experiment, filename)
 
     @pyqtSlot()
     def on_viewer_start(self):
@@ -1416,7 +1413,7 @@ class PlayMat(QtGui.QMainWindow):
             return
         self.undo_stack_push()
         try:
-            sig = elapsio.load_signature(value)
+            sig = elaps.io.load_signature(value)
             try:
                 # prepare call
                 call = sig()

@@ -1,9 +1,8 @@
-#!/usr/bin/env python
 """Plotting routines for reports."""
 from __future__ import division, print_function
 
-from . import defines
-from .report import Report, apply_stat
+from elaps import defines
+from elaps.report import Report, apply_stat
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ELAPS package wide constants."""
 from __future__ import division, print_function
 

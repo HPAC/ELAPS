@@ -1,12 +1,11 @@
-#!/usr/bin/env python
 """GUI for Reports."""
 from __future__ import division, print_function
 
-from .. import defines
-from .. import io as elapsio
-from ..plot import plot
-from ..report import apply_stat
-from .reportitem import QReportItem
+import elaps
+from elaps import defines
+from elaps.plot import plot
+from elaps.report import apply_stat
+from elaps.qt.reportitem import QReportItem
 
 import sys
 import os
@@ -39,8 +38,8 @@ class Viewer(QtGui.QMainWindow):
         self.colors = defines.colors[::-1]
 
         # load some stuff
-        self.papi_names = elapsio.load_papinames()
-        self.metrics = elapsio.load_all_metrics()
+        self.papi_names = elaps.io.load_papinames()
+        self.metrics = elaps.io.load_all_metrics()
 
         # set up UI
         self.UI_init()
@@ -348,7 +347,7 @@ class Viewer(QtGui.QMainWindow):
 
         # load report
         try:
-            report = elapsio.load_report(filename)
+            report = elaps.io.load_report(filename)
         except:
             if UI_alert:
                 self.UI_alert("ERROR: Can't load %r" % filename)
@@ -366,7 +365,7 @@ class Viewer(QtGui.QMainWindow):
             metric_name = counter_info["short"]
             if metric_name in self.metrics:
                 continue
-            self.metrics[metric_name] = elapsio.get_counter_metric(
+            self.metrics[metric_name] = elaps.io.get_counter_metric(
                 counter_name, metric_name, counter_info["long"]
             )
 
