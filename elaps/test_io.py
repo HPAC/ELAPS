@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """Unittest for io.py."""
-from __future__ import division, print_function
+
+import glob
+import unittest
 
 try:
     import elaps
@@ -12,11 +14,8 @@ except:
     )
 
 from elaps.io import *
-from elaps.signature import *
+from elaps.signature import Signature, Dim, sData
 from elaps.experiment import Experiment
-
-import unittest
-import glob
 
 
 class TestLoaders(unittest.TestCase):

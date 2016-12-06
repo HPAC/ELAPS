@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 """Report list entry in the Viewer."""
-from __future__ import division, print_function
 
 import os
 

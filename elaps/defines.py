@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 """ELAPS package wide constants."""
-from __future__ import division, print_function
 
 import os
 from random import randint
@@ -55,7 +53,7 @@ plot_styles = {
 # PlayMat
 viz_scale = 100
 default_dim = 1000
-default_reportname = "default"
+default_reportname = "untitled"
 jobprogress_timeout = 1000
 truncatedreload_timeout = 5000
 github_url = "https://github.com/HPAC/ELAPS/"

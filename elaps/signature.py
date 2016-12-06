@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 """Python representations of kernel signatures."""
-from __future__ import division, print_function
 
 import numbers
-import symbolic
 
+from elaps import symbolic
 
 named_attributes = ("lower", "upper", "symm", "herm", "spd", "hpd", "work")
 
@@ -98,8 +96,7 @@ class Signature(list):
 
     def __str__(self):
         """Format as human readable."""
-        return (self[0].name + "(" +
-                ", ".join(arg.name for arg in self[1:]) + ")")
+        return "%s(%s)" % (self[0], ", ".join(arg.name for arg in self[1:]))
 
     def __repr__(self):
         """Format as python parsable string."""
@@ -171,7 +168,7 @@ class BasicCall(list):
                 args.append("[%s]" % arg[0])
             else:
                 args.append(str(arg))
-        return str(self[0]) + "(" + ", ".join(args) + ")"
+        return "%s(%s)" % (self[0], ", ".join(args))
 
     def __repr__(self):
         """Format as python parsable string."""
@@ -501,7 +498,7 @@ class Data(ArgWithMin):
     def format_sampler(self, val):
         """Format surrounded by [] for the sampler."""
         if isinstance(val, int):
-            return "[" + str(val) + "]"
+            return "[%s]" % val
         return val
 
 
@@ -515,7 +512,7 @@ def _create_Data(classname, typename):
             2x space (for real and complex parts).
             """
             if isinstance(val, int):
-                return "[" + str(2 * val) + "]"
+                return "[%s]" % (2 * val)
             return val
         attributes["format_sampler"] = format_sampler
     globals()[classname] = type(classname, (Data,), attributes)

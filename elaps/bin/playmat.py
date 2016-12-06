@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 """Wrapper for ELAPS:PlayMat."""
-from __future__ import division, print_function
+
+import argparse
 
 from .. import defines
 from ..qt import PlayMat
-
-import argparse
 
 
 def main():

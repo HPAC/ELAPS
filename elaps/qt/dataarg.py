@@ -1,12 +1,12 @@
-#!/usr/bin/env python
 """Representation of data arguments in QCalls in ELAPS:PlayMat."""
-from __future__ import division, print_function
 
-from .. import defines
+from __future__ import division
 
 from numbers import Number
 
 from PyQt4 import QtCore, QtGui
+
+from elaps import defines
 
 
 class QDataArg(QtGui.QLineEdit):

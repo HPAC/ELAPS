@@ -1,17 +1,17 @@
-#!/usr/bin/env python
 """Central ELAPS:Experiment."""
-from __future__ import division, print_function
 
-from . import defines
-from . import symbolic
-from . import signature
+from __future__ import print_function
 
 import os
 import warnings
-from collections import Iterable, defaultdict
+from collections import defaultdict
 from itertools import chain
 from copy import deepcopy
 from numbers import Number
+
+from elaps import defines
+from elaps import symbolic
+from elaps import signature
 
 
 class Experiment(object):
@@ -114,7 +114,7 @@ class Experiment(object):
             indent += "    "
         for call in self.calls:
             if not isinstance(call, signature.Call):
-                result += str(call) + "\n"
+                result += "%s\n" % call
                 continue
             call = call.copy()
             for argid in call.sig.dataargs():
@@ -122,11 +122,11 @@ class Experiment(object):
                 self.update_vary(name)
                 with_ = list(self.vary[name]["with"])
                 if len(with_) == 1:
-                    name += "_" + str(with_[0])
+                    name += "_%s" % with_[0]
                 elif len(with_) > 1:
                     name += "_(%s)" % ",".join(with_)
                 call[argid] = name
-            result += indent + str(call) + "\n"
+            result += indent + "%s\n" % call
         return result[:-1]
 
     def __eq__(self, other):
@@ -1011,7 +1011,7 @@ class Experiment(object):
 
         # parse string
         if isinstance(along, str):
-            along = eval(along)
+            along = eval(along, {})
 
         # type check
         if not isinstance(along, int):
@@ -1110,15 +1110,15 @@ class Experiment(object):
                 sizecall[argid] = None
             elif isinstance(arg, (signature.Ld, signature.Inc)):
                 dimcall[argid] = None
-                ldcall[argid] = symbolic.Symbol("." + arg.name)
+                ldcall[argid] = symbolic.Symbol(arg.name)
             elif isinstance(arg, (signature.Dim, signature.Lwork)):
-                dimcall[argid] = symbolic.Symbol("." + arg.name)
-                ldcall[argid] = symbolic.Symbol("." + arg.name)
+                dimcall[argid] = symbolic.Symbol(arg.name)
+                ldcall[argid] = symbolic.Symbol(arg.name)
         dimcall.complete()
         ldcall.complete()
         sizecall.complete()
 
-        argdict = dict(("." + arg.name, val) for arg, val in zip(sig, call))
+        argdict = dict((arg.name, val) for arg, val in zip(sig, call))
 
         operand = {
             "size": sizecall[name_argid],
@@ -1204,7 +1204,7 @@ class Experiment(object):
                 ldcall[argid] = None
             elif isinstance(arg, (signature.Dim, signature.Ld, signature.Inc,
                                   signature.Lwork)):
-                ldcall[argid] = symbolic.Symbol("." + arg.name)
+                ldcall[argid] = symbolic.Symbol(arg.name)
         ldcall.complete()
 
         # search for ld in all operand args
@@ -1216,7 +1216,7 @@ class Experiment(object):
                 dims = [dims]
             dims = map(symbolic.simplify, dims)
 
-            if "." + ldname in dims:
+            if ldname in dims:
                 break
         else:
             # ld not found
@@ -1224,7 +1224,7 @@ class Experiment(object):
 
         # extract stuff
         opname = call[dataargid]
-        dimidx = dims.index("." + ldname)
+        dimidx = dims.index(ldname)
         operand = self.get_operand(opname)
         vary = self.vary[opname]
 
@@ -1746,7 +1746,7 @@ class Experiment(object):
         script += "rm \"%s\"" % errfile
 
         if b_footer:
-            script += "\n" + b_footer.format(nt=self.nthreads)
+            script += "\n%s" % b_footer.format(nt=self.nthreads)
 
         # write script file
         with open(scriptfile, "w") as fout:

@@ -1,13 +1,11 @@
-#!/usr/bin/env python
 """Job progress tracker in ELAPS:PlayMat."""
-from __future__ import division, print_function
-
-from .. import defines
 
 import os
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import pyqtSlot
+
+from elaps import defines
 
 
 class QJobProgress(QtGui.QDockWidget):
@@ -43,9 +41,7 @@ class QJobProgress(QtGui.QDockWidget):
             customContextMenuRequested=self.on_rightclick
         ))
         self.widget().keyPressEvent = self.on_keypress
-        self.widget().setHeaderLabels(
-            ("job", "progress", "status", "actions")
-        )
+        self.widget().setHeaderLabels(("job", "progress", "status", "actions"))
 
     def resize_columns(self):
         """Resize all columns."""
@@ -80,9 +76,7 @@ class QJobProgress(QtGui.QDockWidget):
         }
 
         # item
-        item = QtGui.QTreeWidgetItem(
-            (job["name"], "", "pending", "")
-        )
+        item = QtGui.QTreeWidgetItem((job["name"], "", "pending", ""))
         self.widget().addTopLevelItem(item)
 
         job["item"] = item
@@ -107,6 +101,13 @@ class QJobProgress(QtGui.QDockWidget):
             "Rerun", actionsT, triggered=self.on_rerun
         )
         actions["rerun"].setDisabled(True)
+        actions["view"] = QtGui.QAction(
+            self.playmat.style().standardIcon(
+                QtGui.QStyle.SP_FileDialogContentsView
+            ),
+            "Open in Viewer", actionsT, triggered=self.on_open_viewer
+        )
+        actions["view"].setDisabled(True)
         actions["remove"] = QtGui.QAction(
             self.playmat.style().standardIcon(QtGui.QStyle.SP_TrashIcon),
             "Remove", actionsT, triggered=self.on_remove
@@ -115,6 +116,7 @@ class QJobProgress(QtGui.QDockWidget):
         actionsT.job = job
         actionsT.addAction(job["actions"]["kill"])
         actionsT.addAction(job["actions"]["rerun"])
+        actionsT.addAction(job["actions"]["view"])
         actionsT.addAction(job["actions"]["remove"])
         self.widget().setItemWidget(item, 3, actionsT)
 
@@ -152,10 +154,13 @@ class QJobProgress(QtGui.QDockWidget):
             if os.path.isfile(job["errorfile"]):
                 if os.path.getsize(job["errorfile"]):
                     job["stat"] = "ERROR"
+                job["actions"]["view"].setDisabled(True)
             if job["stat"] in ("ERROR", "DONE", "KILL"):
                 job["actions"]["kill"].setDisabled(True)
                 job["actions"]["rerun"].setDisabled(False)
                 job["actions"]["remove"].setDisabled(False)
+            if job["stat"] in ("RUN", "DONE"):
+                job["actions"]["view"].setDisabled(False)
 
         for itemid in range(self.widget().topLevelItemCount()):
             item = self.widget().topLevelItem(itemid)
@@ -287,7 +292,7 @@ class QJobProgress(QtGui.QDockWidget):
                  if job["stat"] in ("PEND", "RUN")]
         self.playmat.UI_dialog(
             "question", "Confirm job termination",
-            "I will kill the following jobs: " + " ".join(names),
+            "I will kill the following jobs: " + ", ".join(names),
             {"Ok": (self.on_killall_confirmed, ()), "Cancel": None}
         )
 
@@ -327,7 +332,7 @@ class QJobProgress(QtGui.QDockWidget):
                 )
         self.autohide()
 
-    @pyqtSlot()
+    # @pyqtSlot()  # sender() pyqt bug
     def on_open_viewer(self):
         """Event: open job(s) in Viewer."""
         for job in self.selected_jobs():

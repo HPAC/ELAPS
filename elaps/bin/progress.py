@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 """Show ELAPS:Report progress."""
-from __future__ import division, print_function
+
+from __future__ import print_function
+
+import sys
+import argparse
 
 from .. import defines
 from .. import io as elapsio
-
-import argparse
 
 
 def main():

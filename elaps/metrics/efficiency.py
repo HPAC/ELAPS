@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 """Efficiency metric."""
-from __future__ import division, print_function
+
+from __future__ import division
 
 
 def metric(data, experiment, nthreads, selector, **kwargs):

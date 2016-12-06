@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Unittest for signature.py."""
-from __future__ import division, print_function
+
+import unittest
 
 try:
     import elaps
@@ -12,8 +13,6 @@ except:
     )
 
 from elaps.signature import *
-
-import unittest
 
 
 class TestArgs(unittest.TestCase):

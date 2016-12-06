@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """Unittest for report.py."""
-from __future__ import division, print_function
+
+import random
+import unittest
 
 try:
     import elaps
@@ -14,9 +16,6 @@ except:
 from elaps.signature import *
 from elaps.experiment import Experiment
 from elaps.report import Report
-
-import unittest
-import random
 
 
 class TestReport(unittest.TestCase):
