@@ -1049,7 +1049,7 @@ class Experiment(object):
         known_symbols = list(self.ranges_vardict())
         if not all(symbol in known_symbols
                    for symbol in symbolic.findsymbols(offset)):
-            raise ValueError("offset contains unknown symbols: %s" % offset)
+            raise ValueError("offset contains unknown symbols: %s" % (offset,))
 
         if check_only:
             return
@@ -1128,7 +1128,7 @@ class Experiment(object):
         # dimensions
         dims = dimcall[name_argid]
         if isinstance(dims, symbolic.Times):
-            dims = dims[1:]
+            dims = dims[:]
         else:
             dims = [dims]
         dims = [symbolic.simplify(dim, **argdict) for dim in dims]
@@ -1140,7 +1140,7 @@ class Experiment(object):
         # leading dimension
         lds = ldcall[name_argid]
         if isinstance(lds, symbolic.Times):
-            lds = lds[1:]
+            lds = lds[:]
         else:
             lds = [lds]
         lds = [symbolic.simplify(ld, **argdict) for ld in lds]
@@ -1211,7 +1211,7 @@ class Experiment(object):
         for dataargid in sig.dataargs():
             dims = ldcall[dataargid]
             if isinstance(dims, symbolic.Times):
-                dims = dims[1:]
+                dims = dims[:]
             else:
                 dims = [dims]
             dims = map(symbolic.simplify, dims)
@@ -1926,14 +1926,14 @@ class Experiment(object):
                 if isinstance(opsize, symbolic.Symbol):
                     opsize = [opsize]
                 elif isinstance(opsize, symbolic.Times):
-                    opsize = opsize[1:]
+                    opsize = opsize[:]
                 elif isinstance(opsize, symbolic.Operation):
                     # try simplifying
                     opsize = opsize()
                     if isinstance(opsize, symbolic.Symbol):
                         opsize = [opsize]
                     elif isinstance(opsize, symbolic.Times):
-                        opsize = opsize[1:]
+                        opsize = opsize[:]
                     else:
                         continue
                 else:
