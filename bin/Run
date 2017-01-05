@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """Execute ELAPS:Experiments."""
-from __future__ import division, print_function
 
 # set path to load the lib
 import sys

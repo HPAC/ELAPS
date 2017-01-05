@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 """Unittest for symbolic.py."""
-from __future__ import division, print_function
+
+from __future__ import division
+
+import __builtin__
+import random
+import math
+import unittest
 
 try:
     import elaps
@@ -13,11 +19,6 @@ except:
 
 from elaps.symbolic import *
 
-import unittest
-import random
-import math
-import __builtin__
-
 
 class TestSymbolic(unittest.TestCase):
 
@@ -28,11 +29,19 @@ class TestSymbolic(unittest.TestCase):
         self.A = Symbol("A")
         self.B = Symbol("B")
         self.C = Symbol("C")
-        self.n1 = self.n2 = self.n3 = random.randint(1, 100)
+        self.n1 = self.n2 = self.n3 = random.randint(2, 100)
         while self.n2 == self.n1:
-            self.n2 = random.randint(1, 100)
+            self.n2 = random.randint(2, 100)
         while self.n3 in (self.n1, self.n2):
-            self.n3 = random.randint(1, 100)
+            self.n3 = random.randint(2, 100)
+
+    def test_intern(self):
+        """Test for interning."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(id(A), id(Symbol("A")))
+        self.assertNotEqual(id(A), id(Expression("A")))
+        self.assertRaises(AttributeError, setattr, A, "a", 1)
 
 
 class TestSymbol(TestSymbolic):
@@ -47,6 +56,12 @@ class TestSymbol(TestSymbolic):
         self.assertEqual(A(A=n1), n1)
         self.assertEqual(A.substitute(B=n1), A)
 
+    def test_content(self):
+        """Test differnt content."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(Symbol((1, 2)).name, (1, 2))
+
     def test_eq(self):
         """Test for ==."""
         A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
@@ -58,6 +73,13 @@ class TestSymbol(TestSymbolic):
         A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
 
         self.assertEqual(A.findsymbols(), set([A]))
+
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(A), "A")
+        self.assertEqual(str(Symbol((1, 2))), "(1, 2)")
 
 
 class TestOperation(TestSymbolic):
@@ -99,8 +121,16 @@ class TestMinus(TestSymbolic):
         A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
 
         self.assertEqual((-(-A))(), A)
+        self.assertEqual((-(A + B))(), -A - B)
 
         self.assertEqual(Minus(n1)(), -n1)
+
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(-A), "-A")
+        self.assertEqual(str(-(A + B)), "-(A + B)")
 
 
 class TestAbs(TestSymbolic):
@@ -121,6 +151,13 @@ class TestAbs(TestSymbolic):
         self.assertEqual(abs(-A)(), abs(A))
 
         self.assertEqual(Abs(-n1)(), abs(n1))
+
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(abs(A)), "abs(A)")
+        self.assertEqual(str(abs(A + B)), "abs(A + B)")
 
 
 class TestPlus(TestSymbolic):
@@ -145,6 +182,13 @@ class TestPlus(TestSymbolic):
         self.assertEqual(Plus()(), 0)
         self.assertEqual(Plus(n1, n2)(), n1 + n2)
 
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(A + abs(B) - C - (A + B)),
+                         "A + abs(B) - C - (A + B)")
+
 
 class TestTimes(TestSymbolic):
 
@@ -162,12 +206,20 @@ class TestTimes(TestSymbolic):
         A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
 
         self.assertEqual(((A * B) * C)(), (A * (B * C))())
+        self.assertEqual((n1 * (A + B) * C)(), (n1 * A * C + n1 * B * C)())
 
         self.assertEqual((n1 * A * n2)(), n1 * n2 * A)
         self.assertEqual((1 * A)(), A)
+        self.assertEqual((-1 * A)(), -A)
 
         self.assertEqual(Times()(), 1)
         self.assertEqual(Times(n1, n2)(), n1 * n2)
+
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(A * B * (A + C) * -A), "A * B * (A + C) * -A")
 
 
 class TestDiv(TestSymbolic):
@@ -191,6 +243,12 @@ class TestDiv(TestSymbolic):
 
         self.assertEqual(round(Div(n1, n2)(), 10), round(n1 / n2, 10))
 
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(A / (B + C)), "A / (B + C)")
+
 
 class TestPower(TestSymbolic):
 
@@ -213,6 +271,12 @@ class TestPower(TestSymbolic):
 
         self.assertEqual(Power(n1, n2)(), n1 ** n2)
 
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str((A + B) ** (B * C)), "(A + B) ^ (B * C)")
+
 
 class TestLog(TestSymbolic):
 
@@ -234,6 +298,13 @@ class TestLog(TestSymbolic):
 
         self.assertEqual(Log(n1, n2 + 1)(), math.log(n1, n2 + 1))
 
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(log(B * C, A)), "log_A(B * C)")
+        self.assertEqual(str(log(B * C)), "log(B * C)")
+
 
 class TestFloor(TestSymbolic):
 
@@ -252,6 +323,12 @@ class TestFloor(TestSymbolic):
         self.assertEqual(floor(floor(A))(), floor(A))
 
         self.assertEqual(Floor(n1)(), math.floor(n1))
+
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(floor(A + B)), "floor(A + B)")
 
 
 class TestCeil(TestSymbolic):
@@ -272,6 +349,12 @@ class TestCeil(TestSymbolic):
 
         self.assertEqual(Ceil(n1)(), math.ceil(n1))
 
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(ceil(A + B)), "ceil(A + B)")
+
 
 class TestMin(TestSymbolic):
 
@@ -282,6 +365,7 @@ class TestMin(TestSymbolic):
         A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
 
         self.assertEqual(min(A, B), Min(A, B))
+        self.assertEqual(min(A + B), Min(A + B))
 
     def test_simplify(self):
         """Test for simplify()."""
@@ -292,6 +376,13 @@ class TestMin(TestSymbolic):
 
         self.assertEqual(Min()(), None)
         self.assertEqual(Min(n1, n2)(), __builtin__.min(n1, n2))
+
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(min(A + B)), "min(A + B)")
+        self.assertEqual(str(min(A, B)), "min(A, B)")
 
 
 class TestMax(TestSymbolic):
@@ -313,6 +404,13 @@ class TestMax(TestSymbolic):
 
         self.assertEqual(Max()(), None)
         self.assertEqual(Max(n1, n2)(), __builtin__.max(n1, n2))
+
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(max(A + B)), "max(A + B)")
+        self.assertEqual(str(max(A, B)), "max(A, B)")
 
 
 class TestSum(TestSymbolic):
@@ -355,6 +453,15 @@ class TestSum(TestSymbolic):
         self.assertEqual(Sum(A + B, A=range(n1))(),
                          Plus(*(A + B for A in range(n1)))())
 
+        self.assertEquals(Sum(n1, A=range(n2))(), n1 * n2)
+
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(Sum(A + B, A=range(3))),
+                         "sum(A + B, A=(0, 1, 2))")
+
 
 class TestProd(TestSymbolic):
 
@@ -392,9 +499,16 @@ class TestProd(TestSymbolic):
         self.assertEqual(Prod(A, A=Range((B * n1, n2, n3)))(),
                          Prod(A, A=Range((B * n1, n2, n3))()))
 
-        self.assertEqual(Prod(A, B=range(n1))(), n1 * A)
-        self.assertEqual(Prod(A + B, A=range(n1))(),
-                         Times(*(A + B for A in range(n1)))())
+        self.assertEqual(Prod(A, B=range(n1))(), (A ** n1)())
+        self.assertEqual(Prod(A * B, A=range(n1))(),
+                         Times(*(A * B for A in range(n1)))())
+
+    def test_str(self):
+        """Test for __str__()."""
+        A, B, C, n1, n2, n3 = self.A, self.B, self.C, self.n1, self.n2, self.n3
+
+        self.assertEqual(str(Prod(A + B, A=range(3))),
+                         "prod(A + B, A=(0, 1, 2))")
 
 
 class TestRange(TestSymbolic):
@@ -415,6 +529,7 @@ class TestRange(TestSymbolic):
 
         # parser
         self.assertEqual(Range("%d" % n1), Range((n1, 1, n1)))
+        self.assertEqual(Range("%d:" % n1), Range((n1, 1, n1)))
         self.assertEqual(Range("%d:%d" % (n1, n2)), Range((n1, 1, n2)))
         self.assertEqual(Range("%d:%d:%d" % (n1, n2, n3)), Range((n1, n2, n3)))
 

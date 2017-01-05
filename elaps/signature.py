@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 """Python representations of kernel signatures."""
-from __future__ import division, print_function
 
 import numbers
-import symbolic
 
+from elaps import symbolic
 
 named_attributes = ("lower", "upper", "symm", "herm", "spd", "hpd", "work")
 
@@ -49,12 +47,13 @@ class Signature(list):
         for arg in self:
             arg.min = None
             arg.max = None
-            if isinstance(arg, ArgWithMin) and arg.minstr:
-                arg.min = eval("lambda %s: %s" % (lambdaargs, arg.minstr),
-                               symbolic.__dict__)
-            if isinstance(arg, ArgWithMin) and arg.maxstr:
-                arg.max = eval("lambda %s: %s" % (lambdaargs, arg.maxstr),
-                               symbolic.__dict__)
+            if isinstance(arg, ArgWithMin):
+                if arg.minstr:
+                    arg.min = eval("lambda %s: %s" % (lambdaargs, arg.minstr),
+                                   symbolic.__dict__)
+                if arg.maxstr:
+                    arg.max = eval("lambda %s: %s" % (lambdaargs, arg.maxstr),
+                                   symbolic.__dict__)
             arg.properties = lambda *args: ()
             if arg.propertiesstr:
                 lambdarhs = arg.propertiesstr
@@ -98,29 +97,28 @@ class Signature(list):
 
     def __str__(self):
         """Format as human readable."""
-        return (self[0].name + "(" +
-                ", ".join(arg.name for arg in self[1:]) + ")")
+        return "%s(%s)" % (self[0], ", ".join(arg.name for arg in self[1:]))
 
     def __repr__(self):
         """Format as python parsable string."""
-        args = map(repr, [self[0].name] + self[1:])
+        args = map(repr, [str(self[0])] + self[1:])
         if self.flops:
             args.append("flops=%r" % self.flopsstr)
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         """Create a call from the signature with given arguments."""
         if len(args) == 0:
             args = tuple(arg.default() for arg in self[1:])
-        return Call(self, *args)
+        return Call(self, *args, **kwargs)
 
     def __getattr__(self, name):
         """Variable names as attributes."""
         try:
             return self[self.argpos(name)]
         except:
-            raise AttributeError("%r object has no attribute %r" %
-                                 (type(self).__name__, name))
+            pass
+        return list.__getattr__(self, name)
 
     def argpos(self, name):
         """Search for an argument id by name."""
@@ -160,18 +158,12 @@ class BasicCall(list):
         if len(sig) != 1 + len(args):
             raise TypeError("%s takes %d arguments (%d given)" %
                             (sig[0], len(sig) - 1, len(args)))
-        list.__init__(self, (sig[0].name,) + args)
+        list.__init__(self, (str(sig[0]),) + args)
         self.__dict__["sig"] = sig
 
     def __str__(self):
         """Format as human readable."""
-        args = []
-        for arg in self[1:]:
-            if type(arg) is list:
-                args.append("[%s]" % arg[0])
-            else:
-                args.append(str(arg))
-        return str(self[0]) + "(" + ", ".join(args) + ")"
+        return "%s(%s)" % (self[0], ", ".join(map(str, self[1:])))
 
     def __repr__(self):
         """Format as python parsable string."""
@@ -179,7 +171,7 @@ class BasicCall(list):
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
     def __copy__(self):
-        """Create a deep copy."""
+        """Create a shallow copy."""
         return type(self)(self.sig, *self[1:])
 
     def copy(self):
@@ -191,31 +183,30 @@ class Call(BasicCall):
 
     """A call to a signature."""
 
-    def __init__(self, sig, *args):
+    def __init__(self, sig, *args, **kwargs):
         """Initialize from signature and arguments."""
         if not isinstance(sig, Signature):
             raise TypeError("a Signature is required as first argument")
         BasicCall.__init__(self, sig, *args)
+        for arg, val in kwargs.iteritems():
+            setattr(self, arg, val)
 
     def __getattr__(self, name):
         """Variable names as attributes."""
         try:
             return self[self.sig.argpos(name)]
         except:
-            raise AttributeError("%r object has no attribute %r" %
-                                 (type(self).__name__, name))
+            pass
+        return BasicCall.__getattr__(self, name)
 
     def __setattr__(self, name, value):
         """Variable names as attributes."""
-        for i, arg in enumerate(self.sig):
-            if arg.name == name:
-                self[i] = value
-                return
+        try:
+            self[self.sig.argpos(name)] = value
+            return value
+        except:
+            pass
         list.__setattr__(self, name, value)
-
-    def copy(self):
-        """Create a copy."""
-        return type(self)(self.sig, *self[1:])
 
     def argdict(self):
         """Create a dictionary of the calls arguments."""
@@ -309,11 +300,11 @@ class Arg(object):
         """Format as human readable."""
         return str(self.name)
 
-    def __eq__(self, other):
+    def __cmp__(self, other):
         """Compare with other argument."""
-        return (type(self) == type(other) and
-                self.name == other.name and
-                self.propertiesstr == other.propertiesstr)
+        return cmp(type(self), type(other)) or cmp(
+            (self.name, self.propertiesstr), (other.name, other.propertiesstr)
+        )
 
     @staticmethod
     def format_sampler(val):
@@ -325,9 +316,11 @@ class Name(Arg):
 
     """Name argument."""
 
-    def __eq__(self, other):
-        """Check for equality."""
-        return Arg.__eq__(self, other) or self.name == other
+    def __cmp__(self, other):
+        """Compare with other."""
+        if self.name == other:
+            return 0
+        return Arg.__cmp__(self, other)
 
     def default(self):
         """Default: Kernel name."""
@@ -351,9 +344,9 @@ class Flag(Arg):
         args = map(repr, args)
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
-    def __eq__(self, other):
+    def __cmp__(self, other):
         """Compare with other."""
-        return Arg.__eq__(self, other) and self.flags == other.flags
+        return Arg.__cmp__(self, other) or cmp(self.flags, other.flags)
 
     def default(self):
         """Default: first possible flag."""
@@ -418,10 +411,10 @@ class ArgWithMin(Arg):
         args = map(repr, args)
         return "%s(%s)" % (type(self).__name__, ", ".join(args))
 
-    def __eq__(self, other):
-        """Compare for equality."""
-        return Arg.__eq__(self, other) and (self.minstr == other.minstr and
-                                            self.maxstr == other.maxstr)
+    def __cmp__(self, other):
+        """Compare with other."""
+        return Arg.__cmp__(self, other) or cmp((self.minstr, self.maxstr),
+                                               (other.minstr, other.maxstr))
 
     def default(self):
         """Default: 1."""
@@ -501,7 +494,7 @@ class Data(ArgWithMin):
     def format_sampler(self, val):
         """Format surrounded by [] for the sampler."""
         if isinstance(val, int):
-            return "[" + str(val) + "]"
+            return "[%s]" % val
         return val
 
 
@@ -515,7 +508,7 @@ def _create_Data(classname, typename):
             2x space (for real and complex parts).
             """
             if isinstance(val, int):
-                return "[" + str(2 * val) + "]"
+                return "[%s]" % (2 * val)
             return val
         attributes["format_sampler"] = format_sampler
     globals()[classname] = type(classname, (Data,), attributes)

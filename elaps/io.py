@@ -1,89 +1,79 @@
-#!/usr/bin/env python
 """Utility routines to load ELAPS objects."""
-from __future__ import division, print_function
-
-from . import defines, Experiment, Report
-from .symbolic import *
-from .signature import *
 
 import os
 import imp
 from collections import defaultdict
 
+from elaps import defines
+from elaps import symbolic
+from elaps import signature
+from elaps import experiment
+from elaps import report
 
-def write_signature(sig, filename):
+
+def write_signature(sig, filepath):
     """Write a Signature."""
-    with open(filename, "w") as fout:
+    with open(filepath, "w") as fout:
         fout.write(repr(sig))
 
 
-def load_signature_string(string):
+def load_signature_string(string, name=None):
     """Load a Signature from a string."""
-    sig = eval(string)
-    if not isinstance(sig, Signature):
-        raise TypeError("not a Signature")
+    sig = eval(string, signature.__dict__)
+    if not isinstance(sig, signature.Signature):
+        raise TypeError("Excpected a Signature but loaded a %s" % type(sig))
+    if name and str(sig[0]) != name:
+        raise IOError("Routine mismatch for Signature %s" % name)
     return sig
 
 
-def load_signature_file(filename):
+def load_signature_file(filepath, name=None):
     """Load a Signature from a file."""
-    with open(filename) as fin:
-        return load_signature_string(fin.read())
+    with open(filepath) as fin:
+        return load_signature_string(fin.read(), name)
 
 
 def load_signature(name, _cache={}):
     """Find and load a Signature."""
-    if name in _cache:
-        return _cache[name]
-    for dirname in os.listdir(defines.sigpath):
-        dirpath = os.path.join(defines.sigpath, dirname)
-        if not os.path.isdir(dirpath):
-            continue
-        filename = os.path.join(dirpath, name + ".pysig")
-        if os.path.isfile(filename):
-            sig = load_signature_file(filename)
-            if str(sig[0]) != name:
-                raise IOError("Routine mismatch for Signature %s" % name)
-            _cache[name] = sig
-            return sig
-    raise IOError("No signature found for %s" % name)
+    if name not in _cache:
+        filename = name + ".pysig"
+        for dirpath, dirnames, filenames in os.walk(defines.sigpath):
+            if filename in filenames:
+                filepath = os.path.join(defines.sigpath, dirpath, filename)
+                _cache[name] = load_signature_file(filepath, name)
+                break
+        else:
+            raise IOError("No signature found for %s" % name)
+    return _cache[name]
 
 
 def load_all_signatures():
     """Load all Signatures."""
-    if not os.path.isdir(defines.sigpath):
-        return {}
     sigs = {}
-    for dirname in os.listdir(defines.sigpath):
-        dirpath = os.path.join(defines.sigpath, dirname)
-        if not os.path.isdir(dirpath):
-            continue
-        for filename in os.listdir(os.path.join(defines.sigpath, dirname)):
+    for dirpath, dirnames, filenames in os.walk(defines.sigpath):
+        for filename in filenames:
             if not filename[-6:] == ".pysig":
                 continue
-            filepath = os.path.join(dirpath, filename)
-            if not os.path.isfile(filepath):
-                continue
-            try:
-                sig = load_signature_file(filepath)
-            except:
-                raise IOError("Error parsing %s" % filepath)
-            if str(sig[0]) != filename[:-6]:
-                raise IOError("Routine mismatch for %s" % filepath)
-            sigs[str(sig[0])] = sig
+            name = filename[:-6]
+            filepath = os.path.join(defines.sigpath, dirpath, filename)
+            sigs[name] = load_signature_file(filepath, name)
     return sigs
 
 
-def write_experiment(experiment, filename):
+def write_experiment(experiment, filepath):
     """Write an Experiment."""
-    with open(filename, "w") as fout:
+    with open(filepath, "w") as fout:
         fout.write(repr(experiment))
 
 
-def load_experiment_string(string):
+def load_experiment_string(string, _globals={}):
     """Load a Experiment from a string."""
-    ex = eval(string)
-    if not isinstance(ex, Experiment):
+    if not _globals:
+        _globals.update(symbolic.__dict__)
+        _globals.update(signature.__dict__)
+        _globals.update(experiment.__dict__)
+    ex = eval(string, _globals)
+    if not isinstance(ex, experiment.Experiment):
         raise TypeError("not an Experiment")
     try:
         ex.sampler["backend"] = None
@@ -93,62 +83,51 @@ def load_experiment_string(string):
     return ex
 
 
-def load_experiment(filename):
+def load_experiment(filepath):
     """Load an Experiment."""
-    with open(filename) as fin:
-        if filename[-4:] == "." + defines.experiment_extension:
+    with open(filepath) as fin:
+        if filepath[-4:] == "." + defines.experiment_extension:
             return load_experiment_string(fin.read())
         return load_experiment_string(fin.readline())
 
 
-def load_doc_file(filename):
+def load_doc_file(filepath):
     """Load a documentation."""
-    with open(filename) as fin:
-        return eval(fin.read())
+    with open(filepath) as fin:
+        return eval(fin.read(), {})
 
 
 def load_doc(name, _cache={}):
     """Load documentation for name."""
-    if name in _cache:
-        return _cache[name]
-    for dirname in os.listdir(defines.docpath):
-        dirpath = os.path.join(defines.docpath, dirname)
-        if not os.path.isdir(dirpath):
-            continue
-        filepath = os.path.join(dirpath, name + ".pydoc")
-        if os.path.isfile(filepath):
-            doc = load_doc_file(filepath)
-            _cache[name] = doc
-            return doc
-    raise IOError("No documentation found for %s" % name)
+    if name not in _cache:
+        filename = name + ".pydoc"
+        for dirpath, dirnames, filenames in os.walk(defines.docpath):
+            if filename in filenames:
+                filepath = os.path.join(defines.docpath, dirpath, filename)
+                _cache[name] = load_doc_file(filepath)
+                break
+        else:
+            raise IOError("No documentation found for %s" % name)
+    return _cache[name]
 
 
 def load_all_docs():
     """Load all documentations."""
-    if not os.path.isdir(defines.docpath):
-        return {}
     docs = {}
-    for dirname in os.listdir(defines.docpath):
-        dirpath = os.path.join(defines.docpath, dirname)
-        if not os.path.isdir(dirpath):
-            continue
-        for filename in os.listdir(sigpath):
-            if filename[-6:] != ".pydoc":
+    for dirpath, dirnames, filenames in os.walk(defines.sigpath):
+        for filename in filenames:
+            if not filename[-6:] == ".pydoc":
                 continue
-            filepath = os.path.join(dirpath, filename)
-            if not os.path.isfile(filepath):
-                continue
-            try:
-                docs[filename[:-6]] = load_doc_file(filepath)
-            except:
-                pass
+            name = filename[:-6]
+            filepath = os.path.join(defines.docpath, dirpath, filename)
+            docs[name] = load_doc_file(filepath)
     return docs
 
 
-def load_sampler_file(filename):
+def load_sampler_file(filepath):
     """Load a Sampler from a file."""
-    with open(filename) as fin:
-        sampler = eval(fin.read())
+    with open(filepath) as fin:
+        sampler = eval(fin.read(), {})
     try:
         sampler["backend"] = load_backend(sampler["backend_name"])
     except:
@@ -158,63 +137,56 @@ def load_sampler_file(filename):
 
 def load_sampler(name, _cache={}):
     """Find and load a Sampler."""
-    if name in _cache:
-        return _cache[name]
-    filename = os.path.join(defines.samplerpath, name, "info.py")
-    if os.path.isfile(filename):
-        sampler = load_sampler_file(filename)
-        _cache[name] = sampler
-        return sampler
-    raise IOError("Sampler %s not found" % name)
+    if name not in _cache:
+        filepath = os.path.join(defines.samplerpath, name, "info.py")
+        if os.path.isfile(filepath):
+            _cache[name] = load_sampler_file(filepath)
+        else:
+            raise IOError("Sampler %s not found" % name)
+    return _cache[name]
 
 
 def load_all_samplers():
     """Load all Samplers."""
-    if not os.path.isdir(defines.samplerpath):
-        return {}
     samplers = {}
     for dirname in os.listdir(defines.samplerpath):
-        filename = os.path.join(defines.samplerpath, dirname, "info.py")
-        if os.path.isfile(filename):
+        filepath = os.path.join(defines.samplerpath, dirname, "info.py")
+        exepath = os.path.join(defines.samplerpath, dirname, "sampler.x")
+        if os.path.isfile(filepath) and os.path.isfile(exepath):
             try:
-                samplers[dirname] = load_sampler_file(filename)
+                samplers[dirname] = load_sampler_file(filepath)
             except:
                 pass
     return samplers
 
 
-def load_backend_file(filename):
+def load_backend_file(filepath):
     """Load a backend from a file."""
-    name = os.path.basename(filename)[:-3]
-    module = imp.load_source(name, filename)
+    name = os.path.basename(filepath)[:-3]
+    module = imp.load_source(name, filepath)
     return module.Backend()
 
 
 def load_backend(name, _cache={}):
     """Load a backend."""
-    if name in _cache:
-        return _cache[name]
-    filename = os.path.join(defines.backendpath, name + ".py")
-    if os.path.isfile(filename):
-        backend = load_backend_file(filename)
-        _cache[name] = backend
-        return backend
-    raise IOError("Backend %s not found" % name)
+    if name not in _cache:
+        filepath = os.path.join(defines.backendpath, name + ".py")
+        if not os.path.isfile(filepath):
+            raise IOError("Backend %s not found" % name)
+        _cache[name] = load_backend_file(filepath)
+    return _cache[name]
 
 
 def load_all_backends():
     """Load all backends."""
-    if not os.path.isdir(defines.backendpath):
-        return {}
     backends = {}
     for filename in os.listdir(defines.backendpath):
         if filename[-3:] != ".py":
             continue
+        name = filename[:-3]
         filepath = os.path.join(defines.backendpath, filename)
-        if not os.path.isfile(filepath):
-            continue
         try:
-            backends[filename[:-3]] = load_backend_file(filepath)
+            backends[name] = load_backend_file(filepath)
         except:
             pass
     return backends
@@ -228,13 +200,13 @@ def load_papinames():
             return self[key]
     with open(defines.papinamespath) as fin:
         return keydefaultdict(lambda key: {"short": key, "long": key},
-                              eval(fin.read()))
+                              eval(fin.read(), {}))
 
 
-def load_report(filename, discard_first_repetitions=False):
+def load_report(filepath, discard_first_repetitions=False):
     """Load a Report from a file."""
-    with open(filename) as fin:
-        experiment = eval(fin.readline())
+    with open(filepath) as fin:
+        experiment = load_experiment_string(fin.readline())
         rawdata = []
         for line in fin:
             vals = []
@@ -245,46 +217,41 @@ def load_report(filename, discard_first_repetitions=False):
                     pass
                 vals.append(val)
             rawdata.append(vals)
-    report = Report(experiment, rawdata)
+    rep = report.Report(experiment, rawdata)
     if discard_first_repetitions:
-        return report.discard_first_repetitions()
-    errfile = "%s.%s" % (filename[:-4], defines.error_extension)
+        return rep.discard_first_repetitions()
+    errfile = "%s.%s" % (filepath[:-4], defines.error_extension)
     if os.path.isfile(errfile) and os.path.getsize(errfile):
-        report.error = True
-    return report
+        rep.error = True
+    return rep
 
 
-def load_metric_file(filename):
+def load_metric_file(filepath):
     """Load a metric from a file."""
-    name = os.path.basename(filename)[:-3]
-    module = imp.load_source(name, filename)
+    name = os.path.basename(filepath)[:-3]
+    module = imp.load_source(name, filepath)
     metric = module.metric
     return metric
 
 
 def load_metric(name, _cache={}):
     """Load a metric."""
-    if name in _cache:
-        return _cache[name]
-    filename = os.path.join(defines.metricpath, name + ".py")
-    if os.path.isfile(filename):
-        metric = load_metric_file(filename)
-        _cache[name] = metric
-        return metric
-    raise IOError("Metric %s not found" % name)
+    if name not in _cache:
+        filepath = os.path.join(defines.metricpath, name + ".py")
+        if os.path.isfile(filepath):
+            _cache[name] = load_metric_file(filepath)
+        else:
+            raise IOError("Metric %s not found" % name)
+    return _cache[name]
 
 
 def load_all_metrics():
     """Load all metrics."""
-    if not os.path.isdir(defines.metricpath):
-        return {}
     metrics = {}
     for filename in os.listdir(defines.metricpath):
         if filename[-3:] != ".py":
             continue
         filepath = os.path.join(defines.metricpath, filename)
-        if not os.path.isfile(filepath):
-            continue
         try:
             metric = load_metric_file(filepath)
             metrics[metric.name] = metric

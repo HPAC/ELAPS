@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 """Create include files for the Sampler."""
-from __future__ import division, print_function
+from __future__ import print_function
 
 import sys
 import os
 import re
 from time import time
-from __builtin__ import intern  # fix for pyflake error
 
 
 def main():
@@ -16,11 +15,7 @@ def main():
               "cfg.h kernel.h sigs.c.ing calls.c.inc info.py",
               file=sys.stderr)
         return
-    cfg_h = sys.argv[1]
-    kernel_h = sys.argv[2]
-    sigs_cpp_inc = sys.argv[3]
-    calls_c_inc = sys.argv[4]
-    info_py = sys.argv[5]
+    cfg_h, kernel_h, sigs_cpp_inc, calls_c_inc, info_py = sys.argv[1:6]
     papi_counters_max = int(os.environ["PAPI_COUNTERS_MAX"])
 
     # read and prepare kernels
@@ -83,12 +78,11 @@ def main():
     # create calls.s.cin
     with open(calls_c_inc, "w") as fout:
         for argc in range(1, argcmax + 1):
-            print("case " + str(argc) + ":", file=fout)
+            print("case %s:" % argc, file=fout)
             print("\tCOUNTERS_START", file=fout)
-            voidlist = (argc - 1) * ["void *"]
-            arglist = ["argv[" + str(n) + "]" for n in range(argc - 1)]
-            print("\t((void (*)(" + ", ".join(voidlist) + ")) fptr)(" +
-                  ", ".join(arglist) + ");", file=fout)
+            voids = ", ".join("void *" for n in range(argc - 1))
+            args = ", ".join("argv[%s]" % n for n in range(argc - 1))
+            print("\t((void (*)(%s)) fptr)(%s);" % (voids, args), file=fout)
             print("\tCOUNTERS_END", file=fout)
             print("\tbreak;", file=fout)
 
@@ -96,9 +90,9 @@ def main():
     with open(cfg_h, "w") as fout:
         print("#ifndef SAMPLERCFG_H", file=fout)
         print("#define SAMPLERCFG_H", file=fout)
-        print("#define KERNEL_H \"" + kernel_h + "\"", file=fout)
-        print("#define SIGS_CPP_INC \"" + sigs_cpp_inc + "\"", file=fout)
-        print("#define CALLS_C_INC \"" + calls_c_inc + "\"", file=fout)
+        print("#define KERNEL_H \"%s\"" % kernel_h, file=fout)
+        print("#define SIGS_CPP_INC \"%s\"" % sigs_cpp_inc, file=fout)
+        print("#define CALLS_C_INC \"%s\"" % calls_c_inc, file=fout)
         print("#define KERNEL_MAX_ARGS", argcmax, file=fout)
         if papi_counters_max > 0:
             print("#define PAPI_ENABLED", file=fout)

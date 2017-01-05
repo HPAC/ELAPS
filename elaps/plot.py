@@ -1,12 +1,12 @@
-#!/usr/bin/env python
 """Plotting routines for reports."""
-from __future__ import division, print_function
 
-from . import defines
-from .report import Report, apply_stat
+from __future__ import print_function
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
+
+from elaps import defines
+from elaps import report
 
 
 def plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
@@ -85,16 +85,16 @@ def range_plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
                                for value in values))
                 axes.plot(xs, ys, color=color, **styles["all"])
             elif stat_name == "min-max":
-                min_data = apply_stat("min", data)
-                max_data = apply_stat("max", data)
+                min_data = report.apply_stat("min", data)
+                max_data = report.apply_stat("max", data)
                 xs = sorted(set(min_data) & set(max_data))
                 min_ys = [min_data[x] for x in xs]
                 max_ys = [max_data[x] for x in xs]
                 axes.fill_between(xs, min_ys, max_ys, color=color,
                                   **styles["min-max"])
             elif stat_name == "std":
-                avg_data = apply_stat("avg", data)
-                std_data = apply_stat("std", data)
+                avg_data = report.apply_stat("avg", data)
+                std_data = report.apply_stat("std", data)
                 xs = sorted(set(std_data) & set(avg_data))
                 min_ys = [avg_data[x] - std_data[x] for x in xs]
                 max_ys = [avg_data[x] + std_data[x] for x in xs]
@@ -102,7 +102,7 @@ def range_plot(datas, stat_names=["med"], colors=[], styles={}, xlabel=None,
                                   **styles["std"])
             else:
                 # all other stats
-                stat_data = apply_stat(stat_name, data)
+                stat_data = report.apply_stat(stat_name, data)
                 xs = sorted(stat_data)
                 ys = [stat_data[x] for x in xs]
                 axes.plot(xs, ys, color=color, **styles[stat_name])
@@ -190,20 +190,20 @@ def bar_plot(datas, stat_names=["med"], colors=[], styles={}, ylabel=None,
                 ys = data
                 axes.plot(xs, ys, color=color, **styles["all"])
             elif stat_name == "min-max":
-                min_y = apply_stat("min", data)
-                max_y = apply_stat("max", data)
+                min_y = report.apply_stat("min", data)
+                max_y = report.apply_stat("max", data)
                 axes.bar(left, max_y - min_y, width, min_y, color=color,
                          **styles["bar"])
             elif stat_name == "std":
-                avg = apply_stat("avg", data)
-                std = apply_stat("std", data)
+                avg = report.apply_stat("avg", data)
+                std = report.apply_stat("std", data)
                 axes.bar(left, 2 * std, width, avg - std, color=color,
                          **styles["bar"])
                 axes.plot([left, left + width], [avg, avg], linestyle="--",
                           color="#000000", zorder=4)
             else:
                 # all other stats
-                value = apply_stat(stat_name, data)
+                value = report.apply_stat(stat_name, data)
                 axes.bar(left, value, width, color=color, **styles["bar"])
 
     # xlabels

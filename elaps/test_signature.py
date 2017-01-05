@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Unittest for signature.py."""
-from __future__ import division, print_function
+
+import unittest
 
 try:
     import elaps
@@ -12,8 +13,6 @@ except:
     )
 
 from elaps.signature import *
-
-import unittest
 
 
 class TestArgs(unittest.TestCase):
@@ -118,6 +117,11 @@ class TestSignature(unittest.TestCase):
                         cData("C"))
         self.assertEqual(sig.datatype(), "double precision")
 
+    def test_str(self):
+        """Test for __str__()."""
+        sig = Signature("name", Dim("n"), dData("A"), Ld("x"), cData("C"))
+        self.assertEquals(str(sig), "name(n, A, x, C)")
+
 
 class TestCall(unittest.TestCase):
 
@@ -138,6 +142,7 @@ class TestCall(unittest.TestCase):
 
         self.assertEqual(sig(1234, "X", 5), Call(sig, 1234, "X", 5))
         self.assertEqual(sig(), sig(1, None, None))
+        self.assertEqual(sig(A="a"), sig(1, "a", None))
 
     def test_attr(self):
         """Test for __get/setattr__()."""
@@ -178,6 +183,12 @@ class TestCall(unittest.TestCase):
         call = sig()
         call.n = 1234
         self.assertEqual(call.flops(), 1234 ** 4)
+
+    def test_str(self):
+        sig = self.sig
+
+        call = sig(1, 2, "b")
+        self.assertEqual(str(call), "name(1, 2, b)")
 
 
 if __name__ == "__main__":

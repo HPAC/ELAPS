@@ -1,6 +1,6 @@
-#!/usr/bin/env python
 """Performance metric in flops/cycle metric."""
-from __future__ import division, print_function
+
+from __future__ import division
 
 
 def metric(data, **kwargs):

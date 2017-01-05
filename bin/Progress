@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """Show ELAPS:Report progress."""
-from __future__ import division, print_function
 
 # set path to load the lib
 import sys

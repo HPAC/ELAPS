@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 """Flop-count metric."""
-from __future__ import division, print_function
 
 
 def metric(data, **kwargs):
