@@ -25,8 +25,8 @@ class Expression(tuple):
     def __new__(cls, *args):
         """Implementing interning."""
         if hasattr(cls, "fixedlen") and len(args) != cls.fixedlen:
-            raise TypeError("__new__() takes exactly %s arguments (%s given)" %
-                            (cls.fixedlen, len(args)))
+            raise TypeError("%r takes exactly %s arguments (%s given)" %
+                            (cls.__name__, cls.fixedlen, len(args)))
         id_ = (cls,) + args
         if id_ not in cls.interned:
             cls.interned[id_] = super(Expression, cls).__new__(cls, args)
@@ -35,10 +35,9 @@ class Expression(tuple):
     def __setattr__(self, name, value):
         """Make immutable."""
         if hasattr(self, name):
-            raise AtributeError("can't set attribute")
-        else:
-            raise AttributeError("%r object has no attribute %r" %
-                                 (type(self).__name__, name))
+            raise AttributeError("can't set attribute")
+        raise AttributeError("%r object has no attribute %r" %
+                             (type(self).__name__, name))
 
     def __hash__(self):
         """Differentiate between classes."""
@@ -56,6 +55,23 @@ class Expression(tuple):
         """Format as python parsable string."""
         return "%s(%s)" % (type(self).__name__, ", ".join(map(repr, self)))
 
+    def __str__(self):
+        """Format: cls(args)."""
+        return "%s(%s)" % (type(self).__name__, ", ".join(map(str, self)))
+
+    def substitute(self, **kwargs):
+        """Variable substitution."""
+        return self
+
+    def simplify(self, **kwargs):
+        """(Substitute and) simplify the expression."""
+        return self.substitute(**kwargs)
+
+    def __call__(self, **kwargs):
+        """Substitution and simplification."""
+        return simplify(self, **kwargs)
+
+    # math operator overloading:
     def __neg__(self):
         """-Expression ."""
         return Minus(self)
@@ -107,18 +123,6 @@ class Expression(tuple):
     def __pow__(self, other):
         """Expression ** Other ."""
         return Power(self, other)
-
-    def subistitute(self, **kwargs):
-        """Variable substitution."""
-        return self
-
-    def simplify(self, **kwargs):
-        """(Substitute and) simplify the expression."""
-        return self.substitute(**kwargs)
-
-    def __call__(self, **kwargs):
-        """Substitution and simplification."""
-        return simplify(self, **kwargs)
 
 
 class Symbol(Expression):
@@ -371,7 +375,7 @@ class Div(Operation):
 
     def __str__(self):
         """Format: a / b or (x) / (y)."""
-        return " / ".join("(%s)" % str(arg) if isinstance(arg, Operation)
+        return " / ".join("(%s)" % (arg,) if isinstance(arg, Operation)
                           else str(arg) for arg in self)
 
     def simplify(self, **kwargs):
@@ -443,7 +447,7 @@ class Power(Operation):
 
 class Log(Operation):
 
-    """Logarithm in any base (default: e)
+    """Logarithm in any base (default: e).
 
     tuple layout: (expr, base)
     """
@@ -478,7 +482,7 @@ class Log(Operation):
 
 class Floor(Operation):
 
-    """Floor function: round(x-.5)"""
+    """Floor function: round(x-.5)."""
 
     fixedlen = 1
     expr = property(itemgetter(0))
@@ -504,7 +508,7 @@ class Floor(Operation):
 
 class Ceil(Operation):
 
-    """Ceiling function: round(x+.5)"""
+    """Ceiling function: round(x+.5)."""
 
     fixedlen = 1
     expr = property(itemgetter(0))
@@ -631,8 +635,9 @@ class Sum(Operation):
             # no range: plus
             return Plus(*args)
         if len(kwargs) > 1:
-            # more than one range
-            raise TypeError("Sum can only handle one range.")
+            # more than one range: nesting
+            kwargs = sorted(kwargs.items())
+            return Sum(Sum(*args, **dict(kwargs[0])), **dict(kwargs[1:]))
         if len(args) == 0:
             # no arguments: 0
             arg = 0
@@ -715,8 +720,9 @@ class Prod(Operation):
             # no range: Times
             return Times(*args)
         if len(kwargs) > 1:
-            # more than one range
-            raise TypeError("Times can only handle one range.")
+            # more than one range: nesting
+            kwargs = sorted(kwargs.items())
+            return Prod(Prod(*args, **dict(kwargs[0])), **dict(kwargs[1:]))
         if len(args) == 0:
             # no arguments: 1
             arg = 1
