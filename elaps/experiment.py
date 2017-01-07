@@ -28,6 +28,7 @@ class Experiment(object):
         self.script_header = ""
         self.range = None
         self.range_randomize_data = False
+        self.shuffle = False
         self.nreps = 1
         self.sumrange = None
         self.sumrange_parallel = False
@@ -95,7 +96,10 @@ class Experiment(object):
             result += "Header:\t%s\n" % self.script_header
         indent = ""
         if self.range:
-            result += "for %s = %s :\n" % tuple(self.range)
+            result += "for %s = %s :" % tuple(self.range)
+            if self.shuffle:
+                result += " (shuffled)"
+            result += "\n"
             indent += "    "
         result += indent + "#threads = %s\n" % self.nthreads
         result += indent + "repeat %s times:\n" % self.nreps
@@ -106,8 +110,7 @@ class Experiment(object):
                 result += "in parallel"
             else:
                 result += "sum over"
-            result += " %s = %s" % tuple(self.sumrange)
-            result += ":\n"
+            result += " %s = %s:\n" % tuple(self.sumrange)
             indent += "    "
         if self.calls_parallel:
             result += indent + "in parallel:\n"
@@ -442,6 +445,24 @@ class Experiment(object):
         self.range = [range_var, range_vals]
         self.set_range_var(range_var, force=force)
         self.set_range_vals(range_vals, force=force)
+
+    def set_shuffle(self, shuffle, force=False, check_only=False):
+        """Set whether to shuffle range and repeititions."""
+        if shuffle:
+            if isinstance(self.nthreads, symbolic.Expression):
+                if not force:
+                    raise ValueError("Cannot shuffle with symbolic nthreads")
+                shuffle = False
+
+            if isinstance(self.nreps, symbolic.Expression):
+                if not force:
+                    raise ValueError("Cannot shuffle with symbolic nreps")
+                shuffle = False
+
+        if check_only:
+            return
+
+        self.shuffle = bool(shuffle)
 
     def set_nthreads(self, nthreads, force=False, check_only=False):
         """Set number of threads."""
@@ -1354,33 +1375,26 @@ class Experiment(object):
             self.set_vary_offset(name, vary["offset"], check_only=True)
 
     # job generation
-    def generate_cmds(self, range_val=None):
-        """Generate commands for the Sampler."""
-        def varname(name, range_val, rep, sumrange_val):
-            """Construct a variable name.
+    def sampler_varname(self, name, range_val, rep, sumrange_val):
+        """Construct a variable name.
 
-            Format: <name>[_<range_val>][_<rep>][_<sumrange_val>]
-            """
-            vary = self.vary[name]
-            if not vary["with"]:
-                return name
-            parts = [name]
-            if self.range and self.nthreads != self.range_var:
-                parts.append(range_val)
-            if "rep" in vary["with"]:
-                parts.append(rep)
-            if self.sumrange and self.sumrange_var in vary["with"]:
-                parts.append(sumrange_val)
-            return "_".join(map(str, parts))
+        Format: <name>[_<range_val>][_<rep>][_<sumrange_val>]
+        """
+        vary = self.vary[name]
+        if not vary["with"]:
+            return name
+        parts = [name]
+        if self.range and self.nthreads != self.range_var:
+            parts.append(range_val)
+        if "rep" in vary["with"]:
+            parts.append(rep)
+        if self.sumrange and self.sumrange_var in vary["with"]:
+            parts.append(sumrange_val)
+        return "_".join(map(str, parts))
 
-        self.update_vary()
-
+    def generate_cmds_counters(self):
+        """Generate Sampler commands to set the counters."""
         cmds = []
-
-        range_vals = range_val,
-        if range_val is None:
-            range_vals = tuple(self.range_vals)
-
         if len(self.papi_counters):
             cmds += [
                 ["########################################"],
@@ -1390,6 +1404,11 @@ class Experiment(object):
                 ["set_counters"] + self.papi_counters,
                 [], []
             ]
+        return cmds
+
+    def generate_cmds_operands(self, range_vals):
+        """Generate Sampler commands to allocate operands."""
+        cmds = []
 
         if len(self.operands):
             cmds += [
@@ -1419,7 +1438,6 @@ class Experiment(object):
 
         # go over all operands
         for name in sorted(self.operands):
-            # TODO: merge this whole thing into call generation
             operand = self.get_operand(name)
             vary = self.vary[name]
             cmdprefix = cmdprefixes[operand["type"]]
@@ -1432,9 +1450,9 @@ class Experiment(object):
 
             if not vary["with"]:
                 # argument doesn't vary
-                size = max(self.ranges_eval(operand["size"], range_val))
+                size = max(self.ranges_eval(operand["size"], None))
                 cmds.append([cmdprefix + "malloc", name, size])
-                operand_range_sizes[name][range_val] = size
+                operand_range_sizes[name][None] = size
                 continue
             # operand varies
 
@@ -1467,7 +1485,7 @@ class Experiment(object):
                         # operand doesn't vary in sumrange (1 offset)
                         offsetcmds.append([
                             cmdprefix + "offset", name, offset,
-                            varname(name, range_val, rep, None)
+                            self.sampler_varname(name, range_val, rep, None)
                         ])
                     else:
                         # comment (multiple offsets)
@@ -1481,7 +1499,8 @@ class Experiment(object):
                             # operand varies in sumrange (offset)
                             offsetcmds.append([
                                 cmdprefix + "offset", name, offset,
-                                varname(name, range_val, rep, sumrange_val)
+                                self.sampler_varname(name, range_val, rep,
+                                                     sumrange_val)
                             ])
                         else:
                             # offset is the same every iteration
@@ -1519,108 +1538,171 @@ class Experiment(object):
         if len(self.operands):
             cmds += [[], []]
 
-        cmds += [
+        return cmds
+
+    def generate_cmds_sumrange(self, range_val, rep, sumrange_vals):
+        """Generate Sampler commands for one one range and rep."""
+        cmds = []
+
+        # open parallel constructs
+        if self.sumrange and self.sumrange_parallel:
+            # begin omp range (parallel region)
+            cmds.append(["{omp"])
+
+        # go over sumrange
+        for sumrange_val in sumrange_vals:
+
+            # open parallel constructs
+            if self.calls_parallel and not self.sumrange_parallel:
+                # begin parallel calls
+                cmds.append(["{omp"])
+            elif self.sumrange_parallel and not self.calls_parallel:
+                # begin sequential calls (in parallel region)
+                cmds.append(["{seq"])
+
+            # go over calls
+            for call in self.calls:
+                if isinstance(call, signature.Call):
+                    # call with signature
+
+                    # evaluate symbolic arguments
+                    call = call.sig(*[
+                        next(self.ranges_eval(val, range_val, sumrange_val))
+                        for val in call[1:]
+                    ])
+                    # format for the sampler
+                    cmd = call.format_sampler()
+                    # place operand variables
+                    for argid in call.sig.dataargs():
+                        cmd[argid] = self.sampler_varname(
+                            cmd[argid], range_val, rep, sumrange_val
+                        )
+                else:  # BasicCall
+                    # call without signature
+                    cmd = call[:]
+                    sig = call.sig
+
+                    # go over arguments
+                    for argid, value in enumerate(call):
+                        if argid == 0 or sig[argid] == "char*":
+                            # chars don't need further processing
+                            continue
+                        if type(value) is list:
+                            value = [next(self.ranges_eval(
+                                value[0], range_val, sumrange_val
+                            ))]
+                            # TODO: parse list argument
+                        else:
+                            # parse scalar arguments
+                            value = next(self.ranges_eval(
+                                value, range_val, sumrange_val
+                            ))
+                        cmd[argid] = value
+
+                # add created call
+                cmds.append(cmd)
+
+            # close parallel constructs
+            if self.calls_parallel and not self.sumrange_parallel:
+                # end parallel calls (parallel region)
+                cmds.append(["}"])
+            elif self.sumrange_parallel and not self.calls_parallel:
+                # end sequential calls (in parallel region)
+                cmds.append(["}"])
+
+        # close parallel constructs
+        if self.sumrange and self.sumrange_parallel:
+            # end omp range (parallel region)
+            cmds.append(["}"])
+
+        return cmds
+
+    def generate_cmds_calls(self, range_vals):
+        """Generate Sampler commands for kernel invocations."""
+        cmds = [
             ["########################################"],
             ["# calls                                #"],
             ["########################################"]
         ]
 
-        # go over range
-        for range_val in range_vals:
-            if self.range and len(range_vals) > 1:
-                # comment
-                cmds += [[], ["#", str(self.range_var), "=", range_val]]
-
-            # randomize operand
-            if self.range_randomize_data:
-                for name in sorted(self.operands):
-                    cmdprefix = cmdprefixes[self.get_operand(name)["type"]]
-                    size = operand_range_sizes[name][range_val]
-                    cmds.append([" %sgerand" % cmdprefix, size, 1, name, size])
-
-            # set up sumrange values
-            sumrange_vals = self.sumrange_vals_at(range_val)
-
+        if self.shuffle:
+            nreps = self.nreps_at(None)
             # go over repetitions
-            for rep in range(self.nreps_at(range_val)):
-                if self.sumrange:
-                    # comment
+            for rep in range(nreps):
+                if self.range and nreps > 1:
                     cmds += [[], ["#", "repetition",  rep]]
 
-                # open parallel constructs
-                if self.sumrange and self.sumrange_parallel:
-                    # begin omp range (parallel region)
-                    cmds.append(["{omp"])
+                # go over range
+                for range_val in range_vals:
+                    if self.range and len(range_vals) > 1:
+                        # comment
+                        cmds += [[], ["#", str(self.range_var), "=",
+                                      range_val]]
 
-                # go over sumrange
-                for sumrange_val in sumrange_vals:
+                    # randomize operand
+                    if self.range_randomize_data:
+                        for name in sorted(self.operands):
+                            cmdprefix = cmdprefixes[
+                                self.get_operand(name)["type"]
+                            ]
+                            size = operand_range_sizes[name][range_val]
+                            cmds.append([" %sgerand" % cmdprefix, size, 1,
+                                         name, size])
 
-                    # open parallel constructs
-                    if self.calls_parallel and not self.sumrange_parallel:
-                        # begin parallel calls
-                        cmds.append(["{omp"])
-                    elif self.sumrange_parallel and not self.calls_parallel:
-                        # begin sequential calls (in parallel region)
-                        cmds.append(["{seq"])
+                    # set up sumrange values
+                    sumrange_vals = self.sumrange_vals_at(range_val)
 
-                    # go over calls
-                    for call in self.calls:
-                        if isinstance(call, signature.Call):
-                            # call with signature
+                    cmds += self.generate_cmds_sumrange(range_val, rep,
+                                                        sumrange_vals)
 
-                            # evaluate symbolic arguments
-                            call = call.sig(*[
-                                next(self.ranges_eval(val, range_val,
-                                                      sumrange_val))
-                                for val in call[1:]
-                            ])
-                            # format for the sampler
-                            cmd = call.format_sampler()
-                            # place operand variables
-                            for argid in call.sig.dataargs():
-                                cmd[argid] = varname(
-                                    cmd[argid], range_val, rep, sumrange_val
-                                )
-                        else:  # BasicCall
-                            # call without signature
-                            cmd = call[:]
-                            sig = call.sig
+                # execute repetition
+                cmds.append(["go"])
+        else:
+            # go over range
+            for range_val in range_vals:
+                if self.range and len(range_vals) > 1:
+                    # comment
+                    cmds += [[], ["#", str(self.range_var), "=", range_val]]
 
-                            # go over arguments
-                            for argid, value in enumerate(call):
-                                if argid == 0 or sig[argid] == "char*":
-                                    # chars don't need further processing
-                                    continue
-                                if type(value) is list:
-                                    value = [next(self.ranges_eval(
-                                        value[0], range_val, sumrange_val
-                                    ))]
-                                    # TODO: parse list argument
-                                else:
-                                    # parse scalar arguments
-                                    value = next(self.ranges_eval(
-                                        value, range_val, sumrange_val
-                                    ))
-                                cmd[argid] = value
+                # randomize operand
+                if self.range_randomize_data:
+                    for name in sorted(self.operands):
+                        cmdprefix = cmdprefixes[self.get_operand(name)["type"]]
+                        size = operand_range_sizes[name][range_val]
+                        cmds.append([" %sgerand" % cmdprefix, size, 1, name,
+                                     size])
 
-                        # add created call
-                        cmds.append(cmd)
+                # set up sumrange values
+                sumrange_vals = self.sumrange_vals_at(range_val)
 
-                    # close parallel constructs
-                    if self.calls_parallel and not self.sumrange_parallel:
-                        # end parallel calls (parallel region)
-                        cmds.append(["}"])
-                    elif self.sumrange_parallel and not self.calls_parallel:
-                        # end sequential calls (in parallel region)
-                        cmds.append(["}"])
+                # go over repetitions
+                nreps = self.nreps_at(range_val)
+                for rep in range(nreps):
+                    if self.sumrange and nreps > 1:
+                        # comment
+                        cmds += [[], ["#", "repetition",  rep]]
 
-                # close parallel constructs
-                if self.sumrange and self.sumrange_parallel:
-                    # end omp range (parallel region)
-                    cmds.append(["}"])
+                    cmds += self.generate_cmds_sumrange(range_val, rep,
+                                                        sumrange_vals)
 
-            # execute range iteration
-            cmds.append(["go"])
+                # execute range iteration
+                cmds.append(["go"])
+
+        return cmds
+
+    def generate_cmds(self, range_val=None):
+        """Generate commands for the Sampler."""
+        self.update_vary()
+
+        cmds = []
+
+        range_vals = range_val,
+        if range_val is None:
+            range_vals = tuple(self.range_vals)
+
+        cmds += self.generate_cmds_counters()
+        cmds += self.generate_cmds_operands(range_vals)
+        cmds += self.generate_cmds_calls(range_vals)
 
         return cmds
 

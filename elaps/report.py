@@ -118,42 +118,54 @@ class Report(object):
 
         nvalues = len(ex.papi_counters) + 1
 
-        # full structured data
-        self.fulldata = {}
-        for range_val in ex.range_vals:
-            # results for each repetition
-            range_val_fdata = []
-            for rep in range(ex.nreps_at(range_val)):
-                if ex.sumrange_parallel:
-                    # only one result per repetition
+        def sumrange_fdata(range_val):
+            """Evaluate data for the sumrange."""
+            if ex.sumrange_parallel:
+                # only one result per range_val
+                return getints(nvalues) or None
+
+            # results for each sumrange iteration
+            fdata = {}
+            for sumrange_val in ex.sumrange_vals_at(range_val):
+                if ex.calls_parallel:
+                    # only one result per sumrange
                     values = getints(nvalues)
                     if values:
-                        range_val_fdata.append(values)
+                        fdata[sumrange_val] = values
                     continue
 
-                # results for each sumrange iteration
-                rep_fdata = {}
-                for sumrange_val in ex.sumrange_vals_at(range_val):
-                    if ex.calls_parallel:
-                        # only one result per sumrange
-                        values = getints(nvalues)
-                        if values:
-                            rep_fdata[sumrange_val] = values
-                        continue
+                # results for each call
+                sumrange_val_fdata = []
+                for call in ex.calls:
+                    # one result per call
+                    values = getints(nvalues)
+                    if values:
+                        sumrange_val_fdata.append(values)
+                if sumrange_val_fdata:
+                    fdata[sumrange_val] = tuple(sumrange_val_fdata)
 
-                    # results for each call
-                    sumrange_val_fdata = []
-                    for call in ex.calls:
-                        # one result per call
-                        values = getints(nvalues)
-                        if values:
-                            sumrange_val_fdata.append(values)
-                    if sumrange_val_fdata:
-                        rep_fdata[sumrange_val] = tuple(sumrange_val_fdata)
-                if rep_fdata:
-                    range_val_fdata.append(rep_fdata)
-            if range_val_fdata:
-                self.fulldata[range_val] = tuple(range_val_fdata)
+            return fdata
+
+        # full structured data
+        self.fulldata = {}
+        if ex.shuffle:
+            fulldata = {k: [] for k in ex.range_vals}
+            for rep in range(ex.nreps_at(None)):
+                for range_val in ex.range_vals:
+                    range_val_fdata = sumrange_fdata(range_val)
+                    if range_val_fdata:
+                        fulldata[range_val].append(range_val_fdata)
+            self.fulldata = {k: tuple(v) for k, v in fulldata.iteritems()}
+        else:
+            for range_val in ex.range_vals:
+                # results for each repetition
+                range_val_fdata = []
+                for rep in range(ex.nreps_at(range_val)):
+                    rep_fdata = sumrange_fdata(range_val)
+                    if rep_fdata:
+                        range_val_fdata.append(rep_fdata)
+                if range_val_fdata:
+                    self.fulldata[range_val] = tuple(range_val_fdata)
 
         self.endtime = None
         values = getints(1)

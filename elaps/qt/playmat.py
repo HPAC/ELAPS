@@ -360,13 +360,22 @@ class PlayMat(QtGui.QMainWindow):
                 "a comma separated list of values, or a combination of both."
             )
 
+            # shuffle
+            self.UI_shuffle = QtGui.QCheckBox(
+                "shuffle reps",
+                toggled=self.on_shuffle_toggle,
+                toolTip="<tt>shuffle</tt>: "
+                "range and repetition loops are interchanged."
+            )
+
             rangeL = QtGui.QHBoxLayout(spacing=0)
             rangeL.setContentsMargins(0, 0, 0, 0)
             rangeL.addWidget(QtGui.QLabel("for "))
             rangeL.addWidget(self.UI_rangevar)
             rangeL.addWidget(QtGui.QLabel(" = "))
             rangeL.addWidget(self.UI_rangevals)
-            rangeL.addWidget(QtGui.QLabel(":"))
+            rangeL.addWidget(QtGui.QLabel(": "))
+            rangeL.addWidget(self.UI_shuffle)
             rangeL.addStretch(1)
             self.UI_rangeW = QtGui.QWidget(
                 toolTip="<tt>range</tt>: "
@@ -888,6 +897,7 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_sampler_set()
         self.UI_nthreads_set()
         self.UI_range_set()
+        self.UI_shuffle_set()
         self.UI_nreps_set()
         self.UI_sumrange_set()
         self.UI_calls_parallel_set()
@@ -934,6 +944,18 @@ class PlayMat(QtGui.QMainWindow):
         self.UI_set_invalid(self.UI_rangevar, False)
         self.UI_edit_autowidth(self.UI_rangevals, 2)
         self.UI_set_invalid(self.UI_rangevals, False)
+        self.UI_setting -= 1
+
+    @pyqtSlot()
+    def UI_shuffle_set(self):
+        """Set UI element: shuffle."""
+        self.UI_setting += 1
+        ex = self.experiment
+        self.UI_shuffle.setEnabled(
+            not ex.range or
+            isinstance(ex.nthreads, int) and isinstance(ex.nreps, int)
+        )
+        self.UI_shuffle.setChecked(ex.shuffle)
         self.UI_setting -= 1
 
     @pyqtSlot()
@@ -1309,6 +1331,7 @@ class PlayMat(QtGui.QMainWindow):
         except:
             self.undo_stack_pop()
             self.UI_set_invalid(self.UI_nthreads)
+        self.UI_shuffle_set()
 
     @pyqtSlot(str)
     def on_nreps_change(self, value):
@@ -1323,6 +1346,18 @@ class PlayMat(QtGui.QMainWindow):
         except:
             self.undo_stack_pop()
             self.UI_set_invalid(self.UI_nreps)
+        self.UI_shuffle_set()
+
+    @pyqtSlot(bool)
+    def on_shuffle_toggle(self, checked):
+        """Event: change shuffling."""
+        if self.UI_setting:
+            return
+        self.undo_stack_push()
+        try:
+            self.experiment.set_shuffle(bool(checked))
+        except:
+            self.undo_stack_pop()
 
     @pyqtSlot(bool)
     def on_usesumrange_toggle(self, checked):

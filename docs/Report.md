@@ -14,7 +14,7 @@ executed [`Experiment`](Experiment.md) as well as the resulting measurements.
   - [`fulldata`](#fulldata)
   - [`data`](#data)
 - [Dropping first repetitions](#dropping-first-repetitions)
-- [Applying metrics](#applying-metrics)
+- [Evaluating a metric for a Report](#evaluating-a-metric-for-a-report)
 - [Computing statistics](#computing-statistics)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -68,29 +68,32 @@ or cache initialization.  `discard_first_repetitions()` will discard each first
 repetition within a `Report`, resulting in a derived `Report` object.
 
 
-Applying metrics
-----------------
-Metrics turn raw measurement data (i.e., cycle counts) into more meaningful
-quantities, such as "Execution time in seconds" (`seconds`) or "floating point
-operations per cycle" (`ipc`).  A set of predefined metrics can be loaded using
-`elaps.io`'s `load_metric(name)`.  Such a metric, which is essentially a python
-function, can be applied to an experiment (or a subset of its calls) through
-`apply_metric(metric, callid)`.  In addition to valid call numbers, `callid` can
-be `None` to access the sum of all calls.
+Evaluating a metric for a Report
+--------------------------------
+`Report`s can be evaluated with various metrics (such as "Execution time",
+"Performance", or "Efficiency").  The method `Report.evaluate()` applies such a
+metric and optionally a statistic to a its dataset.
 
-`apply_metric()` returns a data structure with the following hierarchy:
+`Report.evaluate()` takes the following arguments:
+- `callselector` determines which calls contribute to the evaluation. It can
+  take several different values:
+  - An `int` identifies a single call (numbered from `0`)
+  - A `list` of `int`s considers all calls in that list together
+  - A general function that receives as input the values for each call and
+    returns the gathered value.  This allows to evaluate linear combinations or
+    scalings.
+- `metric`: A metric loaded by `elaps.io.load_metric()`.
+- `stat` (default: `"all"`):  Apply a statistic to the output (see below).
 
-    metric_data[range_val][rep]
-
-- `range_val`: The range value (or `None`).
-- `rep`: The repetition number.
+The result is a `dict` with one entry for each `range_val`.  The entries are the
+statistics computed from the metrics applied to the selected calls.
 
 
 Computing statistics
 --------------------
-The method `apply_stat(stat_name, data)` applies a statistics to a data
-structure as returned by a `Report`'s `apply_metric()`.  The following
-`stat_name`'s are available:
+The method `apply_stat(stat, data)` applies a statistics to a `list` or a nested
+to each list in a `dict`.  `stat` is either a function that compute the metric
+itself or one of the following `string`s identifying a predefined statistic:
 - `"min"`: minimum,
 - `"med"`: median,
 - `"max"`: maximum,

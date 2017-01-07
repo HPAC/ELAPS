@@ -95,6 +95,63 @@ class TestReport(unittest.TestCase):
         self.assertEqual(report.fulldata[None][idx][None][0][0], vals[idx])
         self.assertEqual(report.data[None][idx][0]["cycles"], vals[idx])
 
+    def test_noshuffle(self):
+        """Test for Experiment without and without shuffling."""
+        ex, i = self.ex, self.i
+
+        lenrange = random.randint(1, 10)
+        range_vals = random.sample(range(1000), lenrange)
+        nreps = random.randint(1, 10)
+        vals = dict((range_val,
+                     [random.randint(1, 1000) for _ in range(nreps)]) for
+                    range_val in range_vals)
+
+        ex.call = Signature("name")()
+        ex.range = [i, range_vals]
+        ex.nreps = nreps
+        rawdata = [[0]] + [[val] for range_val in range_vals
+                           for val in vals[range_val]] + [[-1]]
+
+        report = Report(ex, rawdata)
+        self.assertEqual(len(report.fulldata), lenrange)
+        self.assertEqual(len(report.fulldata[range_vals[0]]), nreps)
+
+        rangeidx = random.choice(range_vals)
+        repidx = random.randint(0, nreps - 1)
+        self.assertEqual(report.fulldata[rangeidx][repidx][None][0][0],
+                         vals[rangeidx][repidx])
+        self.assertEqual(report.data[rangeidx][repidx][0]["cycles"],
+                         vals[rangeidx][repidx])
+
+    def test_shuffle(self):
+        """Test for Experiment without and with shuffling."""
+        ex, i = self.ex, self.i
+
+        lenrange = random.randint(1, 10)
+        range_vals = random.sample(range(1000), lenrange)
+        nreps = random.randint(1, 10)
+        vals = dict((range_val,
+                     [random.randint(1, 1000) for _ in range(nreps)]) for
+                    range_val in range_vals)
+
+        ex.call = Signature("name")()
+        ex.range = [i, range_vals]
+        ex.nreps = nreps
+        ex.shuffle = True
+        rawdata = [[0]] + [[vals[range_val][rep]] for rep in range(nreps)
+                           for range_val in range_vals] + [[-1]]
+
+        report = Report(ex, rawdata)
+        self.assertEqual(len(report.fulldata), lenrange)
+        self.assertEqual(len(report.fulldata[range_vals[0]]), nreps)
+
+        rangeidx = random.choice(range_vals)
+        repidx = random.randint(0, nreps - 1)
+        self.assertEqual(report.fulldata[rangeidx][repidx][None][0][0],
+                         vals[rangeidx][repidx])
+        self.assertEqual(report.data[rangeidx][repidx][0]["cycles"],
+                         vals[rangeidx][repidx])
+
     def test_sumrange(self):
         """Test for Experiment with sumrange."""
         ex, i = self.ex, self.i

@@ -1,10 +1,10 @@
 ELAPS Report plotting
 =====================
 
-The matplotlib-based module `elaps.plot` provides the function `plot()` that
-plots a series of metric data sets as produced by a [`Report`](Report.md)'s
-`apply_metric()` method.  If any of the provided data sets contains a range,
-it produces a line-plot, otherwise a bar-plot.
+The matplotlib-based module `elaps.plot` provides `plot()` that plots a series
+of metric data sets as produced by [`Report.evaluate()`](Report.md).  If any of
+the provided data sets contains a range, it produces a line-plot,
+otherwise a bar-plot.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -37,9 +37,9 @@ legend entry and the data set as returned by `Report.apply_metric()`.
 ### `stat_names`
 (default: `["med"]`)  
 A `list` of statistics to be plotted.  May contain `"min"`, `"med"`, `"max"`,
-`"avg"`, `"std"`, and `"all"`. `
+`"avg"`, `"std"`, and `"all"`.
 
-"min"` through `"avg"` on their own are plotted as lines (or simple bars); when
+`"min"` through `"avg"` on their own are plotted as lines (or simple bars); when
 both `"min"` and `"max"` are present, the range between them (`"min-max"`) is
 filled; `"std"` fills the range between of the average +/- one standard
 deviation; `"all"` plots all data points as markers.
@@ -76,5 +76,5 @@ The matplotlib `Figure` in which to plot.
 Output
 ------
 
-`plot()` returns a matplotlib `Figure` instance that can be further modified or
-exported via its `savefig()` method.
+`plot()` returns a matplotlib `Figure` that can be further modified or exported
+via its `savefig()` method.

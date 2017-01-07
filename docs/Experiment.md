@@ -12,9 +12,10 @@ features functionality to support their design and handling.
 - [Setup and Attributes](#setup-and-attributes)
   - [`sampler`](#sampler)
   - [`papi_counters`](#papi_counters)
-  - [`nthreads`](#nthreads)
   - [`range`](#range)
+  - [`nthreads`](#nthreads)
   - [`nreps`](#nreps)
+  - [`shuffle`](#shuffle)
   - [`sumrange`](#sumrange)
   - [`sumrange_parallel`](#sumrange_parallel)
   - [`calls_parallel`](#calls_parallel)
@@ -74,15 +75,6 @@ be supported by the Sampler and cannot exceed its counter limit.
 
 Setter: `set_papi_counters(papi_countes)`
 
-### `nthreads`
-The number of threads used by the kernel library.  The number of threads is
-limited by the Sampler.
-
-Instead of a number, `range[0]` (the range variable) can be used as a value to
-let the number of threads depend on the ranges value.
-
-Setter: `set_nthreads(nthreads)`
-
 ### `range`
 `[range_var, range_vals]`, a range variable and range values as a 2-element
 `list`, or `None`.  If set, `range_var` is an `elaps.symbolic.Symbol`, while the
@@ -98,14 +90,33 @@ Setters:
 - `set_range([range_var, range_vals])` or `set_range(None)`
 - `set_range_var(range_var)` and `set_range_vals(range_vals)`
 
+### `nthreads`
+The number of threads used by the kernel library,  limited by the Sampler
+(positive `int` or symbolic in `range_var`).
+
+The range variable can be used to let the number of threads depend on the
+range's value.
+
+Setter: `set_nthreads(nthreads)`
+
 ### `nreps`
-The number of repetitions (positive `int`).
+The number of repetitions (positive `int` or symbolic in `range_var`).
 
 The experiment as defined by the options below is repeated `nreps` times,
 allowing the resulting `Report` to compute statistics of the measurements'
 variations.
 
+The range variable can be used to let the number of repetitions depend on the
+range's value.
+
 Setter: `set_nreps(nreps)`
+
+### `shuffle`
+Whether the repetitions loop is moved above the range loop.
+
+Only possible if both `nthreads` and `nreps` are non-symbolic.
+
+Setter: `set_shuffle(shuffle)`
 
 ### `sumrange`
 `[sumrange_var, sumrange_vals]`, a range variable and range values as a
