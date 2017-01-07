@@ -6,7 +6,7 @@ import sys
 import os
 filepath = os.path.dirname(os.path.realpath(__file__))
 rootpath = os.path.abspath(os.path.join(filepath, ".."))
-sys.path.append(rootpath)
+sys.path.insert(0, rootpath)
 
 from elaps.bin.viewer import main
 
