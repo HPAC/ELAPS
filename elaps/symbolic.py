@@ -45,7 +45,7 @@ class Expression(tuple):
 
     def __eq__(self, other):
         """Check equality by id."""
-        return id(self) == id(other)
+        return self is other
 
     def __cmp__(self, other):
         """Compare with other."""
@@ -58,6 +58,14 @@ class Expression(tuple):
     def __str__(self):
         """Format: cls(args)."""
         return "%s(%s)" % (type(self).__name__, ", ".join(map(str, self)))
+
+    def __copy__(self):
+        """Format: cls(args)."""
+        return self
+
+    def __deepcopy__(self, memo):
+        """Format: cls(args)."""
+        return self
 
     def substitute(self, **kwargs):
         """Variable substitution."""
@@ -141,7 +149,7 @@ class Symbol(Expression):
 
     def __eq__(self, other):
         """Allow comparison with strings."""
-        return self.name == other or Expression.__eq__(self, other)
+        return self is other or self.name == other
 
     def substitute(self, **kwargs):
         """Substitute: return value if matching."""
