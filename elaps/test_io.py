@@ -14,7 +14,7 @@ except:
     )
 
 from elaps.io import *
-from elaps.signature import Signature, Dim, sData
+from elaps.signature import Signature, Dim, sData, Call
 from elaps.experiment import Experiment
 
 
@@ -43,6 +43,12 @@ class TestLoaders(unittest.TestCase):
         """Test for write/load_signature()."""
         sig = load_signature("dtrsm")
         self.assertIsInstance(sig, Signature)
+
+    def test_load_call(self):
+        """Test for load_call[s]_string()."""
+        call = load_signature("dtrsm")()
+        self.assertIsInstance(load_call_string(repr(call)), Call)
+        self.assertIsInstance(load_calls_string(repr([call])), list)
 
     def test_load_expeirment(self):
         """Test for write/load_experiment()."""

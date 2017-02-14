@@ -8,6 +8,8 @@ from PyQt4 import QtCore, QtGui
 
 from elaps import defines
 
+from elaps import signature
+
 
 class QDataArg(QtGui.QLineEdit):
 
@@ -159,7 +161,7 @@ class QDataArg(QtGui.QLineEdit):
             # something with the range went wrong
             self.viz_none()
             return
-        if "work" in call.properties(self.argid):
+        if isinstance(call.sig[self.argid], signature.Work):
             # maximum height for work
             maxdim = max(1, ex.operands_maxdim())
             if dimmax[0] > maxdim:
