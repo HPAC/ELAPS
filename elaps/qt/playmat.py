@@ -1327,6 +1327,7 @@ class PlayMat(QtGui.QMainWindow):
         self.undo_stack_push()
         try:
             self.experiment.set_nthreads(str(value))
+            self.experiment.set_shuffle(False)
             self.UI_set_invalid(self.UI_nthreads, False)
         except:
             self.undo_stack_pop()
