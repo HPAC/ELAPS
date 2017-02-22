@@ -1740,7 +1740,7 @@ class Experiment(object):
             script += "%s\n" % self.script_header.format(nt=nthreads_max)
 
         # experiment as part of the
-        selfrepr = repr(self)
+        selfrepr = repr(self).replace("`", "\\`").replace("$", "\\$")
         delim = "EXPERIMENT"
         if delim in selfrepr:
             i = 0
