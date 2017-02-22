@@ -1107,7 +1107,7 @@ class PlayMat(QtGui.QMainWindow):
         """Event: clipboard changed."""
         if mode == QtGui.QClipboard.Clipboard:
             try:
-                eval(str(self.Qapp.clipboard().text()), signature.__dict__)
+                elaps.io.load_calls_string(str(self.Qapp.clipboard().text()))
                 self.UIA_call_paste.setEnabled(True)
             except:
                 self.UIA_call_paste.setEnabled(False)
@@ -1327,6 +1327,7 @@ class PlayMat(QtGui.QMainWindow):
         self.undo_stack_push()
         try:
             self.experiment.set_nthreads(str(value))
+            self.experiment.set_shuffle(False)
             self.UI_set_invalid(self.UI_nthreads, False)
         except:
             self.undo_stack_pop()
@@ -1577,8 +1578,9 @@ class PlayMat(QtGui.QMainWindow):
     def on_call_paste(self):
         """Event: paste call(s)."""
         self.undo_stack_push()
-        paste_calls = eval(str(self.Qapp.clipboard().text()),
-                           signature.__dict__)
+        paste_calls = elaps.io.load_calls_string(
+            str(self.Qapp.clipboard().text())
+        )
         callid = self.UI_calls.currentRow()
         calls = self.experiment.calls
         calls = calls[:callid] + paste_calls + calls[callid:]

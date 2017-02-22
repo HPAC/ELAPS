@@ -60,6 +60,29 @@ def load_all_signatures():
     return sigs
 
 
+def load_call_string(string, _globals={}):
+    """Load a Call from a string."""
+    if not _globals:
+        _globals.update(symbolic.__dict__)
+        _globals.update(signature.__dict__)
+    call = eval(string, _globals)
+    if not isinstance(call, signature.BasicCall):
+        raise TypeError("not a Call: %s" % call)
+    return call
+
+
+def load_calls_string(string, _globals={}):
+    """Load a Call from a string."""
+    if not _globals:
+        _globals.update(symbolic.__dict__)
+        _globals.update(signature.__dict__)
+    calls = eval(string, _globals)
+    for call in calls:
+        if not isinstance(call, signature.BasicCall):
+            raise TypeError("not a Call: %s" % call)
+    return calls
+
+
 def write_experiment(experiment, filepath):
     """Write an Experiment."""
     with open(filepath, "w") as fout:
