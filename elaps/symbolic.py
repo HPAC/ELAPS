@@ -284,7 +284,7 @@ class Plus(Operation):
         collected = defaultdict(int)
         for arg in newargs:
             if isinstance(arg, Times) and isinstance(arg[0], Number):
-                collected[Times(*arg[1:])()] += arg[1]
+                collected[Times(*arg[1:])()] += arg[0]
             else:
                 collected[arg] += 1
         newargs = [arg if c == 1 else simplify(c * arg)
